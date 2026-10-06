@@ -9,31 +9,31 @@ import { DropSurface } from '@/shared/ui/atoms/drop-surface';
 import { FilePicker } from '@/shared/ui/atoms/file-picker';
 
 /** Soltar archivos encima: se marca mientras pasan por encima y se entregan al soltar. */
-function useFileDrop(subiendo: boolean, onArchivos: (archivos: File[]) => void) {
-  const [encima, setEncima] = useState(false);
+function useFileDrop(isUploading: boolean, onFiles: (files: File[]) => void) {
+  const [isDragOver, setIsDragOver] = useState(false);
 
   return {
-    encima,
+    isDragOver,
     handlers: {
       onDragOver: (e: DragEvent) => {
         e.preventDefault();
-        setEncima(true);
+        setIsDragOver(true);
       },
-      onDragLeave: () => setEncima(false),
+      onDragLeave: () => setIsDragOver(false),
       onDrop: (e: DragEvent) => {
         e.preventDefault();
-        setEncima(false);
-        if (!subiendo) onArchivos(Array.from(e.dataTransfer.files));
+        setIsDragOver(false);
+        if (!isUploading) onFiles(Array.from(e.dataTransfer.files));
       },
     },
   };
 }
 
 interface DropZoneProps {
-  subiendo: boolean;
-  progreso: number;
+  isUploading: boolean;
+  progress: number;
   /** Sin ningún soporte todavía: ocupa el ancho y explica. */
-  solo: boolean;
+  isAlone: boolean;
   /**
    * Qué hace la baldosa pequeña al pulsarse, si no es abrir el buscador.
    *
@@ -42,8 +42,8 @@ interface DropZoneProps {
    * de pegar, así que la baldosa pasó a ser una PUERTA y el cuadro grande el
    * sitio donde de verdad se añade.
    */
-  alPulsar?: () => void;
-  onArchivos: (archivos: File[]) => void;
+  onPress?: () => void;
+  onFiles: (files: File[]) => void;
 }
 
 /**
@@ -73,53 +73,53 @@ interface DropZoneProps {
  * es el mismo —se pulsa en cualquier parte del cuadro y se abre el buscador— y
  * encima cabe lo que haga falta dentro.
  */
-export function Soltar({ subiendo, progreso, solo, alPulsar, onArchivos }: DropZoneProps) {
-  const campo = useRef<HTMLInputElement>(null);
-  const soltando = useFileDrop(subiendo, onArchivos);
-  const { pegar, problemaAlPegar } = usePasteScreenshot(onArchivos);
+export function DropZone({ isUploading, progress, isAlone, onPress, onFiles }: DropZoneProps) {
+  const field = useRef<HTMLInputElement>(null);
+  const isDropping = useFileDrop(isUploading, onFiles);
+  const { pegar, problemaAlPegar } = usePasteScreenshot(onFiles);
 
   return (
-    <div className={cn(solo && 'flex w-full self-stretch')} {...soltando.handlers}>
+    <div className={cn(isAlone && 'flex w-full self-stretch')} {...isDropping.handlers}>
       <DropSurface
-        shape={solo ? 'full' : 'square'}
-        isOver={soltando.encima}
-        isBusy={subiendo}
+        shape={isAlone ? 'full' : 'square'}
+        isOver={isDropping.isDragOver}
+        isBusy={isUploading}
         label={t('transactions.supports.add')}
-        onPick={alPulsar ?? (() => campo.current?.click())}
+        onPick={onPress ?? (() => field.current?.click())}
       >
-        <DropZoneLabel subiendo={subiendo} progreso={progreso} solo={solo} />
+        <DropZoneLabel isUploading={isUploading} progress={progress} isAlone={isAlone} />
 
         {/* La tercera forma de dar un archivo, dentro del cuadro y con las
             otras dos: separada, se leía como otra cosa colgando debajo.
 
             `relative` para quedar por encima del botón que cubre la caja, o el
             clic se lo llevaría él. */}
-        {solo && !subiendo && (
-          <PasteScreenshot onPegar={() => void pegar()} problema={problemaAlPegar} />
+        {isAlone && !isUploading && (
+          <PasteScreenshot onPaste={() => void pegar()} problem={problemaAlPegar} />
         )}
       </DropSurface>
 
       <FilePicker
-        ref={campo}
+        ref={field}
         multiple
         accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
-        onFiles={onArchivos}
+        onFiles={onFiles}
       />
     </div>
   );
 }
 
 /** El botón de pegar y, si el portapapeles no se dejó leer, por qué. */
-function PasteScreenshot({ onPegar, problema }: { onPegar: () => void; problema: string | null }) {
+function PasteScreenshot({ onPaste, problem }: { onPaste: () => void; problem: string | null }) {
   return (
     <div className="relative mt-4 flex flex-col items-center gap-1">
-      <Button type="button" variant="outline" size="sm" onClick={onPegar}>
+      <Button type="button" variant="outline" size="sm" onClick={onPaste}>
         <ClipboardPaste aria-hidden="true" />
         {t('transactions.supports.paste')}
       </Button>
-      {problema && (
+      {problem && (
         <p role="alert" className="max-w-xs text-center text-xs text-muted-foreground">
-          {problema}
+          {problem}
         </p>
       )}
     </div>
@@ -128,24 +128,24 @@ function PasteScreenshot({ onPegar, problema }: { onPegar: () => void; problema:
 
 /** Lo que se lee dentro del cuadro: el avance, la explicación o el rótulo corto. */
 function DropZoneLabel({
-  subiendo,
-  progreso,
-  solo,
+  isUploading,
+  progress,
+  isAlone,
 }: {
-  subiendo: boolean;
-  progreso: number;
-  solo: boolean;
+  isUploading: boolean;
+  progress: number;
+  isAlone: boolean;
 }) {
   return (
     <div className="pointer-events-none relative flex flex-col items-center gap-1.5">
-      {subiendo ? (
+      {isUploading ? (
         <>
           <Loader2 className="size-5 animate-spin" aria-hidden="true" />
           {/* El porcentaje, no una barra: en una caja de 104px una barra son
               cuatro píxeles de alto que no se ven moverse. */}
-          <span className="tabular text-xs font-medium">{Math.round(progreso * 100)} %</span>
+          <span className="tabular text-xs font-medium">{Math.round(progress * 100)} %</span>
         </>
-      ) : solo ? (
+      ) : isAlone ? (
         <>
           {/*
             El texto dice QUÉ va aquí, no solo cómo ponerlo.

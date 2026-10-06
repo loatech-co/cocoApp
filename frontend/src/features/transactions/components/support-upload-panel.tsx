@@ -4,7 +4,7 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
-import { Soltar } from './support-drop-zone';
+import { DropZone } from './support-drop-zone';
 
 /**
  * El cuadro de subir, sobre la ficha que lo pidió.
@@ -26,28 +26,28 @@ import { Soltar } from './support-drop-zone';
  * cerraría igual —con lo escrito dentro—. En captura llega primero y detiene
  * el evento: Escape cierra el panel y nada más.
  */
-export function PanelDeSubida({
-  subiendo,
-  progreso,
-  onArchivos,
-  onCerrar,
+export function UploadPanel({
+  isUploading,
+  progress,
+  onFiles,
+  onClose,
 }: {
-  subiendo: boolean;
-  progreso: number;
-  onArchivos: (archivos: File[]) => void;
-  onCerrar: () => void;
+  isUploading: boolean;
+  progress: number;
+  onFiles: (files: File[]) => void;
+  onClose: () => void;
 }) {
   useEffect(() => {
-    const alPulsar = (e: KeyboardEvent): void => {
+    const onPress = (e: KeyboardEvent): void => {
       if (e.key !== 'Escape') return;
       e.stopPropagation();
       e.preventDefault();
-      onCerrar();
+      onClose();
     };
 
-    document.addEventListener('keydown', alPulsar, true);
-    return () => document.removeEventListener('keydown', alPulsar, true);
-  }, [onCerrar]);
+    document.addEventListener('keydown', onPress, true);
+    return () => document.removeEventListener('keydown', onPress, true);
+  }, [onClose]);
 
   return (
     <div
@@ -64,7 +64,7 @@ export function PanelDeSubida({
       // `onMouseDown` y no `onClick`: con clic, arrastrar desde dentro del
       // panel hasta el velo —que es justo lo que se hace al soltar un
       // archivo— lo cerraría a mitad del gesto.
-      onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
         className={cn(
@@ -73,7 +73,7 @@ export function PanelDeSubida({
           'emerge rounded-lg',
         )}
       >
-        <Soltar subiendo={subiendo} progreso={progreso} solo onArchivos={onArchivos} />
+        <DropZone isUploading={isUploading} progress={progress} isAlone onFiles={onFiles} />
       </div>
     </div>
   );

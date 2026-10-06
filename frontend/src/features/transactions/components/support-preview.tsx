@@ -8,10 +8,10 @@ import { cn } from '@/shared/lib/utils';
 import { PdfCanvas } from '@/shared/ui/atoms/pdf-canvas';
 import { OverlayButton, ControlReadout } from '@/shared/ui/molecules/overlay-control';
 
-import { SoporteQueNoSeVe } from './support-unavailable';
+import { UnavailableReceipt } from './support-unavailable';
 
 /** Los saltos del zoom, como múltiplos de la escala que llena la caja. */
-const PASOS_DE_LA_PREVIA = [1, 1.5, 2, 3];
+const PREVIEW_STEPS = [1, 1.5, 2, 3];
 
 interface PreviewProps {
   /**
@@ -35,10 +35,10 @@ interface PreviewProps {
    * que no iba a llegar giraba para siempre: quien mira no puede distinguir
    * «está tardando» de «no está», que piden cosas distintas.
    */
-  fallo?: FalloDeSoporte | undefined;
+  error?: FalloDeSoporte | undefined;
   /** Solo hace algo con `sin-cargar`: lo ausente no vuelve por reintentarlo. */
-  onReintentar?: (() => void) | undefined;
-  esImagen: boolean;
+  onRetry?: (() => void) | undefined;
+  isImage: boolean;
   /**
    * Abre el pase a pantalla completa, si lo hay.
    *
@@ -46,7 +46,7 @@ interface PreviewProps {
    * se guarde el movimiento no existe en ninguna parte que se pueda abrir. Sin
    * esto, el botón aparecería en los dos sitios y en uno no haría nada.
    */
-  onAbrir?: (() => void) | undefined;
+  onOpen?: (() => void) | undefined;
   /**
    * Lo que se puede hacer con ESTE documento: borrarlo, añadir otro, pasar al
    * siguiente.
@@ -56,7 +56,7 @@ interface PreviewProps {
    * se quita uno; sin ella, todo eso tiene que caber sobre el papel o
    * desaparece.
    */
-  acciones?: ReactNode;
+  actions?: ReactNode;
 }
 
 /**
@@ -70,14 +70,7 @@ interface PreviewProps {
  * Porque es un documento, no una página: el gesto con el que todo el mundo
  * mueve un plano o un mapa es agarrarlo.
  */
-export function PreviaDeArchivo({
-  url,
-  fallo,
-  onReintentar,
-  esImagen,
-  onAbrir,
-  acciones,
-}: PreviewProps) {
+export function FilePreview({ url, error, onRetry, isImage, onOpen, actions }: PreviewProps) {
   /*
     El zoom multiplica la escala que ya LLENA la caja, así que el 100 % es el
     documento cubriendo el marco y no su tamaño natural.
@@ -88,7 +81,7 @@ export function PreviaDeArchivo({
     guardado.
   */
   const marco = useRef<HTMLDivElement>(null);
-  const vista = usePanZoom(marco, PASOS_DE_LA_PREVIA);
+  const vista = usePanZoom(marco, PREVIEW_STEPS);
 
   return (
     <div
@@ -121,22 +114,22 @@ export function PreviaDeArchivo({
           mandos del zoom: son dos cosas distintas —una amplía dentro del
           marco, la otra saca el documento del marco— y juntas se pulsarían la
           una por la otra. */}
-      <PreviewActions onAbrir={onAbrir} acciones={acciones} />
+      <PreviewActions onOpen={onOpen} actions={actions} />
 
       <PreviewZoom
-        visible={Boolean(url)}
+        isVisible={Boolean(url)}
         zoom={vista.zoom}
-        paso={vista.step}
+        step={vista.step}
         onZoom={vista.setZoom}
       />
 
       <PreviewDocument
         url={url}
-        fallo={fallo}
-        onReintentar={onReintentar}
-        esImagen={esImagen}
-        encuadre={vista.framing}
-        onTamano={(ancho, alto) => vista.setNatural({ width: ancho, height: alto })}
+        error={error}
+        onRetry={onRetry}
+        isImage={isImage}
+        framing={vista.framing}
+        onResize={(width, height) => vista.setNatural({ width, height })}
       />
     </div>
   );
@@ -150,20 +143,20 @@ export function PreviaDeArchivo({
  * control que no responde se lee como un fallo.
  */
 function PreviewZoom({
-  visible,
+  isVisible,
   zoom,
-  paso,
+  step,
   onZoom,
 }: {
-  visible: boolean;
+  isVisible: boolean;
   zoom: number;
-  paso: number;
-  onZoom: (cambiar: (zoom: number) => number) => void;
+  step: number;
+  onZoom: (change: (zoom: number) => number) => void;
 }) {
   return (
     <div
       data-zoom-controls=""
-      hidden={!visible}
+      hidden={!isVisible}
       className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
     >
       <OverlayButton
@@ -178,12 +171,12 @@ function PreviewZoom({
         title={t('transactions.supports.resetZoom')}
         onClick={() => onZoom(() => 0)}
       >
-        {Math.round(paso * 100)} %
+        {Math.round(step * 100)} %
       </ControlReadout>
       <OverlayButton
         label={t('transactions.supports.zoomIn')}
-        disabled={zoom === PASOS_DE_LA_PREVIA.length - 1}
-        onClick={() => onZoom((z) => Math.min(PASOS_DE_LA_PREVIA.length - 1, z + 1))}
+        disabled={zoom === PREVIEW_STEPS.length - 1}
+        onClick={() => onZoom((z) => Math.min(PREVIEW_STEPS.length - 1, z + 1))}
       >
         <Plus className="size-4" aria-hidden="true" />
       </OverlayButton>
@@ -194,20 +187,20 @@ function PreviewZoom({
 /** Lo que hay dentro del marco: el fallo, el girador, la imagen o el PDF. */
 function PreviewDocument({
   url,
-  fallo,
-  onReintentar,
-  esImagen,
-  encuadre,
-  onTamano,
+  error,
+  onRetry,
+  isImage,
+  framing,
+  onResize,
 }: {
   url: string | undefined;
-  fallo: FalloDeSoporte | undefined;
-  onReintentar: (() => void) | undefined;
-  esImagen: boolean;
-  encuadre: CSSProperties;
-  onTamano: (ancho: number, alto: number) => void;
+  error: FalloDeSoporte | undefined;
+  onRetry: (() => void) | undefined;
+  isImage: boolean;
+  framing: CSSProperties;
+  onResize: (width: number, height: number) => void;
 }) {
-  if (fallo) return <SoporteQueNoSeVe fallo={fallo} onReintentar={onReintentar} />;
+  if (error) return <UnavailableReceipt error={error} onRetry={onRetry} />;
 
   if (!url) {
     return (
@@ -223,10 +216,10 @@ function PreviewDocument({
     );
   }
 
-  if (!esImagen) {
+  if (!isImage) {
     // A 1400 y no a 240: esto se mira para leer una cifra, y el tamaño de una
     // miniatura la deja borrosa.
-    return <PdfCanvas url={url} width={1400} onResize={onTamano} style={encuadre} />;
+    return <PdfCanvas url={url} width={1400} onResize={onResize} style={framing} />;
   }
 
   return (
@@ -251,24 +244,24 @@ function PreviewDocument({
         fallaba con «algunas imágenes».
       */
       className="max-w-none"
-      onLoad={(e) => onTamano(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
-      style={encuadre}
+      onLoad={(e) => onResize(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
+      style={framing}
     />
   );
 }
 
 /** Lo que se hace con el documento, arriba a la derecha, y el pase si lo hay. */
-function PreviewActions({ onAbrir, acciones }: Pick<PreviewProps, 'onAbrir' | 'acciones'>) {
-  if (onAbrir === undefined && !acciones) return null;
+function PreviewActions({ onOpen, actions }: Pick<PreviewProps, 'onOpen' | 'actions'>) {
+  if (onOpen === undefined && !actions) return null;
 
   return (
     <div
       data-zoom-controls=""
       className="absolute right-2 top-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
     >
-      {acciones}
-      {onAbrir && (
-        <OverlayButton label={t('transactions.supports.enlarge')} onClick={onAbrir}>
+      {actions}
+      {onOpen && (
+        <OverlayButton label={t('transactions.supports.enlarge')} onClick={onOpen}>
           <Maximize2 className="size-4" aria-hidden="true" />
         </OverlayButton>
       )}

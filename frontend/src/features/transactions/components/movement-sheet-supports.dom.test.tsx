@@ -50,9 +50,9 @@ describe('El soporte adjuntado al confirmar un pago', () => {
 
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');
 
-    const campo = container.querySelector('input[type="file"]')!;
-    const recibo = new File(['x'], 'celsia-octubre.png', { type: 'image/png' });
-    fireEvent.change(campo, { target: { files: [recibo] } });
+    const field = container.querySelector('input[type="file"]')!;
+    const receipt = new File(['x'], 'celsia-octubre.png', { type: 'image/png' });
+    fireEvent.change(field, { target: { files: [receipt] } });
 
     /*
       El piso de la espera: la lectura se ve siempre igual, tarde lo que tarde.
@@ -85,8 +85,8 @@ describe('El soporte adjuntado al confirmar un pago', () => {
 
     const { container } = openNew();
 
-    const campo = container.querySelector('input[type="file"]')!;
-    fireEvent.change(campo, {
+    const field = container.querySelector('input[type="file"]')!;
+    fireEvent.change(field, {
       target: { files: [new File(['x'], 'recibo.png', { type: 'image/png' })] },
     });
 
@@ -127,8 +127,8 @@ describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cargar archivo' }));
 
     const panel = screen.getByRole('dialog', { name: 'Agregar soportes' });
-    const campo = panel.querySelector('input[type="file"]')!;
-    fireEvent.change(campo, {
+    const field = panel.querySelector('input[type="file"]')!;
+    fireEvent.change(field, {
       target: { files: [new File(['x'], 'celsia-octubre.png', { type: 'image/png' })] },
     });
 

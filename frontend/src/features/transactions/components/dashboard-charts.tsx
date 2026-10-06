@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
-import { Distribucion } from '@/features/transactions/components/cost-distribution';
-import { PagosPendientes } from '@/features/transactions/components/pagos-pendientes';
-import { Tendencia } from '@/features/transactions/components/tendencia';
+import { Distribution } from '@/features/transactions/components/cost-distribution';
+import { PendingPayments } from '@/features/transactions/components/pagos-pendientes';
+import { Trend } from '@/features/transactions/components/tendencia';
 import type {
   Category,
   Dashboard,
@@ -13,24 +13,24 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 
-interface PropsDeLaFila {
-  datos: Dashboard;
-  hayPendientes: boolean;
-  ruta: Category[];
-  onElegirPago: (pago: PendingPayment) => void;
-  onBajar: (id: number) => void;
-  onSubir: () => void;
+interface RowProps {
+  data: Dashboard;
+  hasPending: boolean;
+  path: Category[];
+  onSelectPayment: (payment: PendingPayment) => void;
+  onDrillDown: (id: number) => void;
+  onDrillUp: () => void;
 }
 
 /** La fila de la gráfica, los pagos pendientes y la distribución. */
 export function DashboardCharts({
-  datos,
-  hayPendientes,
-  ruta,
-  onElegirPago,
-  onBajar,
-  onSubir,
-}: PropsDeLaFila) {
+  data,
+  hasPending,
+  path,
+  onSelectPayment,
+  onDrillDown,
+  onDrillUp,
+}: RowProps) {
   /* La gráfica dice CUÁNDO se gastó y la dona EN QUÉ. Son la misma
       pregunta partida en dos, así que van a la misma altura: una
       debajo de la otra obliga a desplazarse para cruzarlas. */
@@ -110,46 +110,40 @@ export function DashboardCharts({
         'lg:grid-cols-2 xl:grid-cols-4',
       )}
     >
-      <Comportamiento hayPendientes={hayPendientes}>
-        <Tendencia
-          puntos={datos.trend}
-          granularidad={datos.period.granularity === 'day' ? 'dia' : 'mes'}
+      <Behavior hasPending={hasPending}>
+        <Trend
+          points={data.trend}
+          granularity={data.period.granularity === 'day' ? 'dia' : 'mes'}
         />
-      </Comportamiento>
+      </Behavior>
 
-      {hayPendientes && (
-        <PagosPendientes
+      {hasPending && (
+        <PendingPayments
           className="min-h-0"
-          pagos={datos.pending}
+          payments={data.pending}
           // Abre la ficha de «Confirmar pago»: el concepto, el valor
           // esperado y la fecha de vencimiento ya están dichos aquí, así
           // que lo que queda es adjuntar el soporte y confirmar.
-          onElegir={onElegirPago}
+          onSelect={onSelectPayment}
         />
       )}
 
       <div className="h-full min-h-0">
-        <Distribucion
-          filas={datos.byCategory}
-          nivel={NOMBRE_DEL_NIVEL[datos.breakdownLevel]}
-          padre={datos.breakdownParent}
-          totalGastado={datos.range.expense}
-          ruta={ruta}
-          onBajar={onBajar}
-          onSubir={onSubir}
+        <Distribution
+          rows={data.byCategory}
+          level={LEVEL_NAME[data.breakdownLevel]}
+          parent={data.breakdownParent}
+          totalSpent={data.range.expense}
+          path={path}
+          onDrillDown={onDrillDown}
+          onDrillUp={onDrillUp}
         />
       </div>
     </div>
   );
 }
 
-function Comportamiento({
-  hayPendientes,
-  children,
-}: {
-  hayPendientes: boolean;
-  children: ReactNode;
-}) {
+function Behavior({ hasPending, children }: { hasPending: boolean; children: ReactNode }) {
   return (
     <Card
       className={cn(
@@ -157,7 +151,7 @@ function Comportamiento({
         // Con pendientes: toda la fila hasta 1280, y media a partir
         // de ahí. Sin ellos son dos tarjetas, y la dona se queda con
         // una columna —la de un indicador— en vez de con media fila.
-        hayPendientes ? 'lg:col-span-2' : 'xl:col-span-3',
+        hasPending ? 'lg:col-span-2' : 'xl:col-span-3',
       )}
     >
       <CardContent className="flex h-full flex-col p-4 sm:p-6">
@@ -184,7 +178,7 @@ function Comportamiento({
 }
 
 /** The API names the level in English (v2); the screen says it in Spanish. */
-const NOMBRE_DEL_NIVEL: Record<DashboardBreakdownLevel, string> = {
+const LEVEL_NAME: Record<DashboardBreakdownLevel, string> = {
   cost_center: t('transactions.dashboard.levels.costCenter'),
   category: t('transactions.dashboard.levels.category'),
   concept: 'concepto',

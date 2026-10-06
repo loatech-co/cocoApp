@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type CategoryTree } from '@/shared/api/categories';
 import { keys } from '@/shared/api/query-keys';
 
-import { MovimientoModal } from './movimiento-modal';
+import { TransactionModal } from './movimiento-modal';
 
 /*
   Cuántas veces tiene que tocar la pantalla una persona para anotar un gasto.
@@ -31,7 +31,7 @@ const red = vi.fn();
  * a JSON string; the spy sees the route without `/api/v2` and the body as an
  * object, which is what these tests read.
  */
-const comoRuta = (url: string, init?: RequestInit) =>
+const asPath = (url: string, init?: RequestInit) =>
   red(url.replace(/^\/api\/v2/, ''), {
     method: init?.method ?? 'GET',
     ...(typeof init?.body === 'string' ? { body: JSON.parse(init.body) as unknown } : {}),
@@ -39,7 +39,7 @@ const comoRuta = (url: string, init?: RequestInit) =>
 vi.mock('@/shared/api/api-client', async () => {
   const real =
     await vi.importActual<typeof import('@/shared/api/api-client')>('@/shared/api/api-client');
-  return { ...real, apiRequest: (url: string, init?: RequestInit) => comoRuta(url, init) };
+  return { ...real, apiRequest: (url: string, init?: RequestInit) => asPath(url, init) };
 });
 
 vi.mock('@/features/transactions/api/leer-soporte', () => ({ leerSoporte: vi.fn() }));
@@ -53,14 +53,14 @@ vi.mock('@/features/transactions/api/leer-soporte', () => ({ leerSoporte: vi.fn(
   escribe —el campo libre se cambió por el buscador—: es la forma de poner una
   sugerencia encima del formulario sin pasar por un recibo.
 */
-const sugerencia = vi.fn<
+const suggestion = vi.fn<
   () => { categoryId: number; confidence: number; reason: 'historial' } | null
 >(() => null);
 vi.mock('@/features/transactions/hooks/use-sugerencia', () => ({
-  useSugerenciaDeCategoria: () => sugerencia(),
+  useSugerenciaDeCategoria: () => suggestion(),
 }));
 
-const ARBOL = [
+const TREE = [
   {
     id: 1,
     name: 'Costos fijos',
@@ -87,23 +87,23 @@ const ARBOL = [
 ] as unknown as CategoryTree[];
 
 /** El contador. Cada gesto de la persona pasa por aquí y por ningún otro sitio. */
-let interacciones = 0;
-function gesto(accion: () => void): void {
-  interacciones += 1;
-  accion();
+let interactions = 0;
+function gesture(action: () => void): void {
+  interactions += 1;
+  action();
 }
 
 beforeEach(() => {
-  interacciones = 0;
+  interactions = 0;
   red.mockReset();
-  sugerencia.mockReturnValue(null);
+  suggestion.mockReturnValue(null);
   // La red contesta por ruta: la ficha pide el árbol y los recientes nada más
   // abrirse, y una respuesta única le daría un `{ id }` donde espera listas.
-  red.mockImplementation((ruta: string, opciones?: { method?: string }) => {
-    if (opciones?.method === 'POST' && ruta === '/transactions')
+  red.mockImplementation((path: string, options?: { method?: string }) => {
+    if (options?.method === 'POST' && path === '/transactions')
       return Promise.resolve({ data: { id: 42 } });
-    if (ruta.startsWith('/categories')) return Promise.resolve({ data: ARBOL });
-    if (ruta.startsWith('/transactions')) return Promise.resolve({ data: [], meta: {} });
+    if (path.startsWith('/categories')) return Promise.resolve({ data: TREE });
+    if (path.startsWith('/transactions')) return Promise.resolve({ data: [], meta: {} });
     return Promise.resolve({ data: null, meta: {} });
   });
   globalThis.ResizeObserver = class {
@@ -115,65 +115,65 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-function abrirFichaNueva(): void {
-  const cliente = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  cliente.setQueryData([...keys.categories, 'todas'], ARBOL);
+function openNewSheet(): void {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  client.setQueryData([...keys.categories, 'todas'], TREE);
 
   render(
-    <QueryClientProvider client={cliente}>
+    <QueryClientProvider client={client}>
       <MemoryRouter>
-        <MovimientoModal abierta movimiento={null} onCerrar={() => {}} />
+        <TransactionModal isOpen transaction={null} onClose={() => {}} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
-const escribirElMonto = () =>
-  gesto(() =>
+const typeAmount = () =>
+  gesture(() =>
     fireEvent.change(document.getElementById('mov-valor')!, { target: { value: '120000' } }),
   );
 
-async function guardar(): Promise<void> {
+async function save(): Promise<void> {
   // El `async` sin `await` es a propósito: `act` asíncrono vacía además la
   // cola de microtareas, donde se resuelven las peticiones que dispara el
   // envío. Con la versión síncrona se miraría la red de antes.
   // eslint-disable-next-line @typescript-eslint/require-await -- ver arriba
   await act(async () => {
-    gesto(() => fireEvent.submit(document.getElementById('mov-valor')!.closest('form')!));
+    gesture(() => fireEvent.submit(document.getElementById('mov-valor')!.closest('form')!));
   });
 }
 
 /** Lo que se mandó a crear, para comprobar que fue CON clasificación. */
-const cuerpoCreado = () =>
-  red.mock.calls.find(([ruta, o]) => ruta === '/transactions' && o?.method === 'POST')?.[1]
+const createdBody = () =>
+  red.mock.calls.find(([path, o]) => path === '/transactions' && o?.method === 'POST')?.[1]
     ?.body as { categoryId: number | null; amount: unknown } | undefined;
 
-const seAprendio = () => red.mock.calls.some(([ruta]) => ruta === '/categorization/learn');
+const wasLearned = () => red.mock.calls.some(([path]) => path === '/categorization/learn');
 
 describe('Registrar un gasto con clasificación completa', () => {
   it('a mano, por el buscador: cinco gestos desde que se abre la ficha', async () => {
-    abrirFichaNueva();
+    openNewSheet();
 
     // La ficha abre en el formulario: no hay nada que pulsar antes de escribir.
     expect(screen.queryByText('Registrar manualmente')).toBeNull();
 
-    escribirElMonto(); // 1
+    typeAmount(); // 1
 
     // El buscador es un botón que abre la caja de búsqueda: abrirlo es un
     // gesto, escribir es otro, elegir el resultado es el tercero.
-    gesto(() => fireEvent.click(screen.getByRole('button', { name: /Concepto/ }))); // 2
-    gesto(() =>
+    gesture(() => fireEvent.click(screen.getByRole('button', { name: /Concepto/ }))); // 2
+    gesture(() =>
       fireEvent.change(screen.getByLabelText('Buscar concepto o categoría'), {
         target: { value: 'celsia' },
       }),
     ); // 3
-    gesto(() => fireEvent.click(screen.getByRole('option', { name: /^Celsia/ }))); // 4
+    gesture(() => fireEvent.click(screen.getByRole('option', { name: /^Celsia/ }))); // 4
 
-    await guardar(); // 5
+    await save(); // 5
 
-    expect(cuerpoCreado()).toMatchObject({ categoryId: 100 });
+    expect(createdBody()).toMatchObject({ categoryId: 100 });
     // Nadie sugirió nada: clasificar a mano no es confirmar una sugerencia.
-    expect(seAprendio()).toBe(false);
+    expect(wasLearned()).toBe(false);
 
     /*
       El número real, contándolo TODO desde que se abre la ficha: monto,
@@ -181,14 +181,14 @@ describe('Registrar un gasto con clasificación completa', () => {
       cinco que pide la meta (≤ 5); el sexto que había era la pantalla de
       «cómo empezar», y ya no está.
     */
-    expect(interacciones).toBe(5);
+    expect(interactions).toBe(5);
   });
 
   it('con una sugerencia que acierta: dos gestos desde que se abre la ficha', async () => {
-    sugerencia.mockReturnValue({ categoryId: 100, confidence: 0.9, reason: 'historial' });
-    abrirFichaNueva();
+    suggestion.mockReturnValue({ categoryId: 100, confidence: 0.9, reason: 'historial' });
+    openNewSheet();
 
-    escribirElMonto(); // 1
+    typeAmount(); // 1
 
     // La sugerencia ya está puesta y dice de dónde salió. Mirarla no es un
     // gesto: la regla de no guardar nunca una clasificación sin que la
@@ -198,9 +198,9 @@ describe('Registrar un gasto con clasificación completa', () => {
     );
     expect(screen.getByText(/Sugerido por tu historial/)).toBeDefined();
 
-    await guardar(); // 2
+    await save(); // 2
 
-    expect(cuerpoCreado()).toMatchObject({ categoryId: 100 });
+    expect(createdBody()).toMatchObject({ categoryId: 100 });
 
     /*
       Hubo sugerencia, pero no hay de qué aprender: la ficha a mano no tiene
@@ -208,13 +208,13 @@ describe('Registrar un gasto con clasificación completa', () => {
       sin texto no es una regla. `learn` solo se llama con descripción, y
       ese camino —el de un recibo leído— lo cubre la e2e de la API.
     */
-    expect(seAprendio()).toBe(false);
+    expect(wasLearned()).toBe(false);
 
     /*
       El número real, por debajo del ≤ 4 de la meta: monto y guardado, y
       nada más. Sin el «cómo empezar» delante, la sugerencia que acierta deja
       la ficha en dos gestos.
     */
-    expect(interacciones).toBe(2);
+    expect(interactions).toBe(2);
   });
 });

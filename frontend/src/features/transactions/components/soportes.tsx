@@ -7,11 +7,11 @@ import { t } from '@/shared/lib/i18n';
 import { OverlayButton } from '@/shared/ui/molecules/overlay-control';
 
 import { ConfirmSupportDeletion } from './confirm-support-deletion';
-import { Soltar } from './support-drop-zone';
+import { DropZone } from './support-drop-zone';
 import { SupportPager } from './support-pager';
-import { PreviaDeArchivo } from './support-preview';
-import { PanelDeSubida } from './support-upload-panel';
-import { Pase } from './support-viewer';
+import { FilePreview } from './support-preview';
+import { UploadPanel } from './support-upload-panel';
+import { Lightbox } from './support-viewer';
 
 /** Lo que la galería recuerda: cuál se ve, cuál se borra, cuál está en grande. */
 function useSupportGallery(transactionId: number) {
@@ -22,10 +22,10 @@ function useSupportGallery(transactionId: number) {
    * ni tiene sitio para el botón de pegar, que es de donde salen la mitad de
    * los soportes. Así que se añade en el cuadro grande, y de ahí se vuelve.
    */
-  const [añadiendo, setAñadiendo] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   /** El soporte que se va a borrar desde la columna, a la espera del sí. */
-  const [borrando, setBorrando] = useState<Receipt | null>(null);
-  const [enGrande, setEnGrande] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState<Receipt | null>(null);
+  const [enlargedIndex, setEnlargedIndex] = useState<number | null>(null);
   /**
    * Cuál se está viendo arriba.
    *
@@ -33,19 +33,19 @@ function useSupportGallery(transactionId: number) {
    * 104px: la columna de un movimiento guardado enseña el documento en grande,
    * igual que la de uno que se está creando.
    */
-  const [activo, setActivo] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   return {
-    archivos: useSupportFiles(transactionId),
-    subida: useSupportUpload(transactionId, () => setAñadiendo(false)),
-    añadiendo,
-    setAñadiendo,
-    borrando,
-    setBorrando,
-    enGrande,
-    setEnGrande,
-    activo,
-    setActivo,
+    files: useSupportFiles(transactionId),
+    upload: useSupportUpload(transactionId, () => setIsAdding(false)),
+    isAdding,
+    setIsAdding,
+    isDeleting,
+    setIsDeleting,
+    enlargedIndex,
+    setEnlargedIndex,
+    activeIndex,
+    setActiveIndex,
   };
 }
 
@@ -63,11 +63,11 @@ type Gallery = ReturnType<typeof useSupportGallery>;
  * Los archivos se piden con el token y llegan como `blob:`; el porqué está en
  * `useSupportFiles`.
  */
-export function Soportes({ transactionId }: { transactionId: number }) {
+export function Receipts({ transactionId }: { transactionId: number }) {
   const g = useSupportGallery(transactionId);
-  const { lista } = g.archivos;
+  const { lista } = g.files;
 
-  if (g.archivos.cargando) {
+  if (g.files.cargando) {
     /*
       ── El alto ya reservado ──────────────────────────────────────────────
       Mientras se piden, la columna ocupa lo mismo que lo que va a llegar:
@@ -100,18 +100,18 @@ export function Soportes({ transactionId }: { transactionId: number }) {
       */}
       {lista.length === 0 && (
         <div className="flex min-h-0 flex-1">
-          <Soltar
-            subiendo={g.subida.subiendo}
-            progreso={g.subida.progreso}
-            solo
-            onArchivos={(a) => void g.subida.aceptar(a)}
+          <DropZone
+            isUploading={g.upload.subiendo}
+            progress={g.upload.progreso}
+            isAlone
+            onFiles={(a) => void g.upload.aceptar(a)}
           />
         </div>
       )}
 
-      {g.subida.errorDeSubida && (
+      {g.upload.errorDeSubida && (
         <p role="alert" className="text-xs text-destructive">
-          {g.subida.errorDeSubida}
+          {g.upload.errorDeSubida}
         </p>
       )}
 
@@ -122,34 +122,34 @@ export function Soportes({ transactionId }: { transactionId: number }) {
 
 /** El soporte que se está viendo, con sus mandos encima. */
 function GalleryPreview({ g }: { g: Gallery }) {
-  const { lista, urls, fallos } = g.archivos;
+  const { lista, urls, fallos } = g.files;
   // El que se está viendo, recortado: borrar el último dejaba el índice
   // apuntando a un soporte que ya no existe.
-  const i = Math.min(g.activo, lista.length - 1);
+  const i = Math.min(g.activeIndex, lista.length - 1);
   const enseñado = i >= 0 ? lista[i] : undefined;
   if (!enseñado) return null;
 
   return (
-    <PreviaDeArchivo
+    <FilePreview
       // La clave es el SOPORTE y no su url: con la url, el marco se desmontaba
       // y se volvía a montar al llegar el archivo, que es justo el parpadeo que
       // esto viene a quitar.
       key={String(enseñado.id)}
       url={urls[String(enseñado.id)]}
-      fallo={fallos[String(enseñado.id)]}
-      onReintentar={g.archivos.reintentar}
-      esImagen={enseñado.mimeType.startsWith('image/')}
+      error={fallos[String(enseñado.id)]}
+      onRetry={g.files.reintentar}
+      isImage={enseñado.mimeType.startsWith('image/')}
       // Aquí SÍ hay pase a pantalla completa —el soporte ya existe en el
       // servidor, con su descarga y su zoom—, así que la previsualización es
       // también la puerta.
-      onAbrir={() => g.setEnGrande(i)}
-      acciones={
+      onOpen={() => g.setEnlargedIndex(i)}
+      actions={
         <>
-          <SupportPager index={i} total={lista.length} onGo={g.setActivo} />
+          <SupportPager index={i} total={lista.length} onGo={g.setActiveIndex} />
 
           <OverlayButton
             label={t('transactions.supports.addAnother')}
-            onClick={() => g.setAñadiendo(true)}
+            onClick={() => g.setIsAdding(true)}
           >
             <Plus className="size-4" aria-hidden="true" />
           </OverlayButton>
@@ -158,7 +158,7 @@ function GalleryPreview({ g }: { g: Gallery }) {
               deshacer. */}
           <OverlayButton
             label={t('transactions.supports.deleteThis')}
-            onClick={() => g.setBorrando(enseñado)}
+            onClick={() => g.setIsDeleting(enseñado)}
           >
             <Trash2 className="size-4" aria-hidden="true" />
           </OverlayButton>
@@ -170,40 +170,40 @@ function GalleryPreview({ g }: { g: Gallery }) {
 
 /** Lo que se abre encima de la galería: borrar, subir y el pase. */
 function GalleryOverlays({ g, transactionId }: { g: Gallery; transactionId: number }) {
-  const { lista, urls, fallos } = g.archivos;
+  const { lista, urls, fallos } = g.files;
 
   return (
     <>
       <ConfirmSupportDeletion
         transactionId={transactionId}
-        soporte={g.borrando}
-        onCancelar={() => g.setBorrando(null)}
-        onBorrado={() => {
-          g.setBorrando(null);
+        receipt={g.isDeleting}
+        onCancel={() => g.setIsDeleting(null)}
+        onDeleted={() => {
+          g.setIsDeleting(null);
           // Si se va el último de la fila, se enseña el anterior.
-          g.setActivo((n) => Math.max(0, Math.min(n, lista.length - 2)));
+          g.setActiveIndex((n) => Math.max(0, Math.min(n, lista.length - 2)));
         }}
       />
 
-      {g.añadiendo && (
-        <PanelDeSubida
-          subiendo={g.subida.subiendo}
-          progreso={g.subida.progreso}
-          onArchivos={(a) => void g.subida.aceptar(a)}
-          onCerrar={() => g.setAñadiendo(false)}
+      {g.isAdding && (
+        <UploadPanel
+          isUploading={g.upload.subiendo}
+          progress={g.upload.progreso}
+          onFiles={(a) => void g.upload.aceptar(a)}
+          onClose={() => g.setIsAdding(false)}
         />
       )}
 
-      {g.enGrande !== null && (
-        <Pase
+      {g.enlargedIndex !== null && (
+        <Lightbox
           transactionId={transactionId}
-          lista={lista}
+          list={lista}
           urls={urls}
-          fallos={fallos}
-          onReintentar={g.archivos.reintentar}
-          indice={Math.min(g.enGrande, lista.length - 1)}
-          onIr={g.setEnGrande}
-          onCerrar={() => g.setEnGrande(null)}
+          errors={fallos}
+          onRetry={g.files.reintentar}
+          index={Math.min(g.enlargedIndex, lista.length - 1)}
+          onGoTo={g.setEnlargedIndex}
+          onClose={() => g.setEnlargedIndex(null)}
         />
       )}
     </>

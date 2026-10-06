@@ -13,21 +13,21 @@ import { Button } from '@/shared/ui/atoms/button';
 import { Input } from '@/shared/ui/atoms/input';
 import { PageHeader } from '@/shared/ui/atoms/page-header';
 
-import { SelectorDeFecha } from './selector-de-fecha';
+import { DateSelector } from './selector-de-fecha';
 import { ClassificationMenu, NewMovementMenu, SortMenu } from './toolbar-menus';
 
-interface ToolbarFiltrosProps {
-  titulo: string;
+interface FiltersToolbarProps {
+  title: string;
   /** Lo que se está viendo, en una línea. Ej: "377 movimientos". */
-  subtitulo?: string;
+  subtitle?: string;
   /** Alias de `subtitulo`, por compatibilidad con las llamadas existentes. */
-  resumen?: string;
-  filtros: Filtros;
-  aplicar: (cambios: Partial<Filtros>) => void;
-  limpiar: () => void;
-  hayFiltrosActivos: boolean;
+  summary?: string;
+  filters: Filtros;
+  apply: (changes: Partial<Filtros>) => void;
+  clear: () => void;
+  hasActiveFilters: boolean;
   /** Solo donde ordenar significa algo: una lista. */
-  orden?: { valor: Orden; onCambiar: (valor: Orden) => void };
+  sort?: { value: Orden; onChange: (value: Orden) => void };
   /** Botones propios de la pantalla, a la derecha del todo. */
   /**
    * Registrar un movimiento nuevo, del tipo que se elija.
@@ -38,8 +38,8 @@ interface ToolbarFiltrosProps {
    * recorte, en cambio, se lee como lo que es: lo que se puede hacer con lo
    * que se está mirando.
    */
-  onNuevo?: (tipo: TransactionType) => void;
-  acciones?: ReactNode;
+  onNew?: (type: TransactionType) => void;
+  actions?: ReactNode;
 }
 
 /**
@@ -61,17 +61,17 @@ interface ToolbarFiltrosProps {
  * la lista, las cifras de arriba no explicarían las filas de abajo y habría
  * que desconfiar de ambas.
  */
-export function ToolbarFiltros(props: ToolbarFiltrosProps) {
-  const { titulo, subtitulo, resumen, filtros, aplicar, limpiar, hayFiltrosActivos } = props;
-  const { orden, onNuevo, acciones } = props;
-  const categorias = useCategories();
-  const esMovil = useIsMobile();
-  const busqueda = useToolbarSearch(filtros, aplicar);
+export function FiltersToolbar(props: FiltersToolbarProps) {
+  const { title, subtitle, summary, filters, apply, clear, hasActiveFilters } = props;
+  const { sort, onNew, actions } = props;
+  const categories = useCategories();
+  const isMobile = useIsMobile();
+  const search = useToolbarSearch(filters, apply);
 
   return (
     <PageHeader
-      title={titulo}
-      description={subtitulo ?? resumen}
+      title={title}
+      description={subtitle ?? summary}
       align="bottom"
       actions={
         /*
@@ -85,27 +85,27 @@ export function ToolbarFiltros(props: ToolbarFiltrosProps) {
       */
         <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap">
           {/* ── Búsqueda ─────────────────────────────────────────────────── */}
-          {esMovil ? (
-            <PhoneSearch busqueda={busqueda} filtrando={(filtros.q ?? '') !== ''} />
+          {isMobile ? (
+            <PhoneSearch search={search} isFiltering={(filters.q ?? '') !== ''} />
           ) : (
-            <DesktopSearch busqueda={busqueda} />
+            <DesktopSearch search={search} />
           )}
 
           {/* ── Orden ────────────────────────────────────────────────────── */}
-          {orden && <SortMenu orden={orden} />}
+          {sort && <SortMenu sort={sort} />}
 
           {/* ── Clasificación ────────────────────────────────────────────── */}
-          <ClassificationMenu arbol={categorias.data ?? []} filtros={filtros} aplicar={aplicar} />
+          <ClassificationMenu tree={categories.data ?? []} filters={filters} apply={apply} />
 
-          <SelectorDeFecha
-            rango
-            atajos
-            filtros={filtros}
-            aplicar={aplicar}
-            claseCaja="movil:min-w-0 movil:flex-1"
+          <DateSelector
+            isRange
+            hasShortcuts
+            filters={filters}
+            apply={apply}
+            boxClassName="movil:min-w-0 movil:flex-1"
           />
 
-          {hayFiltrosActivos && <ClearFiltersButton onClick={limpiar} />}
+          {hasActiveFilters && <ClearFiltersButton onClick={clear} />}
 
           {/*
           ── Y en el teléfono NO está ────────────────────────────────────────
@@ -114,9 +114,9 @@ export function ToolbarFiltros(props: ToolbarFiltrosProps) {
           cual sea la pantalla. Aquí arriba era el mismo botón repetido, y en
           una fila de cuatro controles era el que menos cabía.
         */}
-          {onNuevo && !esMovil && <NewMovementMenu onNuevo={onNuevo} />}
+          {onNew && !isMobile && <NewMovementMenu onNew={onNew} />}
 
-          {acciones}
+          {actions}
         </div>
       }
     />
@@ -124,32 +124,32 @@ export function ToolbarFiltros(props: ToolbarFiltrosProps) {
 }
 
 /** Lo escrito en la búsqueda, si el campo está abierto, y el campo mismo. */
-function useToolbarSearch(filtros: Filtros, aplicar: (cambios: Partial<Filtros>) => void) {
+function useToolbarSearch(filters: Filtros, apply: (changes: Partial<Filtros>) => void) {
   // La búsqueda se escribe local y se manda con retraso: sin esto cada tecla
   // dispararía una consulta y la lista parpadearía mientras se escribe.
-  const [texto, setTexto] = useState(filtros.q ?? '');
+  const [text, setText] = useState(filters.q ?? '');
 
   // El campo empieza plegado y se abre al pulsar la lupa. Se queda abierto
   // mientras haya algo escrito: plegarlo escondería el filtro que está
   // recortando la pantalla, y no habría forma de saber por qué faltan filas.
-  const [buscando, setBuscando] = useState((filtros.q ?? '') !== '');
-  const campo = useRef<HTMLInputElement>(null);
+  const [isSearching, setIsSearching] = useState((filters.q ?? '') !== '');
+  const field = useRef<HTMLInputElement>(null);
 
-  useOnChange([filtros.q], () => {
-    setTexto(filtros.q ?? '');
+  useOnChange([filters.q], () => {
+    setText(filters.q ?? '');
     // Si el filtro llega puesto desde la URL, el campo tiene que estar a la
     // vista: un recorte activo que no se ve no se puede quitar.
-    if ((filtros.q ?? '') !== '') setBuscando(true);
+    if ((filters.q ?? '') !== '') setIsSearching(true);
   });
 
   useEffect(() => {
     const id = setTimeout(() => {
-      if ((filtros.q ?? '') !== texto) aplicar({ q: texto });
+      if ((filters.q ?? '') !== text) apply({ q: text });
     }, 300);
     return () => clearTimeout(id);
-  }, [texto, filtros.q, aplicar]);
+  }, [text, filters.q, apply]);
 
-  return { texto, setTexto, buscando, setBuscando, campo };
+  return { text, setText, isSearching, setIsSearching, field };
 }
 
 type ToolbarSearch = ReturnType<typeof useToolbarSearch>;
@@ -160,8 +160,8 @@ type ToolbarSearch = ReturnType<typeof useToolbarSearch>;
   iconos empuja a los otros tres fuera de la pantalla, y el teclado del sistema
   sube justo encima de la lista que se está recortando.
 */
-function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtrando: boolean }) {
-  const { texto, setTexto, buscando, setBuscando, campo } = busqueda;
+function PhoneSearch({ search, isFiltering }: { search: ToolbarSearch; isFiltering: boolean }) {
+  const { text, setText, isSearching, setIsSearching, field } = search;
   return (
     <>
       <Button
@@ -169,15 +169,15 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
         variant="tool"
         size="sm-icon"
         aria-label={t('shell.bottomBar.search')}
-        aria-pressed={buscando || filtrando}
-        aria-expanded={buscando}
-        onClick={() => setBuscando(true)}
+        aria-pressed={isSearching || isFiltering}
+        aria-expanded={isSearching}
+        onClick={() => setIsSearching(true)}
       >
         <Search className="size-4" aria-hidden="true" />
       </Button>
 
       <BottomSheet
-        isOpen={buscando}
+        isOpen={isSearching}
         title={t('shell.bottomBar.search')}
         head={
           <div className="relative">
@@ -186,18 +186,18 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
               aria-hidden="true"
             />
             <Input
-              ref={campo}
+              ref={field}
               type="search"
               autoFocus
-              value={texto}
-              onChange={(e) => setTexto(e.target.value)}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
               placeholder={t('transactions.searchPanel.placeholder')}
               aria-label={t('transactions.toolbar.searchByKeyword')}
               className="pl-9"
             />
           </div>
         }
-        onClose={() => setBuscando(false)}
+        onClose={() => setIsSearching(false)}
       >
         {/* Qué hace esto, y no lo que hace la lupa de la barra de abajo.
           Las dos se ven igual y contestan preguntas distintas: aquella
@@ -211,10 +211,10 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
   );
 }
 
-function DesktopSearch({ busqueda }: { busqueda: ToolbarSearch }) {
-  const { texto, setTexto, buscando, setBuscando, campo } = busqueda;
+function DesktopSearch({ search }: { search: ToolbarSearch }) {
+  const { text, setText, isSearching, setIsSearching, field } = search;
 
-  if (!buscando) {
+  if (!isSearching) {
     return (
       <Button
         type="button"
@@ -223,9 +223,9 @@ function DesktopSearch({ busqueda }: { busqueda: ToolbarSearch }) {
         aria-label={t('shell.bottomBar.search')}
         title={t('shell.bottomBar.search')}
         onClick={() => {
-          setBuscando(true);
+          setIsSearching(true);
           // El foco no se hereda de un elemento que acaba de nacer.
-          setTimeout(() => campo.current?.focus(), 0);
+          setTimeout(() => field.current?.focus(), 0);
         }}
       >
         <Search className="size-4" aria-hidden="true" />
@@ -240,12 +240,12 @@ function DesktopSearch({ busqueda }: { busqueda: ToolbarSearch }) {
         aria-hidden="true"
       />
       <Input
-        ref={campo}
+        ref={field}
         type="search"
         autoFocus
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        onBlur={() => texto === '' && setBuscando(false)}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => text === '' && setIsSearching(false)}
         placeholder={t('transactions.searchPanel.placeholder')}
         aria-label={t('transactions.toolbar.searchByKeyword')}
         className="h-9 rounded-lg pl-9"

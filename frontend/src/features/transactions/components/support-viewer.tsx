@@ -6,7 +6,7 @@ import { type Receipt } from '@/shared/api/generated/model';
 import { PAGE_WIDTH, PdfPage } from '@/shared/ui/atoms/pdf-page';
 
 import { ConfirmSupportDeletion } from './confirm-support-deletion';
-import { SoporteQueNoSeVe } from './support-unavailable';
+import { UnavailableReceipt } from './support-unavailable';
 import {
   ViewerArrow,
   ViewerControls,
@@ -16,37 +16,37 @@ import {
 
 /** Escape cierra, las flechas pasan de soporte, `+` y `-` amplían. */
 function useViewerKeys(
-  indice: number,
+  index: number,
   total: number,
-  onIr: (i: number) => void,
-  onCerrar: () => void,
-  cambiarZoom: (paso: number) => void,
+  onGoTo: (i: number) => void,
+  onClose: () => void,
+  changeZoom: (step: number) => void,
 ): void {
   useEffect(() => {
-    const alPulsar = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onCerrar();
-      else if (e.key === 'ArrowLeft' && indice > 0) onIr(indice - 1);
-      else if (e.key === 'ArrowRight' && indice < total - 1) onIr(indice + 1);
-      else if (e.key === '+' || e.key === '=') cambiarZoom(1);
-      else if (e.key === '-') cambiarZoom(-1);
+    const onPress = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowLeft' && index > 0) onGoTo(index - 1);
+      else if (e.key === 'ArrowRight' && index < total - 1) onGoTo(index + 1);
+      else if (e.key === '+' || e.key === '=') changeZoom(1);
+      else if (e.key === '-') changeZoom(-1);
       else return;
       e.preventDefault();
     };
-    document.addEventListener('keydown', alPulsar);
-    return () => document.removeEventListener('keydown', alPulsar);
-  }, [indice, total, onIr, onCerrar, cambiarZoom]);
+    document.addEventListener('keydown', onPress);
+    return () => document.removeEventListener('keydown', onPress);
+  }, [index, total, onGoTo, onClose, changeZoom]);
 }
 
 interface ViewerProps {
   transactionId: number;
-  lista: Receipt[];
+  list: Receipt[];
   urls: Record<string, string>;
   /** Por qué no se ve cada uno, si es que no se ve. Ver `FalloDeSoporte`. */
-  fallos: Readonly<Record<string, FalloDeSoporte>>;
-  onReintentar: () => void;
-  indice: number;
-  onIr: (i: number) => void;
-  onCerrar: () => void;
+  errors: Readonly<Record<string, FalloDeSoporte>>;
+  onRetry: () => void;
+  index: number;
+  onGoTo: (i: number) => void;
+  onClose: () => void;
 }
 
 /**
@@ -62,46 +62,46 @@ interface ViewerProps {
  * este componente amplía, desplaza y descarga igual. Cuesta un render de
  * pdf.js y a cambio el visor se comporta siempre igual.
  */
-export function Pase(props: ViewerProps) {
-  const { lista, indice, onIr, onCerrar } = props;
-  const [confirmando, setConfirmando] = useState(false);
-  const soporte = lista[indice];
-  const vista = useViewerZoom(indice);
-  useViewerKeys(indice, lista.length, onIr, onCerrar, vista.cambiarZoom);
+export function Lightbox(props: ViewerProps) {
+  const { list, index, onGoTo, onClose } = props;
+  const [isConfirming, setIsConfirming] = useState(false);
+  const receipt = list[index];
+  const vista = useViewerZoom(index);
+  useViewerKeys(index, list.length, onGoTo, onClose, vista.changeZoom);
 
-  if (soporte === undefined) return null;
-  const url = props.urls[String(soporte.id)];
+  if (receipt === undefined) return null;
+  const url = props.urls[String(receipt.id)];
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={soporte.fileName}
-      onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}
+      aria-label={receipt.fileName}
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
       // Por encima del modal del movimiento, que está en z-50.
       className="fixed inset-0 z-[60] flex flex-col bg-sala/90 p-3 backdrop-blur-sm sm:p-6"
     >
       <ViewerHeader
-        soporte={soporte}
-        indice={indice}
-        total={lista.length}
+        receipt={receipt}
+        index={index}
+        total={list.length}
         url={url}
-        onBorrar={() => setConfirmando(true)}
-        onCerrar={onCerrar}
+        onDelete={() => setIsConfirming(true)}
+        onClose={onClose}
       />
 
       {/* ── El recibo ─────────────────────────────────────────────────── */}
       <ViewerStage
-        soporte={soporte}
+        receipt={receipt}
         url={url}
-        fallo={props.fallos[String(soporte.id)]}
-        onReintentar={props.onReintentar}
-        escala={vista.escala}
-        pagina={vista.pagina}
-        onPaginas={vista.setPaginas}
-        indice={indice}
-        total={lista.length}
-        onIr={onIr}
+        error={props.errors[String(receipt.id)]}
+        onRetry={props.onRetry}
+        scale={vista.scale}
+        page={vista.page}
+        onPages={vista.setPages}
+        index={index}
+        total={list.length}
+        onGoTo={onGoTo}
       />
 
       <ViewerControls vista={vista} />
@@ -110,8 +110,8 @@ export function Pase(props: ViewerProps) {
           manda el que va después, así que el diálogo queda encima. */}
       <DeleteFromViewer
         {...props}
-        soporte={confirmando ? soporte : null}
-        onTerminar={() => setConfirmando(false)}
+        receipt={isConfirming ? receipt : null}
+        onFinish={() => setIsConfirming(false)}
       />
     </div>
   );
@@ -130,28 +130,28 @@ export function Pase(props: ViewerProps) {
  * el arrastre.
  */
 interface ViewerStageProps {
-  soporte: Receipt;
+  receipt: Receipt;
   url: string | undefined;
-  fallo: FalloDeSoporte | undefined;
-  onReintentar: () => void;
-  escala: number;
-  pagina: number;
-  onPaginas: (n: number) => void;
-  indice: number;
+  error: FalloDeSoporte | undefined;
+  onRetry: () => void;
+  scale: number;
+  page: number;
+  onPages: (n: number) => void;
+  index: number;
   total: number;
-  onIr: (i: number) => void;
+  onGoTo: (i: number) => void;
 }
 
 function ViewerStage(props: ViewerStageProps) {
-  const { indice, total, onIr } = props;
+  const { index, total, onGoTo } = props;
 
   return (
     <div className="flex min-h-0 flex-1 gap-2">
       {total > 1 && (
         <ViewerArrow
-          hacia="anterior"
-          deshabilitado={indice === 0}
-          onClick={() => onIr(indice - 1)}
+          direction="anterior"
+          disabled={index === 0}
+          onClick={() => onGoTo(index - 1)}
         />
       )}
 
@@ -159,46 +159,38 @@ function ViewerStage(props: ViewerStageProps) {
 
       {total > 1 && (
         <ViewerArrow
-          hacia="siguiente"
-          deshabilitado={indice === total - 1}
-          onClick={() => onIr(indice + 1)}
+          direction="siguiente"
+          disabled={index === total - 1}
+          onClick={() => onGoTo(index + 1)}
         />
       )}
     </div>
   );
 }
 
-function ViewerSheet({
-  soporte,
-  url,
-  fallo,
-  onReintentar,
-  escala,
-  pagina,
-  onPaginas,
-}: ViewerStageProps) {
+function ViewerSheet({ receipt, url, error, onRetry, scale, page, onPages }: ViewerStageProps) {
   return (
     <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-lg bg-sala/25 p-3 sm:p-6">
-      {fallo ? (
+      {error ? (
         <div className="flex w-full items-center justify-center">
-          <SoporteQueNoSeVe fallo={fallo} onReintentar={onReintentar} oscuro />
+          <UnavailableReceipt error={error} onRetry={onRetry} isDark />
         </div>
       ) : !url ? (
         <div className="flex w-full items-center justify-center">
           <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
         </div>
-      ) : soporte.mimeType.startsWith('image/') ? (
+      ) : receipt.mimeType.startsWith('image/') ? (
         <img
           src={url}
-          alt={soporte.fileName}
+          alt={receipt.fileName}
           // El MISMO ancho que una página de PDF: si una imagen midiera otra
           // cosa, el botón de ampliar haría dos cosas distintas según qué
           // soporte estuviera abierto.
           className="h-fit max-w-none rounded-lg bg-white shadow-2xl"
-          style={{ width: PAGE_WIDTH * escala }}
+          style={{ width: PAGE_WIDTH * scale }}
         />
       ) : (
-        <PdfPage url={url} page={pagina} scale={escala} onPageCount={onPaginas} />
+        <PdfPage url={url} page={page} scale={scale} onPageCount={onPages} />
       )}
     </div>
   );
@@ -207,23 +199,23 @@ function ViewerSheet({
 /** Borrar el soporte que se está viendo, y qué enseñar después. */
 function DeleteFromViewer({
   transactionId,
-  lista,
-  indice,
-  onIr,
-  onCerrar,
-  soporte,
-  onTerminar,
-}: ViewerProps & { soporte: Receipt | null; onTerminar: () => void }) {
+  list,
+  index,
+  onGoTo,
+  onClose,
+  receipt,
+  onFinish,
+}: ViewerProps & { receipt: Receipt | null; onFinish: () => void }) {
   return (
     <ConfirmSupportDeletion
       transactionId={transactionId}
-      soporte={soporte}
-      onCancelar={onTerminar}
-      onBorrado={() => {
-        onTerminar();
+      receipt={receipt}
+      onCancel={onFinish}
+      onDeleted={() => {
+        onFinish();
         // Era el único: no queda nada que enseñar.
-        if (lista.length === 1) onCerrar();
-        else if (indice === lista.length - 1) onIr(indice - 1);
+        if (list.length === 1) onClose();
+        else if (index === list.length - 1) onGoTo(index - 1);
       }}
     />
   );

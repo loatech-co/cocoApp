@@ -24,28 +24,28 @@ import { Calendar } from '@/shared/ui/molecules/calendar';
  * un recorte que nadie pidió —el día suelto del primer clic— y el segundo
  * llegaría tarde. El borrador vive aquí dentro hasta que se confirma.
  */
-export function PanelDeRango({
-  filtros,
-  aplicar,
-  atajos,
-  cerrar,
+export function RangePanel({
+  filters,
+  apply,
+  hasShortcuts,
+  close,
 }: {
-  filtros: Filtros;
-  aplicar: (cambios: Partial<Filtros>) => void;
-  atajos: boolean;
-  cerrar: () => void;
+  filters: Filtros;
+  apply: (changes: Partial<Filtros>) => void;
+  hasShortcuts: boolean;
+  close: () => void;
 }) {
-  const draft = useRangeDraft(filtros);
+  const draft = useRangeDraft(filters);
   const { borrador, ancla, setSobrevolado, vista, setVista, pintado, pinta } = draft;
   const { elegirPreset, elegirDia } = draft;
 
-  function confirmar(): void {
+  function confirm(): void {
     if (borrador.preset === 'personalizado') {
-      aplicar({ preset: 'personalizado', from: borrador.from, to: borrador.to });
+      apply({ preset: 'personalizado', from: borrador.from, to: borrador.to });
     } else {
-      aplicar({ preset: borrador.preset });
+      apply({ preset: borrador.preset });
     }
-    cerrar();
+    close();
   }
 
   return (
@@ -55,7 +55,7 @@ export function PanelDeRango({
             En pantalla ancha son una columna; en un teléfono se vuelven fichas
             que fluyen, porque una columna lateral dejaría el calendario en la
             mitad del ancho y sin sitio para los días. */}
-        {atajos && <RangePresets borrador={borrador} onElegir={elegirPreset} />}
+        {hasShortcuts && <RangePresets draft={borrador} onSelect={elegirPreset} />}
 
         <Calendar
           className="flex-1 p-3"
@@ -69,46 +69,46 @@ export function PanelDeRango({
       </div>
 
       <RangeFooter
-        borrador={borrador}
-        ancla={ancla}
-        primero={draft.primero}
-        onCancelar={cerrar}
-        onAplicar={confirmar}
+        draft={borrador}
+        anchor={ancla}
+        first={draft.primero}
+        onCancel={close}
+        onApply={confirm}
       />
     </div>
   );
 }
 
 function RangeFooter({
-  borrador,
-  ancla,
-  primero,
-  onCancelar,
-  onAplicar,
+  draft,
+  anchor,
+  first,
+  onCancel,
+  onApply,
 }: {
-  borrador: Borrador;
-  ancla: string | null;
+  draft: Borrador;
+  anchor: string | null;
   /** El primer día con movimientos, para decir desde cuándo es «todo». */
-  primero: string | undefined;
-  onCancelar: () => void;
-  onAplicar: () => void;
+  first: string | undefined;
+  onCancel: () => void;
+  onApply: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3">
       <span className="text-xs text-muted-foreground">
-        {ancla !== null
+        {anchor !== null
           ? t('transactions.range.chooseEnd')
-          : borrador.preset === 'todo'
-            ? primero
-              ? t('transactions.range.fromDay', { day: longDay(primero) })
+          : draft.preset === 'todo'
+            ? first
+              ? t('transactions.range.fromDay', { day: longDay(first) })
               : t('transactions.range.allTime')
-            : longRange(borrador.from, borrador.to)}
+            : longRange(draft.from, draft.to)}
       </span>
       <div className="flex items-center gap-2">
-        <Button type="button" variant="ghost" size="sm" onClick={onCancelar}>
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
           {t('common.cancel')}
         </Button>
-        <Button type="button" size="sm" onClick={onAplicar} disabled={ancla !== null}>
+        <Button type="button" size="sm" onClick={onApply} disabled={anchor !== null}>
           {t('transactions.range.apply')}
         </Button>
       </div>
@@ -117,11 +117,11 @@ function RangeFooter({
 }
 
 function RangePresets({
-  borrador,
-  onElegir,
+  draft,
+  onSelect,
 }: {
-  borrador: Borrador;
-  onElegir: (preset: Preset) => void;
+  draft: Borrador;
+  onSelect: (preset: Preset) => void;
 }) {
   return (
     <ul
@@ -133,8 +133,8 @@ function RangePresets({
       {PRESETS.filter((p) => p.valor !== 'personalizado').map((p) => (
         <li key={p.valor} className="sm:w-full">
           <ToggleOption
-            isOn={borrador.preset === p.valor}
-            onClick={() => onElegir(p.valor)}
+            isOn={draft.preset === p.valor}
+            onClick={() => onSelect(p.valor)}
             title={p.ayuda}
           >
             {p.etiqueta}

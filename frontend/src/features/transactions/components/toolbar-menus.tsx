@@ -7,7 +7,7 @@ import { t } from '@/shared/lib/i18n';
 import { Menu, MenuOption, MenuTitle } from '@/shared/ui/molecules/menu';
 import { MenuRichOption } from '@/shared/ui/molecules/menu-rich-option';
 
-import { FiltroClasificacion } from './filtro-clasificacion';
+import { ClassificationFilter } from './filtro-clasificacion';
 
 /**
  * Los desplegables de la barra de filtros: ordenar, filtrar por clasificación
@@ -15,29 +15,25 @@ import { FiltroClasificacion } from './filtro-clasificacion';
  * `toolbar-filtros.tsx`.
  */
 
-export function SortMenu({
-  orden,
-}: {
-  orden: { valor: Orden; onCambiar: (valor: Orden) => void };
-}) {
+export function SortMenu({ sort }: { sort: { value: Orden; onChange: (value: Orden) => void } }) {
   return (
     <Menu
       label={t('transactions.toolbar.sort')}
       Icon={ArrowDownUp}
       isIconOnly
-      isActive={orden.valor !== '-date'}
+      isActive={sort.value !== '-date'}
       width="sm"
     >
-      {(cerrar) => (
+      {(close) => (
         <>
           <MenuTitle>{t('transactions.toolbar.sortBy')}</MenuTitle>
           {ORDENES.map((o) => (
             <MenuOption
               key={o.valor}
-              isSelected={orden.valor === o.valor}
+              isSelected={sort.value === o.valor}
               onClick={() => {
-                orden.onCambiar(o.valor);
-                cerrar();
+                sort.onChange(o.valor);
+                close();
               }}
             >
               {o.etiqueta}
@@ -50,20 +46,20 @@ export function SortMenu({
 }
 
 export function ClassificationMenu({
-  arbol,
-  filtros,
-  aplicar,
+  tree,
+  filters,
+  apply,
 }: {
-  arbol: Category[];
-  filtros: Filtros;
-  aplicar: (cambios: Partial<Filtros>) => void;
+  tree: Category[];
+  filters: Filtros;
+  apply: (changes: Partial<Filtros>) => void;
 }) {
   return (
     <Menu
       label={t('transactions.toolbar.filterByClassification')}
       Icon={Filter}
       isIconOnly
-      isActive={filtros.categoryIds.length > 0}
+      isActive={filters.categoryIds.length > 0}
       width="lg"
       kind="panel"
       // Este panel trae cabecera, lista y pie separados por líneas que
@@ -71,10 +67,10 @@ export function ClassificationMenu({
       // cortadas 4px antes de cada borde.
       isUnpadded
     >
-      <FiltroClasificacion
-        arbol={arbol}
-        marcados={filtros.categoryIds}
-        onCambiar={(ids) => aplicar({ categoryIds: ids })}
+      <ClassificationFilter
+        tree={tree}
+        checked={filters.categoryIds}
+        onChange={(ids) => apply({ categoryIds: ids })}
       />
     </Menu>
   );
@@ -84,7 +80,7 @@ export function ClassificationMenu({
    los pone `size="sm"` dentro del botón, que es donde viven. Escritos aquí,
    este botón medía distinto que el selector de fechas que tiene al lado y la
    fila se veía descuadrada. */
-export function NewMovementMenu({ onNuevo }: { onNuevo: (tipo: TransactionType) => void }) {
+export function NewMovementMenu({ onNew }: { onNew: (type: TransactionType) => void }) {
   return (
     <Menu
       label={t('transactions.newMovement')}
@@ -93,7 +89,7 @@ export function NewMovementMenu({ onNuevo }: { onNuevo: (tipo: TransactionType) 
       variant="default"
       Icon={Plus}
     >
-      {(cerrar) => (
+      {(close) => (
         <div className="flex flex-col">
           <MenuRichOption
             Icon={TrendingDown}
@@ -101,8 +97,8 @@ export function NewMovementMenu({ onNuevo }: { onNuevo: (tipo: TransactionType) 
             title={t('transactions.types.expense')}
             description={t('transactions.toolbar.expenseHelp')}
             onClick={() => {
-              cerrar();
-              onNuevo('expense');
+              close();
+              onNew('expense');
             }}
           />
           {/* Apagada, no escondida: los ingresos existen en el modelo

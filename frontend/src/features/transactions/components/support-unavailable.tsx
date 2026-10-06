@@ -29,38 +29,32 @@ import { Button } from '@/shared/ui/atoms/button';
  * `oscuro` es para el pase a pantalla completa, cuyo fondo ya lo es: el gris
  * de la app desaparecería encima.
  */
-export function SoporteQueNoSeVe({
-  fallo,
-  onReintentar,
-  oscuro = false,
+export function UnavailableReceipt({
+  error,
+  onRetry,
+  isDark = false,
 }: {
-  fallo: FalloDeSoporte;
-  onReintentar?: (() => void) | undefined;
-  oscuro?: boolean;
+  error: FalloDeSoporte;
+  onRetry?: (() => void) | undefined;
+  isDark?: boolean;
 }) {
   return (
     <span
       className={cn(
         'grid size-full place-items-center px-6 text-center',
-        oscuro ? 'text-sala-tinta/70' : 'text-muted-foreground',
+        isDark ? 'text-sala-tinta/70' : 'text-muted-foreground',
       )}
       role="status"
     >
       <span className="flex max-w-xs flex-col items-center gap-2 text-sm">
         <FileWarning className="size-6 shrink-0" aria-hidden="true" />
-        {fallo === 'ausente' ? (
+        {error === 'ausente' ? (
           <span>{t('transactions.supports.missingFile')}</span>
         ) : (
           <>
             <span>{t('transactions.supports.loadFailed')}</span>
-            {onReintentar && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-1"
-                onClick={onReintentar}
-              >
+            {onRetry && (
+              <Button type="button" variant="outline" size="sm" className="mt-1" onClick={onRetry}>
                 {t('transactions.supports.retry')}
               </Button>
             )}

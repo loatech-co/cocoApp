@@ -11,8 +11,8 @@ import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 
 import { MovementFields } from './movement-fields';
 import { MovementReadColumn } from './movement-read-view';
-import { SoportesPendientes } from './pending-supports';
-import { Soportes } from './soportes';
+import { PendingReceipts } from './pending-supports';
+import { Receipts } from './soportes';
 
 /**
  * LA rejilla de una ficha de movimiento: el papel y lo que dice.
@@ -33,16 +33,16 @@ import { Soportes } from './soportes';
  * Por debajo de `lg` no hay reparto: son dos filas apiladas, porque en un
  * teléfono dos columnas de 170px no son dos columnas.
  */
-const REJILLA_DE_LA_FICHA = 'grid gap-5 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:grid-cols-2';
+const SHEET_GRID = 'grid gap-5 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:grid-cols-2';
 
 type FieldsProps = ComponentProps<typeof MovementFields>;
 
 type SheetFormProps = FieldsProps & {
-  movimiento: Transaction | null | undefined;
-  escanear: (archivo: File) => Promise<void>;
-  onSubmit: (evento: SubmitEvent<HTMLFormElement>) => Promise<void>;
-  guardando: boolean;
-  onCancelar: () => void;
+  transaction: Transaction | null | undefined;
+  scan: (file: File) => Promise<void>;
+  onSubmit: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  isSaving: boolean;
+  onCancel: () => void;
 };
 
 /**
@@ -50,14 +50,14 @@ type SheetFormProps = FieldsProps & {
  * —para leer o para editar— y el pie.
  */
 export function MovementSheetForm({
-  movimiento,
-  escanear,
+  transaction,
+  scan,
   onSubmit,
-  guardando,
-  onCancelar,
-  ...campos
+  isSaving,
+  onCancel,
+  ...fields
 }: SheetFormProps) {
-  const { ficha } = campos;
+  const { sheet } = fields;
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
@@ -73,39 +73,39 @@ export function MovementSheetForm({
         Lo único que cambia de lado a lado es la columna derecha: los campos o
         lo que dicen.
       */}
-      <div className={REJILLA_DE_LA_FICHA}>
+      <div className={SHEET_GRID}>
         <div className="flex flex-col">
-          {movimiento ? (
-            <Soportes transactionId={movimiento.id} />
+          {transaction ? (
+            <Receipts transactionId={transaction.id} />
           ) : (
-            <PendingSupportsColumn ficha={ficha} escanear={escanear} />
+            <PendingSupportsColumn sheet={sheet} scan={scan} />
           )}
         </div>
 
-        {ficha.editable ? (
-          <MovementFields {...campos} />
+        {sheet.editable ? (
+          <MovementFields {...fields} />
         ) : (
-          <ReadColumn ficha={ficha} movimiento={movimiento} arbol={campos.arbol} />
+          <ReadColumn sheet={sheet} transaction={transaction} tree={fields.tree} />
         )}
       </div>
 
-      {ficha.error && (
+      {sheet.error && (
         <p role="alert" className="text-sm text-destructive">
-          {ficha.error}
+          {sheet.error}
         </p>
       )}
 
       {/* Leyendo no hay pie: no hay nada que cancelar ni que guardar, y para
           salir ya está la equis de la esquina. Un botón "Cerrar" debajo de
           todo es una segunda puerta a la misma salida. */}
-      {ficha.editable && (
+      {sheet.editable && (
         <ModalFooter>
-          <Button type="button" variant="outline" onClick={onCancelar}>
+          <Button type="button" variant="outline" onClick={onCancel}>
             {t('common.cancel')}
           </Button>
-          <Button type="submit" disabled={guardando}>
-            {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            {movimiento ? t('common.save') : t('transactions.sheet.register')}
+          <Button type="submit" disabled={isSaving}>
+            {isSaving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            {transaction ? t('common.save') : t('transactions.sheet.register')}
           </Button>
         </ModalFooter>
       )}
@@ -127,58 +127,58 @@ export function MovementSheetForm({
  * as a notice to verify, not as a saved fact.
  */
 function PendingSupportsColumn({
-  ficha,
-  escanear,
+  sheet,
+  scan,
 }: {
-  ficha: MovementSheetState;
-  escanear: (archivo: File) => Promise<void>;
+  sheet: MovementSheetState;
+  scan: (file: File) => Promise<void>;
 }) {
   return (
-    <SoportesPendientes
-      archivos={ficha.pendientes}
-      onAñadir={(nuevos) => {
-        const [primero, ...resto] = nuevos;
+    <PendingReceipts
+      files={sheet.pendientes}
+      onAdd={(added) => {
+        const [first, ...rest] = added;
 
-        if (ficha.pendientes.length === 0 && primero) {
-          void escanear(primero).then(() => {
-            if (resto.length > 0) ficha.setPendientes((p) => [...p, ...resto]);
+        if (sheet.pendientes.length === 0 && first) {
+          void scan(first).then(() => {
+            if (rest.length > 0) sheet.setPendientes((p) => [...p, ...rest]);
           });
           return;
         }
 
-        ficha.setPendientes((p) => [...p, ...nuevos]);
+        sheet.setPendientes((p) => [...p, ...added]);
       }}
-      onQuitar={(i) => ficha.setPendientes((p) => p.filter((_, n) => n !== i))}
-      onTakePhoto={() => ficha.setPaso('camara')}
+      onRemove={(i) => sheet.setPendientes((p) => p.filter((_, n) => n !== i))}
+      onTakePhoto={() => sheet.setPaso('camara')}
     />
   );
 }
 
 /** La columna de los datos, solo para mirar. */
 function ReadColumn({
-  ficha,
-  movimiento,
-  arbol,
+  sheet,
+  transaction,
+  tree,
 }: {
-  ficha: MovementSheetState;
-  movimiento: Transaction | null | undefined;
-  arbol: FieldsProps['arbol'];
+  sheet: MovementSheetState;
+  transaction: Transaction | null | undefined;
+  tree: FieldsProps['tree'];
 }) {
-  const { centro, categoria, concepto } = rutaSeleccionada(arbol, ficha.categoryId);
+  const { centro, categoria, concepto } = rutaSeleccionada(tree, sheet.categoryId);
 
   return (
     <MovementReadColumn
-      tipo={ficha.type}
+      type={sheet.type}
       // El nombre sale del concepto, igual que en la tabla. Leía `description`,
       // que en un movimiento registrado a mano está vacío desde que la ficha
       // cambió su campo libre por un selector.
-      nombre={movimiento ? nombreDelMovimiento(movimiento, arbol) : ''}
-      valor={ficha.amount}
-      currency={movimiento?.currency ?? DEFAULT_CURRENCY}
-      fecha={ficha.date}
-      periodo={movimiento?.period}
-      ruta={[centro?.name, categoria?.name, concepto?.name].filter(Boolean) as string[]}
-      notes={ficha.notes}
+      name={transaction ? nombreDelMovimiento(transaction, tree) : ''}
+      value={sheet.amount}
+      currency={transaction?.currency ?? DEFAULT_CURRENCY}
+      date={sheet.date}
+      period={transaction?.period}
+      path={[centro?.name, categoria?.name, concepto?.name].filter(Boolean) as string[]}
+      notes={sheet.notes}
     />
   );
 }

@@ -1,4 +1,4 @@
-import { TendenciaEsqueleto } from '@/features/transactions/components/tendencia';
+import { TrendSkeleton } from '@/features/transactions/components/tendencia';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
@@ -18,7 +18,7 @@ export function DashboardSkeleton() {
           <CardContent className="flex h-full flex-col p-4 sm:p-6">
             <Skeleton className="mb-4 h-6 w-40" />
             <div className="min-h-0 flex-1">
-              <TendenciaEsqueleto />
+              <TrendSkeleton />
             </div>
           </CardContent>
         </Card>

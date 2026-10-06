@@ -14,7 +14,7 @@ import { cn } from '@/shared/lib/utils';
 import { EmptyState } from '@/shared/ui/atoms/empty-state';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
-import { Punto, TrendAxis, TrendCard, TrendLines, TrendSummary } from './trend-parts';
+import { Point, TrendAxis, TrendCard, TrendLines, TrendSummary } from './trend-parts';
 
 /**
  * El comportamiento del gasto, en una línea.
@@ -27,23 +27,23 @@ import { Punto, TrendAxis, TrendCard, TrendLines, TrendSummary } from './trend-p
  * Una librería de gráficas pesa más que el resto de la app junta, y trae su
  * propia paleta y su propia tipografía contra las que hay que pelear.
  */
-export function Tendencia({
-  puntos,
-  granularidad,
+export function Trend({
+  points,
+  granularity,
 }: {
-  puntos: TrendPoint[];
-  granularidad: 'dia' | 'mes';
+  points: TrendPoint[];
+  granularity: 'dia' | 'mes';
 }) {
   // Los cubos vacíos vienen a propósito de la API —un mes en blanco tiene que
   // verse plano dentro de una serie—, pero si TODOS están en cero no hay serie
   // que dibujar: una línea pegada al suelo afirma "gastaste cero", que no es lo
   // mismo que "no hay nada que mostrar".
-  const vacia = puntos.every((p) => Number(p.expense) === 0 && Number(p.income) === 0);
+  const isEmpty = points.every((p) => Number(p.expense) === 0 && Number(p.income) === 0);
 
-  const primero = puntos[0];
-  const ultimo = puntos[puntos.length - 1];
+  const first = points[0];
+  const last = points[points.length - 1];
 
-  if (primero === undefined || ultimo === undefined || vacia) {
+  if (first === undefined || last === undefined || isEmpty) {
     return (
       <EmptyState
         className="h-full"
@@ -54,82 +54,77 @@ export function Tendencia({
     );
   }
 
-  return <Grafica puntos={puntos} granularidad={granularidad} extremos={{ primero, ultimo }} />;
+  return <Chart points={points} granularity={granularity} extremes={{ first, last }} />;
 }
 
 /** Las cifras que salen de la serie: el techo del lienzo, el promedio y el pico. */
-function resumen(puntos: TrendPoint[]) {
-  const gastos = puntos.map((p) => Number(p.expense));
-  const ingresos = puntos.map((p) => Number(p.income));
-  const hayIngresos = ingresos.some((v) => v > 0);
-  const techo = Math.max(...gastos, ...(hayIngresos ? ingresos : [0]), 1);
+function summary(points: TrendPoint[]) {
+  const expenses = points.map((p) => Number(p.expense));
+  const income = points.map((p) => Number(p.income));
+  const hasIncome = income.some((v) => v > 0);
+  const ceiling = Math.max(...expenses, ...(hasIncome ? income : [0]), 1);
 
-  const total = gastos.reduce((s, v) => s + v, 0);
-  const promedio = total / puntos.length;
-  const maximo = Math.max(...gastos);
-  return { gastos, ingresos, hayIngresos, techo, promedio, maximo };
+  const total = expenses.reduce((s, v) => s + v, 0);
+  const average = total / points.length;
+  const max = Math.max(...expenses);
+  return { expenses, income, hasIncome, ceiling, average, max };
 }
 
-function Grafica({
-  puntos,
-  granularidad,
-  extremos: { primero, ultimo },
+function Chart({
+  points,
+  granularity,
+  extremes: { first, last },
 }: {
-  puntos: TrendPoint[];
-  granularidad: 'dia' | 'mes';
-  extremos: { primero: TrendPoint; ultimo: TrendPoint };
+  points: TrendPoint[];
+  granularity: 'dia' | 'mes';
+  extremes: { first: TrendPoint; last: TrendPoint };
 }) {
-  const s = resumen(puntos);
+  const s = summary(points);
   // `maximo` sale de `gastos`, así que siempre se encuentra: el respaldo no se usa.
-  const pico = puntos[s.gastos.indexOf(s.maximo)] ?? primero;
-  const periodo = unidad(granularidad);
+  const pico = points[s.expenses.indexOf(s.max)] ?? first;
+  const period = unidad(granularity);
 
   return (
     // `h-full` y el lienzo en `flex-1`: la tarjeta la estira su vecina de al
     // lado, y una gráfica de alto fijo dejaba media tarjeta en blanco debajo.
     <div className="flex h-full flex-col gap-4">
-      <TrendSummary
-        granularidad={granularidad}
-        promedio={s.promedio}
-        maximo={s.maximo}
-        pico={pico}
-      />
+      <TrendSummary granularity={granularity} average={s.average} max={s.max} pico={pico} />
 
-      <Lienzo puntos={puntos} granularidad={granularidad} resumen={s}>
+      <Canvas points={points} granularity={granularity} summary={s}>
         <TrendLines
-          gastos={s.gastos}
-          ingresos={s.ingresos}
-          hayIngresos={s.hayIngresos}
-          techo={s.techo}
+          expenses={s.expenses}
+          income={s.income}
+          hasIncome={s.hasIncome}
+          ceiling={s.ceiling}
           ariaLabel={t('transactions.trend.chartLabel', {
-            unit: periodo,
-            from: etiquetaDeCubo(primero.bucket),
-            to: etiquetaDeCubo(ultimo.bucket),
-            average: formatCOP(s.promedio),
-            peak: formatCOP(s.maximo),
+            unit: period,
+            from: etiquetaDeCubo(first.bucket),
+            to: etiquetaDeCubo(last.bucket),
+            average: formatCOP(s.average),
+            peak: formatCOP(s.max),
           })}
         />
-      </Lienzo>
+      </Canvas>
 
-      <TrendAxis etiquetas={etiquetasDelEje(puntos, granularidad)} total={puntos.length} />
+      <TrendAxis labels={etiquetasDelEje(points, granularity)} total={points.length} />
     </div>
   );
 }
 
-function Lienzo({
-  puntos,
-  granularidad,
-  resumen: { techo, hayIngresos },
+function Canvas({
+  points,
+  granularity,
+  summary: { ceiling, hasIncome },
   children,
 }: {
-  puntos: TrendPoint[];
-  granularidad: 'dia' | 'mes';
-  resumen: ReturnType<typeof resumen>;
+  points: TrendPoint[];
+  granularity: 'dia' | 'mes';
+  summary: ReturnType<typeof summary>;
   children: React.ReactNode;
 }) {
   const { lienzo, tarjeta, activo, setActivo, caja, tamTarjeta, apuntar, conTeclado } =
-    useTrendPointer(puntos.length);
-  const punto = activo === null ? null : puntos[activo];
+    useTrendPointer(points.length);
+  const point = activo === null ? null : points[activo];
 
   return (
     /*
@@ -154,7 +149,7 @@ function Lienzo({
       )}
       tabIndex={0}
       role="application"
-      aria-label={t('transactions.trend.pointerLabel', { unit: unidad(granularidad) })}
+      aria-label={t('transactions.trend.pointerLabel', { unit: unidad(granularity) })}
       onPointerDown={(e) => apuntar(e.clientX)}
       onPointerMove={(e) => apuntar(e.clientX)}
       onPointerLeave={() => setActivo(null)}
@@ -163,16 +158,16 @@ function Lienzo({
     >
       {children}
 
-      {punto && activo !== null && (
-        <Senalado
-          punto={punto}
-          indice={activo}
-          total={puntos.length}
-          techo={techo}
-          hayIngresos={hayIngresos}
-          tarjeta={tarjeta}
-          caja={caja}
-          tamTarjeta={tamTarjeta}
+      {point && activo !== null && (
+        <Highlighted
+          point={point}
+          index={activo}
+          total={points.length}
+          ceiling={ceiling}
+          hasIncome={hasIncome}
+          card={tarjeta}
+          box={caja}
+          cardSize={tamTarjeta}
         />
       )}
     </div>
@@ -180,28 +175,35 @@ function Lienzo({
 }
 
 /** La guía vertical, los puntos y la tarjeta del punto señalado. */
-function Senalado({
-  punto,
-  indice,
+function Highlighted({
+  point,
+  index,
   total,
-  techo,
-  hayIngresos,
-  tarjeta,
-  caja,
-  tamTarjeta,
+  ceiling,
+  hasIncome,
+  card,
+  box,
+  cardSize,
 }: {
-  punto: TrendPoint;
-  indice: number;
+  point: TrendPoint;
+  index: number;
   total: number;
-  techo: number;
-  hayIngresos: boolean;
-  tarjeta: React.RefObject<HTMLDivElement | null>;
-  caja: { ancho: number; alto: number };
-  tamTarjeta: { ancho: number; alto: number };
+  ceiling: number;
+  hasIncome: boolean;
+  card: React.RefObject<HTMLDivElement | null>;
+  box: { ancho: number; alto: number };
+  cardSize: { ancho: number; alto: number };
 }) {
-  const x = equis(indice, total);
-  const valor = Number(punto.expense);
-  const sitio = sitioDeLaTarjeta({ indice, total, valor, techo, caja, tamTarjeta });
+  const x = equis(index, total);
+  const value = Number(point.expense);
+  const position = sitioDeLaTarjeta({
+    indice: index,
+    total,
+    valor: value,
+    techo: ceiling,
+    caja: box,
+    tamTarjeta: cardSize,
+  });
 
   return (
     <>
@@ -210,16 +212,16 @@ function Senalado({
         className="pointer-events-none absolute inset-y-0 w-px bg-border"
         style={{ left: `${x}%` }}
       />
-      <Punto x={x} valor={valor} techo={techo} color="var(--color-expense)" />
-      {hayIngresos && Number(punto.income) > 0 && (
-        <Punto x={x} valor={Number(punto.income)} techo={techo} color="var(--color-income)" />
+      <Point x={x} value={value} ceiling={ceiling} color="var(--color-expense)" />
+      {hasIncome && Number(point.income) > 0 && (
+        <Point x={x} value={Number(point.income)} ceiling={ceiling} color="var(--color-income)" />
       )}
       <TrendCard
-        tarjeta={tarjeta}
-        punto={punto}
-        sitio={sitio}
-        medida={tamTarjeta.ancho !== 0}
-        hayIngresos={hayIngresos}
+        card={card}
+        point={point}
+        position={position}
+        isMeasured={cardSize.ancho !== 0}
+        hasIncome={hasIncome}
       />
     </>
   );
@@ -233,7 +235,7 @@ function Senalado({
  * salto justo cuando llegan los datos, que es el momento en que alguien está a
  * punto de pulsar algo.
  */
-export function TendenciaEsqueleto() {
+export function TrendSkeleton() {
   return (
     <div className="flex h-full flex-col gap-4">
       <div className="flex gap-6">

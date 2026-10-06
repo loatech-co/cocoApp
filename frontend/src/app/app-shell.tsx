@@ -3,8 +3,8 @@ import { Eye } from 'lucide-react';
 import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
-import { MovimientoModal } from '@/features/transactions/components/movimiento-modal';
-import { PanelDeBusqueda } from '@/features/transactions/components/panel-de-busqueda';
+import { TransactionModal } from '@/features/transactions/components/movimiento-modal';
+import { SearchPanel } from '@/features/transactions/components/panel-de-busqueda';
 import { useAuth } from '@/shared/api/auth-context';
 import { registerBridge } from '@/shared/api/native-bridge';
 import { invalidateDerived } from '@/shared/api/query-keys';
@@ -301,13 +301,13 @@ function PhoneSheets({ shell }: { shell: ShellState }) {
 function SearchAndSheet({ shell }: { shell: ShellState }) {
   return (
     <>
-      <PanelDeBusqueda
-        abierto={shell.busquedaAbierta}
-        onCerrar={() => shell.setBusquedaAbierta(false)}
+      <SearchPanel
+        isOpen={shell.busquedaAbierta}
+        onClose={() => shell.setBusquedaAbierta(false)}
         // Encontrado el movimiento, la búsqueda se acabó: la hoja se cierra
         // y en su sitio se abre la ficha. Dejarla debajo obligaría a
         // cerrarla después, y con la ficha encima ya no se ve.
-        onElegir={(movimiento) => {
+        onSelect={(movimiento) => {
           shell.setBusquedaAbierta(false);
           shell.setFicha(movimiento);
         }}
@@ -317,11 +317,11 @@ function SearchAndSheet({ shell }: { shell: ShellState }) {
           de su propio velo, que corre por existir—, y montada siempre
           tendría sus consultas en pie en todas las pantallas del teléfono. */}
       {shell.ficha !== undefined && (
-        <MovimientoModal
-          abierta
-          movimiento={shell.ficha}
-          tipoPorDefecto="expense"
-          onCerrar={() => shell.setFicha(undefined)}
+        <TransactionModal
+          isOpen
+          transaction={shell.ficha}
+          defaultType="expense"
+          onClose={() => shell.setFicha(undefined)}
         />
       )}
     </>

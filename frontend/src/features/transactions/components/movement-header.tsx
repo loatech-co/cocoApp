@@ -9,10 +9,10 @@ import { ModalHeader } from '@/shared/ui/molecules/modal-parts';
 
 interface SheetMode {
   type: TransactionType;
-  editando: boolean;
-  editable: boolean;
+  isEditing: boolean;
+  isEditable: boolean;
   /** El pago que se viene a confirmar, solo si la ficha no es de un movimiento ya guardado. */
-  confirmando: PendingPayment | null;
+  isConfirming: PendingPayment | null;
 }
 
 /**
@@ -21,13 +21,13 @@ interface SheetMode {
  * se anota es una ida de cuatro: la lista ya ofreció «Registrar otro» y la
  * ficha que se abre tiene que ser la que se pidió.
  */
-function sheetTitle({ type, editando, editable, confirmando }: SheetMode): string {
-  if (confirmando)
-    return confirmando.isMultiPayment
+function sheetTitle({ type, isEditing, isEditable, isConfirming }: SheetMode): string {
+  if (isConfirming)
+    return isConfirming.isMultiPayment
       ? t('transactions.sheet.registerAnother')
       : t('transactions.sheet.confirmPayment');
-  if (!editando) return t('transactions.sheet.newOfType', { type: nombreDelTipo(type) });
-  return editable
+  if (!isEditing) return t('transactions.sheet.newOfType', { type: nombreDelTipo(type) });
+  return isEditable
     ? t('transactions.sheet.editOfType', { type: nombreDelTipo(type) })
     : mayuscula(nombreDelTipo(type));
 }
@@ -41,21 +41,21 @@ function sheetTitle({ type, editando, editable, confirmando }: SheetMode): strin
  * que uno copiado del recibo, y el que confirme sin mirar registra un promedio
  * como si fuera la plata que salió.
  */
-function sheetHelp(pago: PendingPayment | null): string | undefined {
-  if (!pago) return undefined;
-  if (pago.isMultiPayment) {
-    return t('transactions.sheet.instalmentNote', { name: pago.name });
+function sheetHelp(payment: PendingPayment | null): string | undefined {
+  if (!payment) return undefined;
+  if (payment.isMultiPayment) {
+    return t('transactions.sheet.instalmentNote', { name: payment.name });
   }
-  return pago.expectedAmount != null
-    ? t('transactions.sheet.expectedNote', { name: pago.name })
-    : t('transactions.sheet.attachNote', { name: pago.name });
+  return payment.expectedAmount != null
+    ? t('transactions.sheet.expectedNote', { name: payment.name })
+    : t('transactions.sheet.attachNote', { name: payment.name });
 }
 
 interface MovementHeaderProps {
-  modo: SheetMode;
-  onEditar: () => void;
-  onEliminar: () => void;
-  onCerrar: () => void;
+  mode: SheetMode;
+  onEdit: () => void;
+  onDelete: () => void;
+  onClose: () => void;
 }
 
 /**
@@ -66,13 +66,13 @@ interface MovementHeaderProps {
  * que aquí ya no es una pregunta —es de qué se está hablando, y el pastel lo
  * dice antes de leer—.
  */
-export function MovementHeader({ modo, onEditar, onEliminar, onCerrar }: MovementHeaderProps) {
-  const { type, editando, editable } = modo;
+export function MovementHeader({ mode, onEdit, onDelete, onClose }: MovementHeaderProps) {
+  const { type, isEditing, isEditable } = mode;
 
   return (
     <ModalHeader
-      title={sheetTitle(modo)}
-      description={sheetHelp(modo.confirmando)}
+      title={sheetTitle(mode)}
+      description={sheetHelp(mode.isConfirming)}
       leading={
         <IconChip
           Icon={type === 'income' ? TrendingUp : TrendingDown}
@@ -82,12 +82,12 @@ export function MovementHeader({ modo, onEditar, onEliminar, onCerrar }: Movemen
       }
       actions={
         <>
-          {editando && !editable && (
+          {isEditing && !isEditable && (
             <Button
               type="button"
               variant="ghost"
               size="sm-icon"
-              onClick={onEditar}
+              onClick={onEdit}
               aria-label={t('transactions.sheet.editMovement')}
               title={t('common.edit')}
             >
@@ -105,12 +105,12 @@ export function MovementHeader({ modo, onEditar, onEliminar, onCerrar }: Movemen
             salió tal plata de un concepto. Borrarlo borra el registro y deja el
             concepto donde estaba, igual de vivo, listo para el mes siguiente.
           */}
-          {editando && (
+          {isEditing && (
             <Button
               type="button"
               variant="ghost"
               size="sm-icon"
-              onClick={onEliminar}
+              onClick={onDelete}
               aria-label={t('transactions.sheet.deleteMovement')}
               title={t('common.delete')}
               /*
@@ -128,7 +128,7 @@ export function MovementHeader({ modo, onEditar, onEliminar, onCerrar }: Movemen
           )}
         </>
       }
-      onClose={onCerrar}
+      onClose={onClose}
     />
   );
 }

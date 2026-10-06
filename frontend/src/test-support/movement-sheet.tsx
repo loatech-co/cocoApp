@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 
 import type { leerSoporte } from '@/features/transactions/api/leer-soporte';
-import { MovimientoModal } from '@/features/transactions/components/movimiento-modal';
+import { TransactionModal } from '@/features/transactions/components/movimiento-modal';
 import { type CategoryTree } from '@/shared/api/categories';
 import { type PendingPayment, type Transaction } from '@/shared/api/generated/model';
 import { keys } from '@/shared/api/query-keys';
@@ -23,7 +23,7 @@ export const treeWith = (isStatic: boolean): CategoryTree[] =>
       id: 1,
       name: 'Costos fijos',
       kind: 'expense',
-      isStatic: isStatic,
+      isStatic,
       children: [
         {
           id: 10,
@@ -104,28 +104,28 @@ export function testQueryClient(tree?: CategoryTree[]): QueryClient {
 
 /** The sheet open with those props, inside its client and its router. */
 export function renderSheet(
-  props: Omit<ComponentProps<typeof MovimientoModal>, 'abierta' | 'onCerrar'>,
+  props: Omit<ComponentProps<typeof TransactionModal>, 'isOpen' | 'onClose'>,
   client: QueryClient = testQueryClient(TREE),
 ) {
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <MovimientoModal abierta {...props} onCerrar={() => {}} />
+        <TransactionModal isOpen {...props} onClose={() => {}} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
 export function openSheet(tree: CategoryTree[]) {
-  return renderSheet({ movimiento: TRANSACTION }, testQueryClient(tree));
+  return renderSheet({ transaction: TRANSACTION }, testQueryClient(tree));
 }
 
 export function openConfirmation(payment: PendingPayment = PAYMENT) {
-  return renderSheet({ movimiento: null, pago: payment });
+  return renderSheet({ transaction: null, payment });
 }
 
 export function openNew() {
-  return renderSheet({ movimiento: null });
+  return renderSheet({ transaction: null });
 }
 
 /**

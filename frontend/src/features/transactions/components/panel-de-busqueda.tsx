@@ -19,7 +19,7 @@ import { PanelRow } from '@/shared/ui/atoms/panel-row';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
 /** Cuántos resultados caben antes de que la lista deje de ser una respuesta. */
-const CUANTOS = 20;
+const MAX_RESULTS = 20;
 
 /**
  * Buscar un movimiento, desde cualquier pantalla.
@@ -41,23 +41,23 @@ const CUANTOS = 20;
  * porque alguien pidió buscar. Pedir buscar y tener que tocar además la caja
  * son dos gestos para una sola intención.
  */
-export function PanelDeBusqueda({
-  abierto,
-  onCerrar,
-  onElegir,
+export function SearchPanel({
+  isOpen,
+  onClose,
+  onSelect,
 }: {
-  abierto: boolean;
-  onCerrar: () => void;
-  onElegir: (movimiento: Transaction) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (transaction: Transaction) => void;
 }) {
-  const { texto, setTexto, consulta } = useDebouncedSearch(abierto);
+  const { text, setText, query } = useDebouncedSearch(isOpen);
 
   return (
     <BottomSheet
-      isOpen={abierto}
+      isOpen={isOpen}
       title={t('shell.bottomBar.search')}
-      head={<SearchHead texto={texto} onCambiar={setTexto} />}
-      onClose={onCerrar}
+      head={<SearchHead text={text} onChange={setText} />}
+      onClose={onClose}
     >
       {/*
         La lista es un componente aparte y solo se monta cuando hay algo que
@@ -65,29 +65,29 @@ export function PanelDeBusqueda({
         deslizarse—, así que una consulta escrita aquí dentro se dispararía en
         todas las pantallas del teléfono aunque nadie haya tocado la lupa.
       */}
-      {consulta === '' ? (
+      {query === '' ? (
         <p className="px-3 py-6 text-center text-sm text-muted-foreground">
           {t('transactions.searchPanel.help')}
         </p>
       ) : (
-        <Resultados consulta={consulta} onElegir={onElegir} />
+        <Results query={query} onSelect={onSelect} />
       )}
     </BottomSheet>
   );
 }
 
-function Resultados({
-  consulta,
-  onElegir,
+function Results({
+  query,
+  onSelect,
 }: {
-  consulta: string;
-  onElegir: (movimiento: Transaction) => void;
+  query: string;
+  onSelect: (transaction: Transaction) => void;
 }) {
-  const movimientos = useTransactions({ q: consulta, perPage: CUANTOS, sort: '-date' });
-  const categorias = useCategories();
-  const arbol = categorias.data ?? [];
+  const transactions = useTransactions({ q: query, perPage: MAX_RESULTS, sort: '-date' });
+  const categories = useCategories();
+  const tree = categories.data ?? [];
 
-  if (movimientos.isPending) {
+  if (transactions.isPending) {
     return (
       <div className="flex flex-col gap-2 py-1">
         {[0, 1, 2, 3, 4].map((i) => (
@@ -97,33 +97,33 @@ function Resultados({
     );
   }
 
-  if (movimientos.isError) {
+  if (transactions.isError) {
     return <ErrorAlert message={t('transactions.searchPanel.failed')} />;
   }
 
-  const filas = movimientos.data.data;
+  const rows = transactions.data.data;
 
-  if (filas.length === 0) {
+  if (rows.length === 0) {
     return (
       <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-        {t('transactions.searchPanel.noMatch', { query: consulta })}
+        {t('transactions.searchPanel.noMatch', { query })}
       </p>
     );
   }
 
-  const total = movimientos.data.meta.total;
+  const total = transactions.data.meta.total;
 
   return (
     <div className="flex flex-col">
-      {filas.map((movimiento) => (
-        <ResultRow key={movimiento.id} movimiento={movimiento} arbol={arbol} onElegir={onElegir} />
+      {rows.map((transaction) => (
+        <ResultRow key={transaction.id} transaction={transaction} tree={tree} onSelect={onSelect} />
       ))}
 
       {/* Cuántos hay de los que caben. Sin esto, veinte resultados de
           trescientos se leen como trescientos. */}
-      {total > filas.length && (
+      {total > rows.length && (
         <p className="px-3 pt-3 text-center text-xs text-muted-foreground">
-          {t('transactions.searchPanel.latest', { shown: filas.length, total })}
+          {t('transactions.searchPanel.latest', { shown: rows.length, total })}
         </p>
       )}
     </div>
@@ -131,33 +131,33 @@ function Resultados({
 }
 
 function ResultRow({
-  movimiento,
-  arbol,
-  onElegir,
+  transaction,
+  tree,
+  onSelect,
 }: {
-  movimiento: Transaction;
-  arbol: Category[];
-  onElegir: (movimiento: Transaction) => void;
+  transaction: Transaction;
+  tree: Category[];
+  onSelect: (transaction: Transaction) => void;
 }) {
   return (
-    <PanelRow onClick={() => onElegir(movimiento)}>
+    <PanelRow onClick={() => onSelect(transaction)}>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">{nombreDelMovimiento(movimiento, arbol)}</span>
+        <span className="block truncate font-medium">{nombreDelMovimiento(transaction, tree)}</span>
         <span className="block truncate text-xs text-muted-foreground">
-          {shortDay(movimiento.date)}
+          {shortDay(transaction.date)}
         </span>
       </span>
       <Amount
-        amount={movimiento.amount}
-        currency={movimiento.currency}
-        direction={sentidoDelMovimiento(movimiento.type)}
+        amount={transaction.amount}
+        currency={transaction.currency}
+        direction={sentidoDelMovimiento(transaction.type)}
         className="shrink-0 text-sm"
       />
     </PanelRow>
   );
 }
 
-function SearchHead({ texto, onCambiar }: { texto: string; onCambiar: (texto: string) => void }) {
+function SearchHead({ text, onChange }: { text: string; onChange: (text: string) => void }) {
   return (
     <div className="relative">
       <Search
@@ -167,8 +167,8 @@ function SearchHead({ texto, onCambiar }: { texto: string; onCambiar: (texto: st
       <Input
         type="search"
         autoFocus
-        value={texto}
-        onChange={(e) => onCambiar(e.target.value)}
+        value={text}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={t('transactions.searchPanel.placeholder')}
         aria-label={t('transactions.searchPanel.label')}
         className="pl-9"
@@ -178,25 +178,25 @@ function SearchHead({ texto, onCambiar }: { texto: string; onCambiar: (texto: st
 }
 
 /** Lo que se escribe, y la consulta que sale de ello con un poco de retraso. */
-function useDebouncedSearch(abierto: boolean) {
-  const [texto, setTexto] = useState('');
-  const [consulta, setConsulta] = useState('');
+function useDebouncedSearch(isOpen: boolean) {
+  const [text, setText] = useState('');
+  const [query, setQuery] = useState('');
 
   // Cada apertura empieza en blanco. Reabrir con lo de la vez pasada enseñaría
   // los resultados de una pregunta que ya no se está haciendo.
-  useOnChange([abierto], () => {
-    if (!abierto) {
-      setTexto('');
-      setConsulta('');
+  useOnChange([isOpen], () => {
+    if (!isOpen) {
+      setText('');
+      setQuery('');
     }
   });
 
   // Se escribe local y se consulta con retraso: sin esto cada tecla dispara
   // una petición y la lista parpadea mientras se escribe.
   useEffect(() => {
-    const id = setTimeout(() => setConsulta(texto.trim()), 300);
+    const id = setTimeout(() => setQuery(text.trim()), 300);
     return () => clearTimeout(id);
-  }, [texto]);
+  }, [text]);
 
-  return { texto, setTexto, consulta };
+  return { text, setText, query };
 }

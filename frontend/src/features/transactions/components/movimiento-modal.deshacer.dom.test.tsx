@@ -8,7 +8,7 @@ import { leerSoporte } from '@/features/transactions/api/leer-soporte';
 import { type CategoryTree } from '@/shared/api/categories';
 import { keys } from '@/shared/api/query-keys';
 
-import { MovimientoModal } from './movimiento-modal';
+import { TransactionModal } from './movimiento-modal';
 
 /*
   La red, de mentira.
@@ -28,7 +28,7 @@ const apiUpload = vi.fn();
  * a JSON string; the spy sees the route without `/api/v2` and the body as an
  * object, which is what these tests read.
  */
-const comoRuta = (url: string, init?: RequestInit) =>
+const asPath = (url: string, init?: RequestInit) =>
   red(url.replace(/^\/api\/v2/, ''), {
     method: init?.method ?? 'GET',
     ...(typeof init?.body === 'string' ? { body: JSON.parse(init.body) as unknown } : {}),
@@ -39,7 +39,7 @@ vi.mock('@/shared/api/api-client', async () => {
     await vi.importActual<typeof import('@/shared/api/api-client')>('@/shared/api/api-client');
   return {
     ...real,
-    apiRequest: (url: string, init?: RequestInit) => comoRuta(url, init),
+    apiRequest: (url: string, init?: RequestInit) => asPath(url, init),
     apiUpload: (...args: unknown[]) => apiUpload(...args),
   };
 });
@@ -59,7 +59,7 @@ vi.mock('@/shared/lib/shrink-receipt', () => ({
   shrinkReceipt: (file: File) => Promise.resolve(file),
 }));
 
-const ARBOL = [
+const TREE = [
   {
     id: 1,
     name: 'Costos fijos',
@@ -85,7 +85,7 @@ const ARBOL = [
   aquí lo que se prueba es qué pasa cuando la SUBIDA falla, no la lectura.
   Un lector que no saca nada deja el formulario como estaba.
 */
-const LECTURA_VACIA: Awaited<ReturnType<typeof leerSoporte>> = {
+const EMPTY_READING: Awaited<ReturnType<typeof leerSoporte>> = {
   texto: '',
   fuente: 'texto-embebido',
   lectura: {
@@ -108,7 +108,7 @@ beforeEach(() => {
   // con el reloj falso se le pasa por encima en `adjuntar`.
   vi.useFakeTimers();
   vi.mocked(leerSoporte).mockReset();
-  vi.mocked(leerSoporte).mockResolvedValue(LECTURA_VACIA);
+  vi.mocked(leerSoporte).mockResolvedValue(EMPTY_READING);
   URL.createObjectURL = vi.fn(() => 'blob:prueba');
   URL.revokeObjectURL = vi.fn();
   globalThis.ResizeObserver = class {
@@ -123,14 +123,14 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function abrirFichaNueva() {
-  const cliente = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  cliente.setQueryData([...keys.categories, 'todas'], ARBOL);
+function openNewSheet() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  client.setQueryData([...keys.categories, 'todas'], TREE);
 
   const vista = render(
-    <QueryClientProvider client={cliente}>
+    <QueryClientProvider client={client}>
       <MemoryRouter>
-        <MovimientoModal abierta movimiento={null} onCerrar={() => {}} />
+        <TransactionModal isOpen transaction={null} onClose={() => {}} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -140,12 +140,12 @@ function abrirFichaNueva() {
 }
 
 /** Adjunta un archivo por el campo de verdad, que va escondido. */
-async function adjuntar(container: HTMLElement): Promise<void> {
-  const campo = container.querySelector('input[type="file"]')!;
-  expect(campo).not.toBeNull();
+async function attach(container: HTMLElement): Promise<void> {
+  const field = container.querySelector('input[type="file"]')!;
+  expect(field).not.toBeNull();
 
-  const archivo = new File([new Uint8Array(64)], 'captura.png', { type: 'image/png' });
-  Object.defineProperty(campo, 'files', { value: [archivo], configurable: true });
+  const file = new File([new Uint8Array(64)], 'captura.png', { type: 'image/png' });
+  Object.defineProperty(field, 'files', { value: [file], configurable: true });
 
   /*
     El `async` sin `await` dentro es a propósito, y no es intercambiable.
@@ -158,7 +158,7 @@ async function adjuntar(container: HTMLElement): Promise<void> {
   */
   // eslint-disable-next-line @typescript-eslint/require-await -- ver arriba
   await act(async () => {
-    fireEvent.change(campo);
+    fireEvent.change(field);
   });
 
   // El piso de la espera de la lectura: hasta que pasa, la ficha enseña el
@@ -168,9 +168,9 @@ async function adjuntar(container: HTMLElement): Promise<void> {
   });
 }
 
-async function registrar(): Promise<void> {
-  const valor = document.getElementById('mov-valor') as HTMLInputElement;
-  fireEvent.change(valor, { target: { value: '120000' } });
+async function record(): Promise<void> {
+  const value = document.getElementById('mov-valor') as HTMLInputElement;
+  fireEvent.change(value, { target: { value: '120000' } });
 
   /*
     El `async` sin `await` dentro es a propósito, y no es intercambiable.
@@ -183,11 +183,11 @@ async function registrar(): Promise<void> {
   */
   // eslint-disable-next-line @typescript-eslint/require-await -- ver arriba
   await act(async () => {
-    fireEvent.submit(valor.closest('form')!);
+    fireEvent.submit(value.closest('form')!);
   });
 }
 
-const llamadas = () => red.mock.calls.map(([ruta, opciones]) => [ruta, opciones?.method]);
+const calls = () => red.mock.calls.map(([path, options]) => [path, options?.method]);
 
 /**
  * La red contesta por RUTA, no una cosa para todo.
@@ -196,10 +196,10 @@ const llamadas = () => red.mock.calls.map(([ruta, opciones]) => [ruta, opciones?
  * única le devolvía el `{ id }` de un movimiento donde esperaba una lista:
  * reventaba pintando los desplegables, antes de llegar a lo que se prueba.
  */
-function responder({ alBorrar }: { alBorrar: () => Promise<unknown> }): void {
-  red.mockImplementation((ruta: string, opciones?: { method?: string }) => {
-    if (opciones?.method === 'DELETE') return alBorrar();
-    if (ruta.startsWith('/categories')) return Promise.resolve({ data: ARBOL });
+function respond({ onDelete }: { onDelete: () => Promise<unknown> }): void {
+  red.mockImplementation((path: string, options?: { method?: string }) => {
+    if (options?.method === 'DELETE') return onDelete();
+    if (path.startsWith('/categories')) return Promise.resolve({ data: TREE });
     return Promise.resolve({ data: { id: 42 } });
   });
 }
@@ -214,18 +214,18 @@ function responder({ alBorrar }: { alBorrar: () => Promise<unknown> }): void {
  */
 describe('Cuando el soporte falla al registrar', () => {
   it('borra el movimiento que se acababa de crear', async () => {
-    responder({ alBorrar: () => Promise.resolve({ data: undefined }) });
+    respond({ onDelete: () => Promise.resolve({ data: undefined }) });
     apiUpload.mockRejectedValue(
       new ApiClientError(503, 'service_unavailable', 'Al servidor se le acabaron los recursos.'),
     );
 
-    const { container } = abrirFichaNueva();
-    await adjuntar(container);
-    await registrar();
+    const { container } = openNewSheet();
+    await attach(container);
+    await record();
 
     // Se creó, falló el soporte, y lo creado se fue.
     expect(apiUpload).toHaveBeenCalledOnce();
-    expect(llamadas()).toContainEqual(['/transactions/42', 'DELETE']);
+    expect(calls()).toContainEqual(['/transactions/42', 'DELETE']);
 
     // Y se dice sin rodeos: no quedó nada. Quien lea otra cosa se va a quedar
     // buscando en la tabla un movimiento que no existe.
@@ -233,24 +233,24 @@ describe('Cuando el soporte falla al registrar', () => {
   });
 
   it('si tampoco se pudo deshacer, lo dice y no duplica al reintentar', async () => {
-    responder({ alBorrar: () => Promise.reject(new Error('sin conexión')) });
+    respond({ onDelete: () => Promise.reject(new Error('sin conexión')) });
     apiUpload.mockRejectedValue(
       new ApiClientError(503, 'service_unavailable', 'Falló el soporte.'),
     );
 
-    const { container } = abrirFichaNueva();
-    await adjuntar(container);
-    await registrar();
+    const { container } = openNewSheet();
+    await attach(container);
+    await record();
 
     expect(screen.getByText(/quedó registrado/)).toBeDefined();
 
     // El reintento ACTUALIZA el 42 en vez de crear un segundo movimiento por
     // la misma plata: es el caso que obligaba a recordar el id.
     red.mockClear();
-    await registrar();
+    await record();
 
-    expect(llamadas()).toContainEqual(['/transactions/42', 'PATCH']);
-    expect(llamadas().some(([ruta, metodo]) => ruta === '/transactions' && metodo === 'POST')).toBe(
+    expect(calls()).toContainEqual(['/transactions/42', 'PATCH']);
+    expect(calls().some(([path, method]) => path === '/transactions' && method === 'POST')).toBe(
       false,
     );
   });
@@ -262,27 +262,26 @@ describe('Cuando el soporte falla al registrar', () => {
  * así que aquí `rawText` va vacío a propósito.
  */
 describe('Lo que la web guarda', () => {
-  const creacion = () =>
+  const creation = () =>
     red.mock.calls.find(
-      ([ruta, opciones]) =>
-        ruta === '/transactions' &&
-        (opciones as { method?: string } | undefined)?.method === 'POST',
+      ([path, options]) =>
+        path === '/transactions' && (options as { method?: string } | undefined)?.method === 'POST',
     );
 
   it('manda source «web»; sin texto leído, rawText va vacío', async () => {
-    responder({ alBorrar: () => Promise.resolve({ data: undefined }) });
+    respond({ onDelete: () => Promise.resolve({ data: undefined }) });
     apiUpload.mockResolvedValue({ data: [] });
 
-    const { container } = abrirFichaNueva();
-    await adjuntar(container);
-    await registrar();
+    const { container } = openNewSheet();
+    await attach(container);
+    await record();
 
-    expect(creacion(), 'se creó el movimiento').toBeDefined();
-    const cuerpo = (creacion()![1] as { body: Record<string, unknown> }).body;
-    expect(cuerpo.source).toBe('web');
-    expect(cuerpo.rawText).toBeNull();
+    expect(creation(), 'se creó el movimiento').toBeDefined();
+    const body = (creation()![1] as { body: Record<string, unknown> }).body;
+    expect(body.source).toBe('web');
+    expect(body.rawText).toBeNull();
     // Y lo de siempre sigue viajando igual.
-    expect(cuerpo.amount).toBe('120000');
+    expect(body.amount).toBe('120000');
     // El soporte sí se leyó —es el primero de un movimiento nuevo—, pero no
     // sacó texto, y un texto vacío no viaja como cadena vacía: viaja como nulo.
     expect(vi.mocked(leerSoporte)).toHaveBeenCalledOnce();

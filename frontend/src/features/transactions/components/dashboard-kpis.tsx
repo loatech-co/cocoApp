@@ -5,7 +5,7 @@ import { Tag } from '@/shared/ui/atoms/badge';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 
 /** Los cuatro indicadores del resumen. */
-export function DashboardKpis({ datos, alDia }: { datos: Dashboard; alDia: boolean }) {
+export function DashboardKpis({ data, isUpToDate }: { data: Dashboard; isUpToDate: boolean }) {
   /*
       Cuatro indicadores: de a DOS desde el teléfono y de a cuatro en una
       pantalla ancha. En tres columnas, el cuarto se quedaba solo en una
@@ -30,20 +30,22 @@ export function DashboardKpis({ datos, alDia }: { datos: Dashboard; alDia: boole
         costos fijos.
       */}
       <Kpi
-        etiqueta={t('transactions.kpis.budgetNeeded')}
-        valor={formatCOP(alDia ? datos.requiredBudget : datos.range.expense)}
-        detalle={
-          alDia ? t('transactions.kpis.fixedCostsThisMonth') : t('transactions.kpis.periodCost')
+        label={t('transactions.kpis.budgetNeeded')}
+        value={formatCOP(isUpToDate ? data.requiredBudget : data.range.expense)}
+        detail={
+          isUpToDate
+            ? t('transactions.kpis.fixedCostsThisMonth')
+            : t('transactions.kpis.periodCost')
         }
       />
       <Kpi
-        etiqueta={t('transactions.kpis.periodExpenses')}
-        valor={formatCOP(datos.range.expense)}
+        label={t('transactions.kpis.periodExpenses')}
+        value={formatCOP(data.range.expense)}
         // Cuánto fue fijo y cuánto variable. Los nombres son los de los
         // centros de costos, así que si mañana se llaman de otra forma,
         // el indicador lo dice solo.
-        desglose={datos.expenseByCostCenter}
-        acento="expense"
+        breakdown={data.expenseByCostCenter}
+        accent="expense"
       />
       {/* Apagada, no escondida: los ingresos existen en el modelo —el
           resumen ya los suma— y quitar la tarjeta haría creer que la
@@ -52,33 +54,33 @@ export function DashboardKpis({ datos, alDia }: { datos: Dashboard; alDia: boole
           registrados. Es el mismo trato que la opción «Ingreso» del
           menú de nuevo movimiento. */}
       <Kpi
-        etiqueta={t('transactions.kpis.periodIncome')}
-        valor={formatCOP(datos.range.income)}
-        pronto
+        label={t('transactions.kpis.periodIncome')}
+        value={formatCOP(data.range.income)}
+        isSoon
       />
       <Kpi
-        etiqueta={t('transactions.kpis.movements')}
-        valor={String(datos.range.count)}
-        detalle={longRange(datos.period.from, datos.period.to)}
+        label={t('transactions.kpis.movements')}
+        value={String(data.range.count)}
+        detail={longRange(data.period.from, data.period.to)}
       />
     </div>
   );
 }
 
 function Kpi({
-  etiqueta,
-  valor,
-  detalle,
-  desglose,
-  acento,
-  pronto = false,
+  label,
+  value,
+  detail,
+  breakdown,
+  accent,
+  isSoon = false,
 }: {
-  etiqueta: string;
-  valor: string;
-  detalle?: string;
+  label: string;
+  value: string;
+  detail?: string;
   /** En qué se reparte la cifra. Se escribe debajo, con su nombre y su monto. */
-  desglose?: CategorySpend[];
-  acento?: 'income' | 'expense';
+  breakdown?: CategorySpend[];
+  accent?: 'income' | 'expense';
   /**
    * La cifra es real pero la sección todavía no está: se apaga y se rotula.
    *
@@ -87,7 +89,7 @@ function Kpi({
    * se queda a la vista —un indicador sin cifra no es un indicador— solo que
    * sin color de dato, porque pintarlo como los demás diría que ya está vivo.
    */
-  pronto?: boolean;
+  isSoon?: boolean;
 }) {
   return (
     <Card>
@@ -117,23 +119,23 @@ function Kpi({
               como si viniera de otro producto. Un rótulo en minúsculas se lee
               de un golpe; en sostenidas hay que descifrarlo letra a letra. */}
           <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <span className="min-w-0 truncate">{etiqueta}</span>
+            <span className="min-w-0 truncate">{label}</span>
             {/* La misma etiqueta que en el resto de la app, no un rótulo a
                 mano: `Etiqueta` ya decide su redondeo, su relleno y su
                 tamaño de letra. */}
-            {pronto && (
+            {isSoon && (
               <Tag tone="muted" className="shrink-0">
                 {t('transactions.kpis.soon')}
               </Tag>
             )}
           </p>
-          <p className={claseDeCifra(pronto, acento)}>{valor}</p>
-          {detalle && <p className="mt-1 truncate text-xs text-muted-foreground">{detalle}</p>}
+          <p className={figureClassName(isSoon, accent)}>{value}</p>
+          {detail && <p className="mt-1 truncate text-xs text-muted-foreground">{detail}</p>}
 
           {/* Envuelve en vez de truncarse: un reparto a medias —"Costos fij…"—
               no dice menos, dice otra cosa. Cada parte se queda entera y se
               pasa a la línea de abajo si la tarjeta es angosta. */}
-          {desglose && desglose.length > 0 && <Desglose partes={desglose} />}
+          {breakdown && breakdown.length > 0 && <Breakdown partes={breakdown} />}
         </div>
       </CardContent>
     </Card>
@@ -148,14 +150,14 @@ function Kpi({
 // Desde que las tarjetas van de a dos, cada una mide media
 // pantalla: «$1.234.567» a 24px no cabía y se cortaba, y un
 // indicador con la cifra truncada no indica nada.
-function claseDeCifra(pronto: boolean, acento: 'income' | 'expense' | undefined): string {
+function figureClassName(isSoon: boolean, accent: 'income' | 'expense' | undefined): string {
   return (
     'tabular mt-1 truncate text-xl font-semibold leading-tight sm:text-3xl ' +
-    (pronto
+    (isSoon
       ? 'text-muted-foreground'
-      : acento === 'income'
+      : accent === 'income'
         ? 'text-income'
-        : acento === 'expense'
+        : accent === 'expense'
           ? 'text-expense'
           : '')
   );
@@ -164,15 +166,13 @@ function claseDeCifra(pronto: boolean, acento: 'income' | 'expense' | undefined)
 /* Envuelve en vez de truncarse: un reparto a medias —"Costos fij…"—
    no dice menos, dice otra cosa. Cada parte se queda entera y se
    pasa a la línea de abajo si la tarjeta es angosta. */
-function Desglose({ partes }: { partes: CategorySpend[] }) {
+function Breakdown({ partes }: { partes: CategorySpend[] }) {
   return (
     <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-      {partes.map((parte) => (
-        <span key={parte.categoryId ?? parte.name} className="whitespace-nowrap">
-          {parte.name}{' '}
-          <strong className="tabular font-semibold text-foreground">
-            {formatCOP(parte.total)}
-          </strong>
+      {partes.map((part) => (
+        <span key={part.categoryId ?? part.name} className="whitespace-nowrap">
+          {part.name}{' '}
+          <strong className="tabular font-semibold text-foreground">{formatCOP(part.total)}</strong>
         </span>
       ))}
     </p>

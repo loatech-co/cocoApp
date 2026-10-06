@@ -7,16 +7,16 @@ import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { Donut } from '@/shared/ui/atoms/donut';
 import { BackCrumb } from '@/shared/ui/atoms/level-nav';
 
-interface PropsDeDistribucion {
-  filas: { categoryId: number | null; name: string; total: string; count: number }[];
-  nivel: string;
+interface DistributionProps {
+  rows: { categoryId: number | null; name: string; total: string; count: number }[];
+  level: string;
   /** De quién son las filas. `null` cuando son los centros de costos. */
-  padre: { id: number; name: string } | null;
-  totalGastado: string;
+  parent: { id: number; name: string } | null;
+  totalSpent: string;
   /** El camino hasta donde se bajó. Vacío = se está en los centros de costos. */
-  ruta: { id: number; name: string }[];
-  onBajar: (id: number) => void;
-  onSubir: () => void;
+  path: { id: number; name: string }[];
+  onDrillDown: (id: number) => void;
+  onDrillUp: () => void;
 }
 
 /**
@@ -35,17 +35,17 @@ interface PropsDeDistribucion {
  * implícito; la dona lo pone en el centro y cada porción se lee contra él sin
  * hacer ninguna cuenta.
  */
-export function Distribucion({
-  filas,
-  nivel,
-  padre,
-  totalGastado,
-  ruta,
-  onBajar,
-  onSubir,
-}: PropsDeDistribucion) {
-  const total = Number.parseFloat(totalGastado) || 0;
-  const [verLista, setVerLista] = useState(true);
+export function Distribution({
+  rows,
+  level,
+  parent,
+  totalSpent,
+  path,
+  onDrillDown,
+  onDrillUp,
+}: DistributionProps) {
+  const total = Number.parseFloat(totalSpent) || 0;
+  const [isList, setIsList] = useState(true);
 
   return (
     <Card className="h-full min-h-0">
@@ -54,21 +54,21 @@ export function Distribucion({
           <h2 className="font-display text-lg font-semibold">
             {t('transactions.distribution.title')}
           </h2>
-          <VerNombres verLista={verLista} onAlternar={() => setVerLista((v) => !v)} />
+          <ShowNames isList={isList} onToggle={() => setIsList((wasList) => !wasList)} />
         </div>
 
         {/* Bajar de nivel es un clic; subir tiene que serlo también. Sin esto,
             entrar en un centro de costos era un viaje de ida: la única salida
             era limpiar el filtro entero desde la barra de arriba. */}
-        {ruta.length > 0 ? (
+        {path.length > 0 ? (
           <div className="flex min-w-0 self-start">
-            <BackCrumb path={ruta.map((n) => n.name)} onBack={onSubir} />
+            <BackCrumb path={path.map((n) => n.name)} onBack={onDrillUp} />
           </div>
         ) : (
           /* El NOMBRE de a quién pertenecen estas filas, no el nivel al que
              están. "Por categoría" no dice de qué: las categorías de cuál centro. */
           <p className="truncate text-xs text-muted-foreground">
-            {padre?.name ?? t('transactions.distribution.byLevel', { level: nivel })}
+            {parent?.name ?? t('transactions.distribution.byLevel', { level })}
           </p>
         )}
 
@@ -76,14 +76,14 @@ export function Distribucion({
             tiene alto —se lo dio la fila— y este es el trozo que le queda. */}
         <Donut
           className="mt-6 min-h-0 flex-1"
-          isListVisible={verLista}
+          isListVisible={isList}
           total={total}
-          portions={filas.map((f) => ({
+          portions={rows.map((f) => ({
             id: f.categoryId,
             name: f.name,
             value: Number.parseFloat(f.total) || 0,
           }))}
-          onSelect={nivel === 'concepto' ? undefined : onBajar}
+          onSelect={level === 'concepto' ? undefined : onDrillDown}
         />
       </CardContent>
     </Card>
@@ -96,26 +96,22 @@ export function Distribucion({
     `herramienta` y el tamaño `chip-icon`. Un control que hace lo
     mismo —encender y apagar algo de la vista— tiene que verse igual
     en las dos pantallas. */
-function VerNombres({ verLista, onAlternar }: { verLista: boolean; onAlternar: () => void }) {
+function ShowNames({ isList, onToggle }: { isList: boolean; onToggle: () => void }) {
   return (
     <Button
       type="button"
       variant="tool"
       size="sm-icon"
-      aria-pressed={!verLista}
+      aria-pressed={!isList}
       aria-label={
-        verLista
-          ? t('transactions.distribution.hideNames')
-          : t('transactions.distribution.showNames')
+        isList ? t('transactions.distribution.hideNames') : t('transactions.distribution.showNames')
       }
       title={
-        verLista
-          ? t('transactions.distribution.hideNames')
-          : t('transactions.distribution.showNames')
+        isList ? t('transactions.distribution.hideNames') : t('transactions.distribution.showNames')
       }
-      onClick={onAlternar}
+      onClick={onToggle}
     >
-      {verLista ? (
+      {isList ? (
         <Eye className="size-4" aria-hidden="true" />
       ) : (
         <EyeOff className="size-4" aria-hidden="true" />

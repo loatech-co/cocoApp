@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Input } from '@/shared/ui/atoms/input';
 
-import { SelectorDeFecha } from './selector-de-fecha';
+import { DateSelector } from './selector-de-fecha';
 
 /**
  * La fecha se escribe, y lo escrito se entiende.
@@ -16,14 +16,14 @@ import { SelectorDeFecha } from './selector-de-fecha';
  */
 afterEach(cleanup);
 
-const campoDeFecha = () => screen.getByPlaceholderText<HTMLInputElement>(/septiembre/i);
+const dateField = () => screen.getByPlaceholderText<HTMLInputElement>(/septiembre/i);
 
-function escribir(texto: string, onElegir = vi.fn()) {
-  render(<SelectorDeFecha valor="2026-04-04" onElegir={onElegir} />);
-  const campo = campoDeFecha();
-  fireEvent.change(campo, { target: { value: texto } });
-  fireEvent.blur(campo);
-  return onElegir;
+function type(text: string, onSelect = vi.fn()) {
+  render(<DateSelector value="2026-04-04" onSelect={onSelect} />);
+  const field = dateField();
+  fireEvent.change(field, { target: { value: text } });
+  fireEvent.blur(field);
+  return onSelect;
 }
 
 describe('El campo de fecha que se escribe', () => {
@@ -35,50 +35,50 @@ describe('El campo de fecha que se escribe', () => {
     ['10/09/2026', '2026-09-10'],
     ['10-09-2026', '2026-09-10'],
     ['2026-09-10', '2026-09-10'],
-  ])('entiende «%s»', (escrito, iso) => {
-    expect(escribir(escrito)).toHaveBeenCalledWith(iso);
+  ])('entiende «%s»', (typed, iso) => {
+    expect(type(typed)).toHaveBeenCalledWith(iso);
   });
 
   it('lo que no se entiende vuelve a la última fecha válida', () => {
     // Quedarse con un texto que no es una fecha dejaría el campo diciendo una
     // cosa y el formulario guardando otra.
-    const onElegir = escribir('el martes pasado');
+    const onSelect = type('el martes pasado');
 
-    expect(onElegir).not.toHaveBeenCalled();
-    expect(campoDeFecha().value).toBe('4 de abril de 2026');
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(dateField().value).toBe('4 de abril de 2026');
   });
 
   it('vaciarlo tampoco borra la fecha por accidente', () => {
-    const onElegir = escribir('   ');
+    const onSelect = type('   ');
 
-    expect(onElegir).not.toHaveBeenCalled();
-    expect(campoDeFecha().value).toBe('4 de abril de 2026');
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(dateField().value).toBe('4 de abril de 2026');
   });
 
   it('normaliza aunque se escriba la MISMA fecha de otra forma', () => {
     // Aquí `onElegir` no se dispara —el valor no cambia—, así que si el campo
     // no se reescribiera solo, se quedaría con el «04/04/2026» tecleado.
-    const onElegir = escribir('04/04/2026');
+    const onSelect = type('04/04/2026');
 
-    expect(onElegir).not.toHaveBeenCalled();
-    expect(campoDeFecha().value).toBe('4 de abril de 2026');
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(dateField().value).toBe('4 de abril de 2026');
   });
 
   it('Enter confirma sin enviar el formulario', () => {
-    const onElegir = vi.fn();
+    const onSelect = vi.fn();
     const onSubmit = vi.fn((e: React.SubmitEvent) => e.preventDefault());
 
     render(
       <form onSubmit={onSubmit}>
-        <SelectorDeFecha valor="2026-04-04" onElegir={onElegir} />
+        <DateSelector value="2026-04-04" onSelect={onSelect} />
       </form>,
     );
 
-    const campo = campoDeFecha();
-    fireEvent.change(campo, { target: { value: '10/09/2026' } });
-    fireEvent.keyDown(campo, { key: 'Enter' });
+    const field = dateField();
+    fireEvent.change(field, { target: { value: '10/09/2026' } });
+    fireEvent.keyDown(field, { key: 'Enter' });
 
-    expect(onElegir).toHaveBeenCalledWith('2026-09-10');
+    expect(onSelect).toHaveBeenCalledWith('2026-09-10');
     expect(onSubmit).not.toHaveBeenCalled();
   });
 });
@@ -91,7 +91,7 @@ describe('El campo de fecha que se escribe', () => {
 */
 describe('El selector de fecha dentro de un campo', () => {
   it('el selector de fecha dice lo mismo, y su icono va al final sin flecha', () => {
-    const { container } = render(<SelectorDeFecha valor="2026-04-04" onElegir={() => {}} />);
+    const { container } = render(<DateSelector value="2026-04-04" onSelect={() => {}} />);
 
     /*
       El selector de fecha SE ESCRIBE, así que la etiqueta flota por donde
@@ -99,9 +99,9 @@ describe('El selector de fecha dentro de un campo', () => {
       regla enganche hacen falta las dos cosas —un marcador declarado y un
       valor dentro—, y por eso se comprueban las dos y no la clase que pinta.
     */
-    const campo = container.querySelector('input:not([type="hidden"])');
-    expect(campo?.getAttribute('placeholder')).toBeTruthy();
-    expect((campo as HTMLInputElement | null)?.value).toBe('4 de abril de 2026');
+    const field = container.querySelector('input:not([type="hidden"])');
+    expect(field?.getAttribute('placeholder')).toBeTruthy();
+    expect((field as HTMLInputElement | null)?.value).toBe('4 de abril de 2026');
 
     // Y el valor viaja en ISO para el formulario, no como se escribe.
     expect(container.querySelector<HTMLInputElement>('input[type="hidden"]')?.value).toBe(
@@ -127,24 +127,22 @@ describe('El selector de fecha dentro de un campo', () => {
       alinearse, y no contra un `'px-3'` literal: si algún día el relleno de
       los campos cambia, esta prueba sigue midiendo lo que importa.
     */
-    const campoDeTexto = render(<Input />);
-    const rellenoDelCampo = (campoDeTexto.container.querySelector('input')?.className ?? '')
+    const textField = render(<Input />);
+    const fieldPadding = (textField.container.querySelector('input')?.className ?? '')
       .split(/\s+/)
       .filter((c) => c.startsWith('px-'));
-    expect(rellenoDelCampo).toHaveLength(1);
+    expect(fieldPadding).toHaveLength(1);
 
     cleanup();
 
     // La CAJA del campo, que es la que lleva el relleno. El botón de dentro es
     // el del calendario, y ese se sangra solo.
-    const fecha = render(<SelectorDeFecha valor="2026-04-04" onElegir={() => {}} />);
-    const caja = fecha.container.querySelector('input:not([type="hidden"])')?.parentElement;
-    const rellenoDeLaFecha = (caja?.className ?? '')
-      .split(/\s+/)
-      .filter((c) => c.startsWith('px-'));
+    const date = render(<DateSelector value="2026-04-04" onSelect={() => {}} />);
+    const box = date.container.querySelector('input:not([type="hidden"])')?.parentElement;
+    const datePadding = (box?.className ?? '').split(/\s+/).filter((c) => c.startsWith('px-'));
 
-    expect(rellenoDeLaFecha, 'el selector de fecha se sangra como un campo de texto').toEqual(
-      rellenoDelCampo,
+    expect(datePadding, 'el selector de fecha se sangra como un campo de texto').toEqual(
+      fieldPadding,
     );
   });
 });

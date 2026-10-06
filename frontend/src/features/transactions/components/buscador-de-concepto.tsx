@@ -12,29 +12,25 @@ import { fieldTrigger, useInsideField } from '@/shared/ui/foundations/field';
 import { Menu } from '@/shared/ui/molecules/menu';
 import { readablePath, type IndexEntry } from '@coco/receipt-parser';
 
-import {
-  CategoriaParaNuevo,
-  ResultadosDelBuscador,
-  type PropsDeResultados,
-} from './concept-search-lists';
+import { CategoryForNew, SearchResults, type ResultsProps } from './concept-search-lists';
 
-interface PropsDelBuscador {
+interface ConceptSearchProps {
   id: string;
-  arbol: readonly TreeNode[];
+  tree: readonly TreeNode[];
   /** El id elegido: un concepto o una categoría. */
-  valor: number | undefined;
-  onElegir: (id: number | undefined) => void;
+  value: number | undefined;
+  onSelect: (id: number | undefined) => void;
   /** Crear un concepto con ese nombre dentro de esa categoría, y elegirlo. */
-  onCrearConcepto: (nombre: string, categoriaId: number) => void;
-  creando?: boolean;
+  onCreateConcept: (name: string, categoryId: number) => void;
+  isCreating?: boolean;
   /** En un centro estático: se enseña lo elegido, pero no se cambia desde aquí. */
-  deshabilitado?: boolean;
+  disabled?: boolean;
   /** Ids de los conceptos usados últimamente, del más reciente al más viejo. */
-  recientes?: readonly number[];
+  recent?: readonly number[];
   /** Lo que la lectura de un recibo dejó entre lo que dudar. */
-  candidatos?: readonly CandidatoDelRecibo[];
+  candidates?: readonly CandidatoDelRecibo[];
   /** Debajo del campo: «sugerido por tu historial», un error… */
-  ayuda?: string | undefined;
+  description?: string | undefined;
 }
 
 /**
@@ -70,31 +66,31 @@ interface PropsDelBuscador {
  * La fila elegible es la misma `Opcion` de `Combo`, para que elegir se vea
  * igual en los dos sitios.
  */
-export function BuscadorDeConcepto({
+export function ConceptSearch({
   id,
-  arbol,
-  valor,
-  onElegir,
-  onCrearConcepto,
-  creando = false,
-  deshabilitado = false,
-  recientes = [],
-  candidatos = [],
-  ayuda,
-}: PropsDelBuscador) {
-  const b = useConceptSearch({ arbol, valor, recientes });
-  const campo = useRef<HTMLInputElement>(null);
+  tree,
+  value,
+  onSelect,
+  onCreateConcept,
+  isCreating = false,
+  disabled: isDisabled = false,
+  recent = [],
+  candidates = [],
+  description,
+}: ConceptSearchProps) {
+  const b = useConceptSearch({ arbol: tree, valor: value, recientes: recent });
+  const field = useRef<HTMLInputElement>(null);
 
-  if (deshabilitado) {
+  if (isDisabled) {
     return (
-      <Field label={t('transactions.fields.concept')} id={id} description={ayuda}>
-        <ConceptoBloqueado id={id} elegida={b.elegida} />
+      <Field label={t('transactions.fields.concept')} id={id} description={description}>
+        <LockedConcept id={id} chosen={b.elegida} />
       </Field>
     );
   }
 
   return (
-    <Field label={t('transactions.fields.concept')} id={id} description={ayuda}>
+    <Field label={t('transactions.fields.concept')} id={id} description={description}>
       <Menu
         label={t('transactions.fields.concept')}
         kind="search"
@@ -104,17 +100,17 @@ export function BuscadorDeConcepto({
         boxClassName="w-full min-w-0"
         triggerClassName={fieldTrigger()}
         triggerId={id}
-        trigger={({ isOpen }) => <ValorDelBuscador elegida={b.elegida} abierto={isOpen} />}
+        trigger={({ isOpen }) => <ConceptSearchValue chosen={b.elegida} isOpen={isOpen} />}
       >
-        {(cerrar) => (
-          <PanelDelMenu
-            buscador={b}
-            campo={campo}
-            candidatos={candidatos}
-            creando={creando}
-            cerrar={cerrar}
-            onElegir={onElegir}
-            onCrearConcepto={onCrearConcepto}
+        {(close) => (
+          <MenuPanel
+            searchBox={b}
+            field={field}
+            candidates={candidates}
+            isCreating={isCreating}
+            close={close}
+            onSelect={onSelect}
+            onCreateConcept={onCreateConcept}
           />
         )}
       </Menu>
@@ -122,72 +118,72 @@ export function BuscadorDeConcepto({
   );
 }
 
-interface PropsDelPanelDelMenu {
-  buscador: ReturnType<typeof useConceptSearch>;
-  campo: RefObject<HTMLInputElement | null>;
-  candidatos: readonly CandidatoDelRecibo[];
-  creando: boolean;
-  cerrar: () => void;
-  onElegir: (id: number | undefined) => void;
-  onCrearConcepto: (nombre: string, categoriaId: number) => void;
+interface MenuPanelProps {
+  searchBox: ReturnType<typeof useConceptSearch>;
+  field: RefObject<HTMLInputElement | null>;
+  candidates: readonly CandidatoDelRecibo[];
+  isCreating: boolean;
+  close: () => void;
+  onSelect: (id: number | undefined) => void;
+  onCreateConcept: (name: string, categoryId: number) => void;
 }
 
 /** El panel abierto, con lo que hay que hacer al elegir: limpiar y cerrar. */
-function PanelDelMenu({
-  buscador: b,
-  campo,
-  candidatos,
-  creando,
-  cerrar,
-  onElegir,
-  onCrearConcepto,
-}: PropsDelPanelDelMenu) {
-  const terminar = (): void => {
+function MenuPanel({
+  searchBox: b,
+  field,
+  candidates,
+  isCreating,
+  close,
+  onSelect,
+  onCreateConcept,
+}: MenuPanelProps) {
+  const finish = (): void => {
     b.limpiar();
-    cerrar();
+    close();
   };
 
   return (
     <Panel
-      campo={campo}
-      busca={b.busca}
-      setBusca={b.setBusca}
-      modo={b.modo}
-      resultados={b.resultados}
-      recientes={b.entradasRecientes}
-      candidatos={candidatos}
-      categorias={b.categoriasFiltradas}
-      elegida={b.elegida}
-      puedeCrear={b.puedeCrear}
-      creando={creando}
-      onElegir={(e) => {
-        onElegir(e === undefined ? undefined : Number(e.id));
-        terminar();
+      field={field}
+      query={b.busca}
+      setQuery={b.setBusca}
+      mode={b.modo}
+      results={b.resultados}
+      recent={b.entradasRecientes}
+      candidates={candidates}
+      categories={b.categoriasFiltradas}
+      chosen={b.elegida}
+      canCreate={b.puedeCrear}
+      isCreating={isCreating}
+      onSelect={(e) => {
+        onSelect(e === undefined ? undefined : Number(e.id));
+        finish();
       }}
-      onElegirCandidato={(c) => {
-        onElegir(c.id);
-        terminar();
+      onSelectCandidate={(c) => {
+        onSelect(c.id);
+        finish();
       }}
-      nombreNuevo={b.nombreNuevo}
-      onPedirCategoria={b.pedirCategoria}
-      onVolver={b.volver}
-      onCrearEn={(categoria) => {
-        onCrearConcepto(b.nombreNuevo, Number(categoria.id));
-        terminar();
+      newName={b.nombreNuevo}
+      onRequestCategory={b.pedirCategoria}
+      onBack={b.volver}
+      onCreateIn={(category) => {
+        onCreateConcept(b.nombreNuevo, Number(category.id));
+        finish();
       }}
     />
   );
 }
 
 /** En un centro estático: lo elegido se enseña, pero no abre nada. */
-function ConceptoBloqueado({ id, elegida }: { id: string; elegida: IndexEntry | undefined }) {
+function LockedConcept({ id, chosen }: { id: string; chosen: IndexEntry | undefined }) {
   return (
     <span
       id={id}
       aria-disabled="true"
       className={cn(fieldTrigger(), 'cursor-not-allowed opacity-50')}
     >
-      <ValorDelBuscador elegida={elegida} abierto={false} />
+      <ConceptSearchValue chosen={chosen} isOpen={false} />
     </span>
   );
 }
@@ -199,111 +195,111 @@ function ConceptoBloqueado({ id, elegida }: { id: string; elegida: IndexEntry | 
   desde aquí», nunca «esto está vacío». Un movimiento de un centro estático
   tiene que leerse clasificado aunque no se pueda reclasificar.
 */
-function ValorDelBuscador({
-  elegida,
-  abierto,
+function ConceptSearchValue({
+  chosen,
+  isOpen,
 }: {
-  elegida: IndexEntry | undefined;
-  abierto: boolean;
+  chosen: IndexEntry | undefined;
+  isOpen: boolean;
 }) {
-  const enCampo = useInsideField();
+  const isInField = useInsideField();
   return (
     <>
       <span
-        data-lleno={elegida ? 'si' : 'no'}
-        data-vacio={elegida ? undefined : ''}
+        data-lleno={chosen ? 'si' : 'no'}
+        data-vacio={chosen ? undefined : ''}
         className={cn(
           'flex min-w-0 flex-1 items-baseline gap-2 text-left',
-          !elegida && 'text-muted-foreground',
-          enCampo && 'pt-4',
+          !chosen && 'text-muted-foreground',
+          isInField && 'pt-4',
         )}
       >
         <span className="truncate">
-          {elegida?.name ?? t('transactions.conceptSearch.placeholder')}
+          {chosen?.name ?? t('transactions.conceptSearch.placeholder')}
         </span>
-        {elegida && elegida.path.length > 0 && (
+        {chosen && chosen.path.length > 0 && (
           <span className="hidden truncate text-xs text-muted-foreground sm:inline">
-            {readablePath(elegida)}
+            {readablePath(chosen)}
           </span>
         )}
       </span>
       <ChevronDown
-        className={cn('size-4 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
+        className={cn('size-4 shrink-0 opacity-60 transition-transform', isOpen && 'rotate-180')}
         aria-hidden="true"
       />
     </>
   );
 }
 
-interface PropsDelPanel extends PropsDeResultados {
-  campo: RefObject<HTMLInputElement | null>;
-  setBusca: (v: string) => void;
-  modo: 'buscar' | 'categoria-para-nuevo';
-  categorias: IndexEntry[];
-  nombreNuevo: string;
-  onVolver: () => void;
-  onCrearEn: (categoria: IndexEntry) => void;
+interface PanelProps extends ResultsProps {
+  field: RefObject<HTMLInputElement | null>;
+  setQuery: (v: string) => void;
+  mode: 'buscar' | 'categoria-para-nuevo';
+  categories: IndexEntry[];
+  newName: string;
+  onBack: () => void;
+  onCreateIn: (category: IndexEntry) => void;
 }
 
-function Panel(props: PropsDelPanel) {
-  const { campo, modo } = props;
+function Panel(props: PanelProps) {
+  const { field, mode } = props;
 
   // El foco al abrir: es un buscador que aparece porque se pidió buscar, la
   // excepción que la regla del foco contempla. Si hubiera que pulsar el campo
   // antes de escribir, el gesto serían dos clics.
   useEffect(() => {
-    const t = setTimeout(() => campo.current?.focus(), 10);
+    const t = setTimeout(() => field.current?.focus(), 10);
     return () => clearTimeout(t);
-  }, [campo, modo]);
+  }, [field, mode]);
 
   return (
     <div className="flex flex-col">
-      <CajaDeBusqueda {...props} />
+      <ConceptSearchBox {...props} />
 
-      {modo === 'categoria-para-nuevo' ? (
-        <CategoriaParaNuevo
-          nombreNuevo={props.nombreNuevo}
-          categorias={props.categorias}
-          onVolver={props.onVolver}
-          onCrearEn={props.onCrearEn}
+      {mode === 'categoria-para-nuevo' ? (
+        <CategoryForNew
+          newName={props.newName}
+          categories={props.categories}
+          onBack={props.onBack}
+          onCreateIn={props.onCreateIn}
         />
       ) : (
-        <ResultadosDelBuscador {...props} />
+        <SearchResults {...props} />
       )}
     </div>
   );
 }
 
-function CajaDeBusqueda(props: PropsDelPanel) {
-  const { campo, busca, setBusca, categorias, resultados, puedeCrear } = props;
-  const eligiendoCategoria = props.modo === 'categoria-para-nuevo';
+function ConceptSearchBox(props: PanelProps) {
+  const { field, query, setQuery, categories, results, canCreate } = props;
+  const isChoosingCategory = props.mode === 'categoria-para-nuevo';
 
   return (
     <SearchBox
       shape="header"
-      ref={campo}
-      value={busca}
-      onChange={(e) => setBusca(e.target.value)}
+      ref={field}
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
       onKeyDown={(e) => {
         if (e.key !== 'Enter') return;
         e.preventDefault();
-        if (eligiendoCategoria) {
-          const [unica] = categorias;
-          if (categorias.length === 1 && unica !== undefined) props.onCrearEn(unica);
+        if (isChoosingCategory) {
+          const [isOnly] = categories;
+          if (categories.length === 1 && isOnly !== undefined) props.onCreateIn(isOnly);
           return;
         }
         // Enter elige lo único que queda, que es lo que uno espera después
         // de escribir tres letras y ver una sola fila. Sin filas, pasa a crear.
-        if (resultados.length === 1) props.onElegir(resultados[0]);
-        else if (resultados.length === 0 && puedeCrear) props.onPedirCategoria();
+        if (results.length === 1) props.onSelect(results[0]);
+        else if (results.length === 0 && canCreate) props.onRequestCategory();
       }}
       placeholder={
-        eligiendoCategoria
+        isChoosingCategory
           ? t('transactions.conceptSearch.filterCategoriesPlaceholder')
           : t('transactions.conceptSearch.searchPlaceholder')
       }
       aria-label={
-        eligiendoCategoria
+        isChoosingCategory
           ? t('transactions.conceptSearch.filterCategories')
           : t('transactions.conceptSearch.placeholder')
       }

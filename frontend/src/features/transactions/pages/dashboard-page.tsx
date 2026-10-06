@@ -2,8 +2,8 @@ import { DashboardCharts } from '@/features/transactions/components/dashboard-ch
 import { DashboardKpis } from '@/features/transactions/components/dashboard-kpis';
 import { DashboardMovements } from '@/features/transactions/components/dashboard-movements';
 import { DashboardSkeleton } from '@/features/transactions/components/dashboard-skeleton';
-import { MovimientoModal } from '@/features/transactions/components/movimiento-modal';
-import { ToolbarFiltros } from '@/features/transactions/components/toolbar-filtros';
+import { TransactionModal } from '@/features/transactions/components/movimiento-modal';
+import { FiltersToolbar } from '@/features/transactions/components/toolbar-filtros';
 import { useDashboardPage } from '@/features/transactions/hooks/use-dashboard-page';
 import { ApiClientError } from '@/shared/api/api-client';
 import { useAuth } from '@/shared/api/auth-context';
@@ -46,36 +46,36 @@ export function DashboardPage() {
 
       {dashboard.data && (
         <>
-          <DashboardKpis datos={dashboard.data} alDia={p.alDia} />
+          <DashboardKpis data={dashboard.data} isUpToDate={p.alDia} />
           <DashboardCharts
-            datos={dashboard.data}
-            hayPendientes={p.hayPendientes}
-            ruta={p.ruta}
-            onElegirPago={(pago) => {
+            data={dashboard.data}
+            hasPending={p.hayPendientes}
+            path={p.ruta}
+            onSelectPayment={(pago) => {
               ficha.setConfirmando(pago);
               ficha.setTipoNuevo('expense');
               ficha.setEditando(null);
             }}
-            onBajar={(id) => {
+            onDrillDown={(id) => {
               tabla.setPagina(1);
               p.aplicar({ categoryIds: [id] });
             }}
-            onSubir={() => {
+            onDrillUp={() => {
               tabla.setPagina(1);
               const anterior = p.ruta[p.ruta.length - 2];
               p.aplicar({ categoryIds: anterior ? [anterior.id] : [] });
             }}
           />
-          <DashboardMovements tabla={tabla} arbol={p.arbol} onAbrir={ficha.setEditando} />
+          <DashboardMovements table={tabla} tree={p.arbol} onOpen={ficha.setEditando} />
         </>
       )}
 
-      <MovimientoModal
-        abierta={ficha.editando !== undefined}
-        movimiento={ficha.editando}
-        pago={ficha.confirmando}
-        tipoPorDefecto={ficha.tipoNuevo}
-        onCerrar={() => {
+      <TransactionModal
+        isOpen={ficha.editando !== undefined}
+        transaction={ficha.editando}
+        payment={ficha.confirmando}
+        defaultType={ficha.tipoNuevo}
+        onClose={() => {
           ficha.setEditando(undefined);
           ficha.setConfirmando(null);
         }}
@@ -103,13 +103,13 @@ function Barra({ pagina: p }: { pagina: ReturnType<typeof useDashboardPage> }) {
   const { dashboard, tabla, ficha } = p;
 
   return (
-    <ToolbarFiltros
-      titulo={
+    <FiltersToolbar
+      title={
         nombreDePila(user)
           ? t('transactions.dashboard.greetingNamed', { name: nombreDePila(user) })
           : t('transactions.dashboard.greeting')
       }
-      subtitulo={
+      subtitle={
         dashboard.data
           ? t('transactions.dashboard.rangeSummary', {
               n: dashboard.data.range.count,
@@ -117,17 +117,17 @@ function Barra({ pagina: p }: { pagina: ReturnType<typeof useDashboardPage> }) {
             })
           : t('transactions.dashboard.help')
       }
-      filtros={p.filtros}
-      aplicar={(c) => {
+      filters={p.filtros}
+      apply={(c) => {
         tabla.setPagina(1);
         p.aplicar(c);
       }}
-      limpiar={() => {
+      clear={() => {
         tabla.setPagina(1);
         p.limpiar();
       }}
-      hayFiltrosActivos={p.hayFiltrosActivos}
-      onNuevo={(tipo) => {
+      hasActiveFilters={p.hayFiltrosActivos}
+      onNew={(tipo) => {
         ficha.setTipoNuevo(tipo);
         // Un movimiento nuevo empieza de cero, venga uno de donde venga: sin
         // esto, abrir «Nuevo gasto» después de haber mirado un pendiente

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { type PendingPayment } from '@/shared/api/generated/model';
 
-import { PagosPendientes } from './pagos-pendientes';
+import { PendingPayments } from './pagos-pendientes';
 
 /**
  * Un concepto que se cubre a pedazos no es «sin pagar».
@@ -25,7 +25,7 @@ const BASE = {
   costCenter: 'Costos variables',
 } as const;
 
-const MERCADO = {
+const MARKET = {
   ...BASE,
   categoryId: 10,
   name: 'Mercado',
@@ -34,7 +34,7 @@ const MERCADO = {
   isMultiPayment: true,
 } as unknown as PendingPayment;
 
-const ALQUILER = {
+const RENT = {
   ...BASE,
   categoryId: 20,
   name: 'Alquiler',
@@ -44,14 +44,14 @@ const ALQUILER = {
   isMultiPayment: false,
 } as unknown as PendingPayment;
 
-function pintar(pagos: PendingPayment[], onElegir = vi.fn()) {
-  render(<PagosPendientes pagos={pagos} onElegir={onElegir} />);
-  return onElegir;
+function renderPayments(payments: PendingPayment[], onSelect = vi.fn()) {
+  render(<PendingPayments payments={payments} onSelect={onSelect} />);
+  return onSelect;
 }
 
 describe('Un pendiente que se paga en varias veces', () => {
   it('dice cuánto lleva, no solo cuánto cuesta', () => {
-    pintar([MERCADO]);
+    renderPayments([MARKET]);
 
     // El total sigue a la derecha, como en cualquier pendiente. Sale dos
     // veces —en la fila y en el rótulo de la tarjeta— y las dos son correctas.
@@ -61,34 +61,34 @@ describe('Un pendiente que se paga en varias veces', () => {
   });
 
   it('pinta una barra con la fracción cubierta, y la anuncia', () => {
-    pintar([MERCADO]);
+    renderPayments([MARKET]);
 
-    const barra = screen.getByRole('progressbar');
+    const bar = screen.getByRole('progressbar');
     // 320450 / 1200000 = 26,7 % → 27.
-    expect(barra.getAttribute('aria-valuenow')).toBe('27');
+    expect(bar.getAttribute('aria-valuenow')).toBe('27');
     // Sin nombre accesible, un div que crece no dice nada a quien no lo ve.
-    expect(barra.getAttribute('aria-label')).toMatch(/Mercado/);
+    expect(bar.getAttribute('aria-label')).toMatch(/Mercado/);
   });
 
   it('ofrece «Registrar otro» y no «confirmar»', () => {
     // Lo que va a pasar al pulsar es anotar ESTA ida, no dar el mes por
     // saldado. El rótulo tiene que decir eso.
-    pintar([MERCADO]);
+    renderPayments([MARKET]);
     expect(screen.getByText('Registrar otro')).toBeDefined();
   });
 
   it('al pulsarla, entrega el pago entero a quien abre la ficha', () => {
-    const onElegir = pintar([MERCADO]);
+    const onSelect = renderPayments([MARKET]);
 
     fireEvent.click(screen.getByText('Mercado'));
 
-    expect(onElegir).toHaveBeenCalledWith(MERCADO);
+    expect(onSelect).toHaveBeenCalledWith(MARKET);
   });
 });
 
 describe('Un pendiente normal no cambia', () => {
   it('no lleva barra ni «Registrar otro»', () => {
-    pintar([ALQUILER]);
+    renderPayments([RENT]);
 
     expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.queryByText('Registrar otro')).toBeNull();
@@ -98,7 +98,7 @@ describe('Un pendiente normal no cambia', () => {
   it('y conviviendo con uno de varias veces, solo el otro la lleva', () => {
     // Que la barra se escape a las filas vecinas sería peor que no tenerla:
     // diría que un alquiler sin pagar está pagado a medias.
-    pintar([MERCADO, ALQUILER]);
+    renderPayments([MARKET, RENT]);
 
     expect(screen.getAllByRole('progressbar')).toHaveLength(1);
   });
@@ -108,8 +108,8 @@ describe('Sin un total al que llegar', () => {
   it('no se pinta barra, porque sería una fracción sin denominador', () => {
     // Ya es un `PendingPayment`: esparcirlo no cambia el tipo, así que no hay
     // nada que afirmar.
-    const sinTotal: PendingPayment = { ...MERCADO, expectedAmount: null, paidAmount: '50000' };
-    pintar([sinTotal]);
+    const withoutTotal: PendingPayment = { ...MARKET, expectedAmount: null, paidAmount: '50000' };
+    renderPayments([withoutTotal]);
 
     expect(screen.queryByRole('progressbar')).toBeNull();
   });

@@ -15,7 +15,7 @@ import { Table, TableSkeleton, Td, Th, Tr } from '@/shared/ui/molecules/table';
 import { Select } from '@/shared/ui/organisms/select';
 
 /** Las columnas, en un solo sitio: el esqueleto tiene que tener las mismas. */
-const COLUMNAS = [
+const COLUMNS = [
   t('transactions.table.columns.concept'),
   t('transactions.table.columns.period'),
   t('transactions.table.columns.paidOn'),
@@ -24,13 +24,13 @@ const COLUMNAS = [
   t('transactions.table.columns.amount'),
 ];
 
-interface OrdenDeColumna {
+interface ColumnSort {
   direction: 'asc' | 'desc' | null;
   onChange: () => void;
 }
 
 /** Cómo pide la tabla el orden de una columna: por qué campo, y en qué sentido empieza. */
-type ColumnOrder = (campo: string, primero: 'asc' | 'desc') => OrdenDeColumna;
+type ColumnOrder = (field: string, first: 'asc' | 'desc') => ColumnSort;
 
 /**
  * La tabla de movimientos.
@@ -45,35 +45,35 @@ type ColumnOrder = (campo: string, primero: 'asc' | 'desc') => OrdenDeColumna;
  * Lo que cambia entre las dos es el CONTORNO: si hay cabeceras que ordenan, si
  * hay pie de totales y cuántas filas caben. Eso es lo que se pasa.
  */
-export function TablaDeMovimientos({
-  movimientos,
-  arbol,
-  cargando = false,
-  onAbrir,
-  orden,
+export function TransactionsTable({
+  transactions,
+  tree,
+  isLoading = false,
+  onOpen,
+  sort,
   pie,
-  vacio,
-  filasDelEsqueleto = 8,
+  emptyLabel,
+  skeletonRows = 8,
 }: {
-  movimientos: Transaction[];
-  arbol: CategoryTree[];
-  cargando?: boolean;
-  onAbrir: (movimiento: Transaction) => void;
+  transactions: Transaction[];
+  tree: CategoryTree[];
+  isLoading?: boolean;
+  onOpen: (transaction: Transaction) => void;
   /** Sin esto las cabeceras no ordenan: en un resumen no tendría sentido. */
-  orden?: ColumnOrder;
+  sort?: ColumnOrder;
   pie?: ReactNode;
-  vacio?: ReactNode;
-  filasDelEsqueleto?: number;
+  emptyLabel?: ReactNode;
+  skeletonRows?: number;
 }) {
-  if (cargando) {
-    return <TableSkeleton columns={COLUMNAS} rows={filasDelEsqueleto} hasDivider={false} />;
+  if (isLoading) {
+    return <TableSkeleton columns={COLUMNS} rows={skeletonRows} hasDivider={false} />;
   }
 
-  if (movimientos.length === 0) {
+  if (transactions.length === 0) {
     return (
       <Card>
         <CardContent className="p-0">
-          {vacio ?? (
+          {emptyLabel ?? (
             <EmptyState
               Icon={SearchX}
               title={t('transactions.table.noMatchTitle')}
@@ -87,11 +87,11 @@ export function TablaDeMovimientos({
 
   return (
     <Table>
-      <MovementsHead orden={orden} />
+      <MovementsHead sort={sort} />
 
       <tbody>
-        {movimientos.map((m) => (
-          <Fila key={m.id} movimiento={m} arbol={arbol} onAbrir={() => onAbrir(m)} />
+        {transactions.map((m) => (
+          <Row key={m.id} transaction={m} tree={tree} onOpen={() => onOpen(m)} />
         ))}
       </tbody>
 
@@ -100,26 +100,26 @@ export function TablaDeMovimientos({
   );
 }
 
-interface FilaProps {
-  movimiento: Transaction;
-  arbol: CategoryTree[];
-  onAbrir: () => void;
+interface RowProps {
+  transaction: Transaction;
+  tree: CategoryTree[];
+  onOpen: () => void;
 }
 
-function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
-  const actualizar = useActualizarMovimiento();
-  const { centro, categoria } = rutaSeleccionada(arbol, movimiento.categoryId ?? undefined);
+function Row({ transaction, tree, onOpen }: RowProps) {
+  const update = useActualizarMovimiento();
+  const { centro, categoria } = rutaSeleccionada(tree, transaction.categoryId ?? undefined);
 
   // Cambiar el selector guarda EXACTAMENTE lo elegido, sin adivinar el resto.
   // La tentación es "conservar el concepto si existe con el mismo nombre en el
   // categoría nuevo", pero eso mueve plata a un sitio que nadie pidió y nadie ve.
-  const reclasificar = (id: number | undefined): void => {
-    actualizar.mutate({ id: movimiento.id, cambios: { categoryId: id ?? null } });
+  const reclassify = (id: number | undefined): void => {
+    update.mutate({ id: transaction.id, cambios: { categoryId: id ?? null } });
   };
 
   // Sin clasificar no es un error, es algo pendiente: la fila se marca para que
   // se vea de lejos cuál falta por ordenar después de una importación.
-  const sinClasificar = movimiento.categoryId === null;
+  const isUnclassified = transaction.categoryId === null;
 
   /*
     Un centro ESTÁTICO no se reclasifica desde aquí.
@@ -132,55 +132,55 @@ function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
     hay que mover algo, se hace dinámico el centro desde Centros de costos —un
     acto deliberado, en otra pantalla— y entonces se mueve.
   */
-  const estatico = centro?.isStatic ?? false;
-  const motivo = estatico
+  const isStatic = centro?.isStatic ?? false;
+  const reason = isStatic
     ? t('transactions.table.staticCenter', { name: centro?.name })
     : undefined;
 
   return (
-    <Tr onClick={onAbrir} isFlagged={sinClasificar} isDimmed={actualizar.isPending}>
-      <NameCell movimiento={movimiento} arbol={arbol} sinClasificar={sinClasificar} />
+    <Tr onClick={onOpen} isFlagged={isUnclassified} isDimmed={update.isPending}>
+      <NameCell transaction={transaction} tree={tree} isUnclassified={isUnclassified} />
 
-      <PeriodCell movimiento={movimiento} />
+      <PeriodCell transaction={transaction} />
 
       <Td className="tabular whitespace-nowrap text-muted-foreground">
-        {shortDay(movimiento.date)}
+        {shortDay(transaction.date)}
       </Td>
 
       {/* Los selectores paran el clic: desplegar una lista no puede abrir
           además el modal que hay detrás. */}
       <Td className="w-48">
         <span onClick={(e) => e.stopPropagation()}>
-          <SelectorEnFila
+          <RowSelector
             aria={t('centers.levels.costCenter')}
-            valor={centro?.id}
-            opciones={arbol}
-            deshabilitado={estatico}
-            motivo={motivo}
-            onElegir={reclasificar}
+            value={centro?.id}
+            options={tree}
+            disabled={isStatic}
+            reason={reason}
+            onSelect={reclassify}
           />
         </span>
       </Td>
 
       <Td className="w-48">
         <span onClick={(e) => e.stopPropagation()}>
-          <SelectorEnFila
+          <RowSelector
             aria={t('centers.levels.category')}
-            valor={categoria?.id}
-            opciones={centro?.children ?? []}
-            deshabilitado={estatico || !centro}
-            motivo={motivo}
-            onElegir={(id) => reclasificar(id ?? centro?.id)}
+            value={categoria?.id}
+            options={centro?.children ?? []}
+            disabled={isStatic || !centro}
+            reason={reason}
+            onSelect={(id) => reclassify(id ?? centro?.id)}
           />
         </span>
       </Td>
 
-      <AmountCell movimiento={movimiento} />
+      <AmountCell transaction={transaction} />
     </Tr>
   );
 }
 
-const mesDe = (iso: string): string => iso.slice(0, 7);
+const monthOf = (iso: string): string => iso.slice(0, 7);
 
 /**
  * El periodo del movimiento.
@@ -190,67 +190,67 @@ const mesDe = (iso: string): string => iso.slice(0, 7);
  * campo ausente no puede dejar la pantalla en blanco.
  */
 // `period` opcional en el tipo de entrada: es lo que dice la nota de arriba.
-const periodo = (
+const period = (
   m: Pick<Transaction, 'date'> & { period?: Transaction['period'] | undefined },
-): string => mesDe(m.period ?? m.date);
+): string => monthOf(m.period ?? m.date);
 
 /** El gasto pertenece a un mes y se pagó en otro. */
-const desfasado = (m: Transaction): boolean => periodo(m) !== mesDe(m.date);
+const isStale = (m: Transaction): boolean => period(m) !== monthOf(m.date);
 
-function SelectorEnFila({
+function RowSelector({
   aria,
-  valor,
-  opciones,
-  deshabilitado,
-  motivo,
-  onElegir,
+  value,
+  options,
+  disabled: isDisabled,
+  reason,
+  onSelect,
 }: {
   aria: string;
-  valor?: number | undefined;
-  opciones: CategoryTree[];
-  deshabilitado?: boolean;
+  value?: number | undefined;
+  options: CategoryTree[];
+  disabled?: boolean;
   /** Por qué está bloqueado. Un control apagado sin explicación se lee como
       un error de la aplicación. */
-  motivo?: string | undefined;
-  onElegir: (id: number | undefined) => void;
+  reason?: string | undefined;
+  onSelect: (id: number | undefined) => void;
 }) {
   const selector = (
     <Select
       size="sm"
       label={aria}
       emptyLabel={`${aria}…`}
-      value={valor === undefined ? '' : String(valor)}
-      disabled={deshabilitado}
-      options={opciones.map((o) => ({ value: String(o.id), label: o.name }))}
-      onChange={(v) => onElegir(v === '' ? undefined : Number(v))}
+      value={value === undefined ? '' : String(value)}
+      disabled={isDisabled}
+      options={options.map((o) => ({ value: String(o.id), label: o.name }))}
+      onChange={(v) => onSelect(v === '' ? undefined : Number(v))}
     />
   );
 
-  if (!deshabilitado || motivo === undefined) return selector;
+  if (!isDisabled || reason === undefined) return selector;
 
   return (
-    <WithTooltip text={motivo} className="w-full">
+    <WithTooltip text={reason} className="w-full">
       {selector}
     </WithTooltip>
   );
 }
 
-function AmountCell({ movimiento }: { movimiento: Transaction }) {
+function AmountCell({ transaction }: { transaction: Transaction }) {
   return (
     <Td
       align="right"
       className={cn(
         'tabular whitespace-nowrap font-semibold',
-        movimiento.type === 'income' ? 'text-income' : 'text-expense',
+        transaction.type === 'income' ? 'text-income' : 'text-expense',
       )}
     >
-      {movimiento.type === 'income' ? '+' : '−'}
-      {formatMoney(movimiento.amount, movimiento.currency)}
+      {transaction.type === 'income' ? '+' : '−'}
+      {formatMoney(transaction.amount, transaction.currency)}
     </Td>
   );
 }
 
-function PeriodCell({ movimiento }: { movimiento: Transaction }) {
+function PeriodCell({ transaction }: { transaction: Transaction }) {
   return (
     <Td className="whitespace-nowrap text-muted-foreground">
       {/*
@@ -259,11 +259,11 @@ function PeriodCell({ movimiento }: { movimiento: Transaction }) {
         que descuadra los totales de quien no lo nota —julio parece barato y
         agosto caro— así que se marca, con punto y con explicación.
       */}
-      {desfasado(movimiento) ? (
+      {isStale(transaction) ? (
         <WithTooltip
           text={t('transactions.table.latePayment', {
-            month: shortMonth(periodo(movimiento)),
-            day: shortDay(movimiento.date),
+            month: shortMonth(period(transaction)),
+            day: shortDay(transaction.date),
           })}
           className="items-center gap-1.5 font-medium text-warning"
         >
@@ -271,28 +271,28 @@ function PeriodCell({ movimiento }: { movimiento: Transaction }) {
               columna de texto gris, y quien no lo nota no sabe que hay algo
               que preguntar. */}
           <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-warning" />
-          {shortMonth(periodo(movimiento))}
+          {shortMonth(period(transaction))}
         </WithTooltip>
       ) : (
-        shortMonth(periodo(movimiento))
+        shortMonth(period(transaction))
       )}
     </Td>
   );
 }
 
 function NameCell({
-  movimiento,
-  arbol,
-  sinClasificar,
+  transaction,
+  tree,
+  isUnclassified,
 }: {
-  movimiento: Transaction;
-  arbol: CategoryTree[];
-  sinClasificar: boolean;
+  transaction: Transaction;
+  tree: CategoryTree[];
+  isUnclassified: boolean;
 }) {
   return (
-    <Td isSticky hasDivider={false} isFlagged={sinClasificar}>
+    <Td isSticky hasDivider={false} isFlagged={isUnclassified}>
       <span className="flex items-center gap-2">
-        {sinClasificar && (
+        {isUnclassified && (
           <Flag
             className="size-3.5 shrink-0 text-warning"
             fill="currentColor"
@@ -305,28 +305,28 @@ function NameCell({
             por un selector de conceptos —así que todo lo registrado a mano
             decía «Sin concepto» aunque tuviera su concepto elegido—. */}
         <span className="block max-w-56 truncate font-medium">
-          {nombreDelMovimiento(movimiento, arbol)}
+          {nombreDelMovimiento(transaction, tree)}
         </span>
       </span>
     </Td>
   );
 }
 
-function MovementsHead({ orden }: { orden: ColumnOrder | undefined }) {
+function MovementsHead({ sort }: { sort: ColumnOrder | undefined }) {
   return (
     <thead>
       <tr>
-        <Th isSticky hasDivider={false} sort={orden?.('merchant', 'asc')}>
+        <Th isSticky hasDivider={false} sort={sort?.('merchant', 'asc')}>
           {t('transactions.table.columns.concept')}
         </Th>
         {/* El periodo antes que el pago: es el eje con el que se mira la app
             —el mes AL QUE PERTENECE el gasto— y la fecha de pago es el dato
             de apoyo que explica por qué a veces no coinciden. */}
         <Th>{t('transactions.table.columns.period')}</Th>
-        <Th sort={orden?.('date', 'desc')}>{t('transactions.table.columns.paidOn')}</Th>
+        <Th sort={sort?.('date', 'desc')}>{t('transactions.table.columns.paidOn')}</Th>
         <Th>{t('transactions.table.columns.costCenter')}</Th>
         <Th>{t('transactions.table.columns.category')}</Th>
-        <Th align="right" sort={orden?.('amount', 'desc')}>
+        <Th align="right" sort={sort?.('amount', 'desc')}>
           {t('transactions.table.columns.amount')}
         </Th>
       </tr>

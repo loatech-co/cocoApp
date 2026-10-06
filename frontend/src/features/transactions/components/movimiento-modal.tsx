@@ -16,15 +16,15 @@ import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 import { ModalBody, MODAL_PANEL } from '@/shared/ui/molecules/modal-parts';
 import { Confirmation } from '@/shared/ui/organisms/confirmation';
 
-import { Camara } from './camara';
+import { CameraCapture } from './camara';
 import { MovementHeader } from './movement-header';
 import { MovementSheetForm } from './movement-sheet-form';
-import { Escaneando } from './reading-progress';
+import { Scanning } from './reading-progress';
 
 interface MovementModalProps {
-  abierta: boolean;
+  isOpen: boolean;
   /** Sin movimiento, el formulario crea. Con movimiento, edita ese. */
-  movimiento?: Transaction | null | undefined;
+  transaction?: Transaction | null | undefined;
   /**
    * El pago pendiente que se viene a confirmar, desde la tarjeta del resumen.
    *
@@ -41,10 +41,10 @@ interface MovementModalProps {
    * del soporte esperando. Lo que hay escrito es lo ESPERADO, y el soporte lo
    * corrige: ver `PendingSupportsColumn`.
    */
-  pago?: PendingPayment | null;
+  payment?: PendingPayment | null;
   /** Con qué tipo abrir al CREAR. Lo elige el menú de "Nuevo movimiento". */
-  tipoPorDefecto?: TransactionType;
-  onCerrar: () => void;
+  defaultType?: TransactionType;
+  onClose: () => void;
 }
 
 /**
@@ -63,31 +63,37 @@ interface MovementModalProps {
  *
  * Lo que necesita para funcionar lo junta `useMovementSheet`.
  */
-export function MovimientoModal(props: MovementModalProps) {
-  const { abierta, movimiento, pago, tipoPorDefecto = 'expense', onCerrar } = props;
-  const hoja = useMovementSheet({ abierta, movimiento, pago, tipoPorDefecto, onCerrar });
-  const { ficha } = hoja;
+export function TransactionModal(props: MovementModalProps) {
+  const { isOpen, transaction, payment, defaultType = 'expense', onClose } = props;
+  const sheet = useMovementSheet({
+    abierta: isOpen,
+    movimiento: transaction,
+    pago: payment,
+    tipoPorDefecto: defaultType,
+    onCerrar: onClose,
+  });
+  const { ficha } = sheet;
 
-  if (!abierta) return null;
-  const editando = Boolean(movimiento);
-  const { categoria, concepto } = rutaSeleccionada(hoja.arbol, ficha.categoryId);
+  if (!isOpen) return null;
+  const isEditing = Boolean(transaction);
+  const { categoria, concepto } = rutaSeleccionada(sheet.arbol, ficha.categoryId);
 
   return (
-    <SheetOverlay editando={editando} onCerrar={onCerrar}>
+    <SheetOverlay isEditing={isEditing} onClose={onClose}>
       <MovementHeader
-        modo={{
+        mode={{
           type: ficha.type,
-          editando,
-          editable: ficha.editable,
+          isEditing,
+          isEditable: ficha.editable,
           // Lleva el `!movimiento` a propósito: `pago` sigue puesto mientras la
           // ficha está abierta, y en cuanto se guarda deja de ser un pendiente.
           // Sin eso, la ficha de un movimiento ya existente podría titularse
           // «Confirmar pago» por venir de esa tarjeta.
-          confirmando: pago != null && !movimiento ? pago : null,
+          isConfirming: payment != null && !transaction ? payment : null,
         }}
-        onEditar={() => ficha.setEditable(true)}
-        onEliminar={() => ficha.setConfirmandoBorrado(true)}
-        onCerrar={onCerrar}
+        onEdit={() => ficha.setEditable(true)}
+        onDelete={() => ficha.setConfirmandoBorrado(true)}
+        onClose={onClose}
       />
 
       {/* `min-h-0` es lo que permite que esto se encoja dentro de la columna:
@@ -96,19 +102,19 @@ export function MovimientoModal(props: MovementModalProps) {
           alto mínimo: con eso el formulario puede estirarse y llevarse sus
           botones al fondo en vez de dejarlos a media altura. */}
       <ModalBody>
-        <MovementSteps hoja={hoja} movimiento={movimiento} onCerrar={onCerrar} />
+        <MovementSteps sheet={sheet} transaction={transaction} onClose={onClose} />
 
         <ConfirmMovementDeletion
-          abierta={ficha.confirmandoBorrado}
-          ocupada={hoja.guardar.eliminar.isPending}
-          concepto={concepto?.name ?? categoria?.name ?? t('transactions.sheet.conceptFallback')}
-          onCancelar={() => ficha.setConfirmandoBorrado(false)}
-          onConfirmar={() =>
-            movimiento &&
-            hoja.guardar.eliminar.mutate(movimiento.id, {
+          isOpen={ficha.confirmandoBorrado}
+          isBusy={sheet.guardar.eliminar.isPending}
+          concept={concepto?.name ?? categoria?.name ?? t('transactions.sheet.conceptFallback')}
+          onCancel={() => ficha.setConfirmandoBorrado(false)}
+          onConfirm={() =>
+            transaction &&
+            sheet.guardar.eliminar.mutate(transaction.id, {
               onSuccess: () => {
                 ficha.setConfirmandoBorrado(false);
-                onCerrar();
+                onClose();
               },
             })
           }
@@ -120,41 +126,44 @@ export function MovimientoModal(props: MovementModalProps) {
 
 /** La cámara, la lectura o el formulario: lo que ocupa la ficha ahora. */
 function MovementSteps({
-  hoja,
-  movimiento,
-  onCerrar,
+  sheet,
+  transaction,
+  onClose,
 }: {
-  hoja: MovementSheet;
-  movimiento: Transaction | null | undefined;
-  onCerrar: () => void;
+  sheet: MovementSheet;
+  transaction: Transaction | null | undefined;
+  onClose: () => void;
 }) {
-  const { ficha, escanear } = hoja;
+  const { ficha, escanear } = sheet;
 
   if (ficha.paso === 'camara') {
     return (
-      <Camara onTomar={(a) => void escanear(a)} onCerrar={() => ficha.setPaso('formulario')} />
+      <CameraCapture
+        onCapture={(a) => void escanear(a)}
+        onClose={() => ficha.setPaso('formulario')}
+      />
     );
   }
 
   if (ficha.paso === 'leyendo') {
-    return <Escaneando archivo={ficha.pendientes[0]} progreso={ficha.progresoDeLectura} />;
+    return <Scanning file={ficha.pendientes[0]} progress={ficha.progresoDeLectura} />;
   }
 
   return (
     <MovementSheetForm
-      ficha={ficha}
-      arbol={hoja.arbol}
-      estatico={hoja.estatico}
-      crearDentro={hoja.crear.crearDentro}
-      creando={hoja.crear.creando}
-      recientes={hoja.recientes}
-      movimiento={movimiento}
-      escanear={escanear}
-      onSubmit={hoja.guardar.onSubmit}
-      guardando={hoja.guardar.guardando}
-      onCancelar={() => {
-        if (!movimiento) {
-          onCerrar();
+      sheet={ficha}
+      tree={sheet.arbol}
+      isStatic={sheet.estatico}
+      createInside={sheet.crear.crearDentro}
+      isCreating={sheet.crear.creando}
+      recent={sheet.recientes}
+      transaction={transaction}
+      scan={escanear}
+      onSubmit={sheet.guardar.onSubmit}
+      isSaving={sheet.guardar.guardando}
+      onCancel={() => {
+        if (!transaction) {
+          onClose();
           return;
         }
         ficha.descartar();
@@ -166,12 +175,12 @@ function MovementSteps({
 
 /** El velo y el panel de la ficha. */
 function SheetOverlay({
-  editando,
-  onCerrar,
+  isEditing,
+  onClose,
   children,
 }: {
-  editando: boolean;
-  onCerrar: () => void;
+  isEditing: boolean;
+  onClose: () => void;
   children: ReactNode;
 }) {
   return (
@@ -204,13 +213,13 @@ function SheetOverlay({
       // escrito dentro. Aquí eso no es un caso raro: la previsualización del
       // soporte se recorre arrastrando, así que el gesto que cierra la ficha
       // es el mismo con el que se mira el recibo.
-      onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={
-          editando
+          isEditing
             ? t('transactions.sheet.editMovementTitle')
             : t('transactions.sheet.newMovementTitle')
         }
@@ -237,29 +246,29 @@ function SheetOverlay({
  * nadie borra un gasto mal anotado por miedo a llevarse «Aseo» por delante.
  */
 function ConfirmMovementDeletion({
-  abierta,
-  ocupada,
-  concepto,
-  onCancelar,
-  onConfirmar,
+  isOpen,
+  isBusy,
+  concept,
+  onCancel,
+  onConfirm,
 }: {
-  abierta: boolean;
-  ocupada: boolean;
-  concepto: string;
-  onCancelar: () => void;
-  onConfirmar: () => void;
+  isOpen: boolean;
+  isBusy: boolean;
+  concept: string;
+  onCancel: () => void;
+  onConfirm: () => void;
 }) {
   return (
     <Confirmation
-      isOpen={abierta}
+      isOpen={isOpen}
       title={t('transactions.sheet.deleteMovementTitle')}
       isDestructive
       confirmLabel={t('common.delete')}
-      isBusy={ocupada}
-      onCancel={onCancelar}
-      onConfirm={onConfirmar}
+      isBusy={isBusy}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
     >
-      {t('transactions.sheet.deleteWarning', { concept: concepto })}
+      {t('transactions.sheet.deleteWarning', { concept })}
     </Confirmation>
   );
 }

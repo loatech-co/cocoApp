@@ -6,8 +6,8 @@ import { Textarea } from '@/shared/ui/atoms/textarea';
 import { MoneyField } from '@/shared/ui/molecules/money-field';
 
 import { MovementClassification } from './movement-classification';
-import { LoQueLei, NoSePudoLeer } from './reading-notices';
-import { SelectorDeFecha } from './selector-de-fecha';
+import { WhatWasRead, CouldNotRead } from './reading-notices';
+import { DateSelector } from './selector-de-fecha';
 
 /**
  * La columna de los campos, cuando la ficha se puede tocar.
@@ -18,7 +18,7 @@ import { SelectorDeFecha } from './selector-de-fecha';
  * que alguien anuncie que son tres campos.
  */
 export function MovementFields(props: ComponentProps<typeof MovementClassification>) {
-  const { ficha } = props;
+  const { sheet } = props;
 
   return (
     <div className="flex flex-col gap-3">
@@ -31,8 +31,8 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
         rellenaron solos. Encabezando su columna, es el rótulo de lo que hay
         debajo; cruzando la ficha entera, era un cartel.
       */}
-      {ficha.lectura && <LoQueLei />}
-      {ficha.sinLeer && <NoSePudoLeer texto={ficha.sinLeer} />}
+      {sheet.lectura && <WhatWasRead />}
+      {sheet.sinLeer && <CouldNotRead text={sheet.sinLeer} />}
 
       <MovementClassification {...props} />
 
@@ -42,15 +42,15 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
               está en el componente. */}
           <MoneyField
             id="mov-valor"
-            value={ficha.amount}
-            onValueChange={ficha.setAmount}
+            value={sheet.amount}
+            onValueChange={sheet.setAmount}
             placeholder="0"
             required
           />
         </Field>
 
         <Field label={t('transactions.fields.date')} id="mov-fecha">
-          <SelectorDeFecha id="mov-fecha" valor={ficha.date} onElegir={ficha.setDate} requerido />
+          <DateSelector id="mov-fecha" value={sheet.date} onSelect={sheet.setDate} required />
         </Field>
       </div>
 
@@ -68,8 +68,8 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
             `required`, y eso ya se sabe porque el formulario se envía sin él. */}
         <Textarea
           id="mov-notas"
-          value={ficha.notes}
-          onChange={(e) => ficha.setNotes(e.target.value)}
+          value={sheet.notes}
+          onChange={(e) => sheet.setNotes(e.target.value)}
           rows={3}
         />
       </Field>

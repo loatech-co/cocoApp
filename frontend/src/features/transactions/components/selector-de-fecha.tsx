@@ -11,7 +11,7 @@ import { fieldTrigger, useInsideField } from '@/shared/ui/foundations/field';
 import { Calendar } from '@/shared/ui/molecules/calendar';
 import { Menu } from '@/shared/ui/molecules/menu';
 
-import { PanelDeRango } from './range-panel';
+import { RangePanel } from './range-panel';
 
 /**
  * EL selector de fechas. Uno solo, con o sin rango y con o sin atajos.
@@ -43,26 +43,26 @@ import { PanelDeRango } from './range-panel';
  * | `rango atajos` | Lo anterior con la columna de periodos a la izquierda |
  */
 
-interface Comun {
+interface CommonProps {
   id?: string;
 }
 
-interface Dia extends Comun {
-  rango?: false;
+interface DayProps extends CommonProps {
+  isRange?: false;
   /** Se pinta igual pero no abre nada: es un dato que se lee, no se elige. */
-  deshabilitado?: boolean;
+  disabled?: boolean;
   /** `YYYY-MM-DD`. */
-  valor: string;
-  onElegir: (iso: string) => void;
-  requerido?: boolean;
+  value: string;
+  onSelect: (iso: string) => void;
+  required?: boolean;
 }
 
-interface Rango extends Comun {
-  rango: true;
-  filtros: Filtros;
-  aplicar: (cambios: Partial<Filtros>) => void;
+interface RangeProps extends CommonProps {
+  isRange: true;
+  filters: Filtros;
+  apply: (changes: Partial<Filtros>) => void;
   /** La columna de periodos hechos: «Este mes», «Últimos 90 días»… */
-  atajos?: boolean;
+  hasShortcuts?: boolean;
   /**
    * Cómo se reparte el ancho quien lo coloca.
    *
@@ -70,44 +70,44 @@ interface Rango extends Comun {
    * rango elegido, entero— así que es el que tiene que quedarse con el hueco
    * que sobra cuando los demás ya midieron lo suyo.
    */
-  claseCaja?: string;
+  boxClassName?: string;
 }
 
-export function SelectorDeFecha(props: Dia | Rango) {
-  return props.rango ? <DeRango {...props} /> : <DeUnDia {...props} />;
+export function DateSelector(props: DayProps | RangeProps) {
+  return props.isRange ? <RangePicker {...props} /> : <DayPicker {...props} />;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    UN DÍA — un campo de formulario
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function DeUnDia({ id, valor, onElegir, requerido = false, deshabilitado = false }: Dia) {
-  const enCampo = useInsideField();
+function DayPicker({ id, value, onSelect, required: isRequired, disabled: isDisabled }: DayProps) {
+  const isInField = useInsideField();
 
-  const { escrito, setEscrito, confirmar } = useTypedDate(valor, onElegir);
+  const { typed, setTyped, confirm } = useTypedDate(value, onSelect);
 
   /*
     El valor viaja además en un campo oculto para que el formulario lo envíe en
     ISO y no como se escribió: un botón no es un campo, y lo que se ve aquí es
     «19 de septiembre de 2026».
   */
-  const oculto = <input type="hidden" name={id} value={valor} />;
+  const hidden = <input type="hidden" name={id} value={value} />;
 
-  if (deshabilitado) {
+  if (isDisabled) {
     // Apagado no es un campo que se escriba ni un botón que abra nada: se
     // pinta igual pero sin nada detrás, para que el foco no caiga en una
     // trampa.
     return (
       <>
-        {oculto}
-        <DisabledDay valor={valor} enCampo={enCampo} />
+        {hidden}
+        <DisabledDay value={value} isInField={isInField} />
       </>
     );
   }
 
   return (
     <>
-      {oculto}
+      {hidden}
       {/* El foco se pinta en la CAJA y no en el campo de dentro: lo que se ve
           como un control es la caja, y un anillo alrededor del texto dejaría
           el icono fuera de lo enfocado. */}
@@ -120,28 +120,28 @@ function DeUnDia({ id, valor, onElegir, requerido = false, deshabilitado = false
         <input
           id={id}
           type="text"
-          value={escrito}
-          required={requerido}
+          value={typed}
+          required={isRequired === true}
           // El marcador es un EJEMPLO de lo que se puede escribir, no una
           // instrucción: enseña el formato sin gastar un renglón de ayuda. Y
           // hace falta para que la etiqueta flotante sepa cuándo subir.
           placeholder={t('transactions.range.datePlaceholder')}
-          onChange={(e) => setEscrito(e.target.value)}
-          onBlur={confirmar}
+          onChange={(e) => setTyped(e.target.value)}
+          onBlur={confirm}
           onKeyDown={(e) => {
             if (e.key !== 'Enter') return;
             // Sin esto, Enter envía el formulario con lo que todavía no se ha
             // interpretado.
             e.preventDefault();
-            confirmar();
+            confirm();
           }}
           className={cn(
             'min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground',
-            enCampo && 'pt-4',
+            isInField && 'pt-4',
           )}
         />
 
-        <DayCalendar valor={valor} onElegir={onElegir} />
+        <DayCalendar value={value} onSelect={onSelect} />
       </div>
     </>
   );
@@ -157,14 +157,14 @@ function DeUnDia({ id, valor, onElegir, requerido = false, deshabilitado = false
  * curso" y "del 1 al 15 de septiembre" producen el mismo recorte. Separarlos
  * obligaría a buscar en qué sitio está el que uno necesita.
  */
-function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
-  const activo = PRESETS.find((p) => p.valor === filtros.preset);
-  const etiqueta =
-    filtros.preset === 'todo'
+function RangePicker({ filters, apply, hasShortcuts = false, boxClassName }: RangeProps) {
+  const activeIndex = PRESETS.find((p) => p.valor === filters.preset);
+  const label =
+    filters.preset === 'todo'
       ? t('transactions.range.allTime')
-      : filtros.preset === 'personalizado'
-        ? longRange(filtros.from, filtros.to)
-        : (activo?.etiqueta ?? t('transactions.range.range'));
+      : filters.preset === 'personalizado'
+        ? longRange(filters.from, filters.to)
+        : (activeIndex?.etiqueta ?? t('transactions.range.range'));
 
   return (
     <Menu
@@ -204,15 +204,15 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
         del control: quien no ve la pantalla oye qué recorte está puesto, que
         es mejor que oír "elegir rango".
       */
-      label={etiqueta}
+      label={label}
       Icon={CalendarDays}
       variant="tool"
       // La etiqueta es el rango entero y tiene que poder encogerse: es el
       // único ancho a medida de toda la barra.
-      boxClassName={cn('max-w-full', claseCaja)}
+      boxClassName={cn('max-w-full', boxClassName)}
     >
-      {(cerrar) => (
-        <PanelDeRango filtros={filtros} aplicar={aplicar} atajos={atajos} cerrar={cerrar} />
+      {(close) => (
+        <RangePanel filters={filters} apply={apply} hasShortcuts={hasShortcuts} close={close} />
       )}
     </Menu>
   );
@@ -223,7 +223,7 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
   lo que abre algo —a la derecha, como la flecha de un desplegable— y no gira,
   porque un calendario boca abajo no dice nada.
 */
-function DayCalendar({ valor, onElegir }: { valor: string; onElegir: (iso: string) => void }) {
+function DayCalendar({ value, onSelect }: { value: string; onSelect: (iso: string) => void }) {
   return (
     <Menu
       label={t('transactions.range.openCalendar')}
@@ -240,16 +240,16 @@ function DayCalendar({ valor, onElegir }: { valor: string; onElegir: (iso: strin
       width="content"
       boxClassName="shrink-0"
     >
-      {(cerrar) => (
+      {(close) => (
         <Calendar
           className="p-3"
-          from={valor || undefined}
-          to={valor || undefined}
+          from={value || undefined}
+          to={value || undefined}
           onSelectDay={(iso) => {
-            onElegir(iso);
+            onSelect(iso);
             // Un solo día no necesita confirmarse: con el segundo clic ya
             // no queda nada por decidir.
-            cerrar();
+            close();
           }}
         />
       )}
@@ -257,11 +257,11 @@ function DayCalendar({ valor, onElegir }: { valor: string; onElegir: (iso: strin
   );
 }
 
-function DisabledDay({ valor, enCampo }: { valor: string; enCampo: boolean }) {
+function DisabledDay({ value, isInField }: { value: string; isInField: boolean }) {
   return (
     <span aria-disabled="true" className={cn(fieldTrigger(), 'opacity-50')}>
-      <span className={cn('min-w-0 flex-1 truncate', enCampo && 'pt-4')}>
-        {valor ? longDay(valor) : t('transactions.range.chooseDate')}
+      <span className={cn('min-w-0 flex-1 truncate', isInField && 'pt-4')}>
+        {value ? longDay(value) : t('transactions.range.chooseDate')}
       </span>
       <CalendarDays className="size-4 shrink-0 opacity-70" aria-hidden="true" />
     </span>
@@ -269,7 +269,7 @@ function DisabledDay({ valor, enCampo }: { valor: string; enCampo: boolean }) {
 }
 
 /** Lo que se teclea en el campo, y cómo se convierte en una fecha. */
-function useTypedDate(valor: string, onElegir: (iso: string) => void) {
+function useTypedDate(value: string, onSelect: (iso: string) => void) {
   /*
     ── El campo se ESCRIBE, y el calendario es la otra puerta ────────────────
     Era un botón: la única forma de poner una fecha era abrir el mes y buscar
@@ -286,12 +286,12 @@ function useTypedDate(valor: string, onElegir: (iso: string) => void) {
     fecha, para que dos movimientos registrados el mismo día no se lean
     distinto según cómo los tecleó cada quien.
   */
-  const [escrito, setEscrito] = useState(() => (valor ? longDay(valor) : ''));
+  const [typed, setTyped] = useState(() => (value ? longDay(value) : ''));
 
   // El campo sigue al valor cuando lo cambia otro: el calendario, o abrir la
   // ficha de otro movimiento sin desmontar esto.
-  useOnChange([valor], () => {
-    setEscrito(valor ? longDay(valor) : '');
+  useOnChange([value], () => {
+    setTyped(value ? longDay(value) : '');
   });
 
   /*
@@ -304,25 +304,25 @@ function useTypedDate(valor: string, onElegir: (iso: string) => void) {
     El valor que se guarda siempre es una fecha de verdad, y lo que no se pudo
     leer no puede parecer que sí.
   */
-  function confirmar(): void {
-    const texto = escrito.trim();
+  function confirm(): void {
+    const text = typed.trim();
 
-    if (texto === '') {
-      setEscrito(valor ? longDay(valor) : '');
+    if (text === '') {
+      setTyped(value ? longDay(value) : '');
       return;
     }
 
-    const leida = findDate(texto, new Date().getFullYear());
-    if (!leida) {
-      setEscrito(valor ? longDay(valor) : '');
+    const parsed = findDate(text, new Date().getFullYear());
+    if (!parsed) {
+      setTyped(value ? longDay(value) : '');
       return;
     }
 
     // Si no cambia, el efecto no se dispara y hay que normalizar aquí: quien
     // escribe «10/09/2026» sobre esa misma fecha tiene que ver cómo se queda.
-    if (leida.iso === valor) setEscrito(longDay(leida.iso));
-    else onElegir(leida.iso);
+    if (parsed.iso === value) setTyped(longDay(parsed.iso));
+    else onSelect(parsed.iso);
   }
 
-  return { escrito, setEscrito, confirmar };
+  return { typed, setTyped, confirm };
 }

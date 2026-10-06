@@ -58,9 +58,9 @@ describe('La ficha de un movimiento que se edita', () => {
 
     // Y la cascada sigue existiendo, detrás de su enlace, con los tres puestos.
     fireEvent.click(screen.getByRole('button', { name: 'Elegir por centro y categoría' }));
-    for (const nombre of ['Centro de costos', 'Categoría']) {
-      const disparador = screen.getByRole('button', { name: new RegExp(nombre) });
-      expect(disparador, `el desplegable de ${nombre}`).toBeDefined();
+    for (const name of ['Centro de costos', 'Categoría']) {
+      const trigger = screen.getByRole('button', { name: new RegExp(name) });
+      expect(trigger, `el desplegable de ${name}`).toBeDefined();
     }
     expect(screen.getByText('Costos fijos')).toBeDefined();
     expect(screen.getByText('Servicios públicos')).toBeDefined();
@@ -94,11 +94,11 @@ describe('La ficha de un movimiento que se edita', () => {
     // El caso real: la ficha se abre antes de que responda la consulta de
     // categorías. Si la clasificación se resolviera una sola vez al montar, los
     // tres desplegables se quedarían vacíos para siempre.
-    const cliente = testQueryClient();
-    renderSheet({ movimiento: TRANSACTION }, cliente);
+    const client = testQueryClient();
+    renderSheet({ transaction: TRANSACTION }, client);
 
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
-    cliente.setQueryData([...keys.categories, 'todas'], TREE);
+    client.setQueryData([...keys.categories, 'todas'], TREE);
 
     expect(await screen.findByText(/Servicios públicos › Costos fijos/)).toBeDefined();
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
@@ -187,7 +187,7 @@ describe('La ficha de confirmar un pago pendiente', () => {
  */
 describe('La ficha de un concepto que se paga en varias veces', () => {
   /** Hoy en América/Bogotá, como lo escribe la aplicación. */
-  function hoy(): Date {
+  function today(): Date {
     return new Date(Date.now() - 5 * 60 * 60 * 1000);
   }
 
@@ -202,9 +202,9 @@ describe('La ficha de un concepto que se paga en varias veces', () => {
     // contar el ciclo, no cuándo se gastó esto.
     openConfirmation(SPLIT_PAYMENT);
 
-    const fecha = screen.getByLabelText<HTMLInputElement>('Fecha').value;
-    expect(fecha).toContain(String(hoy().getUTCDate()));
-    expect(fecha).not.toContain('25');
+    const date = screen.getByLabelText<HTMLInputElement>('Fecha').value;
+    expect(date).toContain(String(today().getUTCDate()));
+    expect(date).not.toContain('25');
   });
 
   it('se titula «Registrar otro», que es lo que ofrecía la lista', () => {

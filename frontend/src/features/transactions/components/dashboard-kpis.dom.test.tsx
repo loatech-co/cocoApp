@@ -8,7 +8,7 @@ import { DashboardKpis } from './dashboard-kpis';
 
 afterEach(cleanup);
 
-const DATOS = {
+const DATA = {
   required_budget: 0,
   range: { expense: 0, income: 0, count: 0 },
   expense_by_center: [],
@@ -22,16 +22,16 @@ const DATOS = {
 */
 describe('La tarjeta que todavía no está', () => {
   it('se apaga sin opacidad', () => {
-    const { container } = render(<DashboardKpis datos={DATOS} alDia />);
+    const { container } = render(<DashboardKpis data={DATA} isUpToDate />);
 
     expect(container.querySelector('[class*="opacity-"]')).toBeNull();
   });
 
   it('su etiqueta «Pronto» usa el tono apagado de la etiqueta', () => {
-    render(<DashboardKpis datos={DATOS} alDia />);
+    render(<DashboardKpis data={DATA} isUpToDate />);
 
-    const pronto = screen.getByText('Pronto');
-    expect(pronto.className).toContain('bg-muted');
-    expect(pronto.className).toContain('text-muted-foreground');
+    const isSoon = screen.getByText('Pronto');
+    expect(isSoon.className).toContain('bg-muted');
+    expect(isSoon.className).toContain('text-muted-foreground');
   });
 });

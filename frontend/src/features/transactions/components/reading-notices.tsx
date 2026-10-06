@@ -9,11 +9,11 @@ import { t } from '@/shared/lib/i18n';
  * pregunta— y el tono de lo pendiente, no el del error: no se rompió nada, hay
  * trabajo que hacer a mano.
  */
-export function NoSePudoLeer({ texto }: { texto: string }) {
+export function CouldNotRead({ text }: { text: string }) {
   return (
     <p className="flex min-h-16 items-center gap-2 rounded-lg bg-warning-surface px-4 py-3 text-sm font-medium text-warning">
       <TriangleAlert className="size-4 shrink-0" aria-hidden="true" />
-      {texto}
+      {text}
     </p>
   );
 }
@@ -44,7 +44,7 @@ export function NoSePudoLeer({ texto }: { texto: string }) {
  * hacer, que es mirar los campos. Contarlo entero ocupaba tres renglones y
  * empujaba hacia abajo justo lo que se pedía revisar.
  */
-export function LoQueLei() {
+export function WhatWasRead() {
   return (
     /*
       ── `min-h-16`: la mitad más alto ─────────────────────────────────────────

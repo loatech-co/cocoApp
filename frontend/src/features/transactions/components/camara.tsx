@@ -26,31 +26,31 @@ import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
  * hasta que se recarga la página. Eso no es un consumo: es una aplicación
  * mirando cuando ya nadie se lo pidió.
  */
-export function Camara({
-  onTomar,
-  onCerrar,
+export function CameraCapture({
+  onCapture,
+  onClose,
 }: {
-  onTomar: (archivo: File) => void;
-  onCerrar: () => void;
+  onCapture: (file: File) => void;
+  onClose: () => void;
 }) {
-  const { video, estado } = useCameraStream();
+  const { video, state } = useCameraStream();
 
   return (
     <div className="flex flex-col gap-3">
-      <Viewfinder video={video} estado={estado} />
+      <Viewfinder video={video} state={state} />
 
       {/* El mismo pie que las demás fichas: a la derecha en el escritorio y
           apilado a ancho completo en el teléfono. Los dos botones se repartían
           el ancho a medias, así que «Cancelar» pesaba igual que «Capturar». */}
       <ModalFooter>
-        <Button type="button" variant="outline" onClick={onCerrar}>
+        <Button type="button" variant="outline" onClick={onClose}>
           <X className="size-4" aria-hidden="true" />
           {t('common.cancel')}
         </Button>
         <Button
           type="button"
-          onClick={() => captureFrame(video.current, onTomar)}
-          disabled={estado !== 'lista'}
+          onClick={() => captureFrame(video.current, onCapture)}
+          disabled={state !== 'lista'}
         >
           <Camera className="size-4" aria-hidden="true" />
           {t('transactions.camera.capture')}
@@ -63,72 +63,72 @@ export function Camara({
 type CameraState = 'pidiendo' | 'lista' | 'sin-permiso' | 'sin-camara';
 
 /** Pide la cámara de atrás al montar y la suelta al desmontar. */
-function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; estado: CameraState } {
+function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; state: CameraState } {
   const video = useRef<HTMLVideoElement>(null);
-  const pista = useRef<MediaStream | null>(null);
-  const [estado, setEstado] = useState<CameraState>('pidiendo');
+  const track = useRef<MediaStream | null>(null);
+  const [state, setState] = useState<CameraState>('pidiendo');
 
   useEffect(() => {
-    let vivo = true;
+    let isAlive = true;
     // Se lee con una función: el análisis de tipos no ve que la limpieza lo
     // apaga mientras se espera, y daría cada comprobación por inútil.
-    const sigueVivo = (): boolean => vivo;
+    const isStillAlive = (): boolean => isAlive;
 
     void (async () => {
       // Fuera de un contexto seguro (http) `mediaDevices` no existe, aunque el
       // tipo de la biblioteca diga que siempre está. El `as` ensancha el tipo.
-      const dispositivos = navigator.mediaDevices as Partial<MediaDevices> | undefined;
-      if (!dispositivos?.getUserMedia) {
-        setEstado('sin-camara');
+      const devices = navigator.mediaDevices as Partial<MediaDevices> | undefined;
+      if (!devices?.getUserMedia) {
+        setState('sin-camara');
         return;
       }
 
       try {
-        const flujo = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment', width: { ideal: 1920 } },
           audio: false,
         });
 
-        if (!sigueVivo()) {
-          for (const p of flujo.getTracks()) p.stop();
+        if (!isStillAlive()) {
+          for (const p of stream.getTracks()) p.stop();
           return;
         }
 
-        pista.current = flujo;
-        if (video.current) video.current.srcObject = flujo;
-        setEstado('lista');
+        track.current = stream;
+        if (video.current) video.current.srcObject = stream;
+        setState('lista');
       } catch (e) {
-        if (!sigueVivo()) return;
+        if (!isStillAlive()) return;
         // `NotFoundError` es que no hay cámara; el resto, que no dieron permiso.
-        setEstado((e as Error).name === 'NotFoundError' ? 'sin-camara' : 'sin-permiso');
+        setState((e as Error).name === 'NotFoundError' ? 'sin-camara' : 'sin-permiso');
       }
     })();
 
     return () => {
-      vivo = false;
-      for (const p of pista.current?.getTracks() ?? []) p.stop();
-      pista.current = null;
+      isAlive = false;
+      for (const p of track.current?.getTracks() ?? []) p.stop();
+      track.current = null;
     };
   }, []);
 
-  return { video, estado };
+  return { video, state };
 }
 
 /** Saca una foto del vídeo y la entrega como archivo. */
-function captureFrame(elemento: HTMLVideoElement | null, onTomar: (archivo: File) => void): void {
-  if (!elemento) return;
+function captureFrame(element: HTMLVideoElement | null, onCapture: (file: File) => void): void {
+  if (!element) return;
 
-  const lienzo = document.createElement('canvas');
-  lienzo.width = elemento.videoWidth;
-  lienzo.height = elemento.videoHeight;
-  lienzo.getContext('2d')?.drawImage(elemento, 0, 0);
+  const canvas = document.createElement('canvas');
+  canvas.width = element.videoWidth;
+  canvas.height = element.videoHeight;
+  canvas.getContext('2d')?.drawImage(element, 0, 0);
 
   // JPEG al 92 %: lo que importa aquí es que el OCR lea bien. El servidor lo
   // pasa después a gris y lo comprime con los mismos parámetros del lote.
-  lienzo.toBlob(
-    (imagen) => {
-      if (!imagen) return;
-      onTomar(new File([imagen], `soporte-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+  canvas.toBlob(
+    (image) => {
+      if (!image) return;
+      onCapture(new File([image], `soporte-${Date.now()}.jpg`, { type: 'image/jpeg' }));
     },
     'image/jpeg',
     0.92,
@@ -137,14 +137,14 @@ function captureFrame(elemento: HTMLVideoElement | null, onTomar: (archivo: File
 
 function Viewfinder({
   video,
-  estado,
+  state,
 }: {
   video: RefObject<HTMLVideoElement | null>;
-  estado: CameraState;
+  state: CameraState;
 }) {
   return (
     <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-sala">
-      {estado === 'lista' ? (
+      {state === 'lista' ? (
         <video
           ref={video}
           autoPlay
@@ -153,12 +153,12 @@ function Viewfinder({
           className="size-full object-cover"
           aria-label={t('transactions.camera.preview')}
         />
-      ) : estado === 'pidiendo' ? (
+      ) : state === 'pidiendo' ? (
         <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
       ) : (
         <p className="flex max-w-xs flex-col items-center gap-2 px-4 text-center text-sm text-sala-tinta/80">
           <CameraOff className="size-6" aria-hidden="true" />
-          {estado === 'sin-permiso'
+          {state === 'sin-permiso'
             ? t('transactions.camera.denied')
             : t('transactions.camera.notFound')}
         </p>

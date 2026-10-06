@@ -18,25 +18,25 @@ import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
 /** Promedio y pico, encima de la gráfica. */
 export function TrendSummary({
-  granularidad,
-  promedio,
-  maximo,
+  granularity,
+  average,
+  max,
   pico,
 }: {
-  granularidad: 'dia' | 'mes';
-  promedio: number;
-  maximo: number;
+  granularity: 'dia' | 'mes';
+  average: number;
+  max: number;
   pico: TrendPoint;
 }) {
   return (
     <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs text-muted-foreground">
       <span>
-        {t('transactions.trend.averagePer', { unit: unidad(granularidad) })}
-        <strong className="tabular font-semibold text-foreground">{formatCOP(promedio)}</strong>
+        {t('transactions.trend.averagePer', { unit: unidad(granularity) })}
+        <strong className="tabular font-semibold text-foreground">{formatCOP(average)}</strong>
       </span>
       <span>
         {t('transactions.trend.peak')}
-        <strong className="tabular font-semibold text-foreground">{formatCOP(maximo)}</strong>
+        <strong className="tabular font-semibold text-foreground">{formatCOP(max)}</strong>
         {t('transactions.trend.peakOn', { bucket: etiquetaDeCubo(pico.bucket) })}
       </span>
     </div>
@@ -45,19 +45,19 @@ export function TrendSummary({
 
 /** Las dos series dibujadas: el gasto con su relleno y, si lo hay, el ingreso. */
 export function TrendLines({
-  gastos,
-  ingresos,
-  hayIngresos,
-  techo,
+  expenses,
+  income,
+  hasIncome,
+  ceiling,
   ariaLabel,
 }: {
-  gastos: number[];
-  ingresos: number[];
-  hayIngresos: boolean;
-  techo: number;
+  expenses: number[];
+  income: number[];
+  hasIncome: boolean;
+  ceiling: number;
   ariaLabel: string;
 }) {
-  const total = gastos.length;
+  const total = expenses.length;
 
   return (
     <svg
@@ -67,12 +67,12 @@ export function TrendLines({
       role="img"
       aria-label={ariaLabel}
     >
-      <RellenoDelGasto />
-      <Guias />
+      <ExpenseFill />
+      <Guides />
 
-      <path d={area(gastos, techo, total)} fill="url(#tendencia-relleno)" />
+      <path d={area(expenses, ceiling, total)} fill="url(#tendencia-relleno)" />
       <path
-        d={linea(gastos, techo, total)}
+        d={linea(expenses, ceiling, total)}
         fill="none"
         stroke="var(--color-expense)"
         strokeWidth="2.5"
@@ -81,9 +81,9 @@ export function TrendLines({
         vectorEffect="non-scaling-stroke"
       />
 
-      {hayIngresos && (
+      {hasIncome && (
         <path
-          d={linea(ingresos, techo, total)}
+          d={linea(income, ceiling, total)}
           fill="none"
           stroke="var(--color-income)"
           strokeWidth="1.75"
@@ -96,7 +96,7 @@ export function TrendLines({
   );
 }
 
-function RellenoDelGasto() {
+function ExpenseFill() {
   return (
     <defs>
       <linearGradient id="tendencia-relleno" x1="0" y1="0" x2="0" y2="1">
@@ -119,7 +119,7 @@ function RellenoDelGasto() {
 }
 
 /** Tres guías: sin ellas no se puede comparar la altura de un punto con la de otro que esté lejos. */
-function Guias() {
+function Guides() {
   return (
     <>
       {[0.25, 0.5, 0.75].map((f) => (
@@ -139,15 +139,15 @@ function Guias() {
 }
 
 /** El punto resaltado sobre la línea. */
-export function Punto({
+export function Point({
   x,
-  valor,
-  techo,
+  value,
+  ceiling,
   color,
 }: {
   x: number;
-  valor: number;
-  techo: number;
+  value: number;
+  ceiling: number;
   color: string;
 }) {
   return (
@@ -156,7 +156,7 @@ export function Punto({
       className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-card"
       style={{
         left: `${x}%`,
-        top: `${(ye(valor, techo) / ALTO_LIENZO) * 100}%`,
+        top: `${(ye(value, ceiling) / ALTO_LIENZO) * 100}%`,
         backgroundColor: color,
       }}
     />
@@ -169,43 +169,43 @@ export function Punto({
   justo el punto que se está mirando.
 */
 export function TrendCard({
-  tarjeta,
-  punto,
-  sitio,
-  medida,
-  hayIngresos,
+  card,
+  point,
+  position,
+  isMeasured,
+  hasIncome,
 }: {
-  tarjeta: RefObject<HTMLDivElement | null>;
-  punto: TrendPoint;
-  sitio: { left: number; top: number };
-  medida: boolean;
-  hayIngresos: boolean;
+  card: RefObject<HTMLDivElement | null>;
+  point: TrendPoint;
+  position: { left: number; top: number };
+  isMeasured: boolean;
+  hasIncome: boolean;
 }) {
   return (
     <div
-      ref={tarjeta}
-      style={{ left: `${sitio.left}px`, top: `${sitio.top}px` }}
+      ref={card}
+      style={{ left: `${position.left}px`, top: `${position.top}px` }}
       className={cn(
         'pointer-events-none absolute min-w-36 rounded-lg p-3',
         FLOATING_SURFACE,
         // Sin medir todavía se pinta invisible: un primer fotograma en
         // la esquina y otro en su sitio se ve como un salto.
-        !medida && 'opacity-0',
+        !isMeasured && 'opacity-0',
       )}
     >
-      <p className="text-xs font-semibold text-muted-foreground">{fechaLarga(punto.bucket)}</p>
+      <p className="text-xs font-semibold text-muted-foreground">{fechaLarga(point.bucket)}</p>
       <p className="tabular mt-1 font-display text-base font-semibold">
-        {formatCOP(Number(punto.expense))}
+        {formatCOP(Number(point.expense))}
       </p>
-      {hayIngresos && Number(punto.income) > 0 && (
+      {hasIncome && Number(point.income) > 0 && (
         <p className="tabular mt-0.5 text-xs text-income">
-          {t('transactions.trend.ofIncome', { amount: formatCOP(Number(punto.income)) })}
+          {t('transactions.trend.ofIncome', { amount: formatCOP(Number(point.income)) })}
         </p>
       )}
       <p className="mt-1 text-2xs text-muted-foreground">
-        {punto.count === 1
-          ? t('transactions.trend.movementsOne', { n: punto.count })
-          : t('transactions.trend.movementsMany', { n: punto.count })}
+        {point.count === 1
+          ? t('transactions.trend.movementsOne', { n: point.count })
+          : t('transactions.trend.movementsMany', { n: point.count })}
       </p>
     </div>
   );
@@ -217,21 +217,21 @@ export function TrendCard({
   etiqueta y los números se pisan unos con otros.
 */
 export function TrendAxis({
-  etiquetas,
+  labels,
   total,
 }: {
-  etiquetas: { indice: number; texto: string }[];
+  labels: { indice: number; texto: string }[];
   total: number;
 }) {
   return (
     <div className="relative h-4">
-      {etiquetas.map(({ indice, texto }) => (
+      {labels.map(({ indice: index, texto: text }) => (
         <span
-          key={indice}
+          key={index}
           className="absolute -translate-x-1/2 whitespace-nowrap text-2xs text-muted-foreground"
-          style={{ left: `${equis(indice, total)}%` }}
+          style={{ left: `${equis(index, total)}%` }}
         >
-          {texto}
+          {text}
         </span>
       ))}
     </div>

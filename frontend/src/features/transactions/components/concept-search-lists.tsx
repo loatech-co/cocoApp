@@ -7,38 +7,38 @@ import { CreateOption, Option } from '@/shared/ui/organisms/combo';
 import { readablePath, type IndexEntry } from '@coco/receipt-parser';
 
 /** El paso de elegir en qué categoría va el concepto que se va a crear. */
-export function CategoriaParaNuevo({
-  nombreNuevo,
-  categorias,
-  onVolver,
-  onCrearEn,
+export function CategoryForNew({
+  newName,
+  categories,
+  onBack,
+  onCreateIn,
 }: {
-  nombreNuevo: string;
-  categorias: IndexEntry[];
-  onVolver: () => void;
-  onCrearEn: (categoria: IndexEntry) => void;
+  newName: string;
+  categories: IndexEntry[];
+  onBack: () => void;
+  onCreateIn: (category: IndexEntry) => void;
 }) {
   return (
     <>
       <div className="flex items-center justify-between gap-2 px-3 pt-2 text-xs text-muted-foreground">
         <span className="min-w-0 truncate">
-          {t('transactions.conceptSearch.whichCategory', { name: nombreNuevo })}
+          {t('transactions.conceptSearch.whichCategory', { name: newName })}
         </span>
-        <TextButton tone="highlight" onClick={onVolver}>
+        <TextButton tone="highlight" onClick={onBack}>
           {t('transactions.conceptSearch.back')}
         </TextButton>
       </div>
-      {categorias.length === 0 ? (
-        <Vacio>{t('transactions.conceptSearch.noCategory')}</Vacio>
+      {categories.length === 0 ? (
+        <Empty>{t('transactions.conceptSearch.noCategory')}</Empty>
       ) : (
         <div
-          className={LISTA}
+          className={LIST}
           role="listbox"
           aria-label={t('transactions.conceptSearch.categories')}
         >
-          {categorias.map((c) => (
-            <Option key={String(c.id)} isSelected={false} onClick={() => onCrearEn(c)}>
-              <Fila entrada={c} />
+          {categories.map((c) => (
+            <Option key={String(c.id)} isSelected={false} onClick={() => onCreateIn(c)}>
+              <Row input={c} />
             </Option>
           ))}
         </div>
@@ -47,65 +47,65 @@ export function CategoriaParaNuevo({
   );
 }
 
-export interface PropsDeResultados {
-  busca: string;
-  resultados: IndexEntry[];
-  recientes: IndexEntry[];
-  candidatos: readonly CandidatoDelRecibo[];
-  elegida: IndexEntry | undefined;
-  puedeCrear: boolean;
-  creando: boolean;
-  onElegir: (e: IndexEntry | undefined) => void;
-  onElegirCandidato: (c: CandidatoDelRecibo) => void;
-  onPedirCategoria: () => void;
+export interface ResultsProps {
+  query: string;
+  results: IndexEntry[];
+  recent: IndexEntry[];
+  candidates: readonly CandidatoDelRecibo[];
+  chosen: IndexEntry | undefined;
+  canCreate: boolean;
+  isCreating: boolean;
+  onSelect: (e: IndexEntry | undefined) => void;
+  onSelectCandidate: (c: CandidatoDelRecibo) => void;
+  onRequestCategory: () => void;
 }
 
 /** Lo que se ofrece al buscar: lo del recibo, lo reciente o lo que coincide, y crear. */
-export function ResultadosDelBuscador(props: PropsDeResultados) {
-  const { busca, resultados, elegida, puedeCrear, onElegir } = props;
-  const buscando = busca.trim() !== '';
+export function SearchResults(props: ResultsProps) {
+  const { query, results, chosen, canCreate, onSelect } = props;
+  const isSearching = query.trim() !== '';
 
   return (
     <>
-      {hayOpciones(props) ? (
-        <div className={LISTA} role="listbox" aria-label={t('transactions.conceptSearch.results')}>
-          {elegida && (
-            <Option isSelected={false} onClick={() => onElegir(undefined)}>
+      {hasOptions(props) ? (
+        <div className={LIST} role="listbox" aria-label={t('transactions.conceptSearch.results')}>
+          {chosen && (
+            <Option isSelected={false} onClick={() => onSelect(undefined)}>
               <span className="text-muted-foreground">
                 {t('transactions.conceptSearch.remove')}
               </span>
             </Option>
           )}
 
-          {!buscando && <SinBuscar {...props} />}
+          {!isSearching && <NotSearching {...props} />}
 
-          {buscando &&
-            resultados.map((r) => (
+          {isSearching &&
+            results.map((r) => (
               <Option
                 key={String(r.id)}
-                isSelected={elegida?.id === r.id}
-                onClick={() => onElegir(r)}
+                isSelected={chosen?.id === r.id}
+                onClick={() => onSelect(r)}
               >
-                <Fila entrada={r} />
+                <Row input={r} />
               </Option>
             ))}
         </div>
       ) : (
-        !(buscando && puedeCrear) && (
-          <Vacio>
-            {buscando
+        !(isSearching && canCreate) && (
+          <Empty>
+            {isSearching
               ? t('transactions.conceptSearch.nothingMatches')
               : t('transactions.conceptSearch.typeToSearch')}
-          </Vacio>
+          </Empty>
         )
       )}
 
-      {buscando && puedeCrear && (
-        <CrearConcepto
-          busca={busca}
-          creando={props.creando}
-          sinResultados={resultados.length === 0}
-          onPedirCategoria={props.onPedirCategoria}
+      {isSearching && canCreate && (
+        <CreateConcept
+          query={query}
+          isCreating={props.isCreating}
+          hasNoResults={results.length === 0}
+          onRequestCategory={props.onRequestCategory}
         />
       )}
     </>
@@ -113,22 +113,16 @@ export function ResultadosDelBuscador(props: PropsDeResultados) {
 }
 
 /** Con la caja en blanco: lo que dejó el recibo, o lo usado últimamente. */
-function SinBuscar({
-  candidatos,
-  recientes,
-  elegida,
-  onElegir,
-  onElegirCandidato,
-}: PropsDeResultados) {
+function NotSearching({ candidates, recent, chosen, onSelect, onSelectCandidate }: ResultsProps) {
   return (
     <>
-      {candidatos.length > 0 && (
-        <Grupo titulo={t('transactions.conceptSearch.fromReceipt')}>
-          {candidatos.map((c) => (
+      {candidates.length > 0 && (
+        <Group title={t('transactions.conceptSearch.fromReceipt')}>
+          {candidates.map((c) => (
             <Option
               key={c.id}
-              isSelected={elegida !== undefined && String(elegida.id) === String(c.id)}
-              onClick={() => onElegirCandidato(c)}
+              isSelected={chosen !== undefined && String(chosen.id) === String(c.id)}
+              onClick={() => onSelectCandidate(c)}
             >
               <span className="flex min-w-0 items-baseline gap-2">
                 <span className="truncate">{c.nombre}</span>
@@ -136,53 +130,49 @@ function SinBuscar({
               </span>
             </Option>
           ))}
-        </Grupo>
+        </Group>
       )}
 
-      {candidatos.length === 0 && recientes.length > 0 && (
-        <Grupo titulo={t('transactions.conceptSearch.recent')}>
-          {recientes.map((r) => (
-            <Option
-              key={String(r.id)}
-              isSelected={elegida?.id === r.id}
-              onClick={() => onElegir(r)}
-            >
-              <Fila entrada={r} />
+      {candidates.length === 0 && recent.length > 0 && (
+        <Group title={t('transactions.conceptSearch.recent')}>
+          {recent.map((r) => (
+            <Option key={String(r.id)} isSelected={chosen?.id === r.id} onClick={() => onSelect(r)}>
+              <Row input={r} />
             </Option>
           ))}
-        </Grupo>
+        </Group>
       )}
     </>
   );
 }
 
-function CrearConcepto({
-  busca,
-  creando,
-  sinResultados,
-  onPedirCategoria,
+function CreateConcept({
+  query,
+  isCreating,
+  hasNoResults,
+  onRequestCategory,
 }: {
-  busca: string;
-  creando: boolean;
-  sinResultados: boolean;
-  onPedirCategoria: () => void;
+  query: string;
+  isCreating: boolean;
+  hasNoResults: boolean;
+  onRequestCategory: () => void;
 }) {
   return (
-    <CreateOption isCreating={creando} hasEnterHint={sinResultados} onCreate={onPedirCategoria}>
-      {t('transactions.conceptSearch.createConcept', { name: busca.trim() })}
+    <CreateOption isCreating={isCreating} hasEnterHint={hasNoResults} onCreate={onRequestCategory}>
+      {t('transactions.conceptSearch.createConcept', { name: query.trim() })}
     </CreateOption>
   );
 }
 
 /** Nombre y camino. Una categoría se marca para que no se confunda con un concepto. */
-function Fila({ entrada }: { entrada: IndexEntry }) {
+function Row({ input }: { input: IndexEntry }) {
   return (
     <span className="flex min-w-0 items-baseline gap-2">
-      <span className="truncate">{entrada.name}</span>
-      {entrada.path.length > 0 && (
-        <span className="truncate text-xs text-muted-foreground">{readablePath(entrada)}</span>
+      <span className="truncate">{input.name}</span>
+      {input.path.length > 0 && (
+        <span className="truncate text-xs text-muted-foreground">{readablePath(input)}</span>
       )}
-      {entrada.level === 'categoria' && (
+      {input.level === 'categoria' && (
         <span className="ml-auto shrink-0 text-xs text-muted-foreground">
           {t('transactions.conceptSearch.category')}
         </span>
@@ -200,33 +190,27 @@ function Fila({ entrada }: { entrada: IndexEntry }) {
   la lista, los rótulos dan nombre a un `group`, y lo vacío se dice FUERA de la
   lista, que entonces no se pinta: una lista sin opciones no es una lista.
 */
-const LISTA = 'max-h-64 overflow-y-auto p-1';
+const LIST = 'max-h-64 overflow-y-auto p-1';
 
 /** Hay algo que ofrecer en la lista de resultados. */
-function hayOpciones({
-  busca,
-  resultados,
-  recientes,
-  candidatos,
-  elegida,
-}: PropsDeResultados): boolean {
-  if (elegida) return true;
-  if (busca.trim() !== '') return resultados.length > 0;
-  return candidatos.length > 0 || recientes.length > 0;
+function hasOptions({ query, results, recent, candidates, chosen }: ResultsProps): boolean {
+  if (chosen) return true;
+  if (query.trim() !== '') return results.length > 0;
+  return candidates.length > 0 || recent.length > 0;
 }
 
-function Grupo({ titulo, children }: { titulo: string; children: ReactNode }) {
+function Group({ title, children }: { title: string; children: ReactNode }) {
   const id = useId();
   return (
     <div role="group" aria-labelledby={id}>
       <div id={id} className="px-2.5 pb-1 pt-2 text-xs text-muted-foreground">
-        {titulo}
+        {title}
       </div>
       {children}
     </div>
   );
 }
 
-function Vacio({ children }: { children: ReactNode }) {
+function Empty({ children }: { children: ReactNode }) {
   return <p className="px-3.5 py-3 text-sm text-muted-foreground">{children}</p>;
 }

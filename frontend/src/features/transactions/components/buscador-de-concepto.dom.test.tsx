@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { TreeNode } from '@/shared/lib/searchable-tree';
 
-import { BuscadorDeConcepto } from './buscador-de-concepto';
+import { ConceptSearch } from './buscador-de-concepto';
 
 /**
  * El buscador que reemplaza a la cascada.
@@ -16,7 +16,7 @@ import { BuscadorDeConcepto } from './buscador-de-concepto';
  */
 afterEach(cleanup);
 
-const ARBOL: TreeNode[] = [
+const TREE: TreeNode[] = [
   {
     id: 1,
     name: 'Costos fijos',
@@ -45,101 +45,101 @@ const ARBOL: TreeNode[] = [
   },
 ];
 
-function pintar(props: Partial<Parameters<typeof BuscadorDeConcepto>[0]> = {}) {
-  const onElegir = vi.fn();
-  const onCrearConcepto = vi.fn();
+function renderSearch(props: Partial<Parameters<typeof ConceptSearch>[0]> = {}) {
+  const onSelect = vi.fn();
+  const onCreateConcept = vi.fn();
   render(
-    <BuscadorDeConcepto
+    <ConceptSearch
       id="concepto"
-      arbol={ARBOL}
-      valor={undefined}
-      onElegir={onElegir}
-      onCrearConcepto={onCrearConcepto}
+      tree={TREE}
+      value={undefined}
+      onSelect={onSelect}
+      onCreateConcept={onCreateConcept}
       {...props}
     />,
   );
-  return { onElegir, onCrearConcepto };
+  return { onSelect, onCreateConcept };
 }
 
-const abrir = () => fireEvent.click(screen.getByRole('button', { name: /Concepto/ }));
-const escribir = (texto: string) =>
+const open = () => fireEvent.click(screen.getByRole('button', { name: /Concepto/ }));
+const type = (text: string) =>
   fireEvent.change(screen.getByLabelText('Buscar concepto o categoría'), {
-    target: { value: texto },
+    target: { value: text },
   });
-const opcion = (nombre: RegExp) => screen.getByRole('option', { name: nombre });
+const option = (name: RegExp) => screen.getByRole('option', { name });
 
 describe('Buscar', () => {
   it('encuentra por nombre, sin tildes ni mayúsculas', () => {
-    pintar();
-    abrir();
-    escribir('EDUCACION');
-    expect(opcion(/^Educación/)).toBeDefined();
+    renderSearch();
+    open();
+    type('EDUCACION');
+    expect(option(/^Educación/)).toBeDefined();
   });
 
   it('encuentra por palabra clave: «d1» es Mercado', () => {
-    pintar();
-    abrir();
-    escribir('d1');
-    expect(opcion(/^Mercado/)).toBeDefined();
+    renderSearch();
+    open();
+    type('d1');
+    expect(option(/^Mercado/)).toBeDefined();
     expect(screen.queryByRole('option', { name: /^Supermercado/ })).toBeNull();
   });
 
   it('cada resultado enseña su ruta, que es lo que distingue dos nombres parecidos', () => {
-    pintar();
-    abrir();
-    escribir('mercado');
-    expect(opcion(/^Mercado/).textContent).toContain('Alimentación › Costos variables');
+    renderSearch();
+    open();
+    type('mercado');
+    expect(option(/^Mercado/).textContent).toContain('Alimentación › Costos variables');
   });
 
   it('una categoría se marca como tal', () => {
-    pintar();
-    abrir();
-    escribir('alimentacion');
-    const fila = opcion(/^Alimentación/);
-    expect(fila.textContent).toContain('categoría');
-    expect(fila.textContent).toContain('Costos variables');
+    renderSearch();
+    open();
+    type('alimentacion');
+    const row = option(/^Alimentación/);
+    expect(row.textContent).toContain('categoría');
+    expect(row.textContent).toContain('Costos variables');
   });
 });
 
 describe('Elegir', () => {
   it('un concepto avisa con su id: con él se completan categoría y centro', () => {
-    const { onElegir } = pintar();
-    abrir();
-    escribir('celsia');
-    fireEvent.click(opcion(/^Celsia/));
-    expect(onElegir).toHaveBeenCalledWith(100);
+    const { onSelect } = renderSearch();
+    open();
+    type('celsia');
+    fireEvent.click(option(/^Celsia/));
+    expect(onSelect).toHaveBeenCalledWith(100);
   });
 
   it('una categoría también vale: hay cuentas con categorías y sin conceptos', () => {
-    const { onElegir } = pintar();
-    abrir();
-    escribir('educacion');
-    fireEvent.click(opcion(/^Educación/));
-    expect(onElegir).toHaveBeenCalledWith(11);
+    const { onSelect } = renderSearch();
+    open();
+    type('educacion');
+    fireEvent.click(option(/^Educación/));
+    expect(onSelect).toHaveBeenCalledWith(11);
   });
 
   it('Enter elige lo único que queda', () => {
-    const { onElegir } = pintar();
-    abrir();
-    escribir('celsia');
+    const { onSelect } = renderSearch();
+    open();
+    type('celsia');
     fireEvent.keyDown(screen.getByLabelText('Buscar concepto o categoría'), { key: 'Enter' });
-    expect(onElegir).toHaveBeenCalledWith(100);
+    expect(onSelect).toHaveBeenCalledWith(100);
   });
 
   it('lo elegido se lee en el campo con su ruta, y se puede quitar', () => {
-    const { onElegir } = pintar({ valor: 200 });
+    const { onSelect } = renderSearch({ value: 200 });
     expect(screen.getByRole('button', { name: /Concepto/ }).textContent).toContain('Mercado');
-    abrir();
-    fireEvent.click(opcion(/Quitar/));
-    expect(onElegir).toHaveBeenCalledWith(undefined);
+    open();
+    fireEvent.click(option(/Quitar/));
+    expect(onSelect).toHaveBeenCalledWith(undefined);
   });
 });
 
 describe('Crear lo que no existe', () => {
   it('ofrece crear el concepto con lo escrito y pide SOLO la categoría', () => {
-    const { onCrearConcepto } = pintar();
-    abrir();
-    escribir('Gimnasio');
+    const { onCreateConcept } = renderSearch();
+    open();
+    type('Gimnasio');
     expect(screen.queryByRole('option')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: /Crear concepto «Gimnasio»/ }));
@@ -148,51 +148,51 @@ describe('Crear lo que no existe', () => {
     expect(screen.queryByRole('option', { name: /^Celsia/ })).toBeNull();
     expect(screen.queryByRole('option', { name: /^Costos fijos/ })).toBeNull();
 
-    fireEvent.click(opcion(/^Alimentación/));
-    expect(onCrearConcepto).toHaveBeenCalledWith('Gimnasio', 20);
+    fireEvent.click(option(/^Alimentación/));
+    expect(onCreateConcept).toHaveBeenCalledWith('Gimnasio', 20);
   });
 
   it('no ofrece crear lo que ya existe con ese nombre', () => {
-    pintar();
-    abrir();
-    escribir('Mercado');
+    renderSearch();
+    open();
+    type('Mercado');
     expect(screen.queryByRole('button', { name: /Crear concepto/ })).toBeNull();
   });
 });
 
 describe('Con el buscador en blanco', () => {
   it('enseña los recientes, hasta cinco', () => {
-    pintar({ recientes: [201, 100, 200, 201] });
-    abrir();
+    renderSearch({ recent: [201, 100, 200, 201] });
+    open();
     expect(screen.getByText('Recientes')).toBeDefined();
-    const nombres = screen.getAllByRole('option').map((o) => o.textContent);
-    expect(nombres[0]).toContain('Supermercado');
-    expect(nombres[1]).toContain('Celsia');
-    expect(nombres[2]).toContain('Mercado');
-    expect(nombres).toHaveLength(3);
+    const names = screen.getAllByRole('option').map((o) => o.textContent);
+    expect(names[0]).toContain('Supermercado');
+    expect(names[1]).toContain('Celsia');
+    expect(names[2]).toContain('Mercado');
+    expect(names).toHaveLength(3);
   });
 
   it('si el recibo dejó candidatos, van ellos primero, con su ruta', () => {
-    const { onElegir } = pintar({
-      candidatos: [
+    const { onSelect } = renderSearch({
+      candidates: [
         { id: 200, nombre: 'Mercado', ruta: 'Alimentación › Costos variables' },
         { id: 201, nombre: 'Supermercado', ruta: 'Alimentación › Costos variables' },
       ],
-      recientes: [100],
+      recent: [100],
     });
-    abrir();
+    open();
     expect(screen.getByText('Del recibo')).toBeDefined();
     expect(screen.queryByText('Recientes')).toBeNull();
-    fireEvent.click(opcion(/^Supermercado/));
-    expect(onElegir).toHaveBeenCalledWith(201);
+    fireEvent.click(option(/^Supermercado/));
+    expect(onSelect).toHaveBeenCalledWith(201);
   });
 });
 
 describe('En un centro estático', () => {
   it('se lee lo elegido pero no se puede cambiar', () => {
-    pintar({ valor: 100, deshabilitado: true });
-    const campo = screen.getByText(/Celsia/).closest('[aria-disabled="true"]');
-    expect(campo).not.toBeNull();
+    renderSearch({ value: 100, disabled: true });
+    const field = screen.getByText(/Celsia/).closest('[aria-disabled="true"]');
+    expect(field).not.toBeNull();
     expect(screen.queryByRole('button', { name: /Concepto/ })).toBeNull();
   });
 });
@@ -204,13 +204,13 @@ describe('En un centro estático', () => {
 */
 describe('Estructura accesible', () => {
   /** Lo que cuelga de una lista tiene que ser una opción o un grupo de opciones. */
-  function soloOpciones(lista: HTMLElement): void {
-    for (const hijo of Array.from(lista.children)) {
-      const rol = hijo.getAttribute('role');
-      expect(['option', 'group']).toContain(rol);
-      if (rol === 'group') {
-        expect(hijo.getAttribute('aria-labelledby')).toBeTruthy();
-        for (const o of Array.from(hijo.children).slice(1)) {
+  function optionsOnly(list: HTMLElement): void {
+    for (const child of Array.from(list.children)) {
+      const role = child.getAttribute('role');
+      expect(['option', 'group']).toContain(role);
+      if (role === 'group') {
+        expect(child.getAttribute('aria-labelledby')).toBeTruthy();
+        for (const o of Array.from(child.children).slice(1)) {
           expect(o.getAttribute('role')).toBe('option');
         }
       }
@@ -218,36 +218,36 @@ describe('Estructura accesible', () => {
   }
 
   it('el panel es un diálogo con la caja de búsqueda y una lista de opciones', () => {
-    pintar();
-    abrir();
-    const disparador = screen.getByRole('button', { name: /Concepto/ });
-    expect(disparador.getAttribute('aria-haspopup')).toBe('dialog');
+    renderSearch();
+    open();
+    const trigger = screen.getByRole('button', { name: /Concepto/ });
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
     const panel = screen.getByRole('dialog', { name: 'Concepto' });
     expect(panel.querySelector('[role="listbox"] input')).toBeNull();
 
-    escribir('mercado');
-    soloOpciones(screen.getByRole('listbox', { name: 'Resultados' }));
+    type('mercado');
+    optionsOnly(screen.getByRole('listbox', { name: 'Resultados' }));
   });
 
   it('los recientes van en un grupo con nombre', () => {
-    pintar({ recientes: [200] });
-    abrir();
-    soloOpciones(screen.getByRole('listbox', { name: 'Resultados' }));
+    renderSearch({ recent: [200] });
+    open();
+    optionsOnly(screen.getByRole('listbox', { name: 'Resultados' }));
     expect(screen.getByRole('group', { name: 'Recientes' })).toBeDefined();
   });
 
   it('sin nada que ofrecer no hay lista: lo vacío se dice fuera de ella', () => {
-    pintar();
-    abrir();
-    escribir('zzz');
+    renderSearch();
+    open();
+    type('zzz');
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
   it('la lista de categorías para crear también lleva solo opciones', () => {
-    pintar({ onCrearConcepto: vi.fn() });
-    abrir();
-    escribir('Gimnasio');
+    renderSearch({ onCreateConcept: vi.fn() });
+    open();
+    type('Gimnasio');
     fireEvent.click(screen.getByRole('button', { name: /Crear concepto «Gimnasio»/ }));
-    soloOpciones(screen.getByRole('listbox', { name: 'Categorías' }));
+    optionsOnly(screen.getByRole('listbox', { name: 'Categorías' }));
   });
 });

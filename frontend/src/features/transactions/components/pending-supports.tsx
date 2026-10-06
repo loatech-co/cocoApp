@@ -6,15 +6,15 @@ import { useObjectUrls } from '@/shared/lib/object-url';
 import { Button } from '@/shared/ui/atoms/button';
 import { OverlayButton } from '@/shared/ui/molecules/overlay-control';
 
-import { Soltar } from './support-drop-zone';
+import { DropZone } from './support-drop-zone';
 import { SupportPager } from './support-pager';
-import { PreviaDeArchivo } from './support-preview';
-import { PanelDeSubida } from './support-upload-panel';
+import { FilePreview } from './support-preview';
+import { UploadPanel } from './support-upload-panel';
 
 interface PendingSupportsProps {
-  archivos: File[];
-  onAñadir: (archivos: File[]) => void;
-  onQuitar: (indice: number) => void;
+  files: File[];
+  onAdd: (files: File[]) => void;
+  onRemove: (index: number) => void;
   /** Hands the sheet over to the camera; what it captures comes back through `onAñadir`'s owner. */
   onTakePhoto: () => void;
 }
@@ -27,18 +27,18 @@ interface PendingSupportsProps {
  * creados en cada sitio, el mismo archivo se cargaría dos veces en memoria.
  * Aquí se crean una vez y se sueltan juntos.
  */
-export function SoportesPendientes(props: PendingSupportsProps) {
-  const { archivos, onAñadir, onQuitar, onTakePhoto } = props;
-  const [activo, setActivo] = useState(0);
-  const urls = useObjectUrls(archivos);
+export function PendingReceipts(props: PendingSupportsProps) {
+  const { files, onAdd, onRemove, onTakePhoto } = props;
+  const [activeIndex, setActiveIndex] = useState(0);
+  const urls = useObjectUrls(files);
   /** El panel de subir, sobre la ficha. El mismo que abre la galería de uno
       ya guardado. */
-  const [añadiendo, setAñadiendo] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
   // El que se está viendo, recortado: quitar el último dejaba el índice
   // apuntando a un archivo que ya no existe.
-  const i = Math.min(activo, archivos.length - 1);
-  const enseñado = i >= 0 ? archivos[i] : undefined;
+  const i = Math.min(activeIndex, files.length - 1);
+  const enseñado = i >= 0 ? files[i] : undefined;
 
   return (
     /*
@@ -59,41 +59,41 @@ export function SoportesPendientes(props: PendingSupportsProps) {
         existe en ninguna parte hasta que se guarda el movimiento.
       */}
       {enseñado && (
-        <PreviaDeArchivo
+        <FilePreview
           // La clave es el ARCHIVO y no su url: con la url, el marco se
           // desmontaba y se volvía a montar en cuanto se creaba el `blob:`.
           key={`${enseñado.name}-${i}`}
           url={urls[i]}
-          esImagen={enseñado.type.startsWith('image/')}
-          acciones={
+          isImage={enseñado.type.startsWith('image/')}
+          actions={
             <PendingActions
-              indice={i}
-              total={archivos.length}
-              onIr={setActivo}
-              onAñadir={() => setAñadiendo(true)}
-              onQuitar={onQuitar}
+              index={i}
+              total={files.length}
+              onGoTo={setActiveIndex}
+              onAdd={() => setIsAdding(true)}
+              onRemove={onRemove}
             />
           }
         />
       )}
 
-      {archivos.length === 0 && (
+      {files.length === 0 && (
         <EmptyPendingSupports
-          onAñadir={onAñadir}
-          onCargar={() => setAñadiendo(true)}
+          onAdd={onAdd}
+          onLoad={() => setIsAdding(true)}
           onTakePhoto={onTakePhoto}
         />
       )}
 
-      {añadiendo && (
-        <PanelDeSubida
-          subiendo={false}
-          progreso={0}
-          onArchivos={(nuevos) => {
-            onAñadir(nuevos);
-            setAñadiendo(false);
+      {isAdding && (
+        <UploadPanel
+          isUploading={false}
+          progress={0}
+          onFiles={(added) => {
+            onAdd(added);
+            setIsAdding(false);
           }}
-          onCerrar={() => setAñadiendo(false)}
+          onClose={() => setIsAdding(false)}
         />
       )}
     </div>
@@ -115,22 +115,22 @@ export function SoportesPendientes(props: PendingSupportsProps) {
  * compete with it.
  */
 function EmptyPendingSupports({
-  onAñadir,
-  onCargar,
+  onAdd,
+  onLoad,
   onTakePhoto,
 }: {
-  onAñadir: (archivos: File[]) => void;
-  onCargar: () => void;
+  onAdd: (files: File[]) => void;
+  onLoad: () => void;
   onTakePhoto: () => void;
 }) {
   return (
     <>
       <div className="flex min-h-0 flex-1">
-        <Soltar subiendo={false} progreso={0} solo onArchivos={onAñadir} />
+        <DropZone isUploading={false} progress={0} isAlone onFiles={onAdd} />
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <Button type="button" variant="outline" size="sm" onClick={onCargar}>
+        <Button type="button" variant="outline" size="sm" onClick={onLoad}>
           <Upload aria-hidden="true" />
           {t('transactions.supports.uploadFile')}
         </Button>
@@ -145,23 +145,23 @@ function EmptyPendingSupports({
 
 /** Los mandos sobre el documento: pasar, añadir y quitar. */
 function PendingActions({
-  indice,
+  index,
   total,
-  onIr,
-  onAñadir,
-  onQuitar,
+  onGoTo,
+  onAdd,
+  onRemove,
 }: {
-  indice: number;
+  index: number;
   total: number;
-  onIr: (indice: number) => void;
-  onAñadir: () => void;
-  onQuitar: (indice: number) => void;
+  onGoTo: (index: number) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
 }) {
   return (
     <>
-      <SupportPager index={indice} total={total} onGo={onIr} />
+      <SupportPager index={index} total={total} onGo={onGoTo} />
 
-      <OverlayButton label={t('transactions.supports.addAnother')} onClick={onAñadir}>
+      <OverlayButton label={t('transactions.supports.addAnother')} onClick={onAdd}>
         <Plus className="size-4" aria-hidden="true" />
       </OverlayButton>
 
@@ -171,8 +171,8 @@ function PendingActions({
       <OverlayButton
         label={t('transactions.supports.removeThis')}
         onClick={() => {
-          onQuitar(indice);
-          if (indice > 0) onIr(indice - 1);
+          onRemove(index);
+          if (index > 0) onGoTo(index - 1);
         }}
       >
         <Trash2 className="size-4" aria-hidden="true" />

@@ -14,28 +14,28 @@ import { Confirmation } from '@/shared/ui/organisms/confirmation';
  */
 export function ConfirmSupportDeletion({
   transactionId,
-  soporte,
-  onCancelar,
-  onBorrado,
+  receipt,
+  onCancel,
+  onDeleted,
 }: {
   transactionId: number;
-  soporte: Receipt | null;
-  onCancelar: () => void;
-  onBorrado: () => void;
+  receipt: Receipt | null;
+  onCancel: () => void;
+  onDeleted: () => void;
 }) {
-  const eliminar = useEliminarSoporte(transactionId);
+  const remove = useEliminarSoporte(transactionId);
 
   return (
     <Confirmation
-      isOpen={soporte !== null}
+      isOpen={receipt !== null}
       title={t('transactions.supports.deleteTitle')}
       isDestructive
       confirmLabel={t('common.delete')}
-      isBusy={eliminar.isPending}
-      onCancel={onCancelar}
+      isBusy={remove.isPending}
+      onCancel={onCancel}
       onConfirm={() => {
-        if (!soporte) return;
-        eliminar.mutate(soporte.id, { onSuccess: onBorrado });
+        if (!receipt) return;
+        remove.mutate(receipt.id, { onSuccess: onDeleted });
       }}
     >
       {BORRAR_UN_SOPORTE}

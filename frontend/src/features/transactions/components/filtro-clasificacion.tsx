@@ -27,14 +27,14 @@ import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
  * renglones al segundo nivel. Una sola línea con la flecha de volver dice lo
  * mismo, siempre ocupa el mismo alto y tiene un solo sitio donde pulsar.
  */
-export function FiltroClasificacion({
-  arbol,
-  marcados,
-  onCambiar,
+export function ClassificationFilter({
+  tree,
+  checked,
+  onChange,
 }: {
-  arbol: CategoryTree[];
-  marcados: number[];
-  onCambiar: (ids: number[]) => void;
+  tree: CategoryTree[];
+  checked: number[];
+  onChange: (ids: number[]) => void;
 }) {
   /**
    * El camino hasta el nivel que se está listando. Vacío = los centros.
@@ -43,65 +43,65 @@ export function FiltroClasificacion({
    * con el mismo filtro pueden estar mirando niveles distintos del panel, y
    * eso no cambia lo que ve ninguna de las dos en la pantalla de atrás.
    */
-  const [camino, setCamino] = useState<CategoryTree[]>([]);
+  const [path, setPath] = useState<CategoryTree[]>([]);
 
-  const actual = camino[camino.length - 1];
-  const lista = actual ? (actual.children ?? []) : arbol;
+  const actual = path[path.length - 1];
+  const list = actual ? (actual.children ?? []) : tree;
 
-  const alternar = (id: number): void => {
-    onCambiar(marcados.includes(id) ? marcados.filter((n) => n !== id) : [...marcados, id]);
+  const toggle = (id: number): void => {
+    onChange(checked.includes(id) ? checked.filter((n) => n !== id) : [...checked, id]);
   };
 
   /** Marcado por debajo: el padre lo dice sin afirmar que lo está él. */
-  const tieneMarcadoDentro = (nodo: CategoryTree): boolean =>
-    (nodo.children ?? []).some((hijo) => marcados.includes(hijo.id) || tieneMarcadoDentro(hijo));
+  const hasCheckedInside = (node: CategoryTree): boolean =>
+    (node.children ?? []).some((child) => checked.includes(child.id) || hasCheckedInside(child));
 
   return (
     <div className="flex flex-col">
-      <FilterPath camino={camino} onVolver={() => setCamino(camino.slice(0, -1))} />
+      <FilterPath path={path} onBack={() => setPath(path.slice(0, -1))} />
 
       {/* Alto limitado: un centro con cuarenta conceptos haría un menú más
           largo que la pantalla y sin forma de llegar al pie. */}
       <ul className="max-h-64 overflow-y-auto border-y border-border py-1">
-        {lista.length === 0 ? (
+        {list.length === 0 ? (
           <li className="px-3 py-2 text-sm text-muted-foreground">
             {t('transactions.classificationFilter.nothingToExpand')}
           </li>
         ) : (
-          lista.map((nodo) => {
-            const marcado = marcados.includes(nodo.id);
+          list.map((node) => {
+            const isChecked = checked.includes(node.id);
 
             return (
               <FilterRow
-                key={nodo.id}
-                nodo={nodo}
-                marcado={marcado}
-                conMarcaDentro={!marcado && tieneMarcadoDentro(nodo)}
-                onAlternar={() => alternar(nodo.id)}
-                onEntrar={() => setCamino([...camino, nodo])}
+                key={node.id}
+                node={node}
+                isChecked={isChecked}
+                hasCheckedInside={!isChecked && hasCheckedInside(node)}
+                onToggle={() => toggle(node.id)}
+                onEnter={() => setPath([...path, node])}
               />
             );
           })
         )}
       </ul>
 
-      <FilterFooter marcados={marcados} onLimpiar={() => onCambiar([])} />
+      <FilterFooter checked={checked} onClear={() => onChange([])} />
     </div>
   );
 }
 
-function FilterFooter({ marcados, onLimpiar }: { marcados: number[]; onLimpiar: () => void }) {
+function FilterFooter({ checked, onClear }: { checked: number[]; onClear: () => void }) {
   return (
     <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
       <span className="text-muted-foreground">
-        {marcados.length === 0
+        {checked.length === 0
           ? t('transactions.classificationFilter.unfiltered')
-          : marcados.length === 1
-            ? t('transactions.classificationFilter.markedOne', { n: marcados.length })
-            : t('transactions.classificationFilter.markedMany', { n: marcados.length })}
+          : checked.length === 1
+            ? t('transactions.classificationFilter.markedOne', { n: checked.length })
+            : t('transactions.classificationFilter.markedMany', { n: checked.length })}
       </span>
-      {marcados.length > 0 && (
-        <TextButton tone="primary" onClick={onLimpiar}>
+      {checked.length > 0 && (
+        <TextButton tone="primary" onClick={onClear}>
           {t('transactions.classificationFilter.clear')}
         </TextButton>
       )}
@@ -110,17 +110,17 @@ function FilterFooter({ marcados, onLimpiar }: { marcados: number[]; onLimpiar: 
 }
 
 interface FilterRowProps {
-  nodo: CategoryTree;
-  marcado: boolean;
+  node: CategoryTree;
+  isChecked: boolean;
   /** Hay algo marcado más abajo: lo dice un punto. */
-  conMarcaDentro: boolean;
-  onAlternar: () => void;
-  onEntrar: () => void;
+  hasCheckedInside: boolean;
+  onToggle: () => void;
+  onEnter: () => void;
 }
 
 /** Una fila: la casilla con su nombre, y la flecha para bajar un nivel. */
-function FilterRow({ nodo, marcado, conMarcaDentro, onAlternar, onEntrar }: FilterRowProps) {
-  const hijos = nodo.children ?? [];
+function FilterRow({ node, isChecked, hasCheckedInside, onToggle, onEnter }: FilterRowProps) {
+  const children = node.children ?? [];
   return (
     <li className="flex items-stretch">
       <label
@@ -132,12 +132,12 @@ function FilterRow({ nodo, marcado, conMarcaDentro, onAlternar, onEntrar }: Filt
           // recuadro no.
           'movil:min-h-[42px]',
           HIGHLIGHT,
-          marcado && 'font-medium',
+          isChecked && 'font-medium',
         )}
       >
-        <Checkbox checked={marcado} onChange={onAlternar} />
-        <span className="min-w-0 flex-1 truncate">{nodo.name}</span>
-        {conMarcaDentro && (
+        <Checkbox checked={isChecked} onChange={onToggle} />
+        <span className="min-w-0 flex-1 truncate">{node.name}</span>
+        {hasCheckedInside && (
           <span
             aria-hidden="true"
             title={t('transactions.classificationFilter.somethingMarked')}
@@ -146,17 +146,17 @@ function FilterRow({ nodo, marcado, conMarcaDentro, onAlternar, onEntrar }: Filt
         )}
       </label>
 
-      {hijos.length > 0 && <DrillButton name={nodo.name} onDrill={onEntrar} />}
+      {children.length > 0 && <DrillButton name={node.name} onDrill={onEnter} />}
     </li>
   );
 }
 
 /** Dónde se está: los niveles recorridos, y la vuelta al de arriba. */
-function FilterPath({ camino, onVolver }: { camino: CategoryTree[]; onVolver: () => void }) {
+function FilterPath({ path, onBack }: { path: CategoryTree[]; onBack: () => void }) {
   return (
     <div className="flex min-h-9 items-center gap-1 px-3 py-1.5">
-      {camino.length > 0 ? (
-        <BackCrumb path={camino.map((n) => n.name)} isStrong onBack={onVolver} />
+      {path.length > 0 ? (
+        <BackCrumb path={path.map((n) => n.name)} isStrong onBack={onBack} />
       ) : (
         <span className="text-xs font-semibold text-muted-foreground">
           {t('shell.sections.costCenters')}

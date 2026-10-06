@@ -7,20 +7,20 @@ import { Field } from '@/shared/ui/atoms/field';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { Combo } from '@/shared/ui/organisms/combo';
 
-import { BuscadorDeConcepto } from './buscador-de-concepto';
+import { ConceptSearch } from './buscador-de-concepto';
 
 interface ClassificationProps {
-  ficha: MovementSheetState;
-  arbol: CategoryTree[];
+  sheet: MovementSheetState;
+  tree: CategoryTree[];
   /** El centro GUARDADO es estático: ni el buscador ni la cascada se mueven. */
-  estatico: boolean;
-  crearDentro: (nombre: string, padreId: number | undefined) => Promise<void>;
-  creando: boolean;
+  isStatic: boolean;
+  createInside: (name: string, parentId: number | undefined) => Promise<void>;
+  isCreating: boolean;
 }
 
 /** Lo que el buscador dice debajo: de dónde salió lo que hay puesto. */
-function searchHelp(ficha: MovementSheetState): string | undefined {
-  const { clasificacion, categoryId, candidatosDelRecibo } = ficha;
+function searchHelp(sheet: MovementSheetState): string | undefined {
+  const { clasificacion, categoryId, candidatosDelRecibo } = sheet;
   if (clasificacion.origen && clasificacion.origen !== 'manual' && categoryId !== undefined) {
     return t('transactions.classification.canChange', {
       origin: nombreDelOrigen(clasificacion.origen).replace(/^\w/, (c) => c.toUpperCase()),
@@ -52,47 +52,50 @@ function searchHelp(ficha: MovementSheetState): string | undefined {
  * se puede —eso es el registro, no la estructura—; moverlo de concepto, no.
  */
 export function MovementClassification({
-  ficha,
-  arbol,
-  estatico,
-  crearDentro,
-  creando,
-  recientes,
-}: ClassificationProps & { recientes: readonly number[] }) {
+  sheet,
+  tree,
+  isStatic,
+  createInside,
+  isCreating,
+  recent,
+}: ClassificationProps & { recent: readonly number[] }) {
   return (
     <>
-      <BuscadorDeConcepto
+      <ConceptSearch
         id="mov-concepto"
-        arbol={arbol}
-        valor={ficha.categoryId}
-        deshabilitado={estatico}
-        onElegir={(id) => ficha.proponer({ categoryId: id, origen: 'manual' })}
-        onCrearConcepto={(nombre, categoriaId) => void crearDentro(nombre, categoriaId)}
-        creando={creando}
-        recientes={recientes}
-        candidatos={ficha.candidatosDelRecibo}
-        ayuda={searchHelp(ficha)}
+        tree={tree}
+        value={sheet.categoryId}
+        disabled={isStatic}
+        onSelect={(id) => sheet.proponer({ categoryId: id, origen: 'manual' })}
+        onCreateConcept={(name, categoryId) => void createInside(name, categoryId)}
+        isCreating={isCreating}
+        recent={recent}
+        candidates={sheet.candidatosDelRecibo}
+        description={searchHelp(sheet)}
       />
 
-      {!estatico && (
+      {!isStatic && (
         // -mt-3 y no -mt-2: el botón mide 24 y su letra 16, así que el texto
         // queda donde estaba.
         <div className="-mt-3 flex self-start">
-          <TextButton tone="subtle" onClick={() => ficha.setCascadaVisible((v) => !v)}>
-            {ficha.cascadaVisible
+          <TextButton
+            tone="subtle"
+            onClick={() => sheet.setCascadaVisible((isVisible) => !isVisible)}
+          >
+            {sheet.cascadaVisible
               ? t('transactions.classification.hidePicker')
               : t('transactions.classification.showPicker')}
           </TextButton>
         </div>
       )}
 
-      {(ficha.cascadaVisible || estatico) && (
+      {(sheet.cascadaVisible || isStatic) && (
         <ClassificationCascade
-          ficha={ficha}
-          arbol={arbol}
-          estatico={estatico}
-          crearDentro={crearDentro}
-          creando={creando}
+          sheet={sheet}
+          tree={tree}
+          isStatic={isStatic}
+          createInside={createInside}
+          isCreating={isCreating}
         />
       )}
     </>
@@ -106,13 +109,13 @@ export function MovementClassification({
  * tres veces en la vida de una cuenta.
  */
 function ClassificationCascade(props: ClassificationProps) {
-  const { ficha, arbol, estatico, crearDentro, creando } = props;
-  const { centro, categoria, concepto } = rutaSeleccionada(arbol, ficha.categoryId);
-  const elegir = (id?: number): void => ficha.proponer({ categoryId: id, origen: 'manual' });
+  const { sheet, tree, isStatic, createInside, isCreating } = props;
+  const { centro, categoria, concepto } = rutaSeleccionada(tree, sheet.categoryId);
+  const choose = (id?: number): void => sheet.proponer({ categoryId: id, origen: 'manual' });
 
   return (
     <>
-      <CostCenterField centro={centro} arbol={arbol} estatico={estatico} onElegir={elegir} />
+      <CostCenterField costCenter={centro} tree={tree} isStatic={isStatic} onSelect={choose} />
 
       <Field label={t('centers.levels.category')} id="mov-categoria">
         <Combo
@@ -123,15 +126,15 @@ function ClassificationCascade(props: ClassificationProps) {
             value: String(g.id),
             label: g.name,
           }))}
-          disabled={estatico || !centro}
+          disabled={isStatic || !centro}
           emptyLabel={
             centro
               ? t('transactions.classification.notChosen')
               : t('transactions.classification.chooseCostCenterFirst')
           }
-          isCreating={creando}
-          onChange={(v) => elegir(v === '' ? centro?.id : Number(v))}
-          onCreate={(nombre) => void crearDentro(nombre, centro?.id)}
+          isCreating={isCreating}
+          onChange={(v) => choose(v === '' ? centro?.id : Number(v))}
+          onCreate={(name) => void createInside(name, centro?.id)}
         />
       </Field>
 
@@ -144,15 +147,15 @@ function ClassificationCascade(props: ClassificationProps) {
             value: String(c.id),
             label: c.name,
           }))}
-          disabled={estatico || !categoria}
+          disabled={isStatic || !categoria}
           emptyLabel={
             categoria
               ? t('transactions.classification.notChosen')
               : t('transactions.classification.chooseCategoryFirst')
           }
-          isCreating={creando}
-          onChange={(v) => elegir(v === '' ? categoria?.id : Number(v))}
-          onCreate={(nombre) => void crearDentro(nombre, categoria?.id)}
+          isCreating={isCreating}
+          onChange={(v) => choose(v === '' ? categoria?.id : Number(v))}
+          onCreate={(name) => void createInside(name, categoria?.id)}
         />
       </Field>
     </>
@@ -161,25 +164,25 @@ function ClassificationCascade(props: ClassificationProps) {
 
 /** El centro de costos. No ofrece crear: es la estructura de arriba. */
 function CostCenterField({
-  centro,
-  arbol,
-  estatico,
-  onElegir,
+  costCenter,
+  tree,
+  isStatic,
+  onSelect,
 }: {
-  centro: CategoryTree | undefined;
-  arbol: CategoryTree[];
-  estatico: boolean;
-  onElegir: (id?: number) => void;
+  costCenter: CategoryTree | undefined;
+  tree: CategoryTree[];
+  isStatic: boolean;
+  onSelect: (id?: number) => void;
 }) {
   return (
     <Field label={t('centers.levels.costCenter')} id="mov-centro">
       <Combo
         id="mov-centro"
         label={t('centers.levels.costCenter')}
-        value={centro ? String(centro.id) : ''}
-        options={arbol.map((c) => ({ value: String(c.id), label: c.name }))}
-        disabled={estatico}
-        onChange={(v) => onElegir(v === '' ? undefined : Number(v))}
+        value={costCenter ? String(costCenter.id) : ''}
+        options={tree.map((c) => ({ value: String(c.id), label: c.name }))}
+        disabled={isStatic}
+        onChange={(v) => onSelect(v === '' ? undefined : Number(v))}
       />
     </Field>
   );

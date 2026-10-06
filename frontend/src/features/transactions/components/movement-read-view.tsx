@@ -8,15 +8,15 @@ import { Card } from '@/shared/ui/atoms/card';
 import { Section } from '@/shared/ui/molecules/section';
 
 interface ReadViewProps {
-  tipo: TransactionType;
-  nombre: string;
-  valor: string;
+  type: TransactionType;
+  name: string;
+  value: string;
   /** ISO 4217 code of the movement being read. */
   currency: string;
-  fecha: string;
+  date: string;
   /** `YYYY-MM-DD` del día 1 del mes al que PERTENECE el gasto. */
-  periodo?: string | undefined;
-  ruta: string[];
+  period?: string | undefined;
+  path: string[];
 }
 
 /**
@@ -27,10 +27,10 @@ interface ReadViewProps {
  * recibo es la prueba de lo que pasó y la nota es el comentario de alguien
  * sobre eso, así que va del lado en el que se cuenta lo que pasó.
  */
-export function MovementReadColumn({ notes, ...lectura }: ReadViewProps & { notes: string }) {
+export function MovementReadColumn({ notes, ...reading }: ReadViewProps & { notes: string }) {
   return (
     <div className="flex flex-col gap-4">
-      <VistaDeLectura {...lectura} />
+      <ReadView {...reading} />
 
       {notes.trim() !== '' && (
         <Section title={t('transactions.fields.notes')}>
@@ -67,7 +67,7 @@ export function MovementReadColumn({ notes, ...lectura }: ReadViewProps & { note
  * para "esto es una cosa", y aquí dice lo mismo: el movimiento es un objeto, y
  * lo de abajo son sus anexos.
  */
-function VistaDeLectura({ tipo, nombre, valor, currency, fecha, periodo, ruta }: ReadViewProps) {
+function ReadView({ type, name, value, currency, date, period, path }: ReadViewProps) {
   return (
     <div className="flex flex-col gap-5">
       <Card className="overflow-hidden">
@@ -86,18 +86,18 @@ function VistaDeLectura({ tipo, nombre, valor, currency, fecha, periodo, ruta }:
           */}
           <p className="flex items-center gap-2 font-display text-4xl font-bold leading-none text-acento-tinta">
             <ArrowUpRight
-              className={cn('size-8 shrink-0 sm:size-10', tipo === 'income' && 'rotate-180')}
+              className={cn('size-8 shrink-0 sm:size-10', type === 'income' && 'rotate-180')}
               strokeWidth={2.75}
               aria-hidden="true"
             />
-            {formatMoney(valor || '0', currency)}
+            {formatMoney(value || '0', currency)}
           </p>
         </div>
 
-        <ReadDetails nombre={nombre} fecha={fecha} periodo={periodo} ruta={ruta} />
+        <ReadDetails name={name} date={date} period={period} path={path} />
       </Card>
 
-      {ruta.length === 0 && (
+      {path.length === 0 && (
         <p className="text-sm text-muted-foreground">{t('transactions.readView.unclassified')}</p>
       )}
     </div>
@@ -106,32 +106,32 @@ function VistaDeLectura({ tipo, nombre, valor, currency, fecha, periodo, ruta }:
 
 /** De qué es y cuándo se pagó, debajo de la cifra. */
 function ReadDetails({
-  nombre,
-  fecha,
-  periodo,
-  ruta,
-}: Pick<ReadViewProps, 'nombre' | 'fecha' | 'periodo' | 'ruta'>) {
+  name,
+  date,
+  period,
+  path,
+}: Pick<ReadViewProps, 'name' | 'date' | 'period' | 'path'>) {
   // El periodo solo se nombra cuando NO es el mes del pago. Repetir
   // "septiembre" dos veces seguidas no informa; decirlo cuando la factura de
   // agosto se pagó en septiembre, sí —es lo que descuadra los totales de quien
   // no lo nota—.
-  const mesDelPago = fecha.slice(0, 7);
-  const desfasado = periodo !== undefined && periodo !== '' && periodo.slice(0, 7) !== mesDelPago;
+  const paymentMonth = date.slice(0, 7);
+  const isStale = period !== undefined && period !== '' && period.slice(0, 7) !== paymentMonth;
 
   return (
     <div className="flex flex-col gap-1 border-t border-border px-4 py-3">
-      <p className="truncate text-base font-medium">{nombre || t('transactions.noConcept')}</p>
+      <p className="truncate text-base font-medium">{name || t('transactions.noConcept')}</p>
 
       {/* El camino, sin etiqueta y sin fichas. Con fichas parecían pestañas
           —algo que se pulsa y cambia lo de abajo— y aquí no se pulsa nada: es
           dónde vive este movimiento, que se lee como una ruta. */}
-      {ruta.length > 0 && (
+      {path.length > 0 && (
         <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-          {ruta.map((nombre, i) => (
-            <span key={nombre} className="flex items-center gap-1.5">
+          {path.map((segment, i) => (
+            <span key={segment} className="flex items-center gap-1.5">
               {i > 0 && <span aria-hidden="true">›</span>}
-              <span className={cn(i === ruta.length - 1 && 'font-medium text-foreground')}>
-                {nombre}
+              <span className={cn(i === path.length - 1 && 'font-medium text-foreground')}>
+                {segment}
               </span>
             </span>
           ))}
@@ -139,12 +139,12 @@ function ReadDetails({
       )}
 
       <p className="mt-1 text-xs text-muted-foreground">
-        {t('transactions.readView.paidOn', { day: longDay(fecha) })}
+        {t('transactions.readView.paidOn', { day: longDay(date) })}
       </p>
 
-      {desfasado && (
+      {isStale && (
         <p className="text-xs font-medium text-warning">
-          {t('transactions.readView.belongsTo', { month: longMonth(periodo.slice(0, 7)) })}
+          {t('transactions.readView.belongsTo', { month: longMonth(period.slice(0, 7)) })}
         </p>
       )}
     </div>
