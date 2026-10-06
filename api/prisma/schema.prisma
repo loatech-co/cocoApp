@@ -1,13 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Coco App — the canonical mirror of the data model.
 //
-// Engine: MariaDB (Hostinger). Prisma treats it as provider = "mysql": the code
-// neither knows nor cares whether MySQL or MariaDB sits behind it, which is why
-// stage 2 is a DATABASE_URL change, not a rewrite (analysis 5.1).
-//
-// The STANDARD CONNECTOR is used, never the @prisma/adapter-mariadb driver
-// adapter: it has a known bug with JSON columns, and JSON is used here in
-// user_preferences.pref_value and (later on) audit_log.changes_json.
+// Engine: PostgreSQL (Supabase), provider = "postgresql", reached through the
+// `pg` driver adapter (see the generator below). The MariaDB of the first
+// stage is gone: its migrations are kept, unread, in
+// `prisma/archived-mysql-migrations`, and the history Prisma applies starts at
+// `20260915000000_init_postgres`.
 //
 // Fixed rules:
 //   · Physical names are snake_case plural through @@map / @map. They do not move.
@@ -622,9 +620,9 @@ model Transaction {
 // is 70% groceries and 30% cleaning).
 //
 // INVARIANT THAT CANNOT BREAK: the splits must add up to EXACTLY the
-// transaction's `amount`. MySQL/MariaDB cannot express that sum as a
-// declarative constraint, so the service checks it with Prisma.Decimal inside
-// the $transaction, before committing. If it does not add up: 422 and ROLLBACK.
+// transaction's `amount`. A row-level CHECK cannot see the other rows, so the
+// service checks the sum with Prisma.Decimal inside the $transaction, before
+// committing. If it does not add up: 422 and ROLLBACK.
 //
 // When a transaction has splits, the per-category aggregation uses the
 // splits, not the header's category_id.
@@ -774,9 +772,7 @@ model CategoryRule {
 // structures without migrating the schema. The unique (user_id, pref_key)
 // allows an idempotent upsert.
 //
-// MariaDB note: it implements JSON as LONGTEXT with a validity CHECK, not as a
-// native type. It works the same for storing and reading; checked in the
-// first migration.
+// `Json` is `jsonb` in Postgres.
 
 model UserPreference {
   id        BigInt @id @default(autoincrement())
