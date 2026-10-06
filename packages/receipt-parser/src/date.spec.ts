@@ -20,16 +20,16 @@ describe('leerFecha', () => {
   const text = 'Emitida 2026-02-27. Pagada 2026-03-02';
 
   it('prefers the first date inside the period', () => {
-    expect(readDate(text, '2026-03')).toEqual({ iso: '2026-03-02', enElPeriodo: true });
+    expect(readDate(text, '2026-03')).toEqual({ iso: '2026-03-02', inPeriod: true });
   });
 
   it('falls back to the first date when none is in the period', () => {
-    expect(readDate(text, '2026-05')).toEqual({ iso: '2026-02-27', enElPeriodo: false });
-    expect(readDate(text)).toEqual({ iso: '2026-02-27', enElPeriodo: false });
+    expect(readDate(text, '2026-05')).toEqual({ iso: '2026-02-27', inPeriod: false });
+    expect(readDate(text)).toEqual({ iso: '2026-02-27', inPeriod: false });
   });
 
   it('uses the middle of the period when the text has no date', () => {
-    expect(readDate('sin fecha', '2026-03')).toEqual({ iso: '2026-03-15', enElPeriodo: false });
+    expect(readDate('sin fecha', '2026-03')).toEqual({ iso: '2026-03-15', inPeriod: false });
   });
 
   it('returns null with no date and no period', () => {

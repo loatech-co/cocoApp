@@ -27,17 +27,17 @@ function useConceptLists({
     () => (valor === undefined ? undefined : indice.find((e) => String(e.id) === String(valor))),
     [indice, valor],
   );
-  const resultados = useMemo(() => searchInTree(indice, busca, { limite: 12 }), [indice, busca]);
+  const resultados = useMemo(() => searchInTree(indice, busca, { limit: 12 }), [indice, busca]);
   const entradasRecientes = useMemo(
     () => recientesDelIndice(indice, recientes),
     [indice, recientes],
   );
-  const categorias = useMemo(() => indice.filter((e) => e.nivel === 'categoria'), [indice]);
+  const categorias = useMemo(() => indice.filter((e) => e.level === 'categoria'), [indice]);
   const categoriasFiltradas = useMemo(
     () =>
       busca.trim() === ''
         ? categorias
-        : searchInTree(indice, busca, { niveles: ['categoria'], limite: 30 }),
+        : searchInTree(indice, busca, { levels: ['categoria'], limit: 30 }),
     [indice, categorias, busca],
   );
 
@@ -45,7 +45,7 @@ function useConceptLists({
   // «crear» produciría dos conceptos idénticos sumando por separado.
   const puedeCrear =
     busca.trim() !== '' &&
-    !resultados.some((r) => r.nivel === 'concepto' && r.nombreNormalizado === normal(busca));
+    !resultados.some((r) => r.level === 'concepto' && r.normalizedName === normal(busca));
 
   return { elegida, resultados, entradasRecientes, categoriasFiltradas, puedeCrear };
 }
@@ -102,7 +102,7 @@ function recientesDelIndice(
   // lista con el mismo concepto dos veces se vería como un error del
   // buscador y no de quien lo llamó.
   return [...new Set(recientes.map(String))]
-    .map((r) => indice.find((e) => e.nivel === 'concepto' && String(e.id) === r))
+    .map((r) => indice.find((e) => e.level === 'concepto' && String(e.id) === r))
     .filter((e): e is IndexEntry => e !== undefined)
     .slice(0, 5);
 }

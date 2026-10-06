@@ -274,7 +274,7 @@ export class InterpretacionService {
     }): SearchableNode => ({
       id: f.id.toString(),
       name: f.name,
-      palabras_clave: f.palabrasClave,
+      keywords: f.palabrasClave,
       children: (f.children as (typeof f)[]).map(aNodo),
     });
     return anidar(filas).map(aNodo);

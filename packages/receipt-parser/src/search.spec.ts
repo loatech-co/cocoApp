@@ -6,7 +6,7 @@ describe('indexarArbol', () => {
     const index = indexTree(makeTree());
     const power = index.find((e) => e.id === 'luz');
 
-    expect(index.map((e) => e.nivel)).toEqual([
+    expect(index.map((e) => e.level)).toEqual([
       'centro',
       'categoria',
       'concepto',
@@ -16,14 +16,14 @@ describe('indexarArbol', () => {
       'concepto',
       'centro',
     ]);
-    expect(power).toMatchObject({ centroId: 'hogar', categoriaId: 'servicios' });
+    expect(power).toMatchObject({ costCenterId: 'hogar', categoryId: 'servicios' });
     expect(readablePath(power!)).toBe('Servicios públicos › Hogar');
   });
 
   it('normalises names and keywords', () => {
     const index = indexTree(makeTree());
-    expect(index.find((e) => e.id === 'super')?.palabrasNormalizadas).toEqual(['exito']);
-    expect(index.find((e) => e.id === 'oficina')?.palabrasClave).toEqual([]);
+    expect(index.find((e) => e.id === 'super')?.normalizedKeywords).toEqual(['exito']);
+    expect(index.find((e) => e.id === 'oficina')?.keywords).toEqual([]);
   });
 });
 
@@ -54,8 +54,8 @@ describe('buscarEnArbol', () => {
 
   it('searches only the levels asked for, up to the limit', () => {
     expect(ids('hogar')).toEqual([]);
-    expect(ids('hogar', { niveles: ['centro'] })).toEqual(['hogar']);
-    expect(ids('a', { limite: 2 })).toEqual(['agua', 'luz']);
+    expect(ids('hogar', { levels: ['centro'] })).toEqual(['hogar']);
+    expect(ids('a', { limit: 2 })).toEqual(['agua', 'luz']);
   });
 });
 
@@ -64,33 +64,33 @@ describe('resolverTerminos', () => {
 
   it('is certain when the terms point to one concept', () => {
     const r = resolveTerms(index, ['enel', 'energia']);
-    expect(r.certeza).toBe('alta');
-    expect(r.concepto?.id).toBe('luz');
+    expect(r.certainty).toBe('alta');
+    expect(r.concept?.id).toBe('luz');
   });
 
   it('names the shared category when several concepts of one category match', () => {
     const r = resolveTerms(index, ['agua', 'vanti']);
-    expect(r.certeza).toBe('media');
-    expect(r.categoria?.id).toBe('servicios');
-    expect(r.candidatos.map((c) => c.id)).toEqual(['agua', 'gas']);
+    expect(r.certainty).toBe('media');
+    expect(r.category?.id).toBe('servicios');
+    expect(r.candidates.map((c) => c.id)).toEqual(['agua', 'gas']);
   });
 
   it('names no category when the matching concepts are in different ones', () => {
     const r = resolveTerms(index, ['agua', 'exito']);
-    expect(r.certeza).toBe('media');
-    expect(r.categoria).toBeUndefined();
+    expect(r.certainty).toBe('media');
+    expect(r.category).toBeUndefined();
   });
 
   it('falls back to categories when no concept matches', () => {
     expect(resolveTerms(index, ['servicios'])).toMatchObject({
-      certeza: 'media',
-      categoria: { id: 'servicios' },
+      certainty: 'media',
+      category: { id: 'servicios' },
     });
     const several = resolveTerms(index, ['servicios', 'mercado']);
-    expect(several.certeza).toBe('alta');
+    expect(several.certainty).toBe('alta');
   });
 
   it('is uncertain when nothing matches', () => {
-    expect(resolveTerms(index, ['zapatos'])).toEqual({ certeza: 'ninguna', candidatos: [] });
+    expect(resolveTerms(index, ['zapatos'])).toEqual({ certainty: 'ninguna', candidates: [] });
   });
 });

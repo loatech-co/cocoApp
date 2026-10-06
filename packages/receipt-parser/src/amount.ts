@@ -17,17 +17,17 @@ import { normalize } from './signatures';
  */
 
 /** Las líneas donde de verdad está lo que se pagó, de más a menos fiable. */
-const TOTAL_LINES: { patron: RegExp; puntos: number }[] = [
-  { patron: /valor\s+a\s+pagar/i, puntos: 10 },
-  { patron: /total\s+a\s+pagar/i, puntos: 10 },
-  { patron: /total\s+pagado/i, puntos: 10 },
-  { patron: /valor\s+pagado/i, puntos: 10 },
-  { patron: /neto\s+a\s+pagar/i, puntos: 9 },
-  { patron: /pago\s+total/i, puntos: 8 },
-  { patron: /total\s+factura/i, puntos: 8 },
-  { patron: /\btotal\b/i, puntos: 6 },
-  { patron: /\bvalor\b/i, puntos: 4 },
-  { patron: /\bpagar\b/i, puntos: 4 },
+const TOTAL_LINES: { pattern: RegExp; points: number }[] = [
+  { pattern: /valor\s+a\s+pagar/i, points: 10 },
+  { pattern: /total\s+a\s+pagar/i, points: 10 },
+  { pattern: /total\s+pagado/i, points: 10 },
+  { pattern: /valor\s+pagado/i, points: 10 },
+  { pattern: /neto\s+a\s+pagar/i, points: 9 },
+  { pattern: /pago\s+total/i, points: 8 },
+  { pattern: /total\s+factura/i, points: 8 },
+  { pattern: /\btotal\b/i, points: 6 },
+  { pattern: /\bvalor\b/i, points: 4 },
+  { pattern: /\bpagar\b/i, points: 4 },
 ];
 
 /**
@@ -37,22 +37,22 @@ const TOTAL_LINES: { patron: RegExp; puntos: number }[] = [
  * cotización —varios millones— y no se paga. Está en la misma página que el
  * valor a pagar y suele ser mayor.
  */
-const RED_FLAGS: { patron: RegExp; puntos: number }[] = [
-  { patron: /\bibc\b/i, puntos: -20 },
-  { patron: /ingreso\s+base/i, puntos: -20 },
-  { patron: /\bnit\b/i, puntos: -15 },
-  { patron: /\bcus\b/i, puntos: -15 },
-  { patron: /autorizaci[oó]n/i, puntos: -15 },
-  { patron: /n[uú]mero\s+de\s+(factura|recibo|referencia|operaci[oó]n)/i, puntos: -15 },
+const RED_FLAGS: { pattern: RegExp; points: number }[] = [
+  { pattern: /\bibc\b/i, points: -20 },
+  { pattern: /ingreso\s+base/i, points: -20 },
+  { pattern: /\bnit\b/i, points: -15 },
+  { pattern: /\bcus\b/i, points: -15 },
+  { pattern: /autorizaci[oó]n/i, points: -15 },
+  { pattern: /n[uú]mero\s+de\s+(factura|recibo|referencia|operaci[oó]n)/i, points: -15 },
   {
-    patron: /\b(factura|recibo|referencia|radicado|planilla)\s*(no|n°|nro|#)?\s*:?\s*$/i,
-    puntos: -8,
+    pattern: /\b(factura|recibo|referencia|radicado|planilla)\s*(no|n°|nro|#)?\s*:?\s*$/i,
+    points: -8,
   },
-  { patron: /c[oó]digo/i, puntos: -10 },
-  { patron: /cuenta|contrato|suscriptor|medidor|poliza|póliza/i, puntos: -8 },
-  { patron: /tel[eé]fono|celular|whatsapp/i, puntos: -10 },
-  { patron: /lectura\s+(actual|anterior)/i, puntos: -8 },
-  { patron: /consumo|m3|kwh/i, puntos: -6 },
+  { pattern: /c[oó]digo/i, points: -10 },
+  { pattern: /cuenta|contrato|suscriptor|medidor|poliza|póliza/i, points: -8 },
+  { pattern: /tel[eé]fono|celular|whatsapp/i, points: -10 },
+  { pattern: /lectura\s+(actual|anterior)/i, points: -8 },
+  { pattern: /consumo|m3|kwh/i, points: -6 },
 ];
 
 /** Un número tal como puede aparecer escrito: con miles, decimales o peso. */
@@ -71,11 +71,11 @@ const IPV4 =
   /\b(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/;
 
 export interface AmountCandidate {
-  valor: number;
-  puntaje: number;
-  linea: string;
+  value: number;
+  score: number;
+  line: string;
   /** Si salió de una línea que nombra un total. Sube la confianza. */
-  deLineaDeTotal: boolean;
+  fromTotalLine: boolean;
 }
 
 /**
@@ -124,7 +124,7 @@ export function toNumber(text: string): number | null {
  */
 export function readAmount(
   text: string,
-  options: { esPlanilla?: boolean; rango?: { min: number; max: number } | undefined } = {},
+  options: { isPayroll?: boolean; range?: { min: number; max: number } | undefined } = {},
 ): AmountCandidate | null {
   const candidates: AmountCandidate[] = [];
 
@@ -138,19 +138,19 @@ export function readAmount(
 
     let context = 0;
     let isTotalLine = false;
-    for (const { patron: pattern, puntos: points } of TOTAL_LINES) {
+    for (const { pattern, points } of TOTAL_LINES) {
       if (pattern.test(line)) {
         context = Math.max(context, points);
         isTotalLine = true;
         break;
       }
     }
-    for (const { patron: pattern, puntos: points } of RED_FLAGS) {
+    for (const { pattern, points } of RED_FLAGS) {
       if (pattern.test(line)) context += points;
     }
 
     // En una planilla, el IBC pesa tanto que conviene decirlo aparte.
-    if (options.esPlanilla && /\bibc\b|ingreso\s+base/i.test(line)) continue;
+    if (options.isPayroll && /\bibc\b|ingreso\s+base/i.test(line)) continue;
 
     for (const raw of withoutIp.match(CANDIDATE) ?? []) {
       const value = toNumber(raw);
@@ -171,15 +171,15 @@ export function readAmount(
       // Una hora tampoco.
       if (/\d{1,2}:\d{2}/.test(line) && value < 10_000) score -= 4;
       // Y si cae en el rango que este acreedor suele cobrar, es buena señal.
-      if (options.rango && value >= options.rango.min && value <= options.rango.max) {
+      if (options.range && value >= options.range.min && value <= options.range.max) {
         score += 3;
       }
 
       candidates.push({
-        valor: value,
-        puntaje: score,
-        linea: normal.slice(0, 80),
-        deLineaDeTotal: isTotalLine,
+        value,
+        score,
+        line: normal.slice(0, 80),
+        fromTotalLine: isTotalLine,
       });
     }
   }
@@ -188,6 +188,6 @@ export function readAmount(
 
   // Puntaje primero; el tamaño solo desempata. Al revés, un número de factura
   // de nueve cifras le gana a un total de seis.
-  candidates.sort((a, b) => b.puntaje - a.puntaje || b.valor - a.valor);
+  candidates.sort((a, b) => b.score - a.score || b.value - a.value);
   return candidates[0] ?? null;
 }

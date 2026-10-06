@@ -24,8 +24,8 @@ const ARBOL: SearchableNode[] = [
         id: 10,
         name: 'Servicios públicos',
         children: [
-          { id: 100, name: 'Celsia (Energía)', palabras_clave: ['celsia', 'epsa'] },
-          { id: 101, name: 'Aquaoccidente (Agua)', palabras_clave: ['acueducto'] },
+          { id: 100, name: 'Celsia (Energía)', keywords: ['celsia', 'epsa'] },
+          { id: 101, name: 'Aquaoccidente (Agua)', keywords: ['acueducto'] },
         ],
       },
       {
@@ -43,7 +43,7 @@ const ARBOL: SearchableNode[] = [
         id: 20,
         name: 'Alimentación',
         children: [
-          { id: 200, name: 'Mercado', palabras_clave: ['D1', 'Koba Colombia', 'Ara'] },
+          { id: 200, name: 'Mercado', keywords: ['D1', 'Koba Colombia', 'Ara'] },
           { id: 201, name: 'Supermercado' },
         ],
       },
@@ -57,23 +57,23 @@ const indice = indexTree(ARBOL);
 describe('Indexar el árbol', () => {
   it('aplana los tres niveles con su camino', () => {
     const mercado = indice.find((e) => e.id === 200)!;
-    expect(mercado.nivel).toBe('concepto');
-    expect(mercado.ruta).toEqual(['Alimentación', 'Costos variables']);
-    expect(mercado.categoriaId).toBe(20);
-    expect(mercado.centroId).toBe(2);
+    expect(mercado.level).toBe('concepto');
+    expect(mercado.path).toEqual(['Alimentación', 'Costos variables']);
+    expect(mercado.categoryId).toBe(20);
+    expect(mercado.costCenterId).toBe(2);
     expect(readablePath(mercado)).toBe('Alimentación › Costos variables');
   });
 
   it('una categoría solo lleva su centro en el camino', () => {
     const alimentacion = indice.find((e) => e.id === 20)!;
-    expect(alimentacion.nivel).toBe('categoria');
-    expect(alimentacion.ruta).toEqual(['Costos variables']);
+    expect(alimentacion.level).toBe('categoria');
+    expect(alimentacion.path).toEqual(['Costos variables']);
   });
 });
 
 describe('Buscar', () => {
   it('encuentra por nombre, sin tildes ni mayúsculas', () => {
-    expect(searchInTree(indice, 'educacion').map((e) => e.nombre)).toEqual(['Educación']);
+    expect(searchInTree(indice, 'educacion').map((e) => e.name)).toEqual(['Educación']);
     expect(searchInTree(indice, 'CELSIA').map((e) => e.id)).toEqual([100]);
   });
 
@@ -85,7 +85,7 @@ describe('Buscar', () => {
   });
 
   it('el nombre exacto gana al que empieza igual, y ese al que lo contiene', () => {
-    const nombres = searchInTree(indice, 'mercado').map((e) => e.nombre);
+    const nombres = searchInTree(indice, 'mercado').map((e) => e.name);
     expect(nombres).toEqual(['Mercado', 'Supermercado']);
   });
 
@@ -98,7 +98,7 @@ describe('Buscar', () => {
         children: [{ id: 30, name: 'Transporte', children: [{ id: 300, name: 'Transporte' }] }],
       },
     ]);
-    expect(searchInTree(conConcepto, 'transporte').map((e) => e.nivel)).toEqual([
+    expect(searchInTree(conConcepto, 'transporte').map((e) => e.level)).toEqual([
       'concepto',
       'categoria',
     ]);
@@ -117,7 +117,7 @@ describe('Buscar', () => {
 
   it('no devuelve centros de costos: elegir uno no clasifica nada', () => {
     expect(searchInTree(indice, 'costos')).toEqual([]);
-    expect(searchInTree(indice, 'costos', { niveles: ['centro'] }).map((e) => e.nombre)).toEqual([
+    expect(searchInTree(indice, 'costos', { levels: ['centro'] }).map((e) => e.name)).toEqual([
       'Costos fijos',
       'Costos variables',
     ]);
@@ -127,38 +127,38 @@ describe('Buscar', () => {
 describe('Resolver términos genéricos (lo que usa el diccionario)', () => {
   it('ALTA cuando los términos llevan a un solo concepto', () => {
     const r = resolveTerms(indice, ['acueducto', 'agua']);
-    expect(r.certeza).toBe('alta');
-    expect(r.concepto?.id).toBe(101);
+    expect(r.certainty).toBe('alta');
+    expect(r.concept?.id).toBe(101);
   });
 
   it('MEDIA cuando llevan a varios conceptos: propone su categoría común', () => {
     // «mercado» y «supermercado» son dos conceptos de la misma cuenta. Elegir
     // uno sería mover plata a un sitio que nadie pidió.
     const r = resolveTerms(indice, ['mercado', 'supermercado']);
-    expect(r.certeza).toBe('media');
-    expect(r.concepto).toBeUndefined();
-    expect(r.categoria?.id).toBe(20);
-    expect(r.candidatos.map((c) => c.id).sort()).toEqual([200, 201]);
+    expect(r.certainty).toBe('media');
+    expect(r.concept).toBeUndefined();
+    expect(r.category?.id).toBe(20);
+    expect(r.candidates.map((c) => c.id).sort()).toEqual([200, 201]);
   });
 
   it('MEDIA cuando llevan a una categoría y a ningún concepto', () => {
     // Quien tiene «Transporte» como categoría vacía: se propone la categoría.
     const r = resolveTerms(indice, ['transporte', 'taxi']);
-    expect(r.certeza).toBe('media');
-    expect(r.categoria?.id).toBe(21);
-    expect(r.candidatos.map((c) => c.id)).toEqual([21]);
+    expect(r.certainty).toBe('media');
+    expect(r.category?.id).toBe(21);
+    expect(r.candidates.map((c) => c.id)).toEqual([21]);
   });
 
   it('MEDIA con varios conceptos de categorías distintas: no propone ninguna', () => {
     const r = resolveTerms(indice, ['celsia', 'mercado']);
-    expect(r.certeza).toBe('media');
-    expect(r.categoria).toBeUndefined();
-    expect(r.candidatos.length).toBeGreaterThan(1);
+    expect(r.certainty).toBe('media');
+    expect(r.category).toBeUndefined();
+    expect(r.candidates.length).toBeGreaterThan(1);
   });
 
   it('NINGUNA cuando no llevan a nada', () => {
     const r = resolveTerms(indice, ['gasolina', 'combustible']);
-    expect(r.certeza).toBe('ninguna');
-    expect(r.candidatos).toEqual([]);
+    expect(r.certainty).toBe('ninguna');
+    expect(r.candidates).toEqual([]);
   });
 });

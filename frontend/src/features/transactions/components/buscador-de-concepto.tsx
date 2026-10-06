@@ -219,9 +219,9 @@ function ValorDelBuscador({
         )}
       >
         <span className="truncate">
-          {elegida?.nombre ?? t('transactions.conceptSearch.placeholder')}
+          {elegida?.name ?? t('transactions.conceptSearch.placeholder')}
         </span>
-        {elegida && elegida.ruta.length > 0 && (
+        {elegida && elegida.path.length > 0 && (
           <span className="hidden truncate text-xs text-muted-foreground sm:inline">
             {readablePath(elegida)}
           </span>

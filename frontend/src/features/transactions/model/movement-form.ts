@@ -126,7 +126,7 @@ export function proposalFromText(
   indice: readonly IndexEntry[],
   escrito: string,
 ): AutoProposal | null {
-  const conceptos = searchInTree(indice, escrito).filter((e) => e.nivel === 'concepto');
+  const conceptos = searchInTree(indice, escrito).filter((e) => e.level === 'concepto');
   const [unico] = conceptos;
   if (conceptos.length === 1 && unico !== undefined) {
     return { categoryId: Number(unico.id), origen: 'palabras-clave' };
@@ -135,17 +135,17 @@ export function proposalFromText(
   const terminos = termsFor(escrito);
   if (terminos.length === 0) return null;
   const resuelto = resolveTerms(indice, terminos);
-  if (resuelto.certeza === 'alta' && resuelto.concepto) {
-    return { categoryId: Number(resuelto.concepto.id), origen: 'diccionario' };
+  if (resuelto.certainty === 'alta' && resuelto.concept) {
+    return { categoryId: Number(resuelto.concept.id), origen: 'diccionario' };
   }
-  if (resuelto.certeza === 'media') {
-    const candidatos = resuelto.candidatos.map((c) => ({
+  if (resuelto.certainty === 'media') {
+    const candidatos = resuelto.candidates.map((c) => ({
       id: Number(c.id),
-      nombre: c.nombre,
-      ruta: c.ruta.join(' › '),
+      nombre: c.name,
+      ruta: c.path.join(' › '),
     }));
     return {
-      categoryId: resuelto.categoria ? Number(resuelto.categoria.id) : undefined,
+      categoryId: resuelto.category ? Number(resuelto.category.id) : undefined,
       origen: 'diccionario',
       // Del texto, solo se ponen a la vista si hay alguno.
       ...(candidatos.length > 0 ? { candidatos } : {}),
@@ -166,30 +166,30 @@ export function proposalFromText(
  * nombre, como siempre. `null` si el recibo no dijo nada de esto.
  */
 export function proposalFromReading(leida: Reading, arbol: CategoryTree[]): AutoProposal | null {
-  const enElArbol = leida.enElArbol;
+  const enElArbol = leida.inTree;
   if (!enElArbol) {
-    const suyo = leida.concepto ? conceptoLlamado(arbol, leida.concepto) : undefined;
+    const suyo = leida.concept ? conceptoLlamado(arbol, leida.concept) : undefined;
     return suyo ? { categoryId: suyo.id, origen: 'palabras-clave' } : null;
   }
 
   const origen: Origen =
-    enElArbol.fuente === 'diccionario'
+    enElArbol.source === 'diccionario'
       ? 'diccionario'
-      : enElArbol.fuente === 'historial'
+      : enElArbol.source === 'historial'
         ? 'historial'
         : 'palabras-clave';
 
-  if (enElArbol.certeza === 'alta' && enElArbol.conceptoId !== undefined) {
-    return { categoryId: Number(enElArbol.conceptoId), origen };
+  if (enElArbol.certainty === 'alta' && enElArbol.conceptId !== undefined) {
+    return { categoryId: Number(enElArbol.conceptId), origen };
   }
-  if (enElArbol.certeza === 'media') {
+  if (enElArbol.certainty === 'media') {
     return {
-      categoryId: enElArbol.categoriaId !== undefined ? Number(enElArbol.categoriaId) : undefined,
+      categoryId: enElArbol.categoryId !== undefined ? Number(enElArbol.categoryId) : undefined,
       origen,
-      candidatos: enElArbol.candidatos.map((c) => ({
+      candidatos: enElArbol.candidates.map((c) => ({
         id: Number(c.id),
-        nombre: c.nombre,
-        ruta: c.ruta,
+        nombre: c.name,
+        ruta: c.path,
       })),
     };
   }
@@ -214,7 +214,7 @@ export function proposalFromReading(leida: Reading, arbol: CategoryTree[]): Auto
  * solo para leerlo.
  */
 export function unreadNotice(leida: Reading, texto: string): string | null {
-  const algoUtil = leida.valor !== null || leida.fecha !== null || leida.concepto !== null;
+  const algoUtil = leida.value !== null || leida.date !== null || leida.concept !== null;
   if (algoUtil) return null;
   return texto.trim() === ''
     ? t('transactions.reading.noText')

@@ -37,13 +37,13 @@ import {
 
 export interface ReadingSignals {
   /** Aliases del contenido que coincidieron. */
-  texto: string[];
+  text: string[];
   /** Trozos del nombre del archivo que coincidieron. */
-  nombre: string[];
+  name: string[];
   /** NITs que coincidieron. La señal más fuerte. */
   nit: string[];
   /** Recaudadores encontrados y descartados como acreedor. */
-  recaudadoresIgnorados: string[];
+  ignoredCollectors: string[];
 }
 
 /**
@@ -64,69 +64,69 @@ export interface ReadingSignals {
  * no se elige; NINGUNA no se devuelve: entonces esto es `null`.
  */
 export interface TreeClassification {
-  certeza: Exclude<ClassificationCertainty, 'ninguna'>;
+  certainty: Exclude<ClassificationCertainty, 'ninguna'>;
   /** `historial` no lo produce el paquete: lo añade la API, que es quien lo tiene. */
-  fuente: 'historial' | 'palabras-clave' | 'firma' | 'diccionario';
-  conceptoId?: number | string | undefined;
-  categoriaId?: number | string | undefined;
+  source: 'historial' | 'palabras-clave' | 'firma' | 'diccionario';
+  conceptId?: number | string | undefined;
+  categoryId?: number | string | undefined;
   /** Con certeza media: entre qué se duda, para dejarlo a la vista. */
-  candidatos: { id: number | string; nombre: string; ruta: string }[];
+  candidates: { id: number | string; name: string; path: string }[];
 }
 
 export interface Reading {
-  concepto: string | null;
-  categoria: string | null;
-  centro: string | null;
-  valor: number | null;
-  fecha: string | null;
+  concept: string | null;
+  category: string | null;
+  costCenter: string | null;
+  value: number | null;
+  date: string | null;
   /** 0 a 1. Por debajo de 0,8 se manda a revisar. */
-  confianza: number;
-  señales: ReadingSignals;
+  confidence: number;
+  signals: ReadingSignals;
   /** Por qué se decidió así, en una línea, para la cola de revisión. */
-  motivo: string;
+  reason: string;
   /** Los otros candidatos, por si la persona quiere corregir de un clic. */
-  alternativas: { concepto: string; puntaje: number }[];
+  alternatives: { concept: string; score: number }[];
   /** Por ids, cuando se pasó el árbol. `null` si no se pasó o no llevó a nada. */
-  enElArbol?: TreeClassification | null;
+  inTree?: TreeClassification | null;
 }
 
 export interface ReadingInput {
   /** El texto del recibo: embebido del PDF o salido del OCR. */
-  texto: string;
+  text: string;
   /** Cómo se obtuvo. El embebido es exacto; el OCR confunde letras. */
-  fuente: 'texto-embebido' | 'ocr';
+  source: 'texto-embebido' | 'ocr';
   /** El nombre del archivo y, si existe, el de su carpeta. */
-  nombreDeArchivo?: string | undefined;
+  fileName?: string | undefined;
   /** El mes al que pertenece el gasto, `YYYY-MM`. Ayuda a elegir la fecha. */
-  periodo?: string | undefined;
+  period?: string | undefined;
   /** Las firmas a usar. Por defecto, el catálogo. */
-  firmas?: Signature[];
+  signatures?: Signature[];
   /**
    * El árbol de la persona. Con él, la lectura devuelve ids y no solo nombres,
    * y el diccionario del sistema puede buscar sus términos ahí dentro.
    */
-  arbol?: readonly SearchableNode[];
+  tree?: readonly SearchableNode[];
 }
 
 /** Cuánto pesa cada señal. Suman hasta 100 y de ahí sale la confianza. */
 const WEIGHTS = {
   nit: 45,
-  aliasEnTexto: 30,
-  tokenEnNombre: 18,
-  prefijoEnNombre: 10,
+  aliasInText: 30,
+  tokenInName: 18,
+  prefixInName: 10,
 } as const;
 
 export function classify(input: ReadingInput): Reading {
-  const signatures = input.firmas ?? SIGNATURES;
-  const text = normalize(input.texto);
-  const name = normalize(input.nombreDeArchivo ?? '');
-  const index = input.arbol ? indexTree(input.arbol) : null;
+  const signatures = input.signatures ?? SIGNATURES;
+  const text = normalize(input.text);
+  const name = normalize(input.fileName ?? '');
+  const index = input.tree ? indexTree(input.tree) : null;
 
   const signals: ReadingSignals = {
-    texto: [],
-    nombre: [],
+    text: [],
+    name: [],
     nit: [],
-    recaudadoresIgnorados: [],
+    ignoredCollectors: [],
   };
 
   /*
@@ -138,19 +138,19 @@ export function classify(input: ReadingInput): Reading {
     archivo.
   */
   for (const collector of COLLECTORS) {
-    if (text.includes(collector)) signals.recaudadoresIgnorados.push(collector);
+    if (text.includes(collector)) signals.ignoredCollectors.push(collector);
   }
 
   const scored = signatures.map((signature) => {
     let points = 0;
-    const own: { texto: string[]; nombre: string[]; nit: string[] } = {
-      texto: [],
-      nombre: [],
+    const own: { text: string[]; name: string[]; nit: string[] } = {
+      text: [],
+      name: [],
       nit: [],
     };
 
     // Lo que descarta esta firma aunque todo lo demás coincida.
-    const isDiscarded = (signature.excluye ?? []).some((e) => text.includes(normalize(e)));
+    const isDiscarded = (signature.excludes ?? []).some((e) => text.includes(normalize(e)));
 
     for (const nit of signature.nits ?? []) {
       if (text.replace(/[.\s-]/g, '').includes(nit.replace(/[.\s-]/g, ''))) {
@@ -161,50 +161,48 @@ export function classify(input: ReadingInput): Reading {
 
     for (const alias of signature.alias) {
       if (text.includes(normalize(alias))) {
-        points += WEIGHTS.aliasEnTexto;
-        own.texto.push(alias);
+        points += WEIGHTS.aliasInText;
+        own.text.push(alias);
         break;
       }
     }
 
-    for (const token of signature.tokensDeNombre ?? []) {
+    for (const token of signature.nameTokens ?? []) {
       if (name.includes(normalize(token))) {
-        points += WEIGHTS.tokenEnNombre;
-        own.nombre.push(token);
+        points += WEIGHTS.tokenInName;
+        own.name.push(token);
       }
     }
 
     // Las abreviaturas solo valen ancladas al principio: "AO" en medio de una
     // palabra no dice nada, "ao - agosto.pdf" sí.
-    for (const prefix of signature.prefijosDeNombre ?? []) {
+    for (const prefix of signature.namePrefixes ?? []) {
       if (new RegExp(`^${prefix}\\b`, 'i').test(name)) {
-        points += WEIGHTS.prefijoEnNombre;
-        own.nombre.push(prefix.toUpperCase());
+        points += WEIGHTS.prefixInName;
+        own.name.push(prefix.toUpperCase());
       }
     }
 
     return {
-      firma: signature,
-      puntos: isDiscarded ? 0 : points,
-      suyas: own,
-      descartada: isDiscarded,
+      signature,
+      points: isDiscarded ? 0 : points,
+      own,
+      isDiscarded,
     };
   });
 
-  const alive = scored.filter((p) => p.puntos > 0);
+  const alive = scored.filter((p) => p.points > 0);
 
   // Prioridad ANTES que puntaje: es lo que pone la planilla por encima de Sura
   // cuando el recibo dice las dos cosas.
-  alive.sort((a, b) => (b.firma.prioridad ?? 0) - (a.firma.prioridad ?? 0) || b.puntos - a.puntos);
+  alive.sort(
+    (a, b) => (b.signature.priority ?? 0) - (a.signature.priority ?? 0) || b.points - a.points,
+  );
 
   const winner = alive[0];
 
   if (!winner) {
-    const {
-      valor: value,
-      fecha: date,
-      confianzaDelValor: valueConfidence,
-    } = valueAndDate(input, undefined);
+    const { value, date, valueConfidence } = valueAndDate(input, undefined);
 
     /*
       ── Última fuente: el diccionario del sistema ──────────────────────────
@@ -224,29 +222,25 @@ export function classify(input: ReadingInput): Reading {
     if (dictionaryReading) return dictionaryReading;
 
     return {
-      concepto: null,
-      categoria: null,
-      centro: null,
-      valor: value,
-      fecha: date,
+      concept: null,
+      category: null,
+      costCenter: null,
+      value,
+      date,
       // Sin acreedor no hay clasificación, por mucho que el valor esté claro.
-      confianza: Math.min(0.35, valueConfidence),
-      señales: signals,
-      motivo: 'No reconocí al acreedor en el texto ni en el nombre del archivo.',
-      alternativas: [],
-      enElArbol: null,
+      confidence: Math.min(0.35, valueConfidence),
+      signals,
+      reason: 'No reconocí al acreedor en el texto ni en el nombre del archivo.',
+      alternatives: [],
+      inTree: null,
     };
   }
 
-  signals.texto = winner.suyas.texto;
-  signals.nombre = winner.suyas.nombre;
-  signals.nit = winner.suyas.nit;
+  signals.text = winner.own.text;
+  signals.name = winner.own.name;
+  signals.nit = winner.own.nit;
 
-  const {
-    valor: value,
-    fecha: date,
-    confianzaDelValor: valueConfidence,
-  } = valueAndDate(input, winner.firma);
+  const { value, date, valueConfidence } = valueAndDate(input, winner.signature);
 
   /*
     La confianza.
@@ -258,8 +252,8 @@ export function classify(input: ReadingInput): Reading {
     Y baja cuando el segundo candidato queda cerca: dos firmas empatadas no es
     un acierto con reservas, es una duda.
   */
-  const creditorScore = Math.min(1, winner.puntos / 60);
-  const sourceFactor = input.fuente === 'texto-embebido' ? 1 : 0.8;
+  const creditorScore = Math.min(1, winner.points / 60);
+  const sourceFactor = input.source === 'texto-embebido' ? 1 : 0.8;
   /*
     El margen no baja de 0,6, que es lo que vale un empate.
 
@@ -275,8 +269,8 @@ export function classify(input: ReadingInput): Reading {
   */
   const runnerUp = alive[1];
   const margin =
-    runnerUp && runnerUp.puntos > 0
-      ? Math.max(0.6, Math.min(1, 0.6 + (winner.puntos - runnerUp.puntos) / 60))
+    runnerUp && runnerUp.points > 0
+      ? Math.max(0.6, Math.min(1, 0.6 + (winner.points - runnerUp.points) / 60))
       : 1;
 
   const confidence = Math.max(
@@ -285,16 +279,16 @@ export function classify(input: ReadingInput): Reading {
   );
 
   return {
-    concepto: winner.firma.concepto,
-    categoria: winner.firma.categoria,
-    centro: winner.firma.centro,
-    valor: value,
-    fecha: date,
-    confianza: Math.round(confidence * 100) / 100,
-    señales: signals,
-    motivo: reasonFor(winner.firma, signals, input.fuente),
-    alternativas: alive.slice(1, 4).map((v) => ({ concepto: v.firma.concepto, puntaje: v.puntos })),
-    enElArbol: index ? treeClassificationFromSignature(index, winner.firma) : null,
+    concept: winner.signature.concept,
+    category: winner.signature.category,
+    costCenter: winner.signature.costCenter,
+    value,
+    date,
+    confidence: Math.round(confidence * 100) / 100,
+    signals,
+    reason: reasonFor(winner.signature, signals, input.source),
+    alternatives: alive.slice(1, 4).map((v) => ({ concept: v.signature.concept, score: v.points })),
+    inTree: index ? treeClassificationFromSignature(index, winner.signature) : null,
   };
 }
 
@@ -312,16 +306,16 @@ function treeClassificationFromSignature(
 ): TreeClassification {
   const concept = index.find(
     (e) =>
-      e.nivel === 'concepto' &&
-      normalize(e.nombre) === normalize(signature.concepto) &&
-      normalize(e.ruta[0] ?? '') === normalize(signature.categoria),
+      e.level === 'concepto' &&
+      normalize(e.name) === normalize(signature.concept) &&
+      normalize(e.path[0] ?? '') === normalize(signature.category),
   );
   return {
-    certeza: 'alta',
-    fuente: signature.prioridad === TYPED_TEXT_PRIORITY ? 'palabras-clave' : 'firma',
-    conceptoId: concept?.id,
-    categoriaId: concept?.categoriaId,
-    candidatos: [],
+    certainty: 'alta',
+    source: signature.priority === TYPED_TEXT_PRIORITY ? 'palabras-clave' : 'firma',
+    conceptId: concept?.id,
+    categoryId: concept?.categoryId,
+    candidates: [],
   };
 }
 
@@ -341,51 +335,51 @@ function fromDictionary(
   date: string | null,
   valueConfidence: number,
 ): Reading | null {
-  const found = merchantsIn(`${input.texto} ${input.nombreDeArchivo ?? ''}`);
+  const found = merchantsIn(`${input.text} ${input.fileName ?? ''}`);
   const [firstFound] = found;
   if (firstFound === undefined) return null;
 
-  const terms = [...new Set(found.flatMap((h) => h.grupo.terminos))];
+  const terms = [...new Set(found.flatMap((h) => h.group.terms))];
   const resolved = resolveTerms(index, terms);
-  if (resolved.certeza === 'ninguna') return null;
+  if (resolved.certainty === 'ninguna') return null;
 
-  const concept = resolved.concepto;
+  const concept = resolved.concept;
   const category =
-    resolved.categoria ??
+    resolved.category ??
     (concept
-      ? index.find((e) => e.nivel === 'categoria' && String(e.id) === String(concept.categoriaId))
+      ? index.find((e) => e.level === 'categoria' && String(e.id) === String(concept.categoryId))
       : undefined);
 
   const merchant = firstFound.alias;
   const reason =
-    resolved.certeza === 'alta'
+    resolved.certainty === 'alta'
       ? `Reconocí «${merchant}» y en tu árbol eso lleva a un solo concepto.`
-      : resolved.candidatos.length > 1
-        ? `Reconocí «${merchant}», pero en tu árbol lleva a ${resolved.candidatos.length} sitios: elige tú.`
+      : resolved.candidates.length > 1
+        ? `Reconocí «${merchant}», pero en tu árbol lleva a ${resolved.candidates.length} sitios: elige tú.`
         : `Reconocí «${merchant}» y en tu árbol lleva a una categoría, sin concepto.`;
 
   return {
-    concepto: concept?.nombre ?? null,
-    categoria: category?.nombre ?? null,
-    centro: concept?.ruta[1] ?? category?.ruta[0] ?? null,
-    valor: value,
-    fecha: date,
-    confianza:
-      resolved.certeza === 'alta'
+    concept: concept?.name ?? null,
+    category: category?.name ?? null,
+    costCenter: concept?.path[1] ?? category?.path[0] ?? null,
+    value,
+    date,
+    confidence:
+      resolved.certainty === 'alta'
         ? Math.round(Math.min(0.75, 0.5 + valueConfidence * 0.25) * 100) / 100
         : Math.round(Math.min(0.5, 0.3 + valueConfidence * 0.2) * 100) / 100,
-    señales: signals,
-    motivo: reason,
-    alternativas: resolved.candidatos.map((c) => ({ concepto: c.nombre, puntaje: 0 })),
-    enElArbol: {
-      certeza: resolved.certeza,
-      fuente: 'diccionario',
-      conceptoId: concept?.id,
-      categoriaId: category?.id ?? concept?.categoriaId,
-      candidatos: resolved.candidatos.map((c) => ({
+    signals,
+    reason,
+    alternatives: resolved.candidates.map((c) => ({ concept: c.name, score: 0 })),
+    inTree: {
+      certainty: resolved.certainty,
+      source: 'diccionario',
+      conceptId: concept?.id,
+      categoryId: category?.id ?? concept?.categoryId,
+      candidates: resolved.candidates.map((c) => ({
         id: c.id,
-        nombre: c.nombre,
-        ruta: readablePath(c),
+        name: c.name,
+        path: readablePath(c),
       })),
     },
   };
@@ -395,45 +389,45 @@ function fromDictionary(
 function valueAndDate(
   input: ReadingInput,
   signature: Signature | undefined,
-): { valor: number | null; fecha: string | null; confianzaDelValor: number } {
-  const isPayroll = signature?.concepto === 'PILA / Seguridad Social';
-  const amount = readAmount(input.texto, { esPlanilla: isPayroll, rango: signature?.rango });
-  const date = readDate(input.texto, input.periodo);
+): { value: number | null; date: string | null; valueConfidence: number } {
+  const isPayroll = signature?.concept === 'PILA / Seguridad Social';
+  const amount = readAmount(input.text, { isPayroll, range: signature?.range });
+  const date = readDate(input.text, input.period);
 
-  if (!amount) return { valor: null, fecha: date?.iso ?? null, confianzaDelValor: 0 };
+  if (!amount) return { value: null, date: date?.iso ?? null, valueConfidence: 0 };
 
-  let trust = amount.deLineaDeTotal ? 0.9 : 0.5;
+  let trust = amount.fromTotalLine ? 0.9 : 0.5;
   // Fuera del rango que este acreedor suele cobrar: puede ser cierto —un
   // recibo atrasado, un año de póliza— pero merece que alguien lo mire.
   if (
-    signature?.rango &&
-    (amount.valor < signature.rango.min || amount.valor > signature.rango.max)
+    signature?.range &&
+    (amount.value < signature.range.min || amount.value > signature.range.max)
   ) {
     trust -= 0.35;
   }
   // Una fecha inventada no invalida el valor, pero tampoco lo respalda.
-  if (date && !date.enElPeriodo) trust -= 0.1;
+  if (date && !date.inPeriod) trust -= 0.1;
 
   return {
-    valor: amount.valor,
-    fecha: date?.iso ?? null,
-    confianzaDelValor: Math.max(0, Math.min(1, trust)),
+    value: amount.value,
+    date: date?.iso ?? null,
+    valueConfidence: Math.max(0, Math.min(1, trust)),
   };
 }
 
 function reasonFor(signature: Signature, signals: ReadingSignals, source: string): string {
   const parts: string[] = [];
   if (signals.nit.length > 0) parts.push(`NIT ${signals.nit.join(', ')}`);
-  if (signals.texto.length > 0) parts.push(`“${signals.texto.join('”, “')}” en el texto`);
-  if (signals.nombre.length > 0) parts.push(`“${signals.nombre.join('”, “')}” en el nombre`);
+  if (signals.text.length > 0) parts.push(`“${signals.text.join('”, “')}” en el texto`);
+  if (signals.name.length > 0) parts.push(`“${signals.name.join('”, “')}” en el nombre`);
 
   const cause = parts.length > 0 ? parts.join(' + ') : 'sin señales claras';
   const ignored =
-    signals.recaudadoresIgnorados.length > 0
-      ? `. Ignoré ${signals.recaudadoresIgnorados.join(', ')} por ser recaudador`
+    signals.ignoredCollectors.length > 0
+      ? `. Ignoré ${signals.ignoredCollectors.join(', ')} por ser recaudador`
       : '';
 
-  return `${signature.concepto} por ${cause} (${source})${ignored}.`;
+  return `${signature.concept} por ${cause} (${source})${ignored}.`;
 }
 
 /** Por debajo de esto, a la cola de revisión. */
@@ -441,6 +435,6 @@ export const REVIEW_THRESHOLD = 0.8;
 
 export function needsReview(reading: Reading): boolean {
   return (
-    reading.confianza < REVIEW_THRESHOLD || reading.concepto === null || reading.valor === null
+    reading.confidence < REVIEW_THRESHOLD || reading.concept === null || reading.value === null
   );
 }

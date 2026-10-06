@@ -21,7 +21,7 @@ export function comoNodosBuscables(arbol: readonly NodoDelArbol[]): SearchableNo
   return arbol.map(({ id, name, keywords, children }) => ({
     id,
     name,
-    ...(keywords === undefined ? {} : { palabras_clave: keywords }),
+    ...(keywords === undefined ? {} : { keywords }),
     ...(children === undefined ? {} : { children: comoNodosBuscables(children) }),
   }));
 }

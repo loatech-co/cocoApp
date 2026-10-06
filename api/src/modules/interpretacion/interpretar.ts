@@ -98,33 +98,32 @@ export function interpretar(entrada: EntradaParaInterpretar, contexto: Contexto)
   // comercio es un texto muy corto, y el lector sabe sacar de ahí el acreedor
   // aunque no haya monto ni fecha que leer.
   const lectura = classify({
-    texto: textoLibre || comercio,
-    fuente: 'texto-embebido',
-    nombreDeArchivo: entrada.nombreDeArchivo ?? undefined,
-    periodo: entrada.periodo ?? undefined,
-    firmas: [...treeSignatures(contexto.arbol), ...SIGNATURES],
-    arbol: contexto.arbol,
+    text: textoLibre || comercio,
+    source: 'texto-embebido',
+    fileName: entrada.nombreDeArchivo ?? undefined,
+    period: entrada.periodo ?? undefined,
+    signatures: [...treeSignatures(contexto.arbol), ...SIGNATURES],
+    tree: contexto.arbol,
   });
 
   // Lo estructurado manda sobre lo leído: si quien captura ya sabe el monto,
   // no hay nada que adivinar en el texto.
-  const monto = montoDe(entrada.monto) ?? (lectura.valor === null ? null : String(lectura.valor));
-  const fecha =
-    fechaValida(entrada.fecha, contexto.hoy) ?? fechaValida(lectura.fecha, contexto.hoy);
+  const monto = montoDe(entrada.monto) ?? (lectura.value === null ? null : String(lectura.value));
+  const fecha = fechaValida(entrada.fecha, contexto.hoy) ?? fechaValida(lectura.date, contexto.hoy);
 
-  const clasificacion = clasificarCon(contexto, indice, lectura.enElArbol ?? null, {
-    concepto: lectura.concepto,
-    categoria: lectura.categoria,
-    motivo: lectura.motivo,
+  const clasificacion = clasificarCon(contexto, indice, lectura.inTree ?? null, {
+    concepto: lectura.concept,
+    categoria: lectura.category,
+    motivo: lectura.reason,
   });
 
   return {
     monto,
     fecha,
-    comercio: comercio || lectura.concepto || null,
+    comercio: comercio || lectura.concept || null,
     // La descripción es lo que se lee de un vistazo en la tabla: el comercio
     // si se sabe; si no, el concepto reconocido; si no, nada.
-    descripcion: comercio || lectura.concepto || null,
+    descripcion: comercio || lectura.concept || null,
     clasificacion,
     // Falta algo que alguien tiene que poner —el monto, la fecha— o la
     // clasificación no es segura: a revisar.
@@ -135,7 +134,7 @@ export function interpretar(entrada: EntradaParaInterpretar, contexto: Contexto)
 function clasificarCon(
   contexto: Contexto,
   indice: readonly IndexEntry[],
-  enElArbol: NonNullable<ReturnType<typeof classify>['enElArbol']> | null,
+  enElArbol: NonNullable<ReturnType<typeof classify>['inTree']> | null,
   leido: { concepto: string | null; categoria: string | null; motivo: string },
 ): ClasificacionInterpretada {
   return (
@@ -160,18 +159,17 @@ function porHistorial(
   const { historial } = contexto;
   if (historial) {
     const entrada = indice.find((e) => String(e.id) === historial.categoryId);
-    if (entrada && entrada.nivel !== 'centro') {
+    if (entrada && entrada.level !== 'centro') {
       const alta = historial.confidence >= HISTORIAL_SEGURO;
       return {
         certeza: alta ? 'alta' : 'media',
         fuente: 'historial',
-        conceptoId: entrada.nivel === 'concepto' ? String(entrada.id) : null,
-        categoriaId:
-          entrada.nivel === 'concepto' ? String(entrada.categoriaId) : String(entrada.id),
-        nombre: entrada.nombre,
+        conceptoId: entrada.level === 'concepto' ? String(entrada.id) : null,
+        categoriaId: entrada.level === 'concepto' ? String(entrada.categoryId) : String(entrada.id),
+        nombre: entrada.name,
         candidatos: alta
           ? []
-          : [{ id: String(entrada.id), nombre: entrada.nombre, ruta: readablePath(entrada) }],
+          : [{ id: String(entrada.id), nombre: entrada.name, ruta: readablePath(entrada) }],
         motivo: alta
           ? `Tu historial lo clasifica así (${historial.confidence}% de las veces).`
           : `Tu historial apunta aquí, pero no siempre (${historial.confidence}%): mejor míralo.`,
@@ -184,27 +182,27 @@ function porHistorial(
 /** 2 y 3. Lo que la lectura reconoció, por palabras clave, firma o diccionario. */
 function porLectura(
   indice: readonly IndexEntry[],
-  enElArbol: NonNullable<ReturnType<typeof classify>['enElArbol']>,
+  enElArbol: NonNullable<ReturnType<typeof classify>['inTree']>,
   leido: { motivo: string; concepto: string | null; categoria: string | null },
 ): ClasificacionInterpretada {
   const concepto =
-    enElArbol.conceptoId !== undefined
-      ? indice.find((e) => String(e.id) === String(enElArbol.conceptoId))
+    enElArbol.conceptId !== undefined
+      ? indice.find((e) => String(e.id) === String(enElArbol.conceptId))
       : undefined;
   const categoria =
-    enElArbol.categoriaId !== undefined
-      ? indice.find((e) => String(e.id) === String(enElArbol.categoriaId))
+    enElArbol.categoryId !== undefined
+      ? indice.find((e) => String(e.id) === String(enElArbol.categoryId))
       : undefined;
   return {
-    certeza: enElArbol.certeza,
-    fuente: enElArbol.fuente,
+    certeza: enElArbol.certainty,
+    fuente: enElArbol.source,
     conceptoId: concepto ? String(concepto.id) : null,
-    categoriaId: categoria ? String(categoria.id) : concepto ? String(concepto.categoriaId) : null,
-    nombre: concepto?.nombre ?? categoria?.nombre ?? leido.concepto ?? leido.categoria,
-    candidatos: enElArbol.candidatos.map((c) => ({
+    categoriaId: categoria ? String(categoria.id) : concepto ? String(concepto.categoryId) : null,
+    nombre: concepto?.name ?? categoria?.name ?? leido.concepto ?? leido.categoria,
+    candidatos: enElArbol.candidates.map((c) => ({
       id: String(c.id),
-      nombre: c.nombre,
-      ruta: c.ruta,
+      nombre: c.name,
+      ruta: c.path,
     })),
     motivo: leido.motivo,
   };

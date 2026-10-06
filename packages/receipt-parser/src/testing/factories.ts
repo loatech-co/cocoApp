@@ -24,15 +24,15 @@ export function makeTree(): SearchableNode[] {
           id: 'servicios',
           name: 'Servicios públicos',
           children: [
-            makeNode({ id: 'luz', name: 'Energía', palabras_clave: ['luz', 'enel'] }),
-            makeNode({ id: 'agua', name: 'Acueducto', palabras_clave: ['agua'] }),
-            makeNode({ id: 'gas', name: 'Gas natural', palabras_clave: ['vanti'] }),
+            makeNode({ id: 'luz', name: 'Energía', keywords: ['luz', 'enel'] }),
+            makeNode({ id: 'agua', name: 'Acueducto', keywords: ['agua'] }),
+            makeNode({ id: 'gas', name: 'Gas natural', keywords: ['vanti'] }),
           ],
         }),
         makeNode({
           id: 'mercado',
           name: 'Mercado',
-          children: [makeNode({ id: 'super', name: 'Supermercado', palabras_clave: ['éxito'] })],
+          children: [makeNode({ id: 'super', name: 'Supermercado', keywords: ['éxito'] })],
         }),
       ],
     }),
@@ -42,10 +42,10 @@ export function makeTree(): SearchableNode[] {
 
 export function makeConceptWithWords(overrides: Partial<ConceptWithWords> = {}): ConceptWithWords {
   return {
-    concepto: 'Energía',
-    categoria: 'Servicios públicos',
-    centro: 'Hogar',
-    palabras: ['enel'],
+    concept: 'Energía',
+    category: 'Servicios públicos',
+    costCenter: 'Hogar',
+    words: ['enel'],
     ...overrides,
   };
 }

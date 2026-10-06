@@ -15,8 +15,8 @@ const ARBOL: SearchableNode[] = [
         id: '20',
         name: 'Alimentación',
         children: [
-          { id: '200', name: 'Mercado', palabras_clave: [] },
-          { id: '201', name: 'Restaurantes', palabras_clave: ['rappi'] },
+          { id: '200', name: 'Mercado', keywords: [] },
+          { id: '201', name: 'Restaurantes', keywords: ['rappi'] },
         ],
       },
       { id: '21', name: 'Transporte', children: [] },

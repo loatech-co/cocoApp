@@ -16,7 +16,7 @@ const TREE: SearchableNode[] = [
       {
         id: '11',
         name: 'Hogar',
-        children: [{ id: '110', name: 'Aseo', palabras_clave: ['detergente'] }],
+        children: [{ id: '110', name: 'Aseo', keywords: ['detergente'] }],
       },
     ],
   },

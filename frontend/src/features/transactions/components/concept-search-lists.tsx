@@ -170,11 +170,11 @@ function CrearConcepto({
 function Fila({ entrada }: { entrada: IndexEntry }) {
   return (
     <span className="flex min-w-0 items-baseline gap-2">
-      <span className="truncate">{entrada.nombre}</span>
-      {entrada.ruta.length > 0 && (
+      <span className="truncate">{entrada.name}</span>
+      {entrada.path.length > 0 && (
         <span className="truncate text-xs text-muted-foreground">{readablePath(entrada)}</span>
       )}
-      {entrada.nivel === 'categoria' && (
+      {entrada.level === 'categoria' && (
         <span className="ml-auto shrink-0 text-xs text-muted-foreground">
           {t('transactions.conceptSearch.category')}
         </span>

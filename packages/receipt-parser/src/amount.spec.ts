@@ -36,34 +36,34 @@ describe('leerMonto', () => {
       '\n',
     );
     const amount = readAmount(text);
-    expect(amount?.valor).toBe(95200);
-    expect(amount?.deLineaDeTotal).toBe(true);
+    expect(amount?.value).toBe(95200);
+    expect(amount?.fromTotalLine).toBe(true);
   });
 
   it('penalises years, times, ids and huge values', () => {
     const text = ['Fecha 2026', 'Hora 10:45 4500', 'NIT 900123456', 'Valor 25.000'].join('\n');
-    expect(readAmount(text)?.valor).toBe(25000);
-    expect(readAmount('Valor 25.000\n99.000.000.000')?.valor).toBe(25000);
+    expect(readAmount(text)?.value).toBe(25000);
+    expect(readAmount('Valor 25.000\n99.000.000.000')?.value).toBe(25000);
   });
 
   it('ignores an IPv4 address on a total line', () => {
-    expect(readAmount('Total 192.168.100.200 $ 12.000')?.valor).toBe(12000);
+    expect(readAmount('Total 192.168.100.200 $ 12.000')?.value).toBe(12000);
   });
 
   it('skips the IBC line of a payroll form', () => {
     const text = 'IBC 1.300.000\nTotal pagado 520.000';
-    expect(readAmount(text, { esPlanilla: true })?.valor).toBe(520000);
+    expect(readAmount(text, { isPayroll: true })?.value).toBe(520000);
   });
 
   it('breaks a tie in favour of the amount inside the expected range', () => {
     const text = 'Valor 30.000\nValor 60.000';
-    expect(readAmount(text, { rango: { min: 25000, max: 35000 } })?.valor).toBe(30000);
-    expect(readAmount(text)?.valor).toBe(60000);
+    expect(readAmount(text, { range: { min: 25000, max: 35000 } })?.value).toBe(30000);
+    expect(readAmount(text)?.value).toBe(60000);
   });
 
   it('cuts the line it reports to 80 normalised characters', () => {
     const amount = readAmount(`Total ${'Á'.repeat(100)} $ 10.000`);
-    expect(amount?.linea.length).toBe(80);
-    expect(amount?.linea).not.toMatch(/Á/);
+    expect(amount?.line.length).toBe(80);
+    expect(amount?.line).not.toMatch(/Á/);
   });
 });

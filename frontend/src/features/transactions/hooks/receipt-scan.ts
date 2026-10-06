@@ -68,9 +68,9 @@ export function makeReceiptScan(ficha: MovementSheetState, arbol: Category[] | u
       ficha.setLectura(aviso === null ? leida : null);
       ficha.setSinLeer(aviso);
 
-      if (leida.valor !== null) ficha.setAmount(String(leida.valor));
-      if (leida.fecha) ficha.setDate(leida.fecha);
-      if (leida.concepto) ficha.setDescription(leida.concepto);
+      if (leida.value !== null) ficha.setAmount(String(leida.value));
+      if (leida.date) ficha.setDate(leida.date);
+      if (leida.concept) ficha.setDescription(leida.concept);
 
       // Pasa por `proponer`: si ya había algo elegido a mano, no se toca nada.
       const propuesta = proposalFromReading(leida, arbol ?? []);

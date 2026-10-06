@@ -17,9 +17,9 @@
 
 export interface Signature {
   /** El concepto exacto, tal como existe en el árbol de categorías. */
-  concepto: string;
-  categoria: string;
-  centro: string;
+  concept: string;
+  category: string;
+  costCenter: string;
   /** Razones sociales y nombres comerciales tal como salen en el texto. */
   alias: string[];
   /** NIT sin puntos ni dígito de verificación. La señal más fuerte. */
@@ -28,17 +28,17 @@ export interface Signature {
    * Trozos que aparecen en el NOMBRE del archivo o de la carpeta. Señal de
    * apoyo: quien nombra un archivo ya sabía de qué era.
    */
-  tokensDeNombre?: string[];
+  nameTokens?: string[];
   /**
    * Abreviaturas que solo valen ANCLADAS al principio del nombre. "AO" en
    * medio de una palabra no dice nada; "AO - agosto.pdf" sí.
    */
-  prefijosDeNombre?: string[];
+  namePrefixes?: string[];
   /**
    * Palabras que DESCARTAN esta firma aunque el alias coincida. Es lo que
    * separa "Claro Hogar" de "Claro Movil" cuando el recibo dice las dos.
    */
-  excluye?: string[];
+  excludes?: string[];
   /**
    * Desempata cuando dos firmas coinciden. Más alto gana.
    *
@@ -47,9 +47,9 @@ export interface Signature {
    * es Seguridad Social: lo que se pagó es la planilla, Sura solo es a dónde
    * fue una parte.
    */
-  prioridad?: number;
+  priority?: number;
   /** Rango típico en pesos. Un valor muy fuera baja la confianza. */
-  rango?: { min: number; max: number };
+  range?: { min: number; max: number };
 }
 
 /**
@@ -91,68 +91,68 @@ export const COLLECTORS = [
 export const SIGNATURES: Signature[] = [
   // ── Servicios públicos ──────────────────────────────────────────────────
   {
-    concepto: 'Aquaoccidente (Agua)',
-    categoria: 'Servicios públicos',
-    centro: 'Costos fijos',
+    concept: 'Aquaoccidente (Agua)',
+    category: 'Servicios públicos',
+    costCenter: 'Costos fijos',
     alias: ['aquaoccidente', 'acueducto', 'acuaoccidente'],
-    prefijosDeNombre: ['ao'],
-    tokensDeNombre: ['agua', 'aquaoccidente'],
-    rango: { min: 15_000, max: 400_000 },
+    namePrefixes: ['ao'],
+    nameTokens: ['agua', 'aquaoccidente'],
+    range: { min: 15_000, max: 400_000 },
   },
   {
-    concepto: 'Gases de Occidente (Gas)',
-    categoria: 'Servicios públicos',
-    centro: 'Costos fijos',
+    concept: 'Gases de Occidente (Gas)',
+    category: 'Servicios públicos',
+    costCenter: 'Costos fijos',
     alias: ['gases de occidente', 'gasoccidente', 'gases del occidente'],
-    prefijosDeNombre: ['go', 'gdo'],
-    tokensDeNombre: ['gas'],
-    rango: { min: 5_000, max: 300_000 },
+    namePrefixes: ['go', 'gdo'],
+    nameTokens: ['gas'],
+    range: { min: 5_000, max: 300_000 },
   },
   {
-    concepto: 'Celsia (Energia)',
-    categoria: 'Servicios públicos',
-    centro: 'Costos fijos',
+    concept: 'Celsia (Energia)',
+    category: 'Servicios públicos',
+    costCenter: 'Costos fijos',
     // "celcia" con c: es como lo escribe el OCR cuando el logo está impreso
     // en un tipo estrecho.
     alias: ['celsia', 'celcia', 'epsa'],
     // El internet de Celsia es otro servicio y se factura aparte.
-    excluye: ['internet', 'fibra'],
-    tokensDeNombre: ['energia', 'energía', 'luz', 'celsia'],
-    rango: { min: 20_000, max: 900_000 },
+    excludes: ['internet', 'fibra'],
+    nameTokens: ['energia', 'energía', 'luz', 'celsia'],
+    range: { min: 20_000, max: 900_000 },
   },
   {
-    concepto: 'Claro Hogar',
-    categoria: 'Servicios públicos',
-    centro: 'Costos fijos',
+    concept: 'Claro Hogar',
+    category: 'Servicios públicos',
+    costCenter: 'Costos fijos',
     alias: ['claro', 'comcel'],
     // Sin esto, los dos Claro coinciden con todo recibo de Claro.
-    tokensDeNombre: ['hogar', 'multiplay'],
-    prioridad: 2,
-    rango: { min: 30_000, max: 500_000 },
+    nameTokens: ['hogar', 'multiplay'],
+    priority: 2,
+    range: { min: 30_000, max: 500_000 },
   },
   {
-    concepto: 'Claro Movil',
-    categoria: 'Servicios públicos',
-    centro: 'Costos fijos',
+    concept: 'Claro Movil',
+    category: 'Servicios públicos',
+    costCenter: 'Costos fijos',
     alias: ['claro', 'comcel'],
-    tokensDeNombre: ['movil', 'móvil', 'celular', 'personal', 'corporativo', 'tuti'],
-    prioridad: 2,
-    rango: { min: 20_000, max: 600_000 },
+    nameTokens: ['movil', 'móvil', 'celular', 'personal', 'corporativo', 'tuti'],
+    priority: 2,
+    range: { min: 20_000, max: 600_000 },
   },
   {
-    concepto: 'Movistar',
-    categoria: 'Servicios públicos',
-    centro: 'Costos fijos',
+    concept: 'Movistar',
+    category: 'Servicios públicos',
+    costCenter: 'Costos fijos',
     alias: ['movistar', 'telefonica', 'telefónica', 'colombia telecomunicaciones'],
-    tokensDeNombre: ['movistar'],
-    rango: { min: 10_000, max: 600_000 },
+    nameTokens: ['movistar'],
+    range: { min: 10_000, max: 600_000 },
   },
 
   // ── Seguridad social ────────────────────────────────────────────────────
   {
-    concepto: 'PILA / Seguridad Social',
-    categoria: 'Seguridad social',
-    centro: 'Costos fijos',
+    concept: 'PILA / Seguridad Social',
+    category: 'Seguridad social',
+    costCenter: 'Costos fijos',
     alias: [
       'planilla',
       'aportes en linea',
@@ -164,86 +164,86 @@ export const SIGNATURES: Signature[] = [
       'liquidacion de aportes',
       'liquidación de aportes',
     ],
-    tokensDeNombre: ['pila', 'seguridad social'],
+    nameTokens: ['pila', 'seguridad social'],
     // Más alta que Sura: una planilla menciona "ARL Sura" y "EPS Sura", y lo
     // que se pagó es la planilla.
-    prioridad: 9,
-    rango: { min: 100_000, max: 8_000_000 },
+    priority: 9,
+    range: { min: 100_000, max: 8_000_000 },
   },
 
   // ── Salud y vida ────────────────────────────────────────────────────────
   {
-    concepto: 'Sura',
-    categoria: 'Salud y vida',
-    centro: 'Costos fijos',
+    concept: 'Sura',
+    category: 'Salud y vida',
+    costCenter: 'Costos fijos',
     alias: ['sura', 'suramericana'],
-    prioridad: 1,
-    rango: { min: 50_000, max: 1_500_000 },
+    priority: 1,
+    range: { min: 50_000, max: 1_500_000 },
   },
   {
-    concepto: 'AXA Medicina Prepagada',
-    categoria: 'Salud y vida',
-    centro: 'Costos fijos',
+    concept: 'AXA Medicina Prepagada',
+    category: 'Salud y vida',
+    costCenter: 'Costos fijos',
     alias: ['axa', 'colpatria medicina', 'medicina prepagada'],
-    tokensDeNombre: ['medicina', 'prepagada', 'seguros de vida', 'hyc', 'h&c'],
-    excluye: ['duster'],
-    prioridad: 3,
-    rango: { min: 100_000, max: 2_000_000 },
+    nameTokens: ['medicina', 'prepagada', 'seguros de vida', 'hyc', 'h&c'],
+    excludes: ['duster'],
+    priority: 3,
+    range: { min: 100_000, max: 2_000_000 },
   },
   {
-    concepto: 'Allianz (Seguro)',
-    categoria: 'Salud y vida',
-    centro: 'Costos fijos',
+    concept: 'Allianz (Seguro)',
+    category: 'Salud y vida',
+    costCenter: 'Costos fijos',
     alias: ['allianz'],
-    rango: { min: 50_000, max: 3_000_000 },
+    range: { min: 50_000, max: 3_000_000 },
   },
   {
-    concepto: 'Seguros Bolivar',
-    categoria: 'Salud y vida',
-    centro: 'Costos fijos',
+    concept: 'Seguros Bolivar',
+    category: 'Salud y vida',
+    costCenter: 'Costos fijos',
     alias: ['seguros bolivar', 'seguros bolívar', 'bolivar'],
-    rango: { min: 50_000, max: 3_000_000 },
+    range: { min: 50_000, max: 3_000_000 },
   },
 
   // ── Vehículos ───────────────────────────────────────────────────────────
   {
-    concepto: 'AXA Seguro Duster',
-    categoria: 'Vehículos',
-    centro: 'Costos fijos',
+    concept: 'AXA Seguro Duster',
+    category: 'Vehículos',
+    costCenter: 'Costos fijos',
     alias: ['axa'],
-    tokensDeNombre: ['duster'],
+    nameTokens: ['duster'],
     // Por encima de la medicina prepagada: el Duster lo nombra el archivo, y
     // el texto de los dos dice "AXA".
-    prioridad: 4,
-    rango: { min: 100_000, max: 4_000_000 },
+    priority: 4,
+    range: { min: 100_000, max: 4_000_000 },
   },
   {
-    concepto: 'SOAT',
-    categoria: 'Vehículos',
-    centro: 'Costos fijos',
+    concept: 'SOAT',
+    category: 'Vehículos',
+    costCenter: 'Costos fijos',
     alias: ['soat', 'seguro obligatorio'],
-    tokensDeNombre: ['soat'],
-    prioridad: 5,
-    rango: { min: 200_000, max: 1_500_000 },
+    nameTokens: ['soat'],
+    priority: 5,
+    range: { min: 200_000, max: 1_500_000 },
   },
 
   // ── Educación ───────────────────────────────────────────────────────────
   {
-    concepto: 'Colegio Rafael Pombo',
-    categoria: 'Educación',
-    centro: 'Costos fijos',
+    concept: 'Colegio Rafael Pombo',
+    category: 'Educación',
+    costCenter: 'Costos fijos',
     alias: ['rafael pombo', 'colegio rafael'],
-    prefijosDeNombre: ['rp'],
-    tokensDeNombre: ['pombo'],
-    rango: { min: 100_000, max: 3_000_000 },
+    namePrefixes: ['rp'],
+    nameTokens: ['pombo'],
+    range: { min: 100_000, max: 3_000_000 },
   },
   {
-    concepto: 'Colegio Tuti',
-    categoria: 'Educación',
-    centro: 'Costos fijos',
+    concept: 'Colegio Tuti',
+    category: 'Educación',
+    costCenter: 'Costos fijos',
     alias: ['colegio tuti'],
-    tokensDeNombre: ['colegio tuti'],
-    rango: { min: 100_000, max: 3_000_000 },
+    nameTokens: ['colegio tuti'],
+    range: { min: 100_000, max: 3_000_000 },
   },
 ];
 
@@ -260,11 +260,11 @@ export const TYPED_TEXT_PRIORITY = 100;
 
 /** Un concepto del árbol de alguien, con lo que se busca para reconocerlo. */
 export interface ConceptWithWords {
-  concepto: string;
-  categoria: string;
-  centro: string;
+  concept: string;
+  category: string;
+  costCenter: string;
   /** Tal como se escribieron. Se normalizan al comparar. */
-  palabras: readonly string[];
+  words: readonly string[];
 }
 
 /**
@@ -288,14 +288,14 @@ export interface ConceptWithWords {
  */
 export function conceptSignatures(concepts: readonly ConceptWithWords[]): Signature[] {
   return concepts
-    .filter((concept) => concept.palabras.length > 0)
+    .filter((concept) => concept.words.length > 0)
     .map((concept) => ({
-      concepto: concept.concepto,
-      categoria: concept.categoria,
-      centro: concept.centro,
-      alias: [...concept.palabras],
-      tokensDeNombre: [...concept.palabras],
-      prioridad: TYPED_TEXT_PRIORITY,
+      concept: concept.concept,
+      category: concept.category,
+      costCenter: concept.costCenter,
+      alias: [...concept.words],
+      nameTokens: [...concept.words],
+      priority: TYPED_TEXT_PRIORITY,
     }));
 }
 
@@ -319,21 +319,21 @@ export function normalize(text: string): string {
 export function treeConceptsWithWords(
   roots: readonly {
     name: string;
-    palabras_clave?: readonly string[];
+    keywords?: readonly string[];
     children?: readonly {
       name: string;
-      palabras_clave?: readonly string[];
-      children?: readonly { name: string; palabras_clave?: readonly string[] }[];
+      keywords?: readonly string[];
+      children?: readonly { name: string; keywords?: readonly string[] }[];
     }[];
   }[],
 ): ConceptWithWords[] {
   return roots.flatMap((costCenter) =>
     (costCenter.children ?? []).flatMap((category) =>
       (category.children ?? []).map((concept) => ({
-        concepto: concept.name,
-        categoria: category.name,
-        centro: costCenter.name,
-        palabras: concept.palabras_clave ?? [],
+        concept: concept.name,
+        category: category.name,
+        costCenter: costCenter.name,
+        words: concept.keywords ?? [],
       })),
     ),
   );

@@ -15,34 +15,35 @@
  * las que se leen, la que cae en ese mes.
  */
 
-const MONTHS: Record<string, number> = {
-  ene: 1,
-  enero: 1,
-  feb: 2,
-  febrero: 2,
-  mar: 3,
-  marzo: 3,
-  abr: 4,
-  abril: 4,
-  may: 5,
-  mayo: 5,
-  jun: 6,
-  junio: 6,
-  jul: 7,
-  julio: 7,
-  ago: 8,
-  agosto: 8,
-  sep: 9,
-  sept: 9,
-  septiembre: 9,
-  setiembre: 9,
-  oct: 10,
-  octubre: 10,
-  nov: 11,
-  noviembre: 11,
-  dic: 12,
-  diciembre: 12,
-};
+// Spanish month names, as receipts print them: data, not code, hence strings.
+const MONTHS: Record<string, number> = Object.fromEntries([
+  ['ene', 1],
+  ['enero', 1],
+  ['feb', 2],
+  ['febrero', 2],
+  ['mar', 3],
+  ['marzo', 3],
+  ['abr', 4],
+  ['abril', 4],
+  ['may', 5],
+  ['mayo', 5],
+  ['jun', 6],
+  ['junio', 6],
+  ['jul', 7],
+  ['julio', 7],
+  ['ago', 8],
+  ['agosto', 8],
+  ['sep', 9],
+  ['sept', 9],
+  ['septiembre', 9],
+  ['setiembre', 9],
+  ['oct', 10],
+  ['octubre', 10],
+  ['nov', 11],
+  ['noviembre', 11],
+  ['dic', 12],
+  ['diciembre', 12],
+]);
 
 const ISO = /\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/g;
 const DAY_MONTH_YEAR = /\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2}|\d{2})\b/g;
@@ -54,7 +55,7 @@ const WITH_MONTH_NAME = new RegExp(
 export interface DateCandidate {
   iso: string;
   /** Si cae dentro del mes al que pertenece el gasto. */
-  enElPeriodo: boolean;
+  inPeriod: boolean;
 }
 
 const isValidDate = (a: number, m: number, d: number): boolean =>
@@ -100,11 +101,11 @@ export function readDate(text: string, period?: string): DateCandidate | null {
     // La primera del mes: en un recibo, la de expedición va antes que la de
     // vencimiento, y la que se pagó se parece más a la primera.
     const [firstOfPeriod] = ofPeriod;
-    if (firstOfPeriod !== undefined) return { iso: firstOfPeriod, enElPeriodo: true };
+    if (firstOfPeriod !== undefined) return { iso: firstOfPeriod, inPeriod: true };
   }
 
   const [first] = all;
-  if (first !== undefined) return { iso: first, enElPeriodo: false };
-  if (period) return { iso: `${period}-15`, enElPeriodo: false };
+  if (first !== undefined) return { iso: first, inPeriod: false };
+  if (period) return { iso: `${period}-15`, inPeriod: false };
   return null;
 }

@@ -17,6 +17,6 @@ describe('conceptosConPalabrasDelArbol', () => {
           children: [{ name: 'Papelería', children: [{ name: 'Resmas' }] }],
         },
       ]),
-    ).toEqual([{ concepto: 'Resmas', categoria: 'Papelería', centro: 'Oficina', palabras: [] }]);
+    ).toEqual([{ concept: 'Resmas', category: 'Papelería', costCenter: 'Oficina', words: [] }]);
   });
 });

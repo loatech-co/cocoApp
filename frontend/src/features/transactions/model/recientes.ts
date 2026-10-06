@@ -17,7 +17,7 @@ export function conceptosRecientes(
   // recientes, y ya. Los recientes son una comodidad: no pueden tumbar la ficha.
   if (!esLista(movimientos)) return [];
 
-  const conceptos = new Set(indice.filter((e) => e.nivel === 'concepto').map((e) => String(e.id)));
+  const conceptos = new Set(indice.filter((e) => e.level === 'concepto').map((e) => String(e.id)));
   const vistos = new Set<number>();
   const salida: number[] = [];
 

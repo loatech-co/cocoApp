@@ -28,12 +28,12 @@ const TREE: SearchableNode[] = [
         id: 20,
         name: 'Alimentación',
         children: [
-          { id: 200, name: 'Mercado', palabras_clave: [] },
-          { id: 201, name: 'Restaurantes', palabras_clave: ['rappi'] },
+          { id: 200, name: 'Mercado', keywords: [] },
+          { id: 201, name: 'Restaurantes', keywords: ['rappi'] },
         ],
       },
       { id: 21, name: 'Transporte', children: [] },
-      { id: 22, name: 'Hogar', children: [{ id: 220, name: 'Mercado', palabras_clave: [] }] },
+      { id: 22, name: 'Hogar', children: [{ id: 220, name: 'Mercado', keywords: [] }] },
     ],
   },
 ];
@@ -50,15 +50,15 @@ const CATEGORY_TREE = TREE as unknown as Category[];
 
 function reading(parts: Partial<Reading>): Reading {
   return {
-    concepto: null,
-    categoria: null,
-    centro: null,
-    valor: null,
-    fecha: null,
-    confianza: 0,
-    señales: { texto: [], nombre: [], nit: [], recaudadoresIgnorados: [] },
-    motivo: '',
-    alternativas: [],
+    concept: null,
+    category: null,
+    costCenter: null,
+    value: null,
+    date: null,
+    confidence: 0,
+    signals: { text: [], name: [], nit: [], ignoredCollectors: [] },
+    reason: '',
+    alternatives: [],
     ...parts,
   };
 }
@@ -183,26 +183,26 @@ describe('proposalFromReading', () => {
       },
     ] as unknown as Category[];
 
-    expect(proposalFromReading(reading({ concepto: 'Celsia (Energia)' }), tree)).toEqual({
+    expect(proposalFromReading(reading({ concept: 'Celsia (Energia)' }), tree)).toEqual({
       categoryId: 100,
       origen: 'palabras-clave',
     });
   });
 
   it('proposes nothing when the named concept is not in the tree', () => {
-    expect(proposalFromReading(reading({ concepto: 'Celsia' }), CATEGORY_TREE)).toBeNull();
+    expect(proposalFromReading(reading({ concept: 'Celsia' }), CATEGORY_TREE)).toBeNull();
     expect(proposalFromReading(reading({}), CATEGORY_TREE)).toBeNull();
   });
 
   it('proposes the concept of a high-certainty reading with its source', () => {
     const enElArbol = {
-      certeza: 'alta',
-      fuente: 'historial',
-      conceptoId: '200',
-      candidatos: [],
+      certainty: 'alta',
+      source: 'historial',
+      conceptId: '200',
+      candidates: [],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ enElArbol }), CATEGORY_TREE)).toEqual({
+    expect(proposalFromReading(reading({ inTree: enElArbol }), CATEGORY_TREE)).toEqual({
       categoryId: 200,
       origen: 'historial',
     });
@@ -210,26 +210,26 @@ describe('proposalFromReading', () => {
 
   it('ranks the system catalogue as keywords', () => {
     const enElArbol = {
-      certeza: 'alta',
-      fuente: 'firma',
-      conceptoId: 201,
-      candidatos: [],
+      certainty: 'alta',
+      source: 'firma',
+      conceptId: 201,
+      candidates: [],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ enElArbol }), CATEGORY_TREE)?.origen).toBe(
+    expect(proposalFromReading(reading({ inTree: enElArbol }), CATEGORY_TREE)?.origen).toBe(
       'palabras-clave',
     );
   });
 
   it('proposes the category and shows the candidates of a medium-certainty reading', () => {
     const enElArbol = {
-      certeza: 'media',
-      fuente: 'diccionario',
-      categoriaId: '20',
-      candidatos: [{ id: '200', nombre: 'Mercado', ruta: 'Costos variables › Alimentación' }],
+      certainty: 'media',
+      source: 'diccionario',
+      categoryId: '20',
+      candidates: [{ id: '200', name: 'Mercado', path: 'Costos variables › Alimentación' }],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ enElArbol }), CATEGORY_TREE)).toEqual({
+    expect(proposalFromReading(reading({ inTree: enElArbol }), CATEGORY_TREE)).toEqual({
       categoryId: 20,
       origen: 'diccionario',
       candidatos: [{ id: 200, nombre: 'Mercado', ruta: 'Costos variables › Alimentación' }],
@@ -238,12 +238,12 @@ describe('proposalFromReading', () => {
 
   it('leaves the category empty when the candidates span several', () => {
     const enElArbol = {
-      certeza: 'media',
-      fuente: 'palabras-clave',
-      candidatos: [],
+      certainty: 'media',
+      source: 'palabras-clave',
+      candidates: [],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ enElArbol }), CATEGORY_TREE)).toEqual({
+    expect(proposalFromReading(reading({ inTree: enElArbol }), CATEGORY_TREE)).toEqual({
       categoryId: undefined,
       origen: 'palabras-clave',
       candidatos: [],
@@ -252,12 +252,12 @@ describe('proposalFromReading', () => {
 
   it('keeps the source but proposes nothing when a high reading has no concept', () => {
     const enElArbol = {
-      certeza: 'alta',
-      fuente: 'diccionario',
-      candidatos: [],
+      certainty: 'alta',
+      source: 'diccionario',
+      candidates: [],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ enElArbol }), CATEGORY_TREE)).toEqual({
+    expect(proposalFromReading(reading({ inTree: enElArbol }), CATEGORY_TREE)).toEqual({
       categoryId: undefined,
       origen: 'diccionario',
     });
@@ -266,9 +266,9 @@ describe('proposalFromReading', () => {
 
 describe('unreadNotice', () => {
   it('says nothing when the reading found an amount, a date or a concept', () => {
-    expect(unreadNotice(reading({ valor: 1 }), 'texto')).toBeNull();
-    expect(unreadNotice(reading({ fecha: '2026-01-01' }), '')).toBeNull();
-    expect(unreadNotice(reading({ concepto: 'Mercado' }), '')).toBeNull();
+    expect(unreadNotice(reading({ value: 1 }), 'texto')).toBeNull();
+    expect(unreadNotice(reading({ date: '2026-01-01' }), '')).toBeNull();
+    expect(unreadNotice(reading({ concept: 'Mercado' }), '')).toBeNull();
   });
 
   it('says no text could be extracted from an unreadable file', () => {

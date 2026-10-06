@@ -94,13 +94,13 @@ describe('Las palabras clave clasifican un soporte', () => {
     const arbol = arbolCon(concepto(1, 'Arriendo oficina', ['Inmobiliaria del Valle']));
 
     const lectura = classify({
-      texto: 'INMOBILIARIA DEL VALLE S.A.S.\nCanon de arrendamiento\nTotal a pagar $1.200.000',
-      fuente: 'texto-embebido',
-      firmas: conElArbol(arbol),
+      text: 'INMOBILIARIA DEL VALLE S.A.S.\nCanon de arrendamiento\nTotal a pagar $1.200.000',
+      source: 'texto-embebido',
+      signatures: conElArbol(arbol),
     });
 
-    expect(lectura.concepto).toBe('Arriendo oficina');
-    expect(lectura.valor).toBe(1_200_000);
+    expect(lectura.concept).toBe('Arriendo oficina');
+    expect(lectura.value).toBe(1_200_000);
   });
 
   it('lo encuentra también en el nombre del archivo, que es lo que queda de un escaneo malo', () => {
@@ -108,13 +108,13 @@ describe('Las palabras clave clasifican un soporte', () => {
 
     const lectura = classify({
       // El reconocimiento no sacó nada útil del papel.
-      texto: 'recibo de caja  ****  ',
-      fuente: 'ocr',
-      nombreDeArchivo: 'comfandi agosto',
-      firmas: conElArbol(arbol),
+      text: 'recibo de caja  ****  ',
+      source: 'ocr',
+      fileName: 'comfandi agosto',
+      signatures: conElArbol(arbol),
     });
 
-    expect(lectura.concepto).toBe('Colegio');
+    expect(lectura.concept).toBe('Colegio');
   });
 
   it('lo escrito por una persona le gana al catálogo', () => {
@@ -123,24 +123,24 @@ describe('Las palabras clave clasifican un soporte', () => {
     const arbol = arbolCon(concepto(1, 'Luz de la casa', ['Celsia']));
 
     const lectura = classify({
-      texto: 'CELSIA S.A. E.S.P.\nFactura de energía\nTotal a pagar $180.000',
-      fuente: 'texto-embebido',
-      firmas: conElArbol(arbol),
+      text: 'CELSIA S.A. E.S.P.\nFactura de energía\nTotal a pagar $180.000',
+      source: 'texto-embebido',
+      signatures: conElArbol(arbol),
     });
 
-    expect(lectura.concepto).toBe('Luz de la casa');
+    expect(lectura.concept).toBe('Luz de la casa');
     // Ganar por prioridad y no por puntos es una duda, pero no puede dejar la
     // confianza por los suelos: el valor se leyó de una línea de total.
-    expect(lectura.confianza).toBeGreaterThan(0.4);
+    expect(lectura.confidence).toBeGreaterThan(0.4);
   });
 
   it('sin palabras clave, el catálogo sigue mandando', () => {
     const lectura = classify({
-      texto: 'CELSIA S.A. E.S.P.\nFactura de energía\nTotal a pagar $180.000',
-      fuente: 'texto-embebido',
-      firmas: conElArbol(arbolCon(concepto(1, 'Energía'))),
+      text: 'CELSIA S.A. E.S.P.\nFactura de energía\nTotal a pagar $180.000',
+      source: 'texto-embebido',
+      signatures: conElArbol(arbolCon(concepto(1, 'Energía'))),
     });
 
-    expect(lectura.concepto).toBe('Celsia (Energia)');
+    expect(lectura.concept).toBe('Celsia (Energia)');
   });
 });

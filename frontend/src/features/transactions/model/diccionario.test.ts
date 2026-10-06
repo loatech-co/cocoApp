@@ -9,7 +9,7 @@ import { DICTIONARY, merchantsIn, termsFor } from '@coco/receipt-parser';
  * las que separan una ayuda de una molestia: límites de palabra y alias más
  * largo primero.
  */
-const grupos = (texto: string) => merchantsIn(texto).map((h) => h.grupo.grupo);
+const grupos = (texto: string) => merchantsIn(texto).map((h) => h.group.group);
 
 describe('Reconocer comercios en un texto', () => {
   it('reconoce la razón social, que es lo que imprime el datáfono', () => {
@@ -80,7 +80,7 @@ describe('Los términos que un texto sugiere', () => {
 
 describe('El diccionario en sí', () => {
   it('cubre los once grupos que pide el plan', () => {
-    expect(DICTIONARY.map((g) => g.grupo)).toEqual([
+    expect(DICTIONARY.map((g) => g.group)).toEqual([
       'mercado',
       'restaurantes y domicilios',
       'transporte',
@@ -100,19 +100,19 @@ describe('El diccionario en sí', () => {
     // resolver: siempre ganaría el primero por orden del archivo.
     const vistos = new Map<string, string>();
     for (const g of DICTIONARY) {
-      for (const alias of g.comercios) {
+      for (const alias of g.merchants) {
         expect(
           vistos.get(alias),
-          `«${alias}» está en ${vistos.get(alias)} y en ${g.grupo}`,
+          `«${alias}» está en ${vistos.get(alias)} y en ${g.group}`,
         ).toBeUndefined();
-        vistos.set(alias, g.grupo);
+        vistos.set(alias, g.group);
       }
     }
   });
 
   it('ningún alias es una palabra tan corta que aparezca por todas partes', () => {
     for (const g of DICTIONARY) {
-      for (const alias of g.comercios) expect(alias.length, `«${alias}»`).toBeGreaterThanOrEqual(2);
+      for (const alias of g.merchants) expect(alias.length, `«${alias}»`).toBeGreaterThanOrEqual(2);
     }
   });
 });

@@ -256,12 +256,12 @@ async function interpretText(
 function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Reading {
   const c = i.classification;
   return {
-    concepto: c.conceptId !== null ? c.name : null,
-    categoria: c.conceptId === null && c.categoryId !== null ? c.name : null,
-    centro: null,
-    valor: i.amount === null ? null : Number(i.amount),
-    fecha: i.date,
-    confianza: !i.needsReview
+    concept: c.conceptId !== null ? c.name : null,
+    category: c.conceptId === null && c.categoryId !== null ? c.name : null,
+    costCenter: null,
+    value: i.amount === null ? null : Number(i.amount),
+    date: i.date,
+    confidence: !i.needsReview
       ? fuente === 'ocr'
         ? 0.85
         : 0.95
@@ -270,18 +270,18 @@ function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Read
         : c.certainty === 'medium'
           ? 0.5
           : 0.2,
-    señales: { texto: [], nombre: [], nit: [], recaudadoresIgnorados: [] },
-    motivo: c.reason,
-    alternativas: c.candidates.map((k) => ({ concepto: k.name, puntaje: 0 })),
-    enElArbol:
+    signals: { text: [], name: [], nit: [], ignoredCollectors: [] },
+    reason: c.reason,
+    alternatives: c.candidates.map((k) => ({ concept: k.name, score: 0 })),
+    inTree:
       c.certainty === 'none'
         ? null
         : {
-            certeza: c.certainty === 'high' ? 'alta' : 'media',
-            fuente: FUENTE[c.source ?? 'dictionary'],
-            conceptoId: c.conceptId ?? undefined,
-            categoriaId: c.categoryId ?? undefined,
-            candidatos: c.candidates.map((k) => ({ id: k.id, nombre: k.name, ruta: k.path })),
+            certainty: c.certainty === 'high' ? 'alta' : 'media',
+            source: FUENTE[c.source ?? 'dictionary'],
+            conceptId: c.conceptId ?? undefined,
+            categoryId: c.categoryId ?? undefined,
+            candidates: c.candidates.map((k) => ({ id: k.id, name: k.name, path: k.path })),
           },
   };
 }
@@ -290,7 +290,7 @@ function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Read
  * The API speaks English (v2); `@coco/receipt-parser`, which the sheet reads, still
  * names its sources in Spanish. Translated here, at the edge.
  */
-const FUENTE: Record<NonNullable<ClassificationSource>, TreeClassification['fuente']> = {
+const FUENTE: Record<NonNullable<ClassificationSource>, TreeClassification['source']> = {
   history: 'historial',
   keywords: 'palabras-clave',
   signature: 'firma',

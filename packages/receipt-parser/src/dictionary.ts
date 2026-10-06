@@ -30,18 +30,18 @@ import { normalize } from './signatures';
  */
 export interface DictionaryGroup {
   /** Para leerlo en un informe. No se enseña. */
-  grupo: string;
+  group: string;
   /** Lo que se busca en el árbol de la persona, por nombre y palabra clave. */
-  terminos: readonly string[];
+  terms: readonly string[];
   /** Tal como aparecen en el texto. Se normalizan al comparar. */
-  comercios: readonly string[];
+  merchants: readonly string[];
 }
 
 export const DICTIONARY: readonly DictionaryGroup[] = [
   {
-    grupo: 'mercado',
-    terminos: ['mercado', 'supermercado', 'viveres', 'alimentacion', 'despensa', 'tienda'],
-    comercios: [
+    group: 'mercado',
+    terms: ['mercado', 'supermercado', 'viveres', 'alimentacion', 'despensa', 'tienda'],
+    merchants: [
       'd1',
       'koba colombia',
       'koba',
@@ -68,8 +68,8 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
     ],
   },
   {
-    grupo: 'restaurantes y domicilios',
-    terminos: [
+    group: 'restaurantes y domicilios',
+    terms: [
       'restaurante',
       'restaurantes',
       'comida',
@@ -80,7 +80,7 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
       'cena',
       'cafeteria',
     ],
-    comercios: [
+    merchants: [
       'rappi',
       'didi food',
       'mcdonalds',
@@ -115,9 +115,9 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
     ],
   },
   {
-    grupo: 'transporte',
-    terminos: ['transporte', 'taxi', 'pasajes', 'movilidad', 'parqueadero', 'parqueaderos'],
-    comercios: [
+    group: 'transporte',
+    terms: ['transporte', 'taxi', 'pasajes', 'movilidad', 'parqueadero', 'parqueaderos'],
+    merchants: [
       'uber',
       'cabify',
       'indrive',
@@ -133,9 +133,9 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
     ],
   },
   {
-    grupo: 'combustible',
-    terminos: ['gasolina', 'combustible', 'tanqueada', 'acpm', 'gas vehicular'],
-    comercios: [
+    group: 'combustible',
+    terms: ['gasolina', 'combustible', 'tanqueada', 'acpm', 'gas vehicular'],
+    merchants: [
       'terpel',
       'primax',
       'texaco',
@@ -150,14 +150,14 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
     ],
   },
   {
-    grupo: 'peajes',
-    terminos: ['peaje', 'peajes', 'vias', 'autopista'],
-    comercios: ['peaje', 'peajes', 'flypass', 'facilpass', 'concesion vial', 'concesionaria'],
+    group: 'peajes',
+    terms: ['peaje', 'peajes', 'vias', 'autopista'],
+    merchants: ['peaje', 'peajes', 'flypass', 'facilpass', 'concesion vial', 'concesionaria'],
   },
   {
-    grupo: 'farmacia',
-    terminos: ['farmacia', 'drogueria', 'medicamentos', 'medicinas', 'drogas'],
-    comercios: [
+    group: 'farmacia',
+    terms: ['farmacia', 'drogueria', 'medicamentos', 'medicinas', 'drogas'],
+    merchants: [
       'farmatodo',
       'cruz verde',
       'la rebaja',
@@ -174,8 +174,8 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
     ],
   },
   {
-    grupo: 'servicios publicos',
-    terminos: [
+    group: 'servicios publicos',
+    terms: [
       'servicios publicos',
       'agua',
       'luz',
@@ -185,7 +185,7 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
       'aseo',
       'alcantarillado',
     ],
-    comercios: [
+    merchants: [
       'epm',
       'empresas publicas de medellin',
       'emcali',
@@ -210,9 +210,9 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
     ],
   },
   {
-    grupo: 'telecomunicaciones',
-    terminos: ['internet', 'celular', 'telefonia', 'plan', 'datos', 'television', 'cable'],
-    comercios: [
+    group: 'telecomunicaciones',
+    terms: ['internet', 'celular', 'telefonia', 'plan', 'datos', 'television', 'cable'],
+    merchants: [
       'claro hogar',
       'claro movil',
       'claro',
@@ -228,8 +228,8 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
     ],
   },
   {
-    grupo: 'suscripciones digitales',
-    terminos: [
+    group: 'suscripciones digitales',
+    terms: [
       'suscripcion',
       'suscripciones',
       'streaming',
@@ -238,7 +238,7 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
       'apps',
       'software',
     ],
-    comercios: [
+    merchants: [
       'netflix',
       'spotify',
       'disney plus',
@@ -274,8 +274,8 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
     ],
   },
   {
-    grupo: 'salud',
-    terminos: [
+    group: 'salud',
+    terms: [
       'salud',
       'medico',
       'consulta',
@@ -287,7 +287,7 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
       'odontologia',
       'clinica',
     ],
-    comercios: [
+    merchants: [
       'sura',
       'eps sura',
       'sanitas',
@@ -311,8 +311,8 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
     ],
   },
   {
-    grupo: 'educacion',
-    terminos: [
+    group: 'educacion',
+    terms: [
       'educacion',
       'colegio',
       'universidad',
@@ -322,7 +322,7 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
       'cursos',
       'utiles',
     ],
-    comercios: [
+    merchants: [
       'colegio',
       'universidad',
       'matricula',
@@ -363,7 +363,7 @@ export const PIPELINES: readonly string[] = [
 ];
 
 export interface FoundMerchant {
-  grupo: DictionaryGroup;
+  group: DictionaryGroup;
   /** El alias que apareció, tal como está en el diccionario. */
   alias: string;
 }
@@ -387,17 +387,16 @@ export function merchantsIn(text: string): FoundMerchant[] {
   let remaining = ` ${normalize(text)} `;
   for (const pipeline of PIPELINES) remaining = remaining.split(pipeline).join(' ');
 
-  const candidates: { grupo: DictionaryGroup; alias: string; largo: number }[] = [];
+  const candidates: { group: DictionaryGroup; alias: string; length: number }[] = [];
   for (const group of DICTIONARY) {
-    for (const alias of group.comercios)
-      candidates.push({ grupo: group, alias, largo: alias.length });
+    for (const alias of group.merchants) candidates.push({ group, alias, length: alias.length });
   }
-  candidates.sort((a, b) => b.largo - a.largo);
+  candidates.sort((a, b) => b.length - a.length);
 
   const found: FoundMerchant[] = [];
   const seenGroups = new Set<string>();
 
-  for (const { grupo: group, alias } of candidates) {
+  for (const { group, alias } of candidates) {
     const pattern = new RegExp(
       `(^|[^a-z0-9])(${normalize(alias).replace(ESCAPE, '\\$&')})(?=[^a-z0-9]|$)`,
     );
@@ -411,9 +410,9 @@ export function merchantsIn(text: string): FoundMerchant[] {
     const start = m.index + before.length;
     remaining = `${remaining.slice(0, start)} ${' '.repeat(match.length - 1)}${remaining.slice(start + match.length)}`;
 
-    if (!seenGroups.has(group.grupo)) {
-      seenGroups.add(group.grupo);
-      found.push({ grupo: group, alias });
+    if (!seenGroups.has(group.group)) {
+      seenGroups.add(group.group);
+      found.push({ group, alias });
     }
   }
 
@@ -430,8 +429,8 @@ export function merchantsIn(text: string): FoundMerchant[] {
 export function termsFor(text: string): string[] {
   const seen = new Set<string>();
   const terms: string[] = [];
-  for (const { grupo: group } of merchantsIn(text)) {
-    for (const t of group.terminos) {
+  for (const { group } of merchantsIn(text)) {
+    for (const t of group.terms) {
       if (!seen.has(t)) {
         seen.add(t);
         terms.push(t);
