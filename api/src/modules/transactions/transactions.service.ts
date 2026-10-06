@@ -37,6 +37,9 @@ import { serializar, toMoney, type Money } from '../../common/money/money';
 import { SoportesService } from '../soportes/soportes.service';
 import { TagsService } from '../tags/tags.service';
 
+/** What other modules see of a transaction: they reach the domain through the service. */
+export type { Transaction } from './transactions.domain';
+
 /**
  * El primer día del mes de una fecha.
  *

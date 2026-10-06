@@ -29,8 +29,7 @@ import { DuplicateError, NotFoundError, ValidationError } from '../../common/err
 import { CategoryLookupService } from '../categories/category-lookup.service';
 import { CategorizationService } from '../categorization/categorization.service';
 import { LedgerService } from '../transactions/ledger.service';
-import type { Transaction } from '../transactions/transactions.domain';
-import { TransactionsService } from '../transactions/transactions.service';
+import { TransactionsService, type Transaction } from '../transactions/transactions.service';
 
 /**
  * El único cerebro: interpreta, clasifica, detecta duplicados y registra.

@@ -1,7 +1,7 @@
 /** What the interpretation service hands out (the domain), and the pure helpers that build it. */
 import type { ClasificacionInterpretada, Interpretado } from './interpretar';
 import { CERTAINTY, CLASSIFICATION_SOURCE, english, type English } from '../../common/vocabulary';
-import type { Transaction } from '../transactions/transactions.domain';
+import type { Transaction } from '../transactions/transactions.service';
 
 export type Certainty = English<typeof CERTAINTY>;
 export type ClassificationSource = English<typeof CLASSIFICATION_SOURCE>;
