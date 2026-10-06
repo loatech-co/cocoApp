@@ -24,9 +24,8 @@
  * Es una función pura: quien tiene la base trae las candidatas, y esto decide.
  */
 
-import type { TransactionSource } from '../../generated/prisma/client';
-
 import { toMoney } from '../../common/money/money';
+import type { TransactionSource } from '../../generated/prisma/client';
 import type {
   DuplicateCandidateRow,
   DuplicateCriteria,

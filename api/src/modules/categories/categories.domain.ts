@@ -1,7 +1,6 @@
-import type { Category as CategoryRow, CategoryKind } from '../../generated/prisma/client';
-
 import type { ConHijos } from '../../common/categories/categories.tree';
 import { english, PERIODICITY, type English } from '../../common/vocabulary';
+import type { Category as CategoryRow, CategoryKind } from '../../generated/prisma/client';
 
 /**
  * A category as the service hands it out, whatever its level (cost center,

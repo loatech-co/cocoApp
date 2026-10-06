@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import type { Prisma } from '../../generated/prisma/client';
 
 export class AuditUserResponse {

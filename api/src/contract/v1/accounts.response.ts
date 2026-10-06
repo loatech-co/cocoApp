@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import { AccountType } from '../../generated/prisma/client';
 
 export class AccountResponse {

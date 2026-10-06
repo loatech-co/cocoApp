@@ -14,12 +14,10 @@
       // playwright plugin through it.
       "playwright": { "config": ["e2e/playwright.config.ts"] },
       // Scripts run from the repo root and use the workspaces' hoisted
-      // dependencies (the Prisma adapter, the Prisma client) on purpose: they
-      // operate on the same database as the app, with the same versions. (`pg`
-      // is a root devDependency since the journeys, which open their own test
-      // database with it.) `tsx` runs the .mjs scripts that import the
-      // generated Prisma 7 client (ADR 0020).
-      "ignoreDependencies": ["@prisma/adapter-pg", "@prisma/client", "tsx"],
+      // Prisma adapter on purpose: they operate on the same database as the
+      // app, with the same version (ADR 0020). (`pg` is a root devDependency
+      // since the journeys, which open their own test database with it.)
+      "ignoreDependencies": ["@prisma/adapter-pg"],
     },
     "api": {
       // src/openapi/generate.ts: `npm run openapi` runs it from dist/.

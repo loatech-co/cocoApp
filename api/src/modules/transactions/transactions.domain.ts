@@ -1,7 +1,10 @@
-import type { TransactionSource, TransactionStatus, TransactionType } from '../../generated/prisma/client';
-
 import type { TransaccionCompleta } from './transactions.repository';
 import { serializar, toMoney } from '../../common/money/money';
+import type {
+  TransactionSource,
+  TransactionStatus,
+  TransactionType,
+} from '../../generated/prisma/client';
 
 /**
  * A transaction as the service hands it out: the domain, not a wire format.

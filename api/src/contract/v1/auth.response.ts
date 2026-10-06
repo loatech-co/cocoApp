@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole, UserStatus } from '../../generated/prisma/client';
 
 import { FLAG_NAMES, type FlagName } from '@coco/flags';
+
+import { UserRole, UserStatus } from '../../generated/prisma/client';
 
 export class ProfileResponse {
   id!: number;

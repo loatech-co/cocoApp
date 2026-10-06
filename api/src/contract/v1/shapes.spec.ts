@@ -1,5 +1,3 @@
-import type { Prisma } from '../../generated/prisma/client';
-
 import type { AccountResponse } from './accounts.response';
 import type { AuditEntryResponse, AuditUserResponse } from './admin.response';
 import type { MeResponse, ProfileResponse, SessionResponse } from './auth.response';
@@ -21,6 +19,7 @@ import type {
   TransactionResponse,
   TransferResponse,
 } from './transactions.response';
+import type { Prisma } from '../../generated/prisma/client';
 import type { LivenessPayload, ReadinessPayload } from '../../modules/health/health.service';
 import type { Tag } from '../../modules/tags/tags.service';
 import type { TransactionHistory } from '../../modules/transactions/transactions.domain';

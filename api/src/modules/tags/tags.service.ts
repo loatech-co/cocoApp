@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { Tag as TagRow } from '../../generated/prisma/client';
 
 import type { UpsertTagDto } from './tags.dto';
 import { TagsRepository } from './tags.repository';
 import { NotFoundError } from '../../common/errors/domain-error';
+import type { Tag as TagRow } from '../../generated/prisma/client';
 
 /** A tag, as the service hands it out (the domain). */
 export interface Tag {

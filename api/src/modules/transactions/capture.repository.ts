@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '../../generated/prisma/client';
 
 import type {
   CaptureOutcome,
@@ -10,6 +9,7 @@ import type {
 } from './ledger.types';
 import { writeDetails } from './transactions.repository';
 import { DuplicateError } from '../../common/errors/domain-error';
+import { Prisma } from '../../generated/prisma/client';
 import { Database } from '../../prisma/database';
 
 /**

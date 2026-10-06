@@ -1,5 +1,8 @@
-import type { TransactionSource, TransactionStatus, TransactionType } from '../../generated/prisma/client';
-
+import type {
+  TransactionSource,
+  TransactionStatus,
+  TransactionType,
+} from '../../generated/prisma/client';
 import type {
   Split,
   Transaction,

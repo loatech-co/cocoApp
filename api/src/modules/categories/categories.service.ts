@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { Category as CategoryRow, CategoryKind } from '../../generated/prisma/client';
 
 import {
   categoryFromRow,
@@ -24,6 +23,7 @@ import {
   PROFUNDIDAD_MAXIMA,
 } from '../../common/categories/categories.tree';
 import { ConflictError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
+import type { Category as CategoryRow, CategoryKind } from '../../generated/prisma/client';
 
 @Injectable()
 export class CategoriesService {
