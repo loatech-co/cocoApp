@@ -33,9 +33,9 @@ restarts the app. Expect 1–2 minutes.
 **Migrations go first, in their own step, before the PR whose code needs
 them** (see [Migrations](#migrations)).
 
-**`npm run deploy:api` and `npm run deploy:web` are not the deploy.** They
-are the manual rsync scripts from before hbuilds and the MariaDB move; hbuilds
-replaces whatever they copy on the next push. Do not use them.
+**There is no manual deploy.** The rsync scripts from before hbuilds
+(`deploy:api`, `deploy:web`) were deleted: they overwrote production's `.env`
+and ran Node 20, and hbuilds replaced whatever they copied on the next push.
 
 ### Verify a deploy
 
@@ -44,8 +44,7 @@ push succeeds.** Check, in this order:
 
 1. `curl -s -o /dev/null -w '%{http_code}' https://dev-cocoapp.viteri.me/api/v2/health`
    → `200` (the process answers) and the same against `/api/v2/ready` → `200`
-   (the database answers too; `503` if it does not). Both are public; it is
-   what `scripts/desplegar-api.sh` checks when it finishes.
+   (the database answers too; `503` if it does not). Both are public.
 2. The web bundle name changed: `curl -s https://dev-cocoapp.viteri.me/ | grep -o 'index-[^"]*\.js'`.
 3. The behaviour the change touched, from the outside.
 4. If something is off, over ONE SSH session: the HEAD of

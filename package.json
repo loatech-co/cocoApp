@@ -29,8 +29,6 @@
     "sql:supabase": "dotenv -e api/.env.migrate -- bash scripts/sql-supabase.sh",
     "postinstall": "node scripts/preparar-tesseract.mjs && npm run build --workspace @coco/lectura --workspace @coco/flags",
     "start": "node api/dist/main.js",
-    "deploy:web": "bash scripts/desplegar-frontend.sh",
-    "deploy:api": "bash scripts/desplegar-api.sh",
     "respaldar": "bash scripts/respaldar.sh",
     "verify:clean-install": "bash scripts/verify-clean-install.sh",
     "format": "prettier --write .",
