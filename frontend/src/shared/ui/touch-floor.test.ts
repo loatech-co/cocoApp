@@ -49,17 +49,17 @@ const EXCEPTIONS: [filePath: string, className: string, reason: string][] = [
   [
     'shared/ui/atoms/tile.tsx',
     'size-6',
-    'el menos de una baldosa mide 24: se llega a él dentro de un modo al que se entra manteniendo pulsada la baldosa, y uno mayor se pulsaría al arrastrar',
+    "a tile's minus button is 24: it is reached inside a mode entered by holding the tile down, and a bigger one would get pressed while dragging",
   ],
   [
     'shared/ui/atoms/bottom-sheet.tsx',
     'h-[5px] w-[72px]',
-    'el tirador es un INDICADOR, no un control: el gesto se lee en todo el panel, no encima de la raya',
+    'the handle is an INDICATOR, not a control: the gesture is read on the whole panel, not on top of the bar',
   ],
   [
     'shared/ui/atoms/checkbox.tsx',
     'size-4',
-    'el recuadro mide 16, pero vive dentro de una fila que sí tiene suelo y que lo alterna entera',
+    'the box is 16, but it lives inside a row that does have a floor and toggles it as a whole',
   ],
 ];
 
