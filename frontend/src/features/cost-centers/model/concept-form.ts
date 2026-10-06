@@ -5,7 +5,7 @@ import type { Recurrence } from '../components/recurrence-fields';
 /**
  * Lo que la ficha de un concepto lee del árbol y lo que manda al servidor.
  *
- * Funciones puras: la ficha (`ConceptoModal`) y su estado
+ * Funciones puras: la ficha (`ConceptModal`) y su estado
  * (`useConceptForm`) solo deciden CUÁNDO se llaman.
  */
 

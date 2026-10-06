@@ -59,7 +59,7 @@ interface ConfirmDeletionProps {
  * Hay que decirlo, porque «eliminar» junto a un número de movimientos se lee
  * como que se van los movimientos.
  */
-/** The three levels of the tree, as the person reads them. */
+/** The three levels of the tree. */
 type CategoryLevel = 'costCenter' | 'category' | 'concept';
 
 export function ConfirmDeletion({

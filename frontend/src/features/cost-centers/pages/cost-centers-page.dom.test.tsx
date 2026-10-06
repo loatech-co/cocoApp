@@ -21,7 +21,7 @@ vi.mock('@/features/cost-centers/components/cost-center-card', () => ({
 
 afterEach(cleanup);
 
-describe('CentrosPage when the tree fails to load', () => {
+describe('CostCentersPage when the tree fails to load', () => {
   it('says it failed and does NOT invite to create (that duplicates centers)', () => {
     Object.assign(query, { data: undefined, isError: true, isSuccess: false });
     render(<CostCentersPage />);
