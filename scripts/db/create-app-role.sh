@@ -28,6 +28,12 @@
 # the local scripts and any data fix in a migration would see zero rows.
 # Refused for a remote host: production's owner is not ours to alter.
 #
+# SUPERUSER, REPLICATION and BYPASSRLS are not named in the ALTER: since
+# PostgreSQL 16 only a superuser may name them, even to say NO, and Supabase's
+# `postgres` is not one (it failed there with "permission denied to alter
+# role"). A new role is born without them, and the script checks that it
+# still is.
+#
 # ── Supabase ────────────────────────────────────────────────────────────────
 # Through the pooler (Supavisor) the user is `<role>.<project-ref>`:
 #   postgresql://coco_app.<project-ref>:<password>@<pooler-host>:6543/postgres
@@ -51,7 +57,14 @@ psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 -q <<'SQL'
 \getenv app_password COCO_APP_DB_PASSWORD
 SELECT 'CREATE ROLE coco_app' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'coco_app')
 \gexec
-ALTER ROLE coco_app WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS NOINHERIT PASSWORD :'app_password';
+ALTER ROLE coco_app WITH LOGIN NOCREATEDB NOCREATEROLE NOINHERIT PASSWORD :'app_password';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'coco_app'
+             AND (rolsuper OR rolreplication OR rolbypassrls)) THEN
+    RAISE EXCEPTION 'coco_app must not be a superuser, replicate or bypass row security';
+  END IF;
+END $$;
 SQL
 
 if [ -n "${MIGRATION_ROLE:-}" ]; then
