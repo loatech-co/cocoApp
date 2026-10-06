@@ -4,17 +4,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { shrinkReceipt, shrinkReceipts } from './shrink-receipt';
 
 /**
- * Lo que se sube es un JPG liviano, y si no se puede, se sube lo que había.
+ * What gets uploaded is a light JPG, and if that is not possible, whatever
+ * was there gets uploaded.
  *
- * La segunda mitad importa tanto como la primera: encoger es una mejora, no un
- * requisito. Un navegador que no sepa abrir el formato no puede quedarse sin
- * poder adjuntar el recibo.
+ * The second half matters as much as the first: shrinking is an improvement,
+ * not a requirement. A browser that cannot open the format must not be left
+ * unable to attach the receipt.
  */
 function file(name: string, type: string, kb: number): File {
   return new File([new Uint8Array(kb * 1024)], name, { type });
 }
 
-/** jsdom no dibuja: se finge el lienzo y la decodificación. */
+/** jsdom does not draw: the canvas and the decoding are faked. */
 function fakeBrowser({
   width: width = 4032,
   height: height = 3024,
@@ -32,9 +33,9 @@ function fakeBrowser({
 
   vi.stubGlobal(
     'createImageBitmap',
-    // Promesas explícitas en vez de `async`: lo que importa de este doble es
-    // que RECHACE cuando el formato no se entiende, y `async` lo conseguía de
-    // rebote. Dicho así se lee lo que hace.
+    // Explicit promises instead of `async`: what matters about this double is
+    // that it REJECTS when the format is not understood, and `async` managed
+    // it by accident. Said this way, what it does can be read.
     vi.fn(() =>
       canDecode
         ? Promise.resolve({ width, height } as unknown as ImageBitmap)
@@ -82,22 +83,22 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('Encoger un soporte antes de subirlo', () => {
-  it('convierte la foto de un teléfono a JPG y la encoge', async () => {
+describe('Shrinking a receipt before uploading it', () => {
+  it("converts a phone's photo to JPG and shrinks it", async () => {
     const { canvas } = fakeBrowser({ width: 4032, height: 3024 });
 
     const outputBytes = await shrinkReceipt(file('IMG_4821.jpg', 'image/jpeg', 4096));
 
     expect(outputBytes.type).toBe('image/jpeg');
     expect(outputBytes.size).toBeLessThan(4096 * 1024);
-    // El lado largo queda en 1600: por encima del 1100 al que reduce el
-    // servidor, para que el recorte final lo decida él.
+    // The long side ends at 1600: above the 1100 the server reduces to, so the
+    // final cut is the server's call.
     expect(canvas()).toEqual({ width: 1600, height: 1200 });
   });
 
-  it('un HEIC se convierte SIEMPRE, aunque sea pequeño', async () => {
-    // Su problema no es el peso: es que el servidor no sabe abrir ese formato,
-    // y por eso contestaba «Ocurrió un error inesperado».
+  it('a HEIC is ALWAYS converted, even when small', async () => {
+    // Its problem is not the weight: the server cannot open that format, and
+    // that is why it answered «Ocurrió un error inesperado».
     fakeBrowser({ width: 800, height: 600, outputBytes: 90 * 1024 });
 
     const outputBytes = await shrinkReceipt(file('IMG_4821.HEIC', 'image/heic', 300));
@@ -106,26 +107,26 @@ describe('Encoger un soporte antes de subirlo', () => {
     expect(outputBytes.name).toBe('IMG_4821.jpg');
   });
 
-  it('una imagen pequeña Y estrecha no se toca: recodificarla le quita nitidez', async () => {
-    // Las dos condiciones. Poco peso por sí solo no basta: ver la prueba de
-    // abajo, que es el caso que se nos coló hasta el servidor.
+  it('a small AND narrow image is left alone: re-encoding it takes sharpness away', async () => {
+    // Both conditions. Low weight alone is not enough: see the test below,
+    // which is the case that slipped through to the server.
     fakeBrowser({ width: 900, height: 700 });
     const original = file('recorte.png', 'image/png', 200);
 
     expect(await shrinkReceipt(original)).toBe(original);
   });
 
-  it('una captura LIVIANA pero enorme sí se encoge', async () => {
+  it('a LIGHT but huge screenshot does get shrunk', async () => {
     /*
-      El caso real: pegar una captura de pantalla.
+      The real case: pasting a screenshot.
 
-      Pesa 300 KB —por debajo del umbral— y mide 2560 de ancho. Con el filtro
-      de solo peso, viajaba entera y el servidor tenía que decodificar esos
-      2560px; con los hilos contados de un plan compartido, ahí es donde
-      reventaba con «glib: Error creating thread».
+      It weighs 300 KB —below the threshold— and is 2560 wide. With the
+      weight-only filter, it traveled whole and the server had to decode those
+      2560px; with the counted threads of a shared plan, that is where it blew
+      up with «glib: Error creating thread».
 
-      Por eso fallaba PEGAR y no fallaba subir una foto: la foto pesa más, y
-      por pesar más sí se encogía aquí.
+      That is why PASTING failed and uploading a photo did not: the photo
+      weighs more, and for weighing more it did get shrunk here.
     */
     const { canvas } = fakeBrowser({ width: 2560, height: 1440, outputBytes: 150 * 1024 });
 
@@ -135,16 +136,16 @@ describe('Encoger un soporte antes de subirlo', () => {
     expect(canvas()).toEqual({ width: 1600, height: 900 });
   });
 
-  it('un PDF no se toca: tiene páginas, y aplanarlo perdería todas menos una', async () => {
+  it('a PDF is not touched: it has pages, and flattening it would lose all but one', async () => {
     fakeBrowser();
     const original = file('recibo.pdf', 'application/pdf', 4096);
 
     expect(await shrinkReceipt(original)).toBe(original);
   });
 
-  it('si el navegador no sabe abrir el formato, se sube el original', async () => {
-    // Encoger es una mejora, no un requisito: convertirlo en un paso que puede
-    // impedir la subida sería cambiar un fallo por otro.
+  it('if the browser cannot open the format, the original is uploaded', async () => {
+    // Shrinking is an improvement, not a requirement: turning it into a step
+    // that can prevent the upload would be trading one failure for another.
     fakeBrowser({ canDecode: false });
     vi.stubGlobal(
       'Image',
@@ -160,14 +161,14 @@ describe('Encoger un soporte antes de subirlo', () => {
     expect(await shrinkReceipt(original)).toBe(original);
   });
 
-  it('si el lienzo no se puede leer, se sube el original', async () => {
+  it('if the canvas cannot be read, the original is uploaded', async () => {
     fakeBrowser({ canPaint: false });
     const original = file('foto.jpg', 'image/jpeg', 4096);
 
     expect(await shrinkReceipt(original)).toBe(original);
   });
 
-  it('una tanda se encoge entera', async () => {
+  it('a batch is shrunk whole', async () => {
     fakeBrowser();
     const outputs = await shrinkReceipts([
       file('a.jpg', 'image/jpeg', 4096),

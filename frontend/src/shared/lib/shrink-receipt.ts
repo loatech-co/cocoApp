@@ -1,81 +1,81 @@
 /**
- * Una foto de teléfono, lista para subir.
+ * A phone photo, ready to upload.
  *
- * ── Por qué se encoge ANTES de mandarla ─────────────────────────────────────
- * El servidor ya deja cada soporte en gris y a 1100px de ancho, así que la
- * foto de doce megapíxeles que sale de un teléfono se descarta casi entera
- * nada más llegar. Lo que hace es pagar el viaje: cuatro megas por datos
- * móviles, y luego una decodificación de doce megapíxeles en un plan
- * compartido.
+ * ── Why it is shrunk BEFORE sending it ──────────────────────────────────────
+ * The server already turns every receipt gray and 1100px wide, so the
+ * twelve-megapixel photo that comes out of a phone is almost entirely
+ * discarded on arrival. What it does do is pay for the trip: four megabytes
+ * over mobile data, and then a twelve-megapixel decode on a shared plan.
  *
- * ── Y por qué eso arregla un fallo, no solo una lentitud ────────────────────
- * Porque el formato en el que un iPhone guarda sus fotos es HEIC, y la
- * librería de imágenes del servidor solo lo entiende si se compiló con soporte
- * para él —que es lo que casi nunca ocurre, porque va aparte por licencia—. Al
- * llegarle un HEIC, revienta, y lo que ve quien lo subió es «Ocurrió un error
- * inesperado».
+ * ── And why that fixes a failure, not just slowness ─────────────────────────
+ * Because the format an iPhone stores its photos in is HEIC, and the server's
+ * image library only understands it if it was compiled with support for it
+ * —which almost never happens, because it ships separately for licensing
+ * reasons—. When a HEIC reaches it, it blows up, and what the person who
+ * uploaded it sees is «Ocurrió un error inesperado».
  *
- * El navegador del teléfono SÍ sabe abrir sus propias fotos: es su formato
- * nativo. Así que se decodifica donde se puede —aquí— y lo que viaja es un JPG
- * que cualquiera entiende.
+ * The phone's browser DOES know how to open its own photos: it is its native
+ * format. So it is decoded where it can be —here— and what travels is a JPG
+ * anyone understands.
  *
- * ── Por qué nunca deja de subir ─────────────────────────────────────────────
- * Si algo falla —un formato que este navegador no abre, un lienzo que el
- * sistema no deja leer— se manda el archivo ORIGINAL. Encoger es una mejora,
- * no un requisito: convertirlo en un paso que puede impedir la subida sería
- * cambiar un fallo por otro.
+ * ── Why it never stops the upload ───────────────────────────────────────────
+ * If something fails —a format this browser cannot open, a canvas the system
+ * will not let us read— the ORIGINAL file is sent. Shrinking is an
+ * improvement, not a requirement: turning it into a step that can prevent the
+ * upload would be trading one failure for another.
  */
 
 /**
- * Lo ancho que se manda. Por encima del 1100 al que el servidor reduce, para
- * que sea ÉL quien decida el recorte final y no se pierda nada por el camino
- * —y por si mañana ese número sube—.
+ * The width that is sent. Above the 1100 the server reduces to, so that IT
+ * decides the final cut and nothing is lost on the way —and in case that
+ * number goes up tomorrow—.
  */
 const MAX_SIDE_PX = 1600;
 
-/** Calidad del JPG que viaja. Alta: la compresión de verdad la hace el servidor. */
+/** Quality of the JPG that travels. High: the real compression is the server's. */
 const QUALITY = 0.85;
 
 /**
- * Por debajo de esto, y si además CABE, no se toca.
+ * Below this, and if it also FITS, it is left alone.
  *
- * Una imagen pequeña y estrecha ya está bien: recodificarla solo le quita
- * nitidez al texto, que es justo lo que se viene a leer de un recibo.
+ * A small, narrow image is already fine: re-encoding it only takes sharpness
+ * away from the text, which is exactly what a receipt is read for.
  *
- * Las dos condiciones, y no solo el peso. Una captura de pantalla pesa 300 KB
- * y mide 2560 de ancho: pasaba el filtro por liviana y llegaba entera al
- * servidor, donde lo caro no es el peso sino DECODIFICARLA. Con los hilos
- * contados de un plan compartido, ese decodificado es el que reventaba con
- * «Error creating thread», y por eso fallaba pegar una captura y no fallaba
- * subir una foto —que pesa más, y por pesar más sí se encogía aquí—.
+ * Both conditions, and not just the weight. A screenshot weighs 300 KB and is
+ * 2560 wide: it passed the filter for being light and reached the server
+ * whole, where the expensive part is not the weight but DECODING it. With the
+ * counted threads of a shared plan, that decode is the one that blew up with
+ * «Error creating thread», and that is why pasting a screenshot failed and
+ * uploading a photo did not —it weighs more, and for weighing more it did get
+ * shrunk here—.
  */
 const MIN_BYTES = 900 * 1024;
 
 /**
- * Lo que se espera a que el navegador abra la imagen antes de rendirse.
+ * How long to wait for the browser to open the image before giving up.
  *
- * Generoso: es un archivo que ya está en memoria, así que abrirlo es
- * instantáneo salvo que algo vaya mal. Está para que «algo va mal» acabe en un
- * archivo subido sin encoger y no en una pantalla colgada.
+ * Generous: it is a file already in memory, so opening it is instantaneous
+ * unless something goes wrong. It is there so that «something goes wrong»
+ * ends in a file uploaded unshrunk and not in a frozen screen.
  */
 const MAX_WAIT_MS = 5000;
 
-/** Un PDF no se toca: tiene páginas, y aplanarlo perdería todas menos una. */
+/** A PDF is not touched: it has pages, and flattening it would lose all but one. */
 function isImage(file: File): boolean {
   return file.type.startsWith('image/');
 }
 
-/** El mismo nombre pero con extensión `.jpg`: lo que viaja ya es un JPG. */
+/** The same name but with a `.jpg` extension: what travels is already a JPG. */
 function asJpgName(name: string): string {
   return `${name.replace(/\.[a-z0-9]+$/i, '')}.jpg`;
 }
 
 /**
- * Decodifica la imagen con lo que haya.
+ * Decodes the image with whatever is available.
  *
- * `createImageBitmap` es el camino bueno —no toca el DOM y respeta la
- * orientación EXIF si se le pide— pero no está en todas partes; el `<img>` con
- * un `blob:` funciona en cualquier navegador que abra ese formato.
+ * `createImageBitmap` is the good path —it does not touch the DOM and honors
+ * the EXIF orientation if asked— but it is not everywhere; an `<img>` with a
+ * `blob:` works in any browser that opens that format.
  */
 async function decode(
   file: File,
@@ -85,8 +85,8 @@ async function decode(
       const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
       return { source: bitmap, width: bitmap.width, height: bitmap.height };
     } catch {
-      // Y se sigue por el otro camino: hay navegadores que no admiten
-      // `imageOrientation`, y otros que no saben con este formato.
+      // And it goes on by the other path: some browsers do not accept
+      // `imageOrientation`, and others cannot handle this format.
     }
   }
 
@@ -95,18 +95,18 @@ async function decode(
     const image = await new Promise<HTMLImageElement | null>((resolve) => {
       const el = new Image();
       /*
-        ── Con reloj, y no solo con `onload`/`onerror` ──────────────────────
-        Una promesa que espera dos eventos se queda esperando para siempre si
-        no llega ninguno, y entonces la subida entera se cuelga: sin error, sin
-        aviso, con el botón girando.
+        ── With a timer, and not only with `onload`/`onerror` ───────────────
+        A promise that waits for two events waits forever if neither arrives,
+        and then the whole upload hangs: no error, no notice, the button
+        spinning.
 
-        Pasa de verdad —un `blob:` que el navegador decide no cargar, un
-        formato que ni abre ni rechaza— y pasaba poco porque solo llegaban aquí
-        los archivos de más de 900 KB. Desde que se abre TODA imagen para saber
-        cuánto mide, este camino lo pisa cualquier soporte.
+        It really happens —a `blob:` the browser decides not to load, a format
+        it neither opens nor rejects— and it happened rarely because only files
+        over 900 KB reached this point. Since EVERY image is opened to learn its
+        size, any receipt goes down this path.
 
-        Rendirse es gratis: se manda el original, que es lo que se hace con
-        cualquier otro fallo de aquí.
+        Giving up is free: the original is sent, which is what any other
+        failure here does.
       */
       const timer = setTimeout(() => resolve(null), MAX_WAIT_MS);
       const finish = (result: HTMLImageElement | null): void => {
@@ -127,23 +127,23 @@ async function decode(
 }
 
 /**
- * La imagen encogida a JPG, o el archivo original si no se pudo.
+ * The image shrunk to JPG, or the original file if that was not possible.
  *
- * Nunca lanza: ver «por qué nunca deja de subir», arriba.
+ * Never throws: see «why it never stops the upload», above.
  */
 export async function shrinkReceipt(file: File): Promise<File> {
   if (!isImage(file)) return file;
-  // Un HEIC se convierte SIEMPRE, mida lo que mida: su problema no es el peso
-  // sino el formato, que el servidor no sabe abrir.
+  // A HEIC is ALWAYS converted, whatever its size: its problem is not the
+  // weight but the format, which the server cannot open.
   const isHeic = /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
 
   try {
     /*
-      Se abre SIEMPRE, incluso una imagen liviana.
+      It is ALWAYS opened, even a light image.
 
-      Es el único modo de saber cuánto MIDE, que es lo que decide el trabajo
-      del servidor, y aquí abrirla es barato: la decodifica el navegador, una
-      sola vez, con la imagen que el usuario acaba de elegir delante.
+      It is the only way to know how big it IS, which is what decides the
+      server's work, and opening it here is cheap: the browser decodes it,
+      once, with the image the user just picked right there.
     */
     const decoded = await decode(file);
     if (!decoded || decoded.width === 0 || decoded.height === 0) return file;
@@ -166,15 +166,17 @@ export async function shrinkReceipt(file: File): Promise<File> {
     if (!blob) return file;
 
     /*
-      Si no se ganó nada, se manda el original — pero «nada» son las DOS cosas.
+      If nothing was gained, the original is sent — but «nothing» means BOTH
+      things.
 
-      Antes bastaba con que el JPG pesara más para descartarlo, y eso devolvía
-      al servidor la imagen grande de 2560px aunque la convertida midiera 1600:
-      justo la que no queremos que le llegue. Solo se descarta cuando además no
-      se encogió de tamaño, que es cuando de verdad no aporta.
+      It used to be enough for the JPG to weigh more to discard it, and that
+      sent the server back the big 2560px image even when the converted one
+      measured 1600: exactly the one we do not want reaching it. It is only
+      discarded when it also did not shrink in size, which is when it really
+      adds nothing.
 
-      Con un HEIC se manda lo convertido igual, pese lo que pese: lo que
-      importa de ese es el formato.
+      With a HEIC the converted one is sent anyway, whatever it weighs: what
+      matters about that one is the format.
     */
     if (!isHeic && scale === 1 && blob.size >= file.size) return file;
 
@@ -187,7 +189,7 @@ export async function shrinkReceipt(file: File): Promise<File> {
   }
 }
 
-/** Lo mismo para una tanda. */
+/** The same for a batch. */
 export async function shrinkReceipts(files: readonly File[]): Promise<File[]> {
   return Promise.all(files.map((file) => shrinkReceipt(file)));
 }
