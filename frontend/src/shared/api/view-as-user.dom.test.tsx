@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthProvider, useAuth } from './auth-context';
 
-/** Una sesión de administrador, quieta: aquí no se prueba cómo se abre. */
+/** An administrator's session, standing still: how it opens is not tested here. */
 const STATE = {
   user: {
     id: 2,
@@ -53,26 +53,26 @@ function mount() {
 }
 
 /**
- * Ver la aplicación como la ve quien no administra nada.
+ * Seeing the app the way someone who administers nothing sees it.
  *
- * Es una vista, no un cambio de permisos: el token que viaja sigue siendo el
- * de un administrador y la API le contesta como a tal. Lo que cambia es lo que
- * esta pantalla ofrece — el riel, la insignia de Mi cuenta, las dos páginas
- * del panel—, y todas esas lo deciden con `esAdmin`.
+ * It is a view, not a change of permissions: the token that travels is still
+ * an administrator's and the API answers it as one. What changes is what this
+ * screen offers — the rail, the My account badge, the two panel pages—, and
+ * all of them decide it with `isAdmin`.
  */
-describe('La vista de usuario', () => {
-  it('apaga el panel sin tocar el rol', () => {
+describe('The user view', () => {
+  it('turns the panel off without touching the role', () => {
     mount();
     expect(screen.getByText(/ve el panel · es admin/)).toBeDefined();
 
     fireEvent.click(screen.getByText('alternar'));
 
-    // Lo que pinta la pantalla dice que no; el rol de verdad sigue diciendo
-    // que sí, y esa es la diferencia que sostiene todo lo demás.
+    // What the screen draws says no; the real role still says yes, and that
+    // is the difference that holds everything else up.
     expect(screen.getByText(/no ve el panel · es admin/)).toBeDefined();
   });
 
-  it('se puede volver', () => {
+  it('can be undone', () => {
     mount();
     fireEvent.click(screen.getByText('alternar'));
     fireEvent.click(screen.getByText('alternar'));
@@ -80,10 +80,10 @@ describe('La vista de usuario', () => {
     expect(screen.getByText(/ve el panel · es admin/)).toBeDefined();
   });
 
-  it('el interruptor sigue disponible mientras está encendida', () => {
-    // Quien lo enseña pregunta por `esAdminDeVerdad`. Con `esAdmin`, el
-    // interruptor desaparecería en el mismo clic que lo enciende, y la única
-    // salida sería recargar sin saber por qué.
+  it('the switch stays available while it is on', () => {
+    // Whoever shows it asks for `isRealAdmin`. With `isAdmin`, the switch
+    // would disappear in the same click that turns it on, and the only way
+    // out would be reloading without knowing why.
     mount();
     fireEvent.click(screen.getByText('alternar'));
 
@@ -91,10 +91,10 @@ describe('La vista de usuario', () => {
     expect(screen.getByText('alternar')).toBeDefined();
   });
 
-  it('no sobrevive a un arranque nuevo', () => {
-    // Vive en memoria y se olvida al recargar, a propósito: es la red de
-    // seguridad de un modo que QUITA cosas de la pantalla. Nunca se puede
-    // quedar encendido de una forma de la que no se sepa salir.
+  it('does not survive a fresh start', () => {
+    // It lives in memory and is forgotten on reload, on purpose: it is the
+    // safety net of a mode that REMOVES things from the screen. It can never
+    // stay on in a way nobody knows how to leave.
     mount();
     fireEvent.click(screen.getByText('alternar'));
     expect(screen.getByText(/no ve el panel/)).toBeDefined();

@@ -16,13 +16,12 @@ import {
 } from './session';
 
 /**
- * La sesión DENTRO de la app del teléfono.
+ * The session INSIDE the phone app.
  *
- * Lo que se comprueba es la frontera: qué va a la red y qué va por el puente.
- * La web embebida no tiene refresh token, así que ninguna de estas llamadas
- * puede acabar en `/auth/refresh` ni en `/auth/logout`; y de lo que se le
- * cuenta a la app depende su llavero, así que importa tanto lo que se avisa
- * como lo que NO.
+ * What is checked is the boundary: what goes to the network and what goes over
+ * the bridge. The embedded web has no refresh token, so none of these calls
+ * may end in `/auth/refresh` or `/auth/logout`; and the app's keychain depends
+ * on what it is told, so what it is told matters as much as what it is NOT.
  */
 
 /** What `/api/v2/auth/refresh` answers: the v2 session, camelCase. */
@@ -42,7 +41,7 @@ function fetchReplying(status: number, body: unknown = { data: V2_SESSION }) {
   );
 }
 
-/** Las rutas de `/auth` a las que se llamó por la network, sin la base (que viene del `.env`). */
+/** The `/auth` paths called over the network, without the base (which comes from `.env`). */
 function calledPaths(fakeFetch: ReturnType<typeof fetchReplying>): string[] {
   return fakeFetch.mock.calls.map((call) =>
     String((call as unknown[])[0]).replace(/^.*\/auth\//, '/auth/'),
@@ -60,8 +59,8 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('Con puente', () => {
-  it('renovar() no toca /auth/refresh y guarda lo que contesta la app', async () => {
+describe('With a bridge', () => {
+  it('renew() does not touch /auth/refresh and stores what the app answers', async () => {
     const network = fetchReplying(200);
     vi.stubGlobal('fetch', network);
     const { cocoSesion } = fakeNativeApp();
@@ -75,28 +74,28 @@ describe('Con puente', () => {
     expect(currentState().isLoading).toBe(false);
   });
 
-  it('dos renovar() a la vez son UN solo mensaje a la app', async () => {
+  it('two renew() at once are ONE message to the app', async () => {
     const { cocoSesion } = fakeNativeApp();
 
     await Promise.all([renew(), renew()]);
 
-    // La app rota el refresh en cada uso y GoTrue detecta reusos: dos
-    // peticiones a la vez matarían la familia. Por eso comparten promesa.
+    // The app rotates the refresh on every use and GoTrue detects reuse: two
+    // requests at once would kill the family. That is why they share a promise.
     expect(cocoSesion.postMessage).toHaveBeenCalledTimes(1);
   });
 
-  it('si el puente falla, limpia la memoria y NO avisa a la app', async () => {
+  it('if the bridge fails, it clears the memory and does NOT tell the app', async () => {
     const { cocoEventos } = fakeNativeApp({ failWith: 'sin network' });
 
     await expect(renew()).resolves.toBe(false);
 
     expect(currentToken()).toBeNull();
     expect(currentState().isLoading).toBe(false);
-    // Un fallo de red del puente nunca tira el llavero.
+    // A network failure of the bridge never wipes the keychain.
     expect(cocoEventos.postMessage).not.toHaveBeenCalled();
   });
 
-  it('salir() avisa «salir» y no llama a /auth/logout', async () => {
+  it('signOut() sends «salir» and does not call /auth/logout', async () => {
     const network = fetchReplying(204);
     vi.stubGlobal('fetch', network);
     const { cocoEventos } = fakeNativeApp();
@@ -109,7 +108,7 @@ describe('Con puente', () => {
     expect(currentToken()).toBeNull();
   });
 
-  it('cambiarContrasena() avisa «sesionCerrada»', async () => {
+  it('changePassword() sends «sesionCerrada»', async () => {
     vi.stubGlobal('fetch', fetchReplying(204));
     const { cocoEventos } = fakeNativeApp();
     await renew();
@@ -120,7 +119,7 @@ describe('Con puente', () => {
     expect(currentToken()).toBeNull();
   });
 
-  it('salirDeTodosLosDispositivos() avisa «sesionCerrada»', async () => {
+  it('signOutEverywhere() sends «sesionCerrada»', async () => {
     vi.stubGlobal('fetch', fetchReplying(204));
     const { cocoEventos } = fakeNativeApp();
     await renew();
@@ -131,7 +130,7 @@ describe('Con puente', () => {
     expect(currentToken()).toBeNull();
   });
 
-  it('descartarSesion() NO avisa', async () => {
+  it('discardSession() does NOT tell the app', async () => {
     const { cocoEventos } = fakeNativeApp();
     await renew();
 
@@ -141,7 +140,7 @@ describe('Con puente', () => {
     expect(cocoEventos.postMessage).not.toHaveBeenCalled();
   });
 
-  it('recibirSesion() restaura y sesionCerrada() limpia', () => {
+  it('receiveSession() restores and sessionClosed() clears', () => {
     fakeNativeApp();
 
     receiveSession(APP_SESSION);
@@ -154,8 +153,8 @@ describe('Con puente', () => {
   });
 });
 
-describe('Sin puente', () => {
-  it('renovar() sigue yendo por la network, con la cookie', async () => {
+describe('Without a bridge', () => {
+  it('renew() still goes over the network, with the cookie', async () => {
     const network = fetchReplying(200);
     vi.stubGlobal('fetch', network);
     leaveNativeApp();
@@ -175,7 +174,7 @@ describe('Sin puente', () => {
     once. That first refresh is a 401, and it has to end in the sign-in screen
     and nothing else —no thrown error, no toast, no session half kept.
   */
-  it('sin la cookie de la v2, renovar() deja la sesión vacía sin lanzar', async () => {
+  it('without the v2 cookie, renew() leaves the session empty without throwing', async () => {
     const network = fetchReplying(401, {
       type: 'https://dev-cocoapp.viteri.me/problems/unauthenticated',
       title: 'Hace falta iniciar sesión',
@@ -192,7 +191,7 @@ describe('Sin puente', () => {
     expect(currentState()).toEqual({ user: null, isLoading: false });
   });
 
-  it('salir() llama a /auth/logout', async () => {
+  it('signOut() calls /auth/logout', async () => {
     const network = fetchReplying(204);
     vi.stubGlobal('fetch', network);
     leaveNativeApp();
