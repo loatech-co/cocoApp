@@ -9,7 +9,7 @@ import { PasswordService } from '../auth/password.service';
 import { SupabaseAuthService } from '../auth/supabase-auth.service';
 import { UsersService } from '../auth/users.service';
 
-interface Contexto {
+interface RequestContext {
   ip?: string | null;
   userAgent?: string | null;
 }
@@ -47,40 +47,36 @@ export class AdminService {
     private readonly audit: AuditService,
   ) {}
 
-  async listarUsuarios(filtros: ListUsersQueryDto): Promise<UserPage> {
-    const page = filtros.page ?? 1;
-    const perPage = filtros.per_page ?? 50;
-    const { users: usuarios, total } = await this.users.page(
-      filtros.status,
-      (page - 1) * perPage,
-      perPage,
-    );
+  async listUsers(filters: ListUsersQueryDto): Promise<UserPage> {
+    const page = filters.page ?? 1;
+    const perPage = filters.per_page ?? 50;
+    const { users, total } = await this.users.page(filters.status, (page - 1) * perPage, perPage);
 
     return {
-      data: usuarios.map(profileOf),
+      data: users.map(profileOf),
       meta: { page, perPage, total },
     };
   }
 
-  async aprobar(adminId: bigint, userId: bigint, contexto: Contexto): Promise<Profile> {
-    const usuario = await this.exigirUsuario(userId);
+  async approve(adminId: bigint, userId: bigint, context: RequestContext): Promise<Profile> {
+    const user = await this.requireUser(userId);
 
-    if (usuario.status === 'active') {
+    if (user.status === 'active') {
       throw new BadRequestError('Esa cuenta ya está activa.', { code: 'user_already_active' });
     }
 
-    const actualizado = await this.users.approve(adminId, userId);
+    const updated = await this.users.approve(adminId, userId);
 
     await this.audit.record({
       userId: adminId,
       entity: 'users',
       entityId: userId,
       action: 'admin.user_approved',
-      changes: { de: usuario.status, a: 'active' },
-      ...contexto,
+      changes: { de: user.status, a: 'active' },
+      ...context,
     });
 
-    return profileOf(actualizado);
+    return profileOf(updated);
   }
 
   /**
@@ -88,12 +84,12 @@ export class AdminService {
    * todas las sesiones. Sin eso, quien ya tuviera un access token seguiría
    * entrando hasta que expirara.
    */
-  async suspender(adminId: bigint, userId: bigint, contexto: Contexto): Promise<Profile> {
-    this.exigirQueNoSeaUnoMismo(adminId, userId, 'suspenderte a ti mismo');
-    const usuario = await this.exigirUsuario(userId);
-    await this.exigirQueQuedeAlgunAdmin(usuario.role, userId);
+  async suspend(adminId: bigint, userId: bigint, context: RequestContext): Promise<Profile> {
+    this.requireNotSelf(adminId, userId, 'suspenderte a ti mismo');
+    const user = await this.requireUser(userId);
+    await this.requireAnotherAdmin(user.role, userId);
 
-    const actualizado = await this.users.setStatus(adminId, userId, 'suspended');
+    const updated = await this.users.setStatus(adminId, userId, 'suspended');
     await this.auth.revocarTodasLasSesiones(userId);
 
     await this.audit.record({
@@ -101,44 +97,44 @@ export class AdminService {
       entity: 'users',
       entityId: userId,
       action: 'admin.user_suspended',
-      changes: { de: usuario.status, a: 'suspended' },
-      ...contexto,
+      changes: { de: user.status, a: 'suspended' },
+      ...context,
     });
 
-    return profileOf(actualizado);
+    return profileOf(updated);
   }
 
-  async reactivar(adminId: bigint, userId: bigint, contexto: Contexto): Promise<Profile> {
-    const usuario = await this.exigirUsuario(userId);
+  async reactivate(adminId: bigint, userId: bigint, context: RequestContext): Promise<Profile> {
+    const user = await this.requireUser(userId);
 
-    const actualizado = await this.users.setStatus(adminId, userId, 'active');
+    const updated = await this.users.setStatus(adminId, userId, 'active');
 
     await this.audit.record({
       userId: adminId,
       entity: 'users',
       entityId: userId,
       action: 'admin.user_reactivated',
-      changes: { de: usuario.status, a: 'active' },
-      ...contexto,
+      changes: { de: user.status, a: 'active' },
+      ...context,
     });
 
-    return profileOf(actualizado);
+    return profileOf(updated);
   }
 
-  async cambiarRol(
+  async changeRole(
     adminId: bigint,
     userId: bigint,
-    rol: UserRole,
-    contexto: Contexto,
+    role: UserRole,
+    context: RequestContext,
   ): Promise<Profile> {
-    this.exigirQueNoSeaUnoMismo(adminId, userId, 'cambiar tu propio rol');
-    const usuario = await this.exigirUsuario(userId);
+    this.requireNotSelf(adminId, userId, 'cambiar tu propio rol');
+    const user = await this.requireUser(userId);
 
-    if (usuario.role === 'admin' && rol === 'user') {
-      await this.exigirQueQuedeAlgunAdmin(usuario.role, userId);
+    if (user.role === 'admin' && role === 'user') {
+      await this.requireAnotherAdmin(user.role, userId);
     }
 
-    const actualizado = await this.users.setRole(adminId, userId, rol);
+    const updated = await this.users.setRole(adminId, userId, role);
 
     // El rol se lee de la base en cada petición, así que el cambio ya aplica.
     // Aun así se cierran las sesiones: un cambio de permisos merece que la
@@ -150,11 +146,11 @@ export class AdminService {
       entity: 'users',
       entityId: userId,
       action: 'admin.role_changed',
-      changes: { de: usuario.role, a: rol },
-      ...contexto,
+      changes: { de: user.role, a: role },
+      ...context,
     });
 
-    return profileOf(actualizado);
+    return profileOf(updated);
   }
 
   /**
@@ -166,27 +162,27 @@ export class AdminService {
    * Es una operación potente y por eso queda auditada, y cierra todas las
    * sesiones de esa persona.
    */
-  async restablecerContrasena(
+  async resetPassword(
     adminId: bigint,
     userId: bigint,
-    nueva: string,
-    contexto: Contexto,
+    newPassword: string,
+    context: RequestContext,
   ): Promise<void> {
-    const usuario = await this.exigirUsuario(userId);
+    const user = await this.requireUser(userId);
 
-    await this.passwords.exigirQueSeaFuerte(nueva, {
-      email: usuario.email,
-      displayName: usuario.displayName ?? undefined,
+    await this.passwords.exigirQueSeaFuerte(newPassword, {
+      email: user.email,
+      displayName: user.displayName ?? undefined,
     });
 
     // La contraseña la guarda Supabase; aquí no queda ni rastro de ella.
-    if (!usuario.authId) {
+    if (!user.authId) {
       throw new ValidationError(
         'Esta cuenta no tiene credenciales gestionadas y no se le puede restablecer la contraseña.',
         { code: 'password_reset_not_managed' },
       );
     }
-    await this.supabase.cambiarContrasena(usuario.authId, nueva);
+    await this.supabase.cambiarContrasena(user.authId, newPassword);
     await this.auth.revocarTodasLasSesiones(userId);
 
     await this.audit.record({
@@ -194,56 +190,52 @@ export class AdminService {
       entity: 'users',
       entityId: userId,
       action: 'admin.password_reset',
-      ...contexto,
+      ...context,
     });
   }
 
   /** The query arrives as URL text: de ahí el `Number`. */
-  async bitacora(adminId: bigint, query: { page?: string; per_page?: string }): Promise<AuditPage> {
+  async auditLog(adminId: bigint, query: { page?: string; per_page?: string }): Promise<AuditPage> {
     const page = query.page ? Number(query.page) : 1;
     const perPage = query.per_page ? Number(query.per_page) : 50;
 
-    const { entries: eventos, total } = await this.audit.page(
-      adminId,
-      (page - 1) * perPage,
-      perPage,
-    );
+    const { entries, total } = await this.audit.page(adminId, (page - 1) * perPage, perPage);
 
     return {
-      data: eventos.map((evento) => ({
-        id: evento.id,
-        action: evento.action,
-        entity: evento.entity,
-        entityId: evento.entityId,
-        user: evento.user ? { email: evento.user.email, name: evento.user.displayName } : null,
-        changes: evento.changesJson,
-        ip: evento.ip,
-        createdAt: evento.createdAt,
+      data: entries.map((entry) => ({
+        id: entry.id,
+        action: entry.action,
+        entity: entry.entity,
+        entityId: entry.entityId,
+        user: entry.user ? { email: entry.user.email, name: entry.user.displayName } : null,
+        changes: entry.changesJson,
+        ip: entry.ip,
+        createdAt: entry.createdAt,
       })),
       meta: { page, perPage, total },
     };
   }
 
-  private async exigirUsuario(userId: bigint) {
-    const usuario = await this.users.findById(userId);
-    if (!usuario) throw new NotFoundError('El usuario no existe.');
-    return usuario;
+  private async requireUser(userId: bigint) {
+    const user = await this.users.findById(userId);
+    if (!user) throw new NotFoundError('El usuario no existe.');
+    return user;
   }
 
   /** Evita que un admin se deje a sí mismo fuera por accidente. */
-  private exigirQueNoSeaUnoMismo(adminId: bigint, userId: bigint, accion: string): void {
+  private requireNotSelf(adminId: bigint, userId: bigint, action: string): void {
     if (adminId === userId) {
-      throw new BadRequestError(`No puedes ${accion}.`, { code: 'cannot_target_self' });
+      throw new BadRequestError(`No puedes ${action}.`, { code: 'cannot_target_self' });
     }
   }
 
   /** Impide quedarse sin ningún administrador y perder el panel para siempre. */
-  private async exigirQueQuedeAlgunAdmin(rol: UserRole, userId: bigint): Promise<void> {
-    if (rol !== 'admin') return;
+  private async requireAnotherAdmin(role: UserRole, userId: bigint): Promise<void> {
+    if (role !== 'admin') return;
 
-    const otrosAdmins = await this.users.countOtherActiveAdmins(userId);
+    const otherAdmins = await this.users.countOtherActiveAdmins(userId);
 
-    if (otrosAdmins === 0) {
+    if (otherAdmins === 0) {
       throw new BadRequestError(
         'Es el único administrador activo. Nombra otro antes de quitarle el acceso.',
         { code: 'last_active_admin' },

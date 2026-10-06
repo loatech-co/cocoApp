@@ -73,6 +73,15 @@ const V1_PUBLISHED_IDS: Readonly<Record<string, string>> = {
   TagsController_create: 'TagsController_crear',
   TagsController_update: 'TagsController_actualizar',
   TagsController_remove: 'TagsController_eliminar',
+  AdminController_list: 'AdminController_listar',
+  AdminController_approve: 'AdminController_aprobar',
+  AdminController_suspend: 'AdminController_suspender',
+  AdminController_reactivate: 'AdminController_reactivar',
+  AdminController_changeRole: 'AdminController_cambiarRol',
+  AdminController_resetPassword: 'AdminController_restablecer',
+  AdminController_auditLog: 'AdminController_bitacora',
+  PreferencesController_read: 'PreferencesController_leer',
+  PreferencesController_update: 'PreferencesController_actualizar',
 };
 
 /** Every `$ref` reachable from `value`, followed through `schemas`. */

@@ -15,17 +15,17 @@ export class PreferencesController {
 
   @Get()
   @ApiData(PreferencesResponse)
-  async leer(@CurrentUser() user: AuthenticatedUser): Promise<PreferencesV1> {
-    return preferencesV1(await this.preferences.leer(user.id));
+  async read(@CurrentUser() user: AuthenticatedUser): Promise<PreferencesV1> {
+    return preferencesV1(await this.preferences.read(user.id));
   }
 
   @Patch()
   @ApiData(PreferencesResponse)
   @ApiErrors(400)
-  async actualizar(
+  async update(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdatePreferencesDto,
   ): Promise<PreferencesV1> {
-    return preferencesV1(await this.preferences.actualizar(user.id, dto));
+    return preferencesV1(await this.preferences.update(user.id, dto));
   }
 }

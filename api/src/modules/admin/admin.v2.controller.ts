@@ -47,7 +47,7 @@ export class AdminV2Controller {
   @ApiErrors(400)
   async listUsers(@Query() query: ListUsersQuery): Promise<UserPage> {
     return userPageV2(
-      await this.admin.listarUsuarios(
+      await this.admin.listUsers(
         defined({ status: query.status, page: query.page, per_page: query.perPage }),
       ),
     );
@@ -60,7 +60,7 @@ export class AdminV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<ProfileBody> {
-    return profileV2(await this.admin.aprobar(user.id, id, {}));
+    return profileV2(await this.admin.approve(user.id, id, {}));
   }
 
   @Post('users/:id/suspend')
@@ -70,7 +70,7 @@ export class AdminV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<ProfileBody> {
-    return profileV2(await this.admin.suspender(user.id, id, {}));
+    return profileV2(await this.admin.suspend(user.id, id, {}));
   }
 
   @Post('users/:id/reactivate')
@@ -80,7 +80,7 @@ export class AdminV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<ProfileBody> {
-    return profileV2(await this.admin.reactivar(user.id, id, {}));
+    return profileV2(await this.admin.reactivate(user.id, id, {}));
   }
 
   @Post('users/:id/role')
@@ -91,7 +91,7 @@ export class AdminV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: ChangeRoleDto,
   ): Promise<ProfileBody> {
-    return profileV2(await this.admin.cambiarRol(user.id, id, input.role, {}));
+    return profileV2(await this.admin.changeRole(user.id, id, input.role, {}));
   }
 
   @Post('users/:id/reset-password')
@@ -103,7 +103,7 @@ export class AdminV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: ResetPasswordDto,
   ): Promise<void> {
-    return this.admin.restablecerContrasena(user.id, id, input.newPassword, {});
+    return this.admin.resetPassword(user.id, id, input.newPassword, {});
   }
 
   @Get('audit-log')
@@ -114,7 +114,7 @@ export class AdminV2Controller {
     @Query() query: PageQuery,
   ): Promise<AuditPage> {
     return auditPageV2(
-      await this.admin.bitacora(
+      await this.admin.auditLog(
         user.id,
         defined({
           page: query.page === undefined ? undefined : String(query.page),

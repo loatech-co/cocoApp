@@ -19,7 +19,7 @@ export class PreferencesV2Controller {
   @Get()
   @ApiDataV2(Preferences)
   async get(@CurrentUser() user: AuthenticatedUser): Promise<PreferencesBody> {
-    return preferencesV2(await this.preferences.leer(user.id));
+    return preferencesV2(await this.preferences.read(user.id));
   }
 
   @Patch()
@@ -30,6 +30,6 @@ export class PreferencesV2Controller {
     @Body() input: UpdatePreferencesInput,
   ): Promise<PreferencesBody> {
     const changes = defined({ cuentas_habilitadas: input.accountsEnabled });
-    return preferencesV2(await this.preferences.actualizar(user.id, changes));
+    return preferencesV2(await this.preferences.update(user.id, changes));
   }
 }

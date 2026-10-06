@@ -3,10 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { flagOfPreferenceKey, type FlagName } from '@coco/flags';
 
 import {
-  CUENTAS_HABILITADAS,
-  combinarConDefectos,
+  ACCOUNTS_ENABLED,
+  withDefaults,
   preferencesOf,
-  type Preferencias,
+  type StoredPreferences,
   type Preferences,
 } from './preferences';
 import type { UpdatePreferencesDto } from './preferences.dto';
@@ -17,21 +17,21 @@ import type { Prisma } from '../../generated/prisma/client';
 export class PreferencesService {
   constructor(private readonly repository: PreferencesRepository) {}
 
-  async leer(userId: bigint): Promise<Preferences> {
-    return preferencesOf(await this.guardadas(userId));
+  async read(userId: bigint): Promise<Preferences> {
+    return preferencesOf(await this.saved(userId));
   }
 
   /** Guarda solo lo que venga en el DTO. */
-  async actualizar(userId: bigint, cambios: UpdatePreferencesDto): Promise<Preferences> {
-    const entradas = Object.entries(cambios)
-      .filter(([, valor]) => valor !== undefined)
-      .map(([clave, valor]) => [clave, valor as Prisma.InputJsonValue] as const);
+  async update(userId: bigint, changes: UpdatePreferencesDto): Promise<Preferences> {
+    const entries = Object.entries(changes)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [key, value as Prisma.InputJsonValue] as const);
 
-    if (entradas.length > 0) {
-      await this.repository.upsertMany(userId, entradas);
+    if (entries.length > 0) {
+      await this.repository.upsertMany(userId, entries);
     }
 
-    return this.leer(userId);
+    return this.read(userId);
   }
 
   /**
@@ -41,8 +41,8 @@ export class PreferencesService {
    * sentido hablar de saldos. Vive aquí para que la respuesta a "¿este usuario
    * lleva cuentas?" tenga una sola fuente.
    */
-  async llevaCuentas(userId: bigint): Promise<boolean> {
-    return (await this.guardadas(userId))[CUENTAS_HABILITADAS];
+  async tracksAccounts(userId: bigint): Promise<boolean> {
+    return (await this.saved(userId))[ACCOUNTS_ENABLED];
   }
 
   /**
@@ -61,7 +61,7 @@ export class PreferencesService {
   }
 
   /** Lo guardado, por clave de la tabla, con los valores por defecto. */
-  private async guardadas(userId: bigint): Promise<Preferencias> {
-    return combinarConDefectos(await this.repository.findByUser(userId));
+  private async saved(userId: bigint): Promise<StoredPreferences> {
+    return withDefaults(await this.repository.findByUser(userId));
   }
 }

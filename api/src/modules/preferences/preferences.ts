@@ -19,24 +19,22 @@
  * puede exigir haber inventado antes una cuenta. Quien quiera seguir saldos lo
  * enciende; para el resto, las cuentas sencillamente no existen.
  */
-export const CUENTAS_HABILITADAS = 'cuentas_habilitadas';
+export const ACCOUNTS_ENABLED = 'cuentas_habilitadas';
 
-export interface Preferencias {
-  [CUENTAS_HABILITADAS]: boolean;
+export interface StoredPreferences {
+  [ACCOUNTS_ENABLED]: boolean;
 }
 
-export const PREFERENCIAS_POR_DEFECTO: Readonly<Preferencias> = Object.freeze({
-  [CUENTAS_HABILITADAS]: false,
+export const DEFAULT_PREFERENCES: Readonly<StoredPreferences> = Object.freeze({
+  [ACCOUNTS_ENABLED]: false,
 });
 
-export type ClaveDePreferencia = keyof Preferencias;
+export type PreferenceKey = keyof StoredPreferences;
 
-export const CLAVES: readonly ClaveDePreferencia[] = Object.keys(
-  PREFERENCIAS_POR_DEFECTO,
-) as ClaveDePreferencia[];
+export const KEYS: readonly PreferenceKey[] = Object.keys(DEFAULT_PREFERENCES) as PreferenceKey[];
 
-export function esClaveConocida(clave: string): clave is ClaveDePreferencia {
-  return Object.prototype.hasOwnProperty.call(PREFERENCIAS_POR_DEFECTO, clave);
+export function isKnownKey(key: string): key is PreferenceKey {
+  return Object.prototype.hasOwnProperty.call(DEFAULT_PREFERENCES, key);
 }
 
 /**
@@ -47,23 +45,23 @@ export function esClaveConocida(clave: string): clave is ClaveDePreferencia {
  * preferencias de interfaz — que una quede mal guardada no puede impedirle a
  * nadie ver sus finanzas.
  */
-export function combinarConDefectos(
-  guardadas: readonly { prefKey: string; prefValue: unknown }[],
-): Preferencias {
-  const resultado: Preferencias = { ...PREFERENCIAS_POR_DEFECTO };
+export function withDefaults(
+  saved: readonly { prefKey: string; prefValue: unknown }[],
+): StoredPreferences {
+  const result: StoredPreferences = { ...DEFAULT_PREFERENCES };
 
-  for (const fila of guardadas) {
-    if (!esClaveConocida(fila.prefKey)) continue;
+  for (const row of saved) {
+    if (!isKnownKey(row.prefKey)) continue;
 
-    const valor = fila.prefValue;
+    const value = row.prefValue;
     // Hoy todas las preferencias son booleanas. Cuando haya de otro tipo, esta
     // comprobación se abre por clave — no antes.
-    if (typeof valor === 'boolean') {
-      resultado[fila.prefKey] = valor;
+    if (typeof value === 'boolean') {
+      result[row.prefKey] = value;
     }
   }
 
-  return resultado;
+  return result;
 }
 
 /** The preferences as the service hands them out: the domain, by meaning and not by table key. */
@@ -72,6 +70,6 @@ export interface Preferences {
   accountsEnabled: boolean;
 }
 
-export function preferencesOf(stored: Preferencias): Preferences {
-  return { accountsEnabled: stored[CUENTAS_HABILITADAS] };
+export function preferencesOf(stored: StoredPreferences): Preferences {
+  return { accountsEnabled: stored[ACCOUNTS_ENABLED] };
 }
