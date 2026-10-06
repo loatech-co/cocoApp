@@ -807,8 +807,10 @@ A flag exists to ship something dark or to a few users first, and it is
   `feature:<name>`, boolean value. It wins over `FEATURES` both ways. The
   preferences endpoint does not accept these keys: a user cannot set their own.
 - **Read it** only through OpenFeature. API: `FlagsService.isEnabled`
-  (`modules/flags`). Web: `useFlag` (`shared/api/flags.tsx`, over
-  `useBooleanFlagValue`). iOS: the `features` array of `GET /auth/me`. The
+  (`modules/flags`). Web: `useFlag` (`shared/api/flags.tsx`); OpenFeature
+  lives in `flags-engine.ts`, loaded after the first paint to stay out of the
+  initial bundle, and every flag reads off until it arrives — never import it
+  statically. iOS: the `features` array of `GET /auth/me`. The
   clients read the list the API resolved; none decides on its own.
 - **Remove it** by `removeBy`. CI (`scripts/ci/flags-expiry.mjs`) warns once
   the date passes and fails 30 days later. Moving the date needs a reason in

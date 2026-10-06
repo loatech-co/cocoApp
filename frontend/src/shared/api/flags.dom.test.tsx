@@ -58,6 +58,25 @@ describe('FlagsProvider', () => {
     expect(await screen.findByText('apagada')).toBeTruthy();
   });
 
+  it('keeps OpenFeature out of the initial bundle: only flags-engine imports it', () => {
+    const fuentes = import.meta.glob<string>('/src/**/*.{ts,tsx}', {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    });
+    const conOpenFeature = Object.entries(fuentes)
+      .filter(([ruta, codigo]) => !ruta.includes('.test.') && codigo.includes('@openfeature/'))
+      .map(([ruta]) => ruta);
+    expect(conOpenFeature).toEqual(['/src/shared/api/flags-engine.ts']);
+
+    const vecinos = Object.entries(fuentes)
+      .filter(
+        ([ruta, codigo]) => !ruta.includes('.test.') && /from '[^']*flags-engine'/.test(codigo),
+      )
+      .filter(([, codigo]) => !/import type \* as \w+ from '\.\/flags-engine'/.test(codigo));
+    expect(vecinos.map(([ruta]) => ruta)).toEqual([]);
+  });
+
   it('a response without the field (an older API) means no flags', async () => {
     sesion.usuario = { id: 2 };
     authMe.mockResolvedValue({ data: {}, meta: {} });
