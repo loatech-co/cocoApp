@@ -11,12 +11,12 @@ import { type PendingPayment, type Transaction } from '@/shared/api/generated/mo
 import { keys } from '@/shared/api/query-keys';
 
 /*
-  Lo que comparten las pruebas de la ficha de un movimiento: el árbol, el
-  movimiento y los pagos de ejemplo, la lectura de mentira de un recibo y la
-  forma de abrir la ficha con todo eso puesto.
+  What the tests of a movement's sheet share: the example tree, movement and
+  payments, the fake reading of a receipt, and the way to open the sheet with
+  all of that in place.
 */
 
-/** Un centro, una categoría y un concepto; `estatico` bloquea el centro entero. */
+/** A center, a category and a concept; `isStatic` locks the whole center. */
 export const treeWith = (isStatic: boolean): CategoryTree[] =>
   [
     {
@@ -49,7 +49,7 @@ export const TRANSACTION: Transaction = {
   notes: null,
 } as unknown as Transaction;
 
-/** Un pago pendiente de Celsia, con su valor esperado y su vencimiento. */
+/** A pending Celsia payment, with its expected value and its due date. */
 export const PAYMENT: PendingPayment = {
   categoryId: 100,
   name: 'Celsia (Energía)',
@@ -60,10 +60,10 @@ export const PAYMENT: PendingPayment = {
 } as unknown as PendingPayment;
 
 /**
- * El mismo concepto, pero de los que se cubren a pedazos.
+ * The same concept, but one of those paid in pieces.
  *
- * El vencimiento va lejos de hoy A PROPÓSITO: si los dos cayeran en el mismo
- * día, la prueba de que la fecha es la de HOY pasaría igual estando mal.
+ * The due date is far from today ON PURPOSE: if both fell on the same day,
+ * the test that the date is TODAY's would pass even when it was wrong.
  */
 export const SPLIT_PAYMENT: PendingPayment = {
   categoryId: 100,
@@ -76,7 +76,7 @@ export const SPLIT_PAYMENT: PendingPayment = {
   isMultiPayment: true,
 } as unknown as PendingPayment;
 
-/** Lo que el lector de mentira devuelve por un recibo de Celsia. */
+/** What the fake reader returns for a Celsia receipt. */
 export const CELSIA_READING: Awaited<ReturnType<typeof leerSoporte>> = {
   texto: 'CELSIA S.A. E.S.P. Total a pagar 214.500',
   fuente: 'texto-embebido',
@@ -93,7 +93,7 @@ export const CELSIA_READING: Awaited<ReturnType<typeof leerSoporte>> = {
   },
 };
 
-/** Un cliente de consultas sin reintentos, con el árbol ya en la caché si se da. */
+/** A query client without retries, with the tree already cached if given. */
 export function testQueryClient(tree?: CategoryTree[]): QueryClient {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
@@ -102,7 +102,7 @@ export function testQueryClient(tree?: CategoryTree[]): QueryClient {
   return client;
 }
 
-/** La ficha abierta con esas props, dentro de su cliente y su router. */
+/** The sheet open with those props, inside its client and its router. */
 export function renderSheet(
   props: Omit<ComponentProps<typeof MovimientoModal>, 'abierta' | 'onCerrar'>,
   client: QueryClient = testQueryClient(TREE),
@@ -129,11 +129,11 @@ export function openNew() {
 }
 
 /**
- * Lo que jsdom no trae y la columna del soporte necesita.
+ * What jsdom does not ship and the receipt column needs.
  *
- * Urls de blobs —la columna hace una por archivo para previsualizarlo— y
- * `ResizeObserver`, que es con lo que el visor del soporte mide su marco para
- * encajar el documento dentro.
+ * Blob URLs —the column makes one per file to preview it— and
+ * `ResizeObserver`, which is what the receipt viewer measures its frame with
+ * to fit the document inside.
  */
 export function fakeReceiptBrowser(): void {
   URL.createObjectURL = vi.fn(() => 'blob:prueba');

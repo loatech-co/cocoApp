@@ -1,18 +1,18 @@
 /**
- * Lo que jsdom no trae y el código sí necesita.
+ * What jsdom does not ship and the code does need.
  *
  * ── `matchMedia` ────────────────────────────────────────────────────────────
- * jsdom no lo implementa, y desde que `Menu` pregunta si está por debajo del
- * corte —para abrirse como hoja en vez de colgar del botón— media aplicación
- * pasa por ahí: un desplegable, un selector de fecha, un filtro. Sin esto,
- * treinta pruebas que no hablan del teléfono para nada se caen con
+ * jsdom does not implement it, and since `Menu` asks whether it is below the
+ * breakpoint —to open as a sheet instead of hanging from the button— half the
+ * app goes through there: a dropdown, a date picker, a filter. Without this,
+ * thirty tests that have nothing to do with the phone fail with
  * «window.matchMedia is not a function».
  *
- * Contesta que NO es un teléfono, que es la misma respuesta que da el código
- * cuando no hay ventana que medir: pinta el riel y los desplegables cuelgan de
- * su botón, que es lo que casi todas las pruebas están mirando. La que quiera
- * la otra respuesta la escribe ella —`app-shell.test.tsx` lo hace—, y para eso
- * esto solo se pone si no hay nada puesto.
+ * It answers that it is NOT a phone, which is the same answer the code gives
+ * when there is no window to measure: it paints the rail and the dropdowns
+ * hang from their button, which is what almost every test is looking at. A
+ * test that wants the other answer writes it itself —`app-shell.test.tsx`
+ * does—, and that is why this is only set if nothing is set.
  */
 if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
   window.matchMedia = (query: string) => ({

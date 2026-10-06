@@ -104,7 +104,7 @@ export const NATIVE_CLIENT_HEADER = 'x-coco-cliente';
  * limits.
  *
  * Recommended size is what the web does before uploading
- * (`shared/lib/encoger-soporte.ts`): longest side 1600 px, JPEG at 0.85.
+ * (`shared/lib/shrink-receipt.ts`): longest side 1600 px, JPEG at 0.85.
  * @public read by `soportes.contrato.spec.ts` (api) and `ContratosTests.swift`
  */
 export const CONTRATO_DE_SOPORTES = {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { readProblem } from './problem';
 
-describe('leerProblema', () => {
+describe('readProblem', () => {
   it('reads the code, the sentence and the fields of a problem+json', () => {
     const body = {
       type: 'https://dev-cocoapp.viteri.me/problems/invalid_fields',

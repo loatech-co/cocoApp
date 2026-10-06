@@ -7,21 +7,21 @@ import { AppRouter } from '@/app/router';
 import { isInNativeApp } from '@/shared/lib/bridge';
 import './index.css';
 
-// Tema inicial: se respeta la preferencia del sistema. Más adelante (T5) el
-// usuario podrá fijarlo y se persistirá en user_preferences.
+// Initial theme: the system preference is respected. Later on (T5) the user
+// will be able to set it and it will persist in user_preferences.
 if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
   document.documentElement.classList.add('dark');
 }
 
-// Dentro de la app del teléfono la barra de abajo es la nativa, fuera del
-// webview: el CSS lee esta marca para no reservarle hueco a una que no está.
-// Se pone antes del primer render, para que ningún pintado la vea cambiar.
+// Inside the phone app the bottom bar is the native one, outside the
+// webview: the CSS reads this mark so as not to reserve room for one that is
+// not there. It is set before the first render, so no paint sees it change.
 if (isInNativeApp()) {
   document.documentElement.dataset.embebido = 'si';
 }
 
-// Un despliegue nuevo deja obsoletos los trozos con hash de una pestaña
-// abierta: se recarga una vez para traer los nuevos (ver el archivo).
+// A new deploy makes the hashed chunks of an open tab stale: it reloads once
+// to bring the new ones (see the file).
 instalarRecargaPorVersion();
 
 const container = document.getElementById('root');

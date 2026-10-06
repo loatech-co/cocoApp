@@ -3,15 +3,15 @@ import { vi } from 'vitest';
 import { USER_AGENT_APP, type BridgeSession } from '@/shared/lib/native-contract';
 
 /**
- * Finge que la web corre dentro de la app del teléfono.
+ * Pretends the web runs inside the phone app.
  *
- * Pone las DOS señales que `enLaApp()` exige —la marca en el `User-Agent` y
- * el puente en `window.webkit`— con espías en los dos manejadores, para que
- * una prueba pueda ver qué se le pidió y qué se le contó a la app. Lo usan
- * las cinco pruebas del modo embebido; escrito en cada una, la forma del
- * puente se habría copiado cinco veces.
+ * Sets the TWO signals `isInNativeApp()` requires —the mark in the
+ * `User-Agent` and the bridge in `window.webkit`— with spies on both handlers,
+ * so a test can see what the app was asked and what it was told. The five
+ * tests of the embedded mode use it; written in each of them, the shape of the
+ * bridge would have been copied five times.
  *
- * Solo tiene sentido con DOM: fuera de jsdom no hay `window` que vestir.
+ * It only makes sense with a DOM: outside jsdom there is no `window` to dress.
  */
 export function fakeNativeApp(options: { session?: unknown; failWith?: string } = {}) {
   const cocoSesion = {
@@ -32,7 +32,7 @@ export function fakeNativeApp(options: { session?: unknown; failWith?: string } 
   return { cocoSesion, cocoEventos };
 }
 
-/** Deshace `fingirLaApp()`: vuelve a ser un navegador normal. */
+/** Undoes `fakeNativeApp()`: back to being a normal browser. */
 export function leaveNativeApp(): void {
   Object.defineProperty(navigator, 'userAgent', {
     value: 'Mozilla/5.0 (navegador de pruebas)',
@@ -42,7 +42,7 @@ export function leaveNativeApp(): void {
   delete window.__coco;
 }
 
-/** Lo que la app contesta a `pedirSesion`: una sesión SIN refresh token. */
+/** What the app answers to `pedirSesion`: a session WITHOUT a refresh token. */
 export const APP_SESSION: BridgeSession = {
   access_token: 'token-de-la-app',
   expires_in: 900,
