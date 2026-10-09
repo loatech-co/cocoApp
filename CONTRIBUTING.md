@@ -803,7 +803,7 @@ anything else), and runs `npm run db:test:push --workspace api` once.
 (`coco_migrate`); `scripts/db/create-app-role.sh` with
 `MIGRATION_ROLE=coco_migrate` sets both roles up once per machine.
 
-**Why.** `limpiar()` empties every table, so two runs against the same
+**Why.** `clean()` empties every table, so two runs against the same
 database break each other. The failures look like flaky tests (rows vanishing
 mid-test, a 401 for a user created a line earlier) and send whoever sees them
 after a bug that is not there.
