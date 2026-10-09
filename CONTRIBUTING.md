@@ -821,8 +821,7 @@ after a bug that is not there.
 **Rule.** CI fails below 80 % of lines or of branches in `api/src` (unit and
 e2e measured together: `npm run test:cov --workspace api`) and in
 `packages/receipt-parser` (its `npm test` always measures). `src/common/money` keeps
-90 %. A threshold only goes up. `packages/types` has no behavior —types and
-constant lists— so there is nothing in it to cover.
+90 %. A threshold only goes up.
 
 **Why.** The number is a floor, not a goal: it catches a module landing
 without tests. What to test is still decided by risk —money, pending payments,
