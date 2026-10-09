@@ -66,13 +66,6 @@
   "frontend/public": {
     "file:fondo-login.webp": 1
   },
-  "frontend/src/app": {
-    "abrirBusqueda": 1,
-    "ir": 1
-  },
-  "frontend/src/features/auth/components": {
-    "tipo": 3
-  },
   "frontend/src/features/transactions/api": {
     "interpretacionInterpret": 1
   },
@@ -81,39 +74,16 @@
     "historial": 1,
     "palabras-clave": 1
   },
-  "frontend/src/shared/api": {
-    "abrirBusqueda": 2,
-    "cocoEventos": 5,
-    "cocoSesion": 2,
-    "ir": 2,
-    "primerPlano": 1,
-    "recibirSesion": 1,
-    "sesionCerrada": 1,
-    "tipo": 7
-  },
   "frontend/src/shared/lib": {
-    "AvisosDeLaApp": 1,
     "CONTRATO_DE_SOPORTES": 1,
-    "abrirBusqueda": 3,
     "calidad": 1,
     "campo": 1,
-    "cocoEventos": 1,
-    "cocoSesion": 3,
     "formato": 1,
-    "ir": 3,
     "lado_maximo_px": 1,
     "maximo_por_subida": 1,
-    "primerPlano": 1,
-    "recibirSesion": 1,
     "recomendado": 1,
-    "sesionCerrada": 1,
     "tamano_maximo_bytes": 1,
-    "tipo": 4,
     "tipos": 1
-  },
-  "frontend/src/test-support": {
-    "cocoEventos": 1,
-    "cocoSesion": 1
   },
   "ios/Coco/Features/Capture": {
     "hayCamara": 1
