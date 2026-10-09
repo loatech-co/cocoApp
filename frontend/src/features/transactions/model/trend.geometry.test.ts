@@ -18,7 +18,7 @@ function sampledYs(d: string): number[] {
   return ys;
 }
 
-describe('equis', () => {
+describe('xAt', () => {
   it('centres a single point', () => {
     expect(xAt(0, 1)).toBe(50);
   });
@@ -30,7 +30,7 @@ describe('equis', () => {
   });
 });
 
-describe('ye', () => {
+describe('yAt', () => {
   it('puts zero at the bottom margin and the ceiling at the top margin', () => {
     expect(yAt(0, 100)).toBe(CANVAS_HEIGHT - 3);
     expect(yAt(100, 100)).toBe(3);
@@ -41,7 +41,7 @@ describe('ye', () => {
   });
 });
 
-describe('curva', () => {
+describe('curve', () => {
   it('does not overshoot when a steep rise flattens out', () => {
     const d = curve([
       { x: 0, y: 0 },
@@ -65,7 +65,7 @@ describe('curva', () => {
   });
 });
 
-describe('linea', () => {
+describe('line', () => {
   it('starts at the first value on the left edge and ends at the last on the right', () => {
     const d = line([0, 50, 100], 100, 3);
 
@@ -84,7 +84,7 @@ describe('area', () => {
   });
 });
 
-describe('fechaLarga', () => {
+describe('longDate', () => {
   it('writes a day bucket as a full date', () => {
     expect(longDate('2026-09-06')).toBe('6 de septiembre de 2026');
   });
@@ -94,7 +94,7 @@ describe('fechaLarga', () => {
   });
 });
 
-describe('etiquetaDeCubo', () => {
+describe('bucketLabel', () => {
   it('labels a day with its number and short month', () => {
     expect(bucketLabel('2026-03-05')).toBe('5 mar');
   });

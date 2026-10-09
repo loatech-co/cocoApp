@@ -6,29 +6,29 @@ import { t } from '@/shared/lib/i18n';
 import type { MovementSheetState } from './use-movement-form';
 
 /**
- * Lo que dura como mínimo el paso de lectura de un soporte.
+ * The minimum length of the reading step of a receipt.
  *
- * ── Por qué se espera a propósito ───────────────────────────────────────────
- * Porque la lectura no siempre tarda lo mismo: un PDF con su texto dentro se
- * resuelve en medio segundo y una foto pasa por el OCR y tarda diez. Con la
- * espera atada al trabajo, la misma acción daba dos resultados distintos —un
- * parpadeo o una espera larga— y el parpadeo es el peor de los dos: la banda
- * no alcanza a cruzar el documento, la barra salta de 0 a nada, y lo que se
- * ve es un temblor entre dos pantallas del que no queda claro si se leyó
- * algo. Con un piso, leer un soporte siempre se ve igual.
+ * ── Why it waits on purpose ─────────────────────────────────────────────────
+ * Because reading does not always take the same: a PDF with its text inside is
+ * resolved in half a second and a photo goes through OCR and takes ten. With the
+ * wait tied to the work, the same action gave two different results —a
+ * flicker or a long wait— and the flicker is the worse of the two: the band
+ * does not manage to cross the document, the bar jumps from 0 to nothing, and what is
+ * seen is a jitter between two screens that leaves it unclear whether anything
+ * was read. With a floor, reading a receipt always looks the same.
  *
- * ── Por qué cuatro segundos ─────────────────────────────────────────────────
- * La banda cruza en 1,8s (`barre`, en `index.css`). Cuatro segundos son dos
- * pasadas completas y un respiro: se ve el barrido entero, se ve que vuelve a
- * empezar —que es lo que dice «sigue trabajando»— y da tiempo a leer de qué
- * documento se trata, que es el dato que hace falta si lo que sale no cuadra.
+ * ── Why four seconds ────────────────────────────────────────────────────────
+ * The band crosses in 1.8s (`barrer`, in `index.css`). Four seconds are two
+ * full passes and a breather: you see the whole sweep, you see it start
+ * over —which is what says «still working»— and there is time to read which
+ * document it is, which is the fact needed if what comes out does not add up.
  *
- * Y es un MÍNIMO, no una pausa que se suma: si la lectura tarda más, no se
- * espera nada.
+ * And it is a MINIMUM, not a pause that adds up: if the reading takes longer, there is
+ * no wait.
  */
 const MIN_READING_MS = 4000;
 
-/** Espera lo que falte para que la lectura haya durado `LECTURA_MINIMA_MS`. */
+/** Waits whatever is left for the reading to have lasted `MIN_READING_MS`. */
 async function waitForReadingFloor(startedAt: number): Promise<void> {
   const remaining = MIN_READING_MS - (Date.now() - startedAt);
   if (remaining > 0) {
@@ -39,12 +39,12 @@ async function waitForReadingFloor(startedAt: number): Promise<void> {
 }
 
 /**
- * Lee el recibo y rellena lo que sepa.
+ * Reads the receipt and fills in what it knows.
  *
- * Rellena, no decide: lo leído entra en los mismos campos que se escribirían a
- * mano, y la persona confirma con el mismo botón de siempre. Un recibo mal
- * leído que se guarda solo es peor que no leerlo, porque nadie vuelve a mirar
- * lo que ya quedó registrado.
+ * It fills in, it does not decide: what was read goes into the same fields that would be typed by
+ * hand, and the person confirms with the usual button. A badly read
+ * receipt that saves itself is worse than not reading it, because nobody looks again at
+ * what was already recorded.
  */
 export function makeReceiptScan(sheet: MovementSheetState, tree: Category[] | undefined) {
   return async function scan(file: File): Promise<void> {
@@ -56,12 +56,12 @@ export function makeReceiptScan(sheet: MovementSheetState, tree: Category[] | un
     try {
       const { reading, text } = await readReceipt(file, {
         period: sheet.date.slice(0, 7),
-        // El árbol y las palabras clave ya no viajan: los tiene el servidor,
-        // que es quien interpreta ahora.
+        // The tree and the keywords no longer travel: the server has them,
+        // and it is the one interpreting now.
         onProgress: sheet.setReadingProgress,
       });
-      // Se guarda con el movimiento: es la única forma de saber después por
-      // qué se clasificó como se clasificó, y de reinterpretarlo.
+      // It is saved with the transaction: it is the only way to know later
+      // why it was classified the way it was, and to reinterpret it.
       sheet.setTextRead(text);
 
       const notice = unreadNotice(reading, text);
@@ -72,7 +72,7 @@ export function makeReceiptScan(sheet: MovementSheetState, tree: Category[] | un
       if (reading.date) sheet.setDate(reading.date);
       if (reading.concept) sheet.setDescription(reading.concept);
 
-      // Pasa por `proponer`: si ya había algo elegido a mano, no se toca nada.
+      // Goes through `propose`: if something was already picked by hand, nothing is touched.
       const proposal = proposalFromReading(reading, tree ?? []);
       if (proposal) {
         sheet.setWasSuggested(true);
@@ -83,9 +83,9 @@ export function makeReceiptScan(sheet: MovementSheetState, tree: Category[] | un
     } catch (e) {
       sheet.setError(e instanceof Error ? e.message : t('transactions.reading.fileReadFailed'));
     } finally {
-      // El piso de la espera, salga bien o mal. También cuando falla: un
-      // mensaje de error que aparece de un fogonazo se lee como un fallo de
-      // la ficha y no como el resultado de haber intentado leer el archivo.
+      // The floor of the wait, whether it goes well or badly. Also when it fails: an
+      // error message that appears in a flash reads as a failure of
+      // the sheet and not as the result of having tried to read the file.
       await waitForReadingFloor(startedAt);
       sheet.setReadingProgress(null);
       sheet.setStep('formulario');

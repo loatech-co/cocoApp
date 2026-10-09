@@ -4,38 +4,38 @@ import { t } from '@/shared/lib/i18n';
 import type { MoneyDirection } from '@/shared/ui/atoms/amount';
 
 /**
- * Lo que un movimiento ES, y de dónde saca su nombre.
+ * What a transaction IS, and where it gets its name from.
  *
- * ── Un movimiento es un REGISTRO ────────────────────────────────────────────
- * No es una cosa con nombre propio: es la anotación de que tal día salió tal
- * plata de tal concepto. El nombre no lo tiene, lo TOMA del concepto al que
- * pertenece.
+ * ── A transaction is a RECORD ───────────────────────────────────────────────
+ * It is not a thing with a name of its own: it is the note that on such a day such
+ * money went out of such a concept. It does not have the name, it TAKES it from the concept it
+ * belongs to.
  *
- * ── Por qué se deriva y no se guarda ────────────────────────────────────────
- * Porque si se guardara una copia, renombrar un concepto dejaría atrás a sus
- * movimientos: «Aseo» pasaría a llamarse «Aseo y limpieza» en Centros de
- * costos y en la tabla seguirían los cuarenta viejos diciendo «Aseo». Dos
- * nombres para lo mismo, y ninguna forma de saber cuál es el bueno.
+ * ── Why it is derived and not stored ────────────────────────────────────────
+ * Because if a copy were stored, renaming a concept would leave its
+ * transactions behind: «Aseo» would become «Aseo y limpieza» in Centros de
+ * costos and in the table the forty old ones would still say «Aseo». Two
+ * names for the same thing, and no way of knowing which one is right.
  *
- * Derivándolo, renombrar el concepto renombra sus movimientos, que es
- * exactamente lo que significa que el nombre sea del concepto.
+ * Deriving it, renaming the concept renames its transactions, which is
+ * exactly what it means for the name to belong to the concept.
  *
- * ── Y el concepto NO se va con el movimiento ────────────────────────────────
- * Borrar un movimiento borra el registro y nada más: el concepto sigue vivo,
- * porque es estructura y no dato. Es la razón por la que ni los conceptos ni
- * las categorías ni los centros se pueden tocar desde aquí —solo desde Centros de
- * costos—: desde la tabla de movimientos se anota y se corrige lo que pasó,
- * no se rehace el mapa con el que se ordena.
+ * ── And the concept does NOT go with the transaction ────────────────────────
+ * Deleting a transaction deletes the record and nothing else: the concept stays alive,
+ * because it is structure and not data. It is the reason why neither concepts nor
+ * categories nor centers can be touched from here —only from Centros de
+ * costos—: from the transactions table you note down and correct what happened,
+ * you do not redo the map it is sorted by.
  */
 
 /**
- * Reconstruye la ruta completa a partir de un solo id.
+ * Rebuilds the whole path from a single id.
  *
- * Los filtros y los movimientos guardan UN id —el más específico que se
- * eligió—, no los tres. Guardar los tres obligaría a mantenerlos coherentes
- * entre sí en cada cambio, y bastaría un descuido para tener una categoría que no
- * pertenece al centro seleccionado. Con uno solo, el resto se deduce y no
- * puede contradecirse.
+ * Filters and transactions store ONE id —the most specific one that was
+ * picked—, not all three. Storing the three would force keeping them consistent
+ * with each other on every change, and a single slip would be enough to have a category that does not
+ * belong to the selected center. With just one, the rest is deduced and cannot
+ * contradict itself.
  */
 export function selectedPath(
   tree: CategoryTree[],
@@ -59,24 +59,24 @@ export function selectedPath(
 }
 
 /**
- * El nombre de un movimiento.
+ * The name of a transaction.
  *
- * El del concepto al que pertenece. Si solo está clasificado hasta la categoría,
- * el dla categoría: es lo más específico que se sabe de él.
+ * That of the concept it belongs to. If it is only classified down to the category,
+ * that of the category: it is the most specific thing known about it.
  *
- * ── Los dos respaldos, y por qué existen ────────────────────────────────────
- * `description` y `merchant` son lo que DECÍA EL PAPEL, no el nombre del
- * movimiento: los rellena una importación con lo que traía el extracto, y un
- * movimiento importado y todavía sin clasificar no tiene concepto del que
- * tomar nombre. Ahí «PAGO PSE COMCEL» es mucho mejor que «Sin concepto»,
- * porque es justo el dato con el que alguien va a decidir dónde clasificarlo.
+ * ── The two fallbacks, and why they exist ───────────────────────────────────
+ * `description` and `merchant` are what THE PAPER SAID, not the name of the
+ * transaction: an import fills them with what the statement carried, and an
+ * imported and still unclassified transaction has no concept to
+ * take a name from. There «PAGO PSE COMCEL» is much better than «Sin concepto»,
+ * because it is exactly the fact someone is going to use to decide where to classify it.
  *
- * Van DESPUÉS del concepto y no antes. Al revés —que es como estaba— un
- * movimiento creado a mano se quedaba sin nombre: el rediseño de la ficha
- * cambió el campo libre de «Concepto» por un selector de conceptos, así que
- * `description` dejó de rellenarse por ningún camino visible y la tabla, que
- * pintaba `description`, decía «Sin concepto» de todo lo que se registraba a
- * mano aunque tuviera su concepto elegido.
+ * They go AFTER the concept and not before. The other way around —which is how it was— a
+ * transaction created by hand was left without a name: the sheet redesign
+ * swapped the free «Concepto» field for a concept selector, so
+ * `description` stopped being filled by any visible path and the table, which
+ * painted `description`, said «Sin concepto» of everything recorded by
+ * hand even though it had its concept picked.
  */
 export function transactionName(
   transaction: Pick<Transaction, 'description' | 'merchant' | 'categoryId'>,
@@ -93,7 +93,7 @@ export function transactionName(
   );
 }
 
-/** Hacia dónde va la plata de un movimiento, en el idioma de `Monto`. */
+/** Which way a transaction's money goes, in the language of `Amount`. */
 export function transactionDirection(type: TransactionType): MoneyDirection {
   if (type === 'income') return 'in';
   if (type === 'transfer') return 'transfer';

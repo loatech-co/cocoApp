@@ -9,23 +9,23 @@ import { TextButton } from '@/shared/ui/atoms/text-button';
 import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
- * El filtro por centros de costos, categorías y conceptos.
+ * The filter by cost centers, categories and concepts.
  *
- * ── Por qué casillas y no una lista de una sola elección ────────────────────
- * Porque la pregunta habitual no es "¿cuánto me cuesta Casa?" sino "¿cuánto me
- * cuestan Casa y Transporte juntos?". Con una sola elección hay que mirar dos
- * veces y sumar a mano.
+ * ── Why checkboxes and not a single-choice list ─────────────────────────────
+ * Because the usual question is not "how much does Casa cost me?" but "how much do
+ * Casa and Transporte cost me together?". With a single choice you have to look twice
+ * and add up by hand.
  *
- * ── Por qué marcar y bajar de nivel son dos gestos distintos ────────────────
- * Antes eran el mismo: elegir un centro lo filtraba y además mostraba sus
- * categorías. Con casillas eso deja de funcionar —marcar tres centros movería la
- * lista tres veces— así que la casilla marca y la flecha baja. Cada gesto hace
- * una cosa y solo una.
+ * ── Why checking and drilling down are two different gestures ──────────────
+ * They used to be the same: picking a center filtered it and also showed its
+ * categories. With checkboxes that stops working —checking three centers would move the
+ * list three times— so the checkbox checks and the arrow drills down. Each gesture does
+ * one thing and only one.
  *
- * ── Por qué el camino es una línea y no migas sueltas ───────────────────────
- * Porque el panel mide 18rem: tres botones con separadores se parten en dos
- * renglones al segundo nivel. Una sola línea con la flecha de volver dice lo
- * mismo, siempre ocupa el mismo alto y tiene un solo sitio donde pulsar.
+ * ── Why the path is a line and not loose breadcrumbs ────────────────────────
+ * Because the panel measures 18rem: three buttons with separators break into two
+ * lines at the second level. A single line with the back arrow says the
+ * same, always takes the same height and has a single place to press.
  */
 export function ClassificationFilter({
   tree,
@@ -37,11 +37,11 @@ export function ClassificationFilter({
   onChange: (ids: number[]) => void;
 }) {
   /**
-   * El camino hasta el nivel que se está listando. Vacío = los centros.
+   * The path down to the level being listed. Empty = the centers.
    *
-   * Vive aquí y no en la URL porque es NAVEGACIÓN, no recorte: dos personas
-   * con el mismo filtro pueden estar mirando niveles distintos del panel, y
-   * eso no cambia lo que ve ninguna de las dos en la pantalla de atrás.
+   * It lives here and not in the URL because it is NAVIGATION, not a cut: two people
+   * with the same filter can be looking at different levels of the panel, and
+   * that does not change what either of them sees on the screen behind.
    */
   const [path, setPath] = useState<CategoryTree[]>([]);
 
@@ -52,7 +52,7 @@ export function ClassificationFilter({
     onChange(checked.includes(id) ? checked.filter((n) => n !== id) : [...checked, id]);
   };
 
-  /** Marcado por debajo: el padre lo dice sin afirmar que lo está él. */
+  /** Checked further down: the parent says so without claiming it is checked itself. */
   const hasCheckedInside = (node: CategoryTree): boolean =>
     (node.children ?? []).some((child) => checked.includes(child.id) || hasCheckedInside(child));
 
@@ -60,8 +60,8 @@ export function ClassificationFilter({
     <div className="flex flex-col">
       <FilterPath path={path} onBack={() => setPath(path.slice(0, -1))} />
 
-      {/* Alto limitado: un centro con cuarenta conceptos haría un menú más
-          largo que la pantalla y sin forma de llegar al pie. */}
+      {/* Limited height: a center with forty concepts would make a menu
+          longer than the screen with no way to reach the bottom. */}
       <ul className="max-h-64 overflow-y-auto border-y border-border py-1">
         {list.length === 0 ? (
           <li className="px-3 py-2 text-sm text-muted-foreground">
@@ -112,13 +112,13 @@ function FilterFooter({ checked, onClear }: { checked: number[]; onClear: () => 
 interface FilterRowProps {
   node: CategoryTree;
   isChecked: boolean;
-  /** Hay algo marcado más abajo: lo dice un punto. */
+  /** There is something checked further down: a dot says so. */
   hasCheckedInside: boolean;
   onToggle: () => void;
   onEnter: () => void;
 }
 
-/** Una fila: la casilla con su nombre, y la flecha para bajar un nivel. */
+/** A row: the checkbox with its name, and the arrow to drill down a level. */
 function FilterRow({ node, isChecked, hasCheckedInside, onToggle, onEnter }: FilterRowProps) {
   const children = node.children ?? [];
   return (
@@ -126,10 +126,10 @@ function FilterRow({ node, isChecked, hasCheckedInside, onToggle, onEnter }: Fil
       <label
         className={cn(
           'flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 py-2 pl-3 pr-2 text-sm transition-colors',
-          // La FILA es el control: el recuadro de 16 es una segunda
-          // forma, más pequeña, de dar a un blanco que ya es todo el
-          // ancho del desplegable. Por eso la fila tiene suelo y el
-          // recuadro no.
+          // The ROW is the control: the 16 box is a second,
+          // smaller way of hitting a target that is already the whole
+          // width of the dropdown. That is why the row has a floor and the
+          // box does not.
           'movil:min-h-[42px]',
           HIGHLIGHT,
           isChecked && 'font-medium',
@@ -151,7 +151,7 @@ function FilterRow({ node, isChecked, hasCheckedInside, onToggle, onEnter }: Fil
   );
 }
 
-/** Dónde se está: los niveles recorridos, y la vuelta al de arriba. */
+/** Where you are: the levels walked, and the way back to the one above. */
 function FilterPath({ path, onBack }: { path: CategoryTree[]; onBack: () => void }) {
   return (
     <div className="flex min-h-9 items-center gap-1 px-3 py-1.5">

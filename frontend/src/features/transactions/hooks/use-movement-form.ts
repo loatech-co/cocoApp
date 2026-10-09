@@ -20,7 +20,7 @@ import {
 import { useOnChange } from '@/shared/lib/on-change';
 import type { Reading } from '@coco/receipt-parser';
 
-/** Con qué se abre la ficha. Cambiar cualquiera de estos la vuelve a llenar. */
+/** What the sheet opens with. Changing any of these fills it again. */
 export interface SheetOpening {
   isOpen: boolean;
   transaction?: Transaction | null | undefined;
@@ -28,7 +28,7 @@ export interface SheetOpening {
   defaultType: TransactionType;
 }
 
-/** Lo que se escribe en la ficha: los datos del movimiento y su clasificación. */
+/** What is typed in the sheet: the transaction's data and its classification. */
 function useMovementFields(opening: SheetOpening, discards: number) {
   const { isOpen, transaction, payment, defaultType } = opening;
   const [description, setDescription] = useState('');
@@ -36,38 +36,38 @@ function useMovementFields(opening: SheetOpening, discards: number) {
   const [date, setDate] = useState(todayInBogota);
   const [type, setType] = useState<TransactionType>('expense');
   /*
-    ── La clasificación lleva escrito de dónde salió ───────────────────────
-    No es un id suelto: es un id y una fuente —a mano, el historial, las
-    palabras clave, el diccionario—. Toda propuesta pasa por `aplicar()`, que
-    es la única que sabe quién puede reemplazar a quién: lo elegido a mano no
-    lo toca nada automático, y una fuente inferior nunca pisa a una superior.
-    Ver `model/precedence.ts`.
+    ── The classification carries where it came from ──────────────────────
+    It is not a loose id: it is an id and a source —by hand, the history, the
+    keywords, the dictionary—. Every proposal goes through `apply()`, which
+    is the only one that knows who can replace whom: nothing automatic touches what was
+    picked by hand, and a lower source never overrides a higher one.
+    See `model/precedence.ts`.
 
-    Un solo objeto y actualizaciones funcionales, a propósito: las propuestas
-    llegan por caminos asíncronos —la lectura de un recibo, una petición— y
-    comparar contra un `categoryId` capturado en un render viejo es cómo una
-    sugerencia tardía pisa lo que la persona acaba de elegir.
+    A single object and functional updates, on purpose: proposals
+    arrive through async paths —reading a receipt, a request— and
+    comparing against a `categoryId` captured in an old render is how a
+    late suggestion overrides what the person just picked.
   */
   const [classification, setClassification] = useState<Classification>(UNCLASSIFIED);
   /**
-   * Si en esta apertura alguna fuente automática propuso algo. Es lo que
-   * decide si al guardar se aprende: solo cuando hubo una sugerencia que la
-   * persona aceptó o corrigió, nunca de un movimiento clasificado a mano sin
-   * que nadie hubiera dicho nada.
+   * Whether any automatic source proposed something in this opening. It is what
+   * decides whether saving learns: only when there was a suggestion the
+   * person accepted or corrected, never from a transaction classified by hand without
+   * anyone having said anything.
    */
   const [wasSuggested, setWasSuggested] = useState(false);
-  /** Lo que la lectura de un recibo dejó entre lo que dudar. */
+  /** What reading a receipt left to choose between. */
   const [receiptCandidates, setReceiptCandidates] = useState<ReceiptCandidate[]>([]);
-  /** El texto del que salió la lectura, para guardarlo con el movimiento. */
+  /** The text the reading came from, to save it with the transaction. */
   const [textRead, setTextRead] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Cada vez que se abre se recarga desde el movimiento: sin esto, abrir para
-  // editar el segundo movimiento mostraría los datos del primero.
+  // Every time it opens it reloads from the transaction: without this, opening to
+  // edit the second transaction would show the data of the first.
   //
-  // Durante el render y no en un efecto —ver `useAlCambiar`—: así la ficha
-  // sale pintada ya con los datos buenos, sin un fotograma con los del
-  // movimiento anterior.
+  // During render and not in an effect —see `useOnChange`—: that way the sheet
+  // comes out already painted with the right data, without a frame with those of the
+  // previous transaction.
   useOnChange([isOpen, transaction, payment, defaultType, discards], () => {
     if (!isOpen) return;
     const initials = initialAmountAndDate(transaction, payment);
@@ -75,8 +75,8 @@ function useMovementFields(opening: SheetOpening, discards: number) {
     setAmount(initials.amount);
     setDate(initials.date);
     setType(transaction?.type ?? defaultType);
-    // Lo que llega puesto —el concepto de un movimiento que se edita, el de un
-    // pago pendiente que se confirma— es una elección: lo automático no lo toca.
+    // What arrives set —the concept of a transaction being edited, that of a
+    // pending payment being confirmed— is a choice: nothing automatic touches it.
     const chosenId = transaction?.categoryId ?? payment?.categoryId;
     setClassification(
       chosenId === undefined ? UNCLASSIFIED : { categoryId: chosenId, origin: 'manual' },
@@ -110,36 +110,36 @@ function useMovementFields(opening: SheetOpening, discards: number) {
   };
 }
 
-/** En qué punto está la ficha: qué se enseña, qué se está haciendo, qué falló. */
+/** Where the sheet is at: what is shown, what is being done, what failed. */
 function useSheetStatus(opening: SheetOpening, discards: number) {
   const { isOpen, transaction, payment, defaultType } = opening;
   const [error, setError] = useState<string | null>(null);
   const [isConfirmingDeletion, setIsConfirmingDeletion] = useState(false);
   /**
-   * La cascada de siempre, detrás de un enlace. Sigue existiendo para quien
-   * quiera ir nivel a nivel, pero ya no es la puerta: la puerta es el buscador.
+   * The usual cascade, behind a link. It still exists for whoever
+   * wants to go level by level, but it is no longer the door: the door is the search.
    */
   const [isCascadeVisible, setIsCascadeVisible] = useState(false);
   /*
-    ── Se abre para LEER, no para editar ────────────────────────────────────
-    Abrir un movimiento es casi siempre consultarlo: ver cuánto fue, cuándo se
-    pagó, mirar el recibo. Con todo editable desde el primer instante, cada
-    una de esas consultas es una ocasión de cambiar algo sin querer —un clic
-    en un desplegable, una tecla en el campo del valor— y de esos accidentes
-    no queda rastro.
+    ── It opens to READ, not to edit ────────────────────────────────────────
+    Opening a transaction is almost always looking it up: seeing how much it was, when it was
+    paid, looking at the receipt. With everything editable from the first instant, each
+    of those lookups is a chance to change something by accident —a click
+    on a dropdown, a key in the amount field— and those accidents
+    leave no trace.
 
-    Crear es lo contrario: no hay nada que leer, así que nace editable.
+    Creating is the opposite: there is nothing to read, so it is born editable.
   */
   const [isEditable, setEditable] = useState(false);
   /*
     ── The form is the first thing you see ──────────────────────────────────
-    A new movement used to open on a chooser —"Registrar manualmente",
+    A new transaction used to open on a chooser —"Registrar manualmente",
     "Subir un archivo", "Tomar una foto"— before the form. It cost one click
-    on every new movement to answer a question most people answered the same
+    on every new transaction to answer a question most people answered the same
     way, and it hid the form behind a screen that had nothing to fill in.
 
     Now the form opens directly. Uploading a file and taking a photo are two
-    actions inside the document column (`SoportesPendientes`); the camera and
+    actions inside the document column (`PendingReceipts`); the camera and
     the reading step still take over the sheet while they last, and come back
     to the form when they finish.
   */
@@ -152,7 +152,7 @@ function useSheetStatus(opening: SheetOpening, discards: number) {
     setIsConfirmingDeletion(false);
     setEditable(!transaction);
     // Always the form: a sheet left on the camera or mid-reading would reopen
-    // there for the next movement.
+    // there for the next transaction.
     setStep('formulario');
   });
 
@@ -170,34 +170,34 @@ function useSheetStatus(opening: SheetOpening, discards: number) {
   };
 }
 
-/** La lectura de un soporte y los archivos que esperan a que exista el movimiento. */
+/** The reading of a receipt and the files waiting for the transaction to exist. */
 function useSheetSupports(opening: SheetOpening, discards: number) {
   const { isOpen, transaction, payment, defaultType } = opening;
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
   const [reading, setReading] = useState<Reading | null>(null);
   /**
-   * Lo que NO se pudo leer, para decirlo.
+   * What could NOT be read, to say so.
    *
-   * Es un estado aparte del error porque no es un error: el archivo se abrió,
-   * se miró y no se reconoció nada dentro. Un rojo ahí diría que algo salió
-   * mal, y lo que hay que hacer es distinto —escribir los datos a mano—.
+   * It is a state apart from the error because it is not an error: the file opened,
+   * it was looked at and nothing was recognized inside. A red there would say something went
+   * wrong, and what has to be done is different —typing the data by hand—.
    */
   const [unreadNotice, setUnreadNotice] = useState<string | null>(null);
   /*
-    Los soportes elegidos antes de que el movimiento exista.
+    The receipts picked before the transaction exists.
 
-    Un soporte cuelga de un movimiento, y al crear todavía no hay de qué
-    colgarlo. Se quedan aquí y se suben justo después de guardar: el orden
-    inverso —crear el movimiento para poder adjuntar— obligaría a guardar algo
-    a medias solo para tener un identificador.
+    A receipt hangs from a transaction, and when creating there is nothing yet to
+    hang it from. They stay here and are uploaded right after saving: the
+    reverse order —creating the transaction to be able to attach— would force saving something
+    half done just to have an identifier.
   */
   const [pending, setPending] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   /**
-   * El movimiento que se acaba de crear, cuando su soporte se quedó sin subir.
+   * The transaction that was just created, when its receipt was left un-uploaded.
    *
-   * Es lo que impide que reintentar cree un segundo movimiento por la misma
-   * plata. Ver el porqué largo en `useGuardarMovimiento`.
+   * It is what keeps a retry from creating a second transaction for the same
+   * money. See the long why in `useSaveMovement`.
    */
   const [registered, setRegistered] = useState<number | null>(null);
 
@@ -227,20 +227,20 @@ function useSheetSupports(opening: SheetOpening, discards: number) {
 }
 
 /**
- * Todo el estado de la ficha de un movimiento.
+ * All the state of a transaction's sheet.
  *
- * Son quince estados, y se recargan juntos cada vez que la ficha se abre o se
- * cancela una edición.
+ * It is fifteen states, and they reload together every time the sheet opens or an
+ * edit is cancelled.
  */
 export function useMovementForm(opening: SheetOpening) {
   /*
-    Sube cada vez que se cancela una edición.
+    Goes up every time an edit is cancelled.
 
-    Está en la firma de lo que llena los campos, así que cancelar los devuelve
-    a lo que hay GUARDADO. Sin esto, "Cancelar" solo apagaba el modo de
-    edición y dejaba en pantalla lo que se había escrito: la ficha decía una
-    cosa y la base otra, y el siguiente que pulsara el lápiz guardaba sin
-    querer un cambio que alguien ya había descartado.
+    It is in the signature of what fills the fields, so cancelling takes them back
+    to what is SAVED. Without this, "Cancelar" only turned off edit
+    mode and left on screen what had been typed: the sheet said one
+    thing and the database another, and the next one to press the pencil saved without
+    meaning to a change someone had already discarded.
   */
   const [discards, setDiscards] = useState(0);
 

@@ -20,11 +20,11 @@ function useCloseOnEscape(isOpen: boolean, onClose: () => void): void {
 }
 
 /**
- * Todo lo que la ficha de un movimiento necesita, junto.
+ * Everything a transaction's sheet needs, together.
  *
- * El estado vive en `useMovementForm`; lo que proponen las fuentes
- * automáticas, en `useClassificationProposals`; leer un recibo, en
- * `makeReceiptScan`; y guardar, en `useSaveMovement`.
+ * The state lives in `useMovementForm`; what the automatic sources
+ * propose, in `useClassificationProposals`; reading a receipt, in
+ * `makeReceiptScan`; and saving, in `useSaveMovement`.
  */
 export function useMovementSheet(opening: SheetOpening & { onClose: () => void }) {
   const { isOpen, transaction, onClose } = opening;
@@ -41,16 +41,16 @@ export function useMovementSheet(opening: SheetOpening & { onClose: () => void }
 
   const tree = categories.data ?? [];
   /*
-    ── Lo que ya está en un centro estático no se mueve ──────────────────────
-    Estático es estático: ni desde la tabla ni desde aquí. La estructura de
-    los costos fijos se decide una vez, y si de verdad hay que cambiarla, se
-    hace dinámico el centro y entonces se mueve —que es un acto deliberado, en
-    otra pantalla, y no un desplegable a un clic de distancia—.
+    ── What is already in a static center does not move ──────────────────────
+    Static is static: not from the table and not from here. The structure of
+    fixed costs is decided once, and if it really has to change, the
+    center is made dynamic and then it is moved —which is a deliberate act, on
+    another screen, and not a dropdown one click away—.
 
-    Se mira el centro GUARDADO, no el que esté elegido en el formulario. Con
-    el elegido, escoger "Costos fijos" al crear un movimiento bloqueaba los dos
-    desplegables de abajo y dejaba el formulario a medias: entrar sí se puede,
-    salir es lo que no.
+    The SAVED center is checked, not the one picked in the form. With
+    the picked one, choosing "Costos fijos" when creating a transaction locked the two
+    dropdowns below and left the form half done: getting in is allowed,
+    getting out is what is not.
   */
   const isStatic =
     selectedPath(tree, transaction?.categoryId ?? undefined).costCenter?.isStatic ?? false;

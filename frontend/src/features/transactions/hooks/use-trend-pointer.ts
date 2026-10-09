@@ -8,20 +8,20 @@ interface Size {
 }
 
 /**
- * Qué punto de la gráfica se está señalando —con el dedo, el puntero o las
- * flechas— y dónde va la tarjeta que lo explica.
+ * Which point of the chart is being pointed at —with the finger, the pointer or the
+ * arrows— and where the card that explains it goes.
  */
 export function useTrendPointer(total: number) {
   const canvas = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<number | null>(null);
-  /** El tamaño del lienzo en píxeles, para colocar la tarjeta sin que se salga. */
+  /** The canvas size in pixels, to place the card without it spilling out. */
   const [box, setBox] = useState<Size>({ width: 0, height: 0 });
   const [cardSize, setCardSize] = useState<Size>({ width: 0, height: 0 });
 
-  // Se mide DESPUÉS de pintar y antes de que el navegador dibuje: midiendo en
-  // el render la tarjeta todavía no existe, y midiendo en un efecto normal se
-  // vería un fotograma con la tarjeta en el sitio equivocado.
+  // It is measured AFTER painting and before the browser draws: measuring in
+  // render the card does not exist yet, and measuring in a normal effect
+  // a frame with the card in the wrong place would be seen.
   useLayoutEffect(() => {
     if (!card.current) return;
     const { offsetWidth, offsetHeight } = card.current;
@@ -32,7 +32,7 @@ export function useTrendPointer(total: number) {
     );
   }, [active]);
 
-  /** El punto más cercano al dedo o al puntero. */
+  /** The point closest to the finger or the pointer. */
   function point(clientX: number): void {
     const size = canvas.current?.getBoundingClientRect();
     if (!size || size.width === 0) return;
@@ -47,7 +47,7 @@ export function useTrendPointer(total: number) {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     e.preventDefault();
 
-    // Con el teclado no hay puntero, así que la medida hay que tomarla aquí.
+    // With the keyboard there is no pointer, so the measurement has to be taken here.
     const size = canvas.current?.getBoundingClientRect();
     if (size) setBox({ width: size.width, height: size.height });
 
@@ -60,12 +60,12 @@ export function useTrendPointer(total: number) {
 }
 
 /**
- * Dónde va la tarjeta.
+ * Where the card goes.
  *
- * Al lado del puntero, a doce píxeles, y saltando al otro lado cuando no
- * cabe: pegada a un extremo fijo obliga a mirar a otra parte para leer el
- * dato del punto que se está señalando, y siguiendo al puntero sin más se
- * sale del gráfico en los bordes.
+ * Next to the pointer, twelve pixels away, and jumping to the other side when it does not
+ * fit: stuck to a fixed end it forces looking elsewhere to read the
+ * fact of the point being pointed at, and following the pointer without more it
+ * runs off the chart at the edges.
  */
 export function cardPosition({
   index,

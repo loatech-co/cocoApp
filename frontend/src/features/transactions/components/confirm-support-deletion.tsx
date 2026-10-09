@@ -5,12 +5,12 @@ import { t } from '@/shared/lib/i18n';
 import { Confirmation } from '@/shared/ui/organisms/confirmation';
 
 /**
- * La pregunta antes de borrar un soporte: es lo único de sus mandos que no se
- * puede deshacer.
+ * The question before deleting a receipt: it is the only one of its controls that
+ * cannot be undone.
  *
- * La hacen la galería de un movimiento y el pase a pantalla completa, con las
- * mismas palabras: es la misma acción, hecha desde otro sitio. Abierta
- * mientras haya un `soporte`.
+ * The transaction gallery and the full-screen lightbox ask it, with the
+ * same words: it is the same action, done from another place. Open
+ * while there is a `receipt`.
  */
 export function ConfirmSupportDeletion({
   transactionId,

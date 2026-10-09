@@ -12,11 +12,11 @@ import { keys } from '@/shared/api/query-keys';
 import { shrinkReceipts } from '@/shared/lib/shrink-receipt';
 
 /**
- * Los soportes de un movimiento: la FICHA de cada recibo, no el recibo.
+ * A transaction's receipts: the RECORD of each receipt, not the receipt.
  *
- * El binario se pide aparte y solo cuando alguien lo mira (`apiBlob`): traer
- * ocho PDFs de doscientos kilos cada vez que se abre un movimiento sería pagar
- * por adelantado por lo que casi nadie va a abrir.
+ * The binary is requested separately and only when someone looks at it (`apiBlob`): fetching
+ * eight two-hundred-kilobyte PDFs every time a transaction is opened would be paying
+ * up front for what almost nobody is going to open.
  */
 export function useReceipts(transactionId: number | undefined) {
   return useQuery({
@@ -28,7 +28,7 @@ export function useReceipts(transactionId: number | undefined) {
   });
 }
 
-/** Sube soportes a un movimiento y devuelve la lista ya actualizada. */
+/** Uploads receipts to a transaction and returns the already updated list. */
 export function useUploadReceipts(transactionId: number) {
   const queryClient = useQueryClient();
 
@@ -41,16 +41,16 @@ export function useUploadReceipts(transactionId: number) {
       onProgress?: (fraction: number) => void;
     }): Promise<Receipt[]> => {
       const data = new FormData();
-      // Encogidas antes de viajar: una foto de teléfono son cuatro megas de
-      // los que el servidor se queda con 1100px de ancho. El porqué largo
-      // —incluido el HEIC del iPhone, que allá no se puede abrir— está en
-      // `lib/encoger-soporte.ts`.
+      // Shrunk before traveling: a phone photo is four megabytes of
+      // which the server keeps 1100px of width. The long why
+      // —including the iPhone's HEIC, which cannot be opened over there— is in
+      // `shared/lib/shrink-receipt.ts`.
       for (const file of await shrinkReceipts(files)) data.append('files', file);
       return apiUpload<Receipt[]>(getSoportesUploadUrl(transactionId), data, onProgress);
     },
-    // Se escribe la respuesta en la caché en vez de invalidarla: el servidor
-    // acaba de devolver la lista entera y volver a pedirla es un viaje para
-    // traer lo que ya está en la mano.
+    // The response is written into the cache instead of invalidating it: the server
+    // just returned the whole list and asking for it again is a trip to
+    // bring what is already in hand.
     onSuccess: (list) => queryClient.setQueryData(keys.receipts(transactionId), list),
   });
 }

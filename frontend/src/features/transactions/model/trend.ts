@@ -2,7 +2,7 @@ import { longDay, SHORT_MONTHS, longMonth } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 
 /*
-  La geometría y el eje de la gráfica de tendencia: lo que se calcula sin dibujar.
+  The geometry and the axis of the trend chart: what is computed without drawing.
 */
 
 /** The unit a trend is grouped by, as a person reads it: `día` or `mes`. */
@@ -12,19 +12,19 @@ export function unit(granularity: 'dia' | 'mes'): string {
     : t('transactions.trend.units.month');
 }
 
-/** Coordenada X de un punto en el lienzo de 0–100. */
+/** X coordinate of a point on the 0–100 canvas. */
 export function xAt(i: number, total: number): number {
   return total === 1 ? 50 : (i / (total - 1)) * 100;
 }
 
 /**
- * Coordenada Y: se invierte porque en SVG el 0 está arriba.
+ * Y coordinate: it is inverted because in SVG 0 is at the top.
  *
- * ── Por qué hay margen arriba y abajo ───────────────────────────────────────
- * Porque el punto más alto de la serie vale justo el techo, y sin margen caía
- * en y=0: la mitad del grosor del trazo quedaba fuera del lienzo y el SVG la
- * recortaba. La línea aparecía cortada a ras justo en su pico, que es el dato
- * que uno estaba mirando. Igual abajo con los ceros.
+ * ── Why there is a margin at the top and bottom ─────────────────────────────
+ * Because the highest point of the series is worth exactly the ceiling, and with no margin it fell
+ * at y=0: half the stroke width was left outside the canvas and the SVG
+ * clipped it. The line appeared cut flush right at its peak, which is the fact
+ * you were looking at. Same at the bottom with the zeros.
  */
 export const CANVAS_HEIGHT = 42;
 const MARGIN_Y = 3;
@@ -35,20 +35,20 @@ export function yAt(value: number, ceiling: number): number {
 }
 
 /**
- * La línea, en curvas.
+ * The line, in curves.
  *
- * ── Por qué curva y no tramos rectos ────────────────────────────────────────
- * Porque la serie es un MUESTREO de algo continuo: el gasto no salta de un
- * valor a otro en el instante que cambia el día, va y viene. Los tramos rectos
- * con sus picos en punta sugieren una precisión que el dato no tiene.
+ * ── Why a curve and not straight segments ───────────────────────────────────
+ * Because the series is a SAMPLING of something continuous: spending does not jump from one
+ * value to another the instant the day changes, it comes and goes. Straight segments
+ * with their pointed peaks suggest a precision the data does not have.
  *
- * ── Por qué MONÓTONA y no una curva cualquiera ──────────────────────────────
- * Una spline normal se pasa de largo al doblar: entre un mes de cero y otro de
- * un millón, la curva baja por debajo de cero antes de subir. Dibujar un gasto
- * negativo que nunca existió no es suavizar, es mentir. Esta variante
- * —Fritsch–Carlson— ajusta las pendientes para que la curva nunca se salga del
- * rango de los dos puntos que une: si el dato sube, la curva sube; si el dato
- * no baja de cero, la curva tampoco.
+ * ── Why MONOTONE and not just any curve ─────────────────────────────────────
+ * A normal spline overshoots when it bends: between a month of zero and one of
+ * a million, the curve dips below zero before rising. Drawing a negative
+ * expense that never existed is not smoothing, it is lying. This variant
+ * —Fritsch–Carlson— adjusts the slopes so the curve never leaves the
+ * range of the two points it joins: if the data rises, the curve rises; if the data
+ * does not go below zero, neither does the curve.
  */
 export function curve(points: { x: number; y: number }[]): string {
   const [first] = points;
@@ -56,27 +56,27 @@ export function curve(points: { x: number; y: number }[]): string {
   if (points.length === 1) return `M ${first.x} ${first.y}`;
 
   const n = points.length;
-  // Todos los índices de abajo van de 0 a n - 1: los respaldos no se usan nunca.
+  // All the indices below go from 0 to n - 1: the fallbacks are never used.
   const point = (i: number): { x: number; y: number } => points[i] ?? first;
   const value = (list: readonly number[], i: number): number => list[i] ?? 0;
 
-  // Pendiente de cada tramo.
+  // Slope of each segment.
   const deltas: number[] = [];
   for (let i = 0; i < n - 1; i += 1) {
     const dx = point(i + 1).x - point(i).x;
     deltas.push(dx === 0 ? 0 : (point(i + 1).y - point(i).y) / dx);
   }
 
-  // Tangente en cada punto: el promedio de las pendientes que llegan a él.
+  // Tangent at each point: the average of the slopes arriving at it.
   const tangentes: number[] = [value(deltas, 0)];
   for (let i = 1; i < n - 1; i += 1) {
     tangentes.push((value(deltas, i - 1) + value(deltas, i)) / 2);
   }
   tangentes.push(value(deltas, n - 2));
 
-  // Y aquí está lo que impide el sobrepaso. Donde el tramo es plano, la curva
-  // llega y sale plana; donde no, las tangentes se recortan al círculo de
-  // radio 3, que es la condición de Fritsch–Carlson.
+  // And here is what prevents the overshoot. Where the segment is flat, the curve
+  // arrives and leaves flat; where it is not, the tangents are clamped to the circle of
+  // radius 3, which is the Fritsch–Carlson condition.
   for (let i = 0; i < n - 1; i += 1) {
     const delta = value(deltas, i);
     if (delta === 0) {
@@ -112,7 +112,7 @@ export function curve(points: { x: number; y: number }[]): string {
   return d;
 }
 
-/** La serie en coordenadas del lienzo. */
+/** The series in canvas coordinates. */
 function toPoints(series: number[], ceiling: number, total: number): { x: number; y: number }[] {
   return series.map((v, i) => ({ x: xAt(i, total), y: yAt(v, ceiling) }));
 }
@@ -121,55 +121,55 @@ export function line(series: number[], ceiling: number, total: number): string {
   return curve(toPoints(series, ceiling, total));
 }
 
-/** La misma línea, cerrada contra la base, para el relleno. */
+/** The same line, closed against the baseline, for the fill. */
 export function area(series: number[], ceiling: number, total: number): string {
-  // Cierra en la línea del CERO, no en el borde del lienzo: cerrando abajo
-  // del todo, el relleno se extendía por debajo de donde vale cero.
+  // It closes on the ZERO line, not on the canvas edge: closing at the very
+  // bottom, the fill spread below where zero is.
   const base = yAt(0, ceiling).toFixed(2);
   return `${line(series, ceiling, total)} L ${xAt(total - 1, total).toFixed(2)} ${base} L ${xAt(0, total).toFixed(2)} ${base} Z`;
 }
 
 /**
- * La fecha de un punto, entera: `6 de septiembre de 2026` o `Septiembre de
+ * The full date of a point: `6 de septiembre de 2026` or `Septiembre de
  * 2026`.
  *
- * Aquí sí cabe y aquí sí hace falta. En el eje hay decenas de fechas y el
- * nombre completo las haría chocar; en la tarjeta hay UNA, y "sep 26" obliga a
- * descifrar una abreviatura y a adivinar si el 26 es el día o el año.
+ * Here it does fit and here it is needed. On the axis there are dozens of dates and the
+ * full name would make them collide; on the card there is ONE, and "sep 26" forces
+ * deciphering an abbreviation and guessing whether 26 is the day or the year.
  */
 export function longDate(bucket: string): string {
   return bucket.length > 7 ? longDay(bucket) : longMonth(bucket);
 }
 
-/** El último día de un mes: 28, 29, 30 o 31 según cuál sea. */
+/** The last day of a month: 28, 29, 30 or 31 depending on which. */
 function lastDay(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
 /**
- * Qué puntos del eje llevan etiqueta, y qué dice cada una.
+ * Which axis points get a label, and what each one says.
  *
- * ── Menos de tres meses: cada cinco días ────────────────────────────────────
- * 5, 10, 15, 20, 25 y el último del mes —28, 29, 30 o 31, según cuál sea—. El
- * 30 solo aparece cuando de verdad cierra el mes: en un mes de 31 días sería
- * una etiqueta pegada a la siguiente.
+ * ── Less than three months: every five days ─────────────────────────────────
+ * 5, 10, 15, 20, 25 and the last of the month —28, 29, 30 or 31, depending on which—. The
+ * 30 only appears when it really closes the month: in a 31-day month it would be
+ * a label stuck to the next one.
  *
- * No se habla de "semanas" porque las semanas no coinciden con los meses: la
- * semana 5 empieza un martes en marzo y un viernes en abril, y comparar dos
- * meses dejaría de ser posible.
+ * There is no talk of "weeks" because weeks do not line up with months: the
+ * 5th week starts on a Tuesday in March and on a Friday in April, and comparing two
+ * months would stop being possible.
  *
- * El NOMBRE DEL MES se escribe solo la primera vez que aparece. Sin él, un
- * rango de dos meses muestra "5 10 15 20 25 31 5 10 15 20 25 30" y no hay
- * forma de saber dónde termina uno y empieza el otro.
+ * The MONTH NAME is written only the first time it appears. Without it, a
+ * two-month range shows "5 10 15 20 25 31 5 10 15 20 25 30" and there is no
+ * way to know where one ends and the other begins.
  *
- * ── Tres meses o más: solo el mes ───────────────────────────────────────────
- * "Ene Feb Mar", sin día. Todas con la misma forma: si el rango cruza de año
- * lo llevan todas —entero, "Abr 2023"— y si no lo cruza no lo lleva ninguna. Escribirlo solo donde
- * cambia dejaba un eje que mezclaba "ene" con "abr 23" y se leía como si
- * fueran dos cosas distintas.
+ * ── Three months or more: only the month ────────────────────────────────────
+ * "Ene Feb Mar", no day. All with the same shape: if the range crosses a year
+ * they all carry it —in full, "Abr 2023"— and if it does not cross, none do. Writing it only where
+ * it changes left an axis that mixed "ene" with "abr 23" and read as if
+ * they were two different things.
  *
- * Y si son tantos meses que no caben, uno de cada tantos. Cincuenta etiquetas
- * en un teléfono no se leen: se tocan.
+ * And if there are so many months that they do not fit, one out of every so many. Fifty labels
+ * on a phone cannot be read: they touch.
  */
 export function axisLabels(
   points: readonly { bucket: string }[],
@@ -178,10 +178,10 @@ export function axisLabels(
   if (granularity === 'mes') {
     const every = Math.max(1, Math.ceil(points.length / 12));
 
-    // Todas las etiquetas con la MISMA forma. Escribir el año solo donde
-    // cambia deja un eje que mezcla "ene" con "abr 23" y se lee como si
-    // fueran dos cosas distintas. Si el rango cruza de año, el año va en
-    // todas; si no cruza, en ninguna.
+    // All the labels with the SAME shape. Writing the year only where
+    // it changes leaves an axis that mixes "ene" with "abr 23" and reads as if
+    // they were two different things. If the range crosses a year, the year goes on
+    // all of them; if it does not, on none.
     const isMultiYear = new Set(points.map((p) => p.bucket.slice(0, 4))).size > 1;
 
     return points
@@ -191,9 +191,9 @@ export function axisLabels(
         const [year, month = ''] = bucket.split('-');
         const name = SHORT_MONTHS[Number(month) - 1] ?? month;
         const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
-        // El año ENTERO, no sus dos últimas cifras. "Abr 23" obliga a
-        // completarlo mentalmente, y en un histórico que arranca en 2022 eso
-        // es justo lo que hay que leer sin esfuerzo.
+        // The FULL year, not its last two digits. "Abr 23" forces
+        // completing it mentally, and in a history that starts in 2022 that
+        // is exactly what has to be read effortlessly.
         return { index, text: isMultiYear ? `${capitalized} ${year}` : capitalized };
       });
   }
@@ -202,11 +202,11 @@ export function axisLabels(
   let monthName = '';
 
   points.forEach((p, index) => {
-    // Un cubo diario trae siempre sus tres partes: los respaldos no se usan.
+    // A daily bucket always brings its three parts: the fallbacks are not used.
     const [year = NaN, month = NaN, day = NaN] = p.bucket.split('-').map(Number);
     const isLast = day === lastDay(year, month);
-    // 5, 10, 15, 20 y 25. El 30 queda fuera: o cierra el mes —y entra por la
-    // otra condición— o está a un día del 31, que sí lo cierra.
+    // 5, 10, 15, 20 and 25. The 30 is left out: either it closes the month —and comes in through the
+    // other condition— or it is one day away from the 31st, which does close it.
     const isFifth = day % 5 === 0 && day < 26;
     if (!isFifth && !isLast) return;
 
@@ -221,12 +221,12 @@ export function axisLabels(
 }
 
 /**
- * `2025-03-14` → `14 mar`. `2025-03` → `mar 25`, o solo `mar` si todo el rango
- * cae en el mismo año.
+ * `2025-03-14` → `14 mar`. `2025-03` → `mar 25`, or just `mar` if the whole range
+ * falls in the same year.
  *
- * Repetir el año en los doce puntos de un mismo año es ruido: ocupa espacio,
- * hace que las etiquetas se pisen y no distingue un punto de otro. Solo aporta
- * cuando el rango cruza de año.
+ * Repeating the year on the twelve points of the same year is noise: it takes space,
+ * makes the labels step on each other and does not tell one point from another. It only helps
+ * when the range crosses a year.
  */
 export function bucketLabel(bucket: string, isSameYear = false): string {
   const [year = '', month = '', day] = bucket.split('-');

@@ -12,25 +12,25 @@ import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/atoms/alert';
 
 /**
- * El nombre con el que saludar.
+ * The name to greet with.
  *
- * Solo el de pila: "Hola de nuevo, Gerardo Andrés Viteri" no saluda a nadie,
- * recita un documento de identidad. Si no hay nombre, el correo tampoco sirve
- * para saludar, así que el saludo se queda solo.
+ * Only the first name: "Hola de nuevo, Gerardo Andrés Viteri" greets nobody,
+ * it recites an ID card. If there is no name, the email does not work
+ * for greeting either, so the greeting stands alone.
  */
 function firstName(user: { displayName?: string | null } | null | undefined): string {
   return (user?.displayName ?? '').trim().split(/\s+/)[0] ?? '';
 }
 
 /**
- * Resumen.
+ * Dashboard.
  *
- * Todas las cifras son DERIVADAS: no hay ni una columna de saldo en la base.
- * Si un movimiento cambia, esto cambia solo.
+ * Every figure is DERIVED: there is not a single balance column in the database.
+ * If a transaction changes, this changes by itself.
  *
- * La pantalla se lee de arriba abajo como una sola pregunta que se va
- * acotando: qué recorte estoy mirando (toolbar), cuánto suma (indicadores),
- * cómo se comportó en el tiempo (tendencia) y en qué se fue (desglose).
+ * The screen reads top to bottom as a single question that keeps
+ * narrowing: which cut am I looking at (toolbar), how much it adds up to (indicators),
+ * how it behaved over time (trend) and what it went on (breakdown).
  */
 export function DashboardPage() {
   const p = useDashboardPage();
@@ -97,7 +97,7 @@ function SummaryError({ error }: { error: Error }) {
   );
 }
 
-/** La barra de filtros con el saludo y lo que suma el recorte. */
+/** The filter bar with the greeting and what the cut adds up to. */
 function Bar({ page: p }: { page: ReturnType<typeof useDashboardPage> }) {
   const { user } = useAuth();
   const { dashboard, table, sheet } = p;
@@ -129,9 +129,9 @@ function Bar({ page: p }: { page: ReturnType<typeof useDashboardPage> }) {
       hasActiveFilters={p.hasActiveFilters}
       onNew={(type) => {
         sheet.setNewType(type);
-        // Un movimiento nuevo empieza de cero, venga uno de donde venga: sin
-        // esto, abrir «Nuevo gasto» después de haber mirado un pendiente
-        // habría reabierto la ficha de confirmar aquel pago.
+        // A new transaction starts from scratch, wherever it comes from: without
+        // this, opening «Nuevo gasto» after having looked at a pending payment
+        // would have reopened the sheet to confirm that payment.
         sheet.setConfirming(null);
         sheet.setEditing(null);
       }}

@@ -17,7 +17,7 @@ const TREE: Category[] = [
 
 const PAPER = { description: 'PAGO PSE COMCEL', merchant: 'COMCEL' };
 
-describe('rutaSeleccionada', () => {
+describe('selectedPath', () => {
   it('rebuilds the whole path from the id of a concept', () => {
     const { costCenter, category, concept } = selectedPath(TREE, 100);
 
@@ -38,7 +38,7 @@ describe('rutaSeleccionada', () => {
   });
 });
 
-describe('nombreDelMovimiento', () => {
+describe('transactionName', () => {
   it('takes the name of its concept over what the paper said', () => {
     expect(transactionName({ ...PAPER, categoryId: 100 }, TREE)).toBe('Aseo');
   });
@@ -47,7 +47,7 @@ describe('nombreDelMovimiento', () => {
     expect(transactionName({ ...PAPER, categoryId: 10 }, TREE)).toBe('Aseo y limpieza');
   });
 
-  it('falls back to the description of an unclassified movement', () => {
+  it('falls back to the description of an unclassified transaction', () => {
     expect(transactionName({ ...PAPER, categoryId: null }, TREE)).toBe('PAGO PSE COMCEL');
   });
 
@@ -64,8 +64,8 @@ describe('nombreDelMovimiento', () => {
   });
 });
 
-describe('sentidoDelMovimiento', () => {
-  it('maps each movement type to the direction of the money', () => {
+describe('transactionDirection', () => {
+  it('maps each transaction type to the direction of the money', () => {
     expect(transactionDirection('income')).toBe('in');
     expect(transactionDirection('expense')).toBe('out');
     expect(transactionDirection('transfer')).toBe('transfer');

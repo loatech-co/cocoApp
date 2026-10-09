@@ -1,5 +1,5 @@
 import { t } from '@/shared/lib/i18n';
-/** Los órdenes que la API acepta. Lo que no esté aquí, no existe. */
+/** The sort orders the API accepts. What is not here does not exist. */
 export const SORT_ORDERS = [
   { value: '-date', label: t('transactions.toolbar.sortOrders.newest') },
   { value: 'date', label: t('transactions.toolbar.sortOrders.oldest') },

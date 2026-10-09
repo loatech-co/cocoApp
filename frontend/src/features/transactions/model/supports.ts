@@ -1,35 +1,35 @@
 import { t } from '@/shared/lib/i18n';
 
 /**
- * Por qué no se está viendo un soporte. Dos motivos, y no son el mismo.
+ * Why a receipt is not being shown. Two reasons, and they are not the same.
  *
  * ── `ausente` ───────────────────────────────────────────────────────────────
- * El servidor miró el disco y el archivo no está. Es definitivo: reintentar
- * no lo va a traer. Pasa porque la base y el almacén son dos sitios
- * distintos —las fichas viven en Postgres, el mismo para todos los entornos,
- * y los archivos en disco, que no lo es—, así que un soporte importado en una
- * máquina y no sincronizado a la otra sale en la lista y no está.
+ * The server looked at the disk and the file is not there. It is final: retrying
+ * will not bring it. It happens because the database and the storage are two
+ * different places —the records live in Postgres, the same for every environment,
+ * and the files on disk, which is not—, so a receipt imported on one
+ * machine and not synced to the other shows up in the list and is not there.
  *
  * ── `sin-cargar` ────────────────────────────────────────────────────────────
- * La descarga falló y no sabemos más: un 500 del servidor, la sesión
- * caducada, la red que se cortó a mitad. El archivo puede estar
- * perfectamente. Es pasajero, así que lleva un reintento.
+ * The download failed and we know nothing more: a 500 from the server, an expired
+ * session, the network cutting out halfway. The file may be
+ * perfectly fine. It is transient, so it carries a retry.
  *
- * Estaban juntos y contestaban lo mismo —«no está en el servidor»— a un
- * soporte que sí estaba. Es el mismo error que el 415 que se comía los
- * agotamientos de recursos: dar por definitivo lo que solo era un fallo.
+ * They were together and answered the same —«no está en el servidor»— to a
+ * receipt that was there. It is the same mistake as the 415 that swallowed
+ * resource exhaustion: taking as final what was only a failure.
  */
 export type ReceiptFailure = 'ausente' | 'sin-cargar';
 
 /**
- * El texto de la confirmación de borrar un soporte, escrito una vez.
+ * The text of the confirmation to delete a receipt, written once.
  *
- * Se pregunta desde dos sitios —la galería de un movimiento y el pase a
- * pantalla completa— y estaba escrito en los dos. Es la misma pregunta sobre
- * la misma cosa: escrita dos veces, el día que cambie una cambia una.
+ * It is asked from two places —a transaction's gallery and the full-screen
+ * lightbox— and it was written in both. It is the same question about
+ * the same thing: written twice, the day one changes only one changes.
  *
- * Dice que el movimiento no se elimina por lo mismo que la del movimiento dice
- * que el concepto no se toca: lo que se está borrando se ve DENTRO de lo otro,
- * así que la papelera parece apuntar al contenedor.
+ * It says the transaction is not deleted for the same reason the transaction's one says
+ * the concept is not touched: what is being deleted is seen INSIDE the other,
+ * so the trash can seems to point at the container.
  */
 export const DELETE_RECEIPT = t('transactions.supports.deleteWarning');

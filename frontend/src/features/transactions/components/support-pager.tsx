@@ -4,13 +4,13 @@ import { t } from '@/shared/lib/i18n';
 import { OverlayButton, ControlSeparator } from '@/shared/ui/molecules/overlay-control';
 
 /**
- * Las flechas y el contador de los soportes, sobre el documento.
+ * The arrows and the counter of the receipts, over the document.
  *
- * Lo pintan la columna de un movimiento guardado y la de uno que se está
- * creando, y era el mismo trozo escrito dos veces. Solo aparece con más de
- * uno: con un único soporte, «1 de 1» y dos flechas apagadas son tres
- * controles que no hacen nada. La raya del final separa moverse de lo que
- * modifica (ver `SeparadorDeMandos`).
+ * Both the column of a saved transaction and that of one being
+ * created draw it, and it was the same piece written twice. It only shows with more than
+ * one: with a single receipt, «1 de 1» and two disabled arrows are three
+ * controls that do nothing. The rule at the end separates moving from what
+ * modifies (see `ControlSeparator`).
  */
 export function SupportPager({
   index,

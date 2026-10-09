@@ -15,23 +15,23 @@ import { PendingReceipts } from './pending-supports';
 import { Receipts } from './receipts';
 
 /**
- * LA rejilla de una ficha de movimiento: el papel y lo que dice.
+ * THE grid of a transaction sheet: the paper and what it says.
  *
- * ── Por qué una clase y no dos rejillas escritas ────────────────────────────
- * Porque la ficha tiene cinco caras —leer, editar, registrar a mano, registrar
- * con un archivo y, pronto, con una foto— y las cinco son lo mismo: un
- * documento a la izquierda y sus datos a la derecha. Escrita en cada una, la
- * de leer y la de editar ya se habían separado: al pulsar «Editar», el recibo
- * saltaba de sitio y las columnas cambiaban de ancho en el mismo gesto.
+ * ── Why a class and not two written grids ───────────────────────────────────
+ * Because the sheet has five faces —read, edit, record by hand, record
+ * with a file and, soon, with a photo— and all five are the same: a
+ * document on the left and its data on the right. Written in each one, the
+ * read one and the edit one had already drifted apart: on pressing «Editar», the receipt
+ * jumped places and the columns changed width in the same gesture.
  *
- * ── El reparto: mitad y mitad ───────────────────────────────────────────────
- * Se probó a favor del papel —65 y 35— y no hacía falta. Desde que la columna
- * del documento perdió su fila de miniaturas, lo que hay en ella es una sola
- * previsualización de 350px de alto: darle dos tercios del ancho solo la deja
- * con aire a los lados mientras los campos de al lado se aprietan.
+ * ── The split: half and half ────────────────────────────────────────────────
+ * Favoring the paper was tried —65 and 35— and it was not needed. Since the
+ * document column lost its row of thumbnails, what is in it is a single
+ * 350px-tall preview: giving it two thirds of the width only leaves it
+ * with air on the sides while the fields next to it get squeezed.
  *
- * Por debajo de `lg` no hay reparto: son dos filas apiladas, porque en un
- * teléfono dos columnas de 170px no son dos columnas.
+ * Below `lg` there is no split: they are two stacked rows, because on a
+ * phone two 170px columns are not two columns.
  */
 const SHEET_GRID = 'grid gap-5 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:grid-cols-2';
 
@@ -46,8 +46,8 @@ type SheetFormProps = FieldsProps & {
 };
 
 /**
- * El formulario de la ficha: el soporte a la izquierda, los datos a la derecha
- * —para leer o para editar— y el pie.
+ * The sheet's form: the receipt on the left, the data on the right
+ * —to read or to edit— and the footer.
  */
 export function MovementSheetForm({
   transaction,
@@ -62,16 +62,16 @@ export function MovementSheetForm({
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
       {/*
-        ── La misma rejilla, se esté leyendo o editando ──────────────────────
-        Y la MISMA en el árbol, no una copia en cada rama: la columna del papel
-        se pinta una vez, fuera del condicional, así que al pulsar «Editar»
-        React no la desmonta. Escrita dentro de las dos ramas, el soporte se
-        descargaba otra vez en cada cambio —el marco se vaciaba, aparecía el
-        girador y volvía la misma imagen que ya estaba en la memoria de la
-        pestaña—.
+        ── The same grid, whether reading or editing ────────────────────────
+        And the SAME one in the tree, not a copy in each branch: the paper column
+        is drawn once, outside the conditional, so on pressing «Editar»
+        React does not unmount it. Written inside both branches, the receipt was
+        downloaded again on every switch —the frame emptied, the spinner
+        appeared and the same image came back that was already in the tab's
+        memory—.
 
-        Lo único que cambia de lado a lado es la columna derecha: los campos o
-        lo que dicen.
+        The only thing that changes from side to side is the right column: the fields or
+        what they say.
       */}
       <div className={SHEET_GRID}>
         <div className="flex flex-col">
@@ -95,9 +95,9 @@ export function MovementSheetForm({
         </p>
       )}
 
-      {/* Leyendo no hay pie: no hay nada que cancelar ni que guardar, y para
-          salir ya está la equis de la esquina. Un botón "Cerrar" debajo de
-          todo es una segunda puerta a la misma salida. */}
+      {/* While reading there is no footer: there is nothing to cancel or save, and to
+          leave there is already the X in the corner. A "Cerrar" button under
+          everything is a second door to the same exit. */}
       {sheet.isEditable && (
         <ModalFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
@@ -114,9 +114,9 @@ export function MovementSheetForm({
 }
 
 /**
- * Los soportes de un movimiento que todavía no existe.
+ * The receipts of a transaction that does not exist yet.
  *
- * The FIRST document of a new movement is read. Whether it came from the drop
+ * The FIRST document of a new transaction is read. Whether it came from the drop
  * zone, the paste button, "Cargar archivo" or the camera: the receipt is what
  * turns the expected (or empty) value and date into the real ones. Attaching
  * it and having nothing happen left the document as decoration and forced
@@ -154,7 +154,7 @@ function PendingSupportsColumn({
   );
 }
 
-/** La columna de los datos, solo para mirar. */
+/** The data column, only for looking. */
 function ReadColumn({
   sheet,
   transaction,
@@ -169,9 +169,9 @@ function ReadColumn({
   return (
     <MovementReadColumn
       type={sheet.type}
-      // El nombre sale del concepto, igual que en la tabla. Leía `description`,
-      // que en un movimiento registrado a mano está vacío desde que la ficha
-      // cambió su campo libre por un selector.
+      // The name comes from the concept, same as in the table. It read `description`,
+      // which on a transaction recorded by hand has been empty since the sheet
+      // swapped its free-text field for a selector.
       name={transaction ? transactionName(transaction, tree) : ''}
       value={sheet.amount}
       currency={transaction?.currency ?? DEFAULT_CURRENCY}

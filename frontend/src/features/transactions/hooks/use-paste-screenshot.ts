@@ -3,15 +3,15 @@ import { useState } from 'react';
 import { t } from '@/shared/lib/i18n';
 
 /**
- * Le pone nombre a una captura pegada.
+ * Gives a name to a pasted screenshot.
  *
- * El portapapeles no entrega nombres: lo que llega es un blob. Sin esto, todas
- * las capturas se llamarían igual y en una fila de miniaturas no habría forma
- * de saber cuál es cuál. Con la fecha y la hora, el nombre dice al menos
- * cuándo se pegó.
+ * The clipboard does not hand over names: what arrives is a blob. Without this, all
+ * the screenshots would have the same name and in a row of thumbnails there would be no way
+ * to tell which is which. With the date and time, the name at least says
+ * when it was pasted.
  *
- * La extensión sale del TIPO y no de un nombre que no existe: según de dónde
- * se copie, el portapapeles entrega png, jpeg o webp.
+ * The extension comes from the TYPE and not from a name that does not exist: depending on where
+ * it is copied from, the clipboard hands over png, jpeg or webp.
  */
 function nameScreenshot(content: Blob, type: string): File {
   const extension = type.split('/')[1]?.replace('jpeg', 'jpg') ?? 'png';
@@ -21,20 +21,20 @@ function nameScreenshot(content: Blob, type: string): File {
 }
 
 /**
- * Pegar una captura.
+ * Pasting a screenshot.
  *
- * Una captura de pantalla vive en el portapapeles y en ningún otro sitio: para
- * adjuntarla había que guardarla primero en el disco, buscarla y arrastrarla.
- * Tres pasos para algo que se acaba de capturar.
+ * A screenshot lives in the clipboard and nowhere else: to
+ * attach it you had to save it to disk first, find it and drag it.
+ * Three steps for something that was just captured.
  *
- * Lo dispara un BOTÓN y no un atajo de teclado escuchando en la ficha. Un
- * pegado que solo funciona con el cursor en el sitio correcto no se descubre y
- * falla sin decir por qué; un botón se ve, dice lo que hace y se puede pulsar
- * con el dedo en un teléfono.
+ * A BUTTON triggers it and not a keyboard shortcut listening on the sheet. A
+ * paste that only works with the cursor in the right place is not discovered and
+ * fails without saying why; a button is seen, says what it does and can be pressed
+ * with a finger on a phone.
  *
- * El portapapeles no siempre se deja leer —Safari lo pregunta, y sin HTTPS ni
- * existe—, así que el fallo se cuenta y se ofrece la salida de siempre:
- * arrastrar o elegir del equipo.
+ * The clipboard does not always let itself be read —Safari asks, and without HTTPS it does not even
+ * exist—, so the failure is told and the usual way out is offered:
+ * drag or pick from the device.
  */
 export function usePasteScreenshot(onFiles: (files: File[]) => void) {
   const [pasteProblem, setPasteProblem] = useState<string | null>(null);

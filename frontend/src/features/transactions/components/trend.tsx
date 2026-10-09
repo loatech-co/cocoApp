@@ -12,15 +12,15 @@ import { Skeleton } from '@/shared/ui/atoms/skeleton';
 import { Point, TrendAxis, TrendCard, TrendLines, TrendSummary } from './trend-parts';
 
 /**
- * El comportamiento del gasto, en una línea.
+ * How spending behaves, in one line.
  *
- * ── Línea, no barras ────────────────────────────────────────────────────────
- * Lo que interesa aquí es la TENDENCIA: si el gasto sube o baja mes a mes. La
- * línea lo dice de un vistazo; una barra obliga a comparar alturas de a pares.
+ * ── A line, not bars ────────────────────────────────────────────────────────
+ * What matters here is the TREND: whether spending goes up or down month by month. The
+ * line says it at a glance; a bar forces comparing heights in pairs.
  *
- * ── Por qué SVG a mano ──────────────────────────────────────────────────────
- * Una librería de gráficas pesa más que el resto de la app junta, y trae su
- * propia paleta y su propia tipografía contra las que hay que pelear.
+ * ── Why hand-written SVG ────────────────────────────────────────────────────
+ * A charting library weighs more than the rest of the app put together, and brings its
+ * own palette and its own typeface to fight against.
  */
 export function Trend({
   points,
@@ -29,10 +29,10 @@ export function Trend({
   points: TrendPoint[];
   granularity: 'dia' | 'mes';
 }) {
-  // Los cubos vacíos vienen a propósito de la API —un mes en blanco tiene que
-  // verse plano dentro de una serie—, pero si TODOS están en cero no hay serie
-  // que dibujar: una línea pegada al suelo afirma "gastaste cero", que no es lo
-  // mismo que "no hay nada que mostrar".
+  // Empty buckets come from the API on purpose —a blank month has to
+  // look flat inside a series—, but if ALL of them are zero there is no series
+  // to draw: a line stuck to the floor claims "you spent zero", which is not the
+  // same as "there is nothing to show".
   const isEmpty = points.every((p) => Number(p.expense) === 0 && Number(p.income) === 0);
 
   const first = points[0];
@@ -52,7 +52,7 @@ export function Trend({
   return <Chart points={points} granularity={granularity} extremes={{ first, last }} />;
 }
 
-/** Las cifras que salen de la serie: el techo del lienzo, el promedio y el pico. */
+/** The figures that come out of the series: the canvas ceiling, the average and the peak. */
 function summary(points: TrendPoint[]) {
   const expenses = points.map((p) => Number(p.expense));
   const income = points.map((p) => Number(p.income));
@@ -75,13 +75,13 @@ function Chart({
   extremes: { first: TrendPoint; last: TrendPoint };
 }) {
   const s = summary(points);
-  // `maximo` sale de `gastos`, así que siempre se encuentra: el respaldo no se usa.
+  // `max` comes from `expenses`, so it is always found: the fallback is not used.
   const pico = points[s.expenses.indexOf(s.max)] ?? first;
   const period = unit(granularity);
 
   return (
-    // `h-full` y el lienzo en `flex-1`: la tarjeta la estira su vecina de al
-    // lado, y una gráfica de alto fijo dejaba media tarjeta en blanco debajo.
+    // `h-full` and the canvas in `flex-1`: the card is stretched by its neighbor
+    // next to it, and a fixed-height chart left half the card blank below.
     <div className="flex h-full flex-col gap-4">
       <TrendSummary granularity={granularity} average={s.average} max={s.max} pico={pico} />
 
@@ -124,23 +124,23 @@ function Canvas({
 
   return (
     /*
-      El lienzo y lo que se superpone comparten el mismo sistema de
-      coordenadas: 0–100 a lo ancho. Por eso la guía, el punto y la tarjeta
-      se colocan en HTML con `left: x%` en vez de dibujarse dentro del SVG —
-      el SVG se estira sin conservar la proporción, y ahí dentro un círculo
-      saldría aplastado y un texto deformado.
+      The canvas and what is overlaid share the same coordinate
+      system: 0–100 across. That is why the guide, the point and the card
+      are placed in HTML with `left: x%` instead of being drawn inside the SVG —
+      the SVG stretches without keeping its aspect ratio, and in there a circle
+      would come out squashed and a text distorted.
     */
     <div
       ref={canvas}
-      // `min-h-0` deja que el flex lo encoja; sin eso el hijo impone su alto
-      // mínimo y el contenedor se desborda.
+      // `min-h-0` lets flex shrink it; without it the child imposes its minimum
+      // height and the container overflows.
       className={cn(
         'relative min-h-40 min-w-0 flex-1 touch-pan-y rounded-lg',
-        // La gráfica ENTRA en el orden del tabulador y se recorre con las
-        // flechas —lo dice su propia etiqueta—, pero llevaba `outline-none`
-        // sin nada que lo reemplazara: quien llegaba aquí con el teclado no
-        // tenía forma de saberlo. El anillo va por dentro porque la gráfica
-        // llena su tarjeta hasta el borde.
+        // The chart IS in the tab order and is walked with the
+        // arrows —its own label says so—, but it carried `outline-none`
+        // with nothing replacing it: whoever got here with the keyboard had
+        // no way of knowing. The ring goes inside because the chart
+        // fills its card to the edge.
         'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
       )}
       tabIndex={0}
@@ -170,7 +170,7 @@ function Canvas({
   );
 }
 
-/** La guía vertical, los puntos y la tarjeta del punto señalado. */
+/** The vertical guide, the points and the card of the pointed point. */
 function Highlighted({
   point,
   index,
@@ -224,12 +224,12 @@ function Highlighted({
 }
 
 /**
- * La gráfica mientras llega su dato.
+ * The chart while its data arrives.
  *
- * Con la misma forma que la gráfica de verdad: cabecera, lienzo que se estira
- * y fila de etiquetas. Un esqueleto de otro tamaño hace que la página dé un
- * salto justo cuando llegan los datos, que es el momento en que alguien está a
- * punto de pulsar algo.
+ * With the same shape as the real chart: header, canvas that stretches
+ * and row of labels. A skeleton of another size makes the page
+ * jump right when the data arrives, which is the moment someone is about
+ * to press something.
  */
 export function TrendSkeleton() {
   return (

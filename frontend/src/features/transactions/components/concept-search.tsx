@@ -17,54 +17,54 @@ import { CategoryForNew, SearchResults, type ResultsProps } from './concept-sear
 interface ConceptSearchProps {
   id: string;
   tree: readonly TreeNode[];
-  /** El id elegido: un concepto o una categoría. */
+  /** The picked id: a concept or a category. */
   value: number | undefined;
   onSelect: (id: number | undefined) => void;
-  /** Crear un concepto con ese nombre dentro de esa categoría, y elegirlo. */
+  /** Create a concept with that name inside that category, and pick it. */
   onCreateConcept: (name: string, categoryId: number) => void;
   isCreating?: boolean;
-  /** En un centro estático: se enseña lo elegido, pero no se cambia desde aquí. */
+  /** In a static center: what was picked is shown, but it is not changed from here. */
   disabled?: boolean;
-  /** Ids de los conceptos usados últimamente, del más reciente al más viejo. */
+  /** Ids of the concepts used lately, from the most recent to the oldest. */
   recent?: readonly number[];
-  /** Lo que la lectura de un recibo dejó entre lo que dudar. */
+  /** What reading a receipt left to choose between. */
   candidates?: readonly ReceiptCandidate[];
-  /** Debajo del campo: «sugerido por tu historial», un error… */
+  /** Under the field: «sugerido por tu historial», an error… */
   description?: string | undefined;
 }
 
 /**
- * Un solo buscador para clasificar un movimiento.
+ * A single search to classify a transaction.
  *
- * ── El problema que resuelve ────────────────────────────────────────────────
- * Clasificar pedía tres desplegables en cascada —centro, categoría, concepto—
- * y siete interacciones para dejar un gasto bien puesto. Aquí se escribe «d1»
- * y aparece «Mercado · Alimentación › Costos variables»: un clic, y los tres
- * niveles quedan puestos, porque elegir un concepto ya dice de qué categoría y
- * de qué centro es.
+ * ── The problem it solves ───────────────────────────────────────────────────
+ * Classifying asked for three cascading dropdowns —center, category, concept—
+ * and seven interactions to get an expense properly set. Here you type «d1»
+ * and «Mercado · Alimentación › Costos variables» shows up: one click, and the three
+ * levels are set, because picking a concept already says which category and
+ * which center it belongs to.
  *
- * ── Qué se busca ────────────────────────────────────────────────────────────
- * Conceptos y categorías, por nombre y por palabra clave, sin tildes ni
- * mayúsculas. Cada resultado enseña su camino, que es lo que distingue dos
- * «Mercado». Elegir una categoría también vale: hay cuentas con categorías y
- * sin conceptos, y ahí la categoría es lo más fino que se puede decir.
+ * ── What is searched ────────────────────────────────────────────────────────
+ * Concepts and categories, by name and by keyword, regardless of accents or
+ * capitals. Each result shows its path, which is what tells two
+ * «Mercado» apart. Picking a category is valid too: there are accounts with categories and
+ * no concepts, and there the category is the finest thing that can be said.
  *
- * ── Con el buscador en blanco ───────────────────────────────────────────────
- * Lo que la persona usó últimamente, hasta cinco. Casi todos los gastos de
- * alguien van a los mismos cinco conceptos, y tenerlos delante es cero
- * teclas. Si la lectura de un recibo dejó candidatos entre los que dudar,
- * esos van primero: son la pregunta que la pantalla está haciendo.
+ * ── With the search blank ───────────────────────────────────────────────────
+ * What the person used lately, up to five. Almost all of someone's
+ * expenses go to the same five concepts, and having them in front is zero
+ * keystrokes. If reading a receipt left candidates to choose between,
+ * those go first: they are the question the screen is asking.
  *
- * ── Cuando no hay nada ──────────────────────────────────────────────────────
- * Se ofrece crear el concepto con lo escrito. Como un concepto cuelga de una
- * categoría, se pregunta solo eso: en qué categoría va. Un centro de costos
- * nunca se crea desde aquí —es la estructura de arriba, y se define tres
- * veces en la vida de una cuenta—.
+ * ── When there is nothing ───────────────────────────────────────────────────
+ * It offers to create the concept with what was typed. Since a concept hangs from a
+ * category, only that is asked: which category it goes in. A cost center
+ * is never created from here —it is the top structure, and it is defined three
+ * times in the life of an account—.
  *
- * ── Sobre `Menu`, como todo desplegable de esta aplicación ──────────────────
- * Es el que sabe abrir, cerrar al tocar fuera, cerrar con Escape y colocarse.
- * La fila elegible es la misma `Opcion` de `Combo`, para que elegir se vea
- * igual en los dos sitios.
+ * ── On top of `Menu`, like every dropdown in this app ───────────────────────
+ * It is the one that knows how to open, close on an outside tap, close with Escape and place itself.
+ * The pickable row is the same `Option` as `Combo`'s, so that picking looks
+ * the same in both places.
  */
 export function ConceptSearch({
   id,
@@ -128,7 +128,7 @@ interface MenuPanelProps {
   onCreateConcept: (name: string, categoryId: number) => void;
 }
 
-/** El panel abierto, con lo que hay que hacer al elegir: limpiar y cerrar. */
+/** The open panel, with what to do on picking: clear and close. */
 function MenuPanel({
   searchBox: b,
   field,
@@ -175,7 +175,7 @@ function MenuPanel({
   );
 }
 
-/** En un centro estático: lo elegido se enseña, pero no abre nada. */
+/** In a static center: what was picked is shown, but it opens nothing. */
 function LockedConcept({ id, chosen }: { id: string; chosen: IndexEntry | undefined }) {
   return (
     <span
@@ -189,11 +189,11 @@ function LockedConcept({ id, chosen }: { id: string; chosen: IndexEntry | undefi
 }
 
 /*
-  Lo que se ve en el campo, abierto o cerrado, se pueda tocar o no.
+  What shows in the field, open or closed, whether it can be touched or not.
 
-  Uno y no dos, como en `Combo`: bloqueado quiere decir «esto no se cambia
-  desde aquí», nunca «esto está vacío». Un movimiento de un centro estático
-  tiene que leerse clasificado aunque no se pueda reclasificar.
+  One and not two, as in `Combo`: locked means «this is not changed
+  from here», never «this is empty». A transaction from a static center
+  has to read as classified even though it cannot be reclassified.
 */
 function ConceptSearchValue({
   chosen,
@@ -244,9 +244,9 @@ interface PanelProps extends ResultsProps {
 function Panel(props: PanelProps) {
   const { field, mode } = props;
 
-  // El foco al abrir: es un buscador que aparece porque se pidió buscar, la
-  // excepción que la regla del foco contempla. Si hubiera que pulsar el campo
-  // antes de escribir, el gesto serían dos clics.
+  // Focus on opening: it is a search box that appears because searching was asked for, the
+  // exception the focus rule allows. If the field had to be pressed
+  // before typing, the gesture would be two clicks.
   useEffect(() => {
     const t = setTimeout(() => field.current?.focus(), 10);
     return () => clearTimeout(t);
@@ -288,8 +288,8 @@ function ConceptSearchBox(props: PanelProps) {
           if (categories.length === 1 && isOnly !== undefined) props.onCreateIn(isOnly);
           return;
         }
-        // Enter elige lo único que queda, que es lo que uno espera después
-        // de escribir tres letras y ver una sola fila. Sin filas, pasa a crear.
+        // Enter picks the only thing left, which is what you expect after
+        // typing three letters and seeing a single row. With no rows, it goes to create.
         if (results.length === 1) props.onSelect(results[0]);
         else if (results.length === 0 && canCreate) props.onRequestCategory();
       }}

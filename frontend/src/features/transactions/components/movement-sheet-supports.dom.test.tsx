@@ -11,12 +11,12 @@ import {
 } from '@/test-support/movement-sheet';
 
 /*
-  El lector de soportes, de mentira.
+  The receipt reader, faked.
 
-  El de verdad abre un PDF con pdf.js o enciende Tesseract, que no tienen nada
-  que hacer en una prueba de esta ficha: lo que aquí se comprueba es qué pasa
-  DESPUÉS de leer, no cómo se lee. Eso ya lo prueban `lib/palabras-clave` y el
-  paquete de lectura.
+  The real one opens a PDF with pdf.js or fires up Tesseract, which have no
+  business in a test of this sheet: what is checked here is what happens
+  AFTER reading, not how it is read. The keyword tests already cover that, and the
+  reading package.
 */
 vi.mock('@/features/transactions/api/read-receipt', () => ({
   readReceipt: vi.fn(),
@@ -25,14 +25,14 @@ vi.mock('@/features/transactions/api/read-receipt', () => ({
 afterEach(cleanup);
 
 /**
- * Y el soporte CORRIGE lo que estaba puesto.
+ * And the receipt CORRECTS what was filled in.
  *
- * Es la otra mitad de confirmar un pago: los campos abren con lo esperado —el
- * promedio de los meses anteriores y el día en que vencía— y el recibo dice lo
- * que pasó de verdad. Adjuntarlo y que no cambiara nada dejaba al soporte de
- * adorno y obligaba a teclear, mirando el papel, lo que la app sabe leer.
+ * It is the other half of confirming a payment: the fields open with the expected —the
+ * average of the previous months and the day it was due— and the receipt says what
+ * really happened. Attaching it and having nothing change left the receipt as
+ * decoration and forced typing, while looking at the paper, what the app can read.
  */
-describe('El soporte adjuntado al confirmar un pago', () => {
+describe('The receipt attached when confirming a payment', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     fakeReceiptBrowser();
@@ -43,7 +43,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
     vi.mocked(readReceipt).mockReset();
   });
 
-  it('reemplaza el valor y la fecha esperados por los que dice el recibo', async () => {
+  it('replaces the expected amount and date with the ones on the receipt', async () => {
     vi.mocked(readReceipt).mockResolvedValue(CELSIA_READING);
 
     const { container } = openConfirmation();
@@ -55,17 +55,17 @@ describe('El soporte adjuntado al confirmar un pago', () => {
     fireEvent.change(field, { target: { files: [receipt] } });
 
     /*
-      El piso de la espera: la lectura se ve siempre igual, tarde lo que tarde.
+      The floor of the wait: the reading always looks the same, however long it takes.
 
-      Y dentro de `act`, que no es adorno. El `setPaso('formulario')` que cierra
-      la lectura corre dentro de un temporizador FALSO, fuera de cualquier
-      evento de React; así que React lo programa por su `Scheduler`, que en
-      jsdom también usa `setTimeout`, y la prueba dependía de que los
-      temporizadores falsos recogieran esa tarea antes de la aserción. Lo
-      hacían si otra prueba del archivo había corrido antes y no si esta corría
-      sola: pasaba en el archivo completo y fallaba aislada, siempre. `act`
-      vacía el trabajo pendiente de React al terminar, y la prueba deja de
-      depender de quién corra antes.
+      And inside `act`, which is not decoration. The `setStep('formulario')` that closes
+      the reading runs inside a FAKE timer, outside any
+      React event; so React schedules it through its `Scheduler`, which in
+      jsdom also uses `setTimeout`, and the test depended on the
+      fake timers picking up that task before the assertion. They
+      did if another test in the file had run first and not if this one ran
+      alone: it passed in the full file and failed in isolation, every time. `act`
+      flushes React's pending work when it finishes, and the test stops
+      depending on who runs first.
     */
     await act(async () => {
       await vi.advanceTimersByTimeAsync(4000);
@@ -76,11 +76,11 @@ describe('El soporte adjuntado al confirmar un pago', () => {
     expect(screen.getByLabelText<HTMLInputElement>('Fecha').value).toMatch(/2 de octubre/i);
   });
 
-  it('en un movimiento nuevo, el primer soporte también se lee', async () => {
-    // Antes solo se leía confirmando un pago: quien pulsaba «Registrar
-    // manualmente» en el «cómo empezar» había dicho que iba a teclearlo. Esa
-    // pantalla ya no existe, así que no hay elección que respetar: lo leído
-    // entra como propuesta a verificar, igual que al confirmar un pago.
+  it('on a new transaction, the first receipt is read too', async () => {
+    // It used to be read only when confirming a payment: whoever tapped «Registrar
+    // manualmente» on the «cómo empezar» had said they were going to type it. That
+    // screen no longer exists, so there is no choice to respect: what was read
+    // comes in as a proposal to verify, same as when confirming a payment.
     vi.mocked(readReceipt).mockResolvedValue(CELSIA_READING);
 
     const { container } = openNew();
@@ -90,7 +90,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
       target: { files: [new File(['x'], 'recibo.png', { type: 'image/png' })] },
     });
 
-    // En `act` por lo mismo que la prueba de arriba.
+    // In `act` for the same reason as the test above.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(4000);
     });
@@ -101,13 +101,13 @@ describe('El soporte adjuntado al confirmar un pago', () => {
 });
 
 /**
- * Las dos vías que vivían en el «cómo empezar», ahora dentro del formulario.
+ * The two paths that lived in the «cómo empezar», now inside the form.
  *
- * Lo que hace un archivo o una foto con la ficha es EXACTAMENTE lo de antes
- * —se lee, rellena los campos y queda como previsualización—; lo único que
- * cambió es desde dónde se dispara.
+ * What a file or a photo does to the sheet is EXACTLY what it did before
+ * —it is read, fills the fields and stays as the preview—; the only thing that
+ * changed is where it is triggered from.
  */
-describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
+describe('Cargar archivo and Tomar foto, inside the form', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     fakeReceiptBrowser();
@@ -118,7 +118,7 @@ describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
     vi.mocked(readReceipt).mockReset();
   });
 
-  it('«Cargar archivo» abre el panel de subir, y lo que se da ahí se lee y rellena el formulario', async () => {
+  it('«Cargar archivo» opens the upload panel, and what is given there is read and fills the form', async () => {
     vi.mocked(readReceipt).mockResolvedValue(CELSIA_READING);
     openNew();
 
@@ -138,21 +138,21 @@ describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
 
     expect(vi.mocked(readReceipt)).toHaveBeenCalledOnce();
     expect(vi.mocked(readReceipt).mock.calls[0]?.[0]?.name).toBe('celsia-octubre.png');
-    // El panel se cerró, el formulario quedó relleno y el archivo queda como
-    // previsualización en la columna del documento.
+    // The panel closed, the form was filled and the file stays as the
+    // preview in the document column.
     expect(screen.queryByRole('dialog', { name: 'Agregar soportes' })).toBeNull();
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('214.500');
     expect(screen.getByLabelText<HTMLInputElement>('Fecha').value).toMatch(/2 de octubre/i);
     expect(screen.getByRole('button', { name: 'Quitar este soporte' })).toBeDefined();
   });
 
-  it('«Tomar foto» pasa a la cámara, y cancelar vuelve al formulario', () => {
+  it('«Tomar foto» switches to the camera, and cancelling goes back to the form', () => {
     openNew();
 
     fireEvent.click(screen.getByRole('button', { name: 'Tomar foto' }));
 
-    // jsdom no tiene cámara: la vista lo dice y «Capturar» queda apagado. Lo
-    // que se comprueba es que la ficha ESTÁ en la cámara, no que capture.
+    // jsdom has no camera: the view says so and «Capturar» stays disabled. What
+    // is checked is that the sheet IS on the camera, not that it captures.
     expect(screen.getByText(/No se detectó ninguna cámara/)).toBeDefined();
     expect(screen.getByRole('button', { name: /Capturar/ })).toBeDefined();
     expect(screen.queryByLabelText('Valor')).toBeNull();

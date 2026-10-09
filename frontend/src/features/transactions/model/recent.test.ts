@@ -22,16 +22,16 @@ const index = indexTree([
   },
 ]);
 
-describe('Los conceptos recientes', () => {
-  it('son los distintos, en orden de aparición, hasta el máximo', () => {
+describe('The recent concepts', () => {
+  it('are the distinct ones, in order of appearance, up to the max', () => {
     const transactions = [100, 101, 100, 110, 101, 100].map((categoryId) => ({ categoryId }));
     expect(recentConcepts(transactions, index, 5)).toEqual([100, 101, 110]);
     expect(recentConcepts(transactions, index, 2)).toEqual([100, 101]);
   });
 
-  it('ignora lo sin clasificar y lo que no es un concepto', () => {
-    // 10 es una categoría: un movimiento clasificado solo hasta ahí no cuenta
-    // como «lo que suelo usar».
+  it('ignores the unclassified and what is not a concept', () => {
+    // 10 is a category: a transaction classified only that far does not count
+    // as «what I usually use».
     const transactions = [
       { categoryId: null },
       { categoryId: 10 },
@@ -41,13 +41,13 @@ describe('Los conceptos recientes', () => {
     expect(recentConcepts(transactions, index)).toEqual([110]);
   });
 
-  it('sin movimientos, nada', () => {
+  it('with no transactions, nothing', () => {
     expect(recentConcepts([], index)).toEqual([]);
   });
 
-  it('una respuesta que no es una lista tampoco tumba nada', () => {
-    // Los recientes son una comodidad del buscador; un servidor que devuelva
-    // otra forma no puede convertir la ficha en una pantalla en blanco.
+  it('a response that is not a list does not break anything either', () => {
+    // The recent ones are a convenience of the search; a server that returns
+    // another shape cannot turn the sheet into a blank screen.
     expect(recentConcepts(undefined, index)).toEqual([]);
     expect(recentConcepts(null, index)).toEqual([]);
     expect(recentConcepts({ id: 1 } as unknown as [], index)).toEqual([]);

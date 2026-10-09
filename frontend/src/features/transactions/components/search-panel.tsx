@@ -15,28 +15,28 @@ import { Input } from '@/shared/ui/atoms/input';
 import { PanelRow } from '@/shared/ui/atoms/panel-row';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
-/** Cuántos resultados caben antes de que la lista deje de ser una respuesta. */
+/** How many results fit before the list stops being an answer. */
 const MAX_RESULTS = 20;
 
 /**
- * Buscar un movimiento, desde cualquier pantalla.
+ * Search for a transaction, from any screen.
  *
- * ── Por qué es una hoja y no una pantalla ───────────────────────────────────
- * Porque buscar no es ir a otro sitio: es levantar la vista un momento sin
- * soltar lo que se estaba haciendo. Una pantalla de resultados obliga a volver
- * con el botón de atrás, y de vuelta la pantalla anterior ya perdió el sitio
- * donde estaba.
+ * ── Why it is a sheet and not a screen ──────────────────────────────────────
+ * Because searching is not going somewhere else: it is looking up for a moment without
+ * letting go of what you were doing. A results screen forces coming back
+ * with the back button, and on the way back the previous screen has already lost the place
+ * where it was.
  *
- * ── Por qué los resultados van DENTRO ───────────────────────────────────────
- * La alternativa era llevar lo escrito a la lista de movimientos como filtro,
- * y eso contesta otra pregunta: «enséñame todos los que dicen esto», con su
- * tabla, su orden y su paginador. Aquí la pregunta es «¿dónde está aquel
- * gasto?», y se acaba al encontrarlo: se toca y se abre su ficha.
+ * ── Why the results go INSIDE ───────────────────────────────────────────────
+ * The alternative was taking what was typed to the transactions list as a filter,
+ * and that answers another question: «show me all the ones that say this», with its
+ * table, its sort and its paginator. Here the question is «where is that
+ * expense?», and it ends when it is found: you tap it and its sheet opens.
  *
- * ── El campo SÍ nace enfocado ───────────────────────────────────────────────
- * Es la excepción que la regla del foco concede: un buscador que aparece
- * porque alguien pidió buscar. Pedir buscar y tener que tocar además la caja
- * son dos gestos para una sola intención.
+ * ── The field DOES start focused ────────────────────────────────────────────
+ * It is the exception the focus rule grants: a search box that appears
+ * because someone asked to search. Asking to search and then also having to tap the box
+ * are two gestures for a single intention.
  */
 export function SearchPanel({
   isOpen,
@@ -57,10 +57,10 @@ export function SearchPanel({
       onClose={onClose}
     >
       {/*
-        La lista es un componente aparte y solo se monta cuando hay algo que
-        preguntar. La hoja está montada SIEMPRE —abierta o cerrada, para poder
-        deslizarse—, así que una consulta escrita aquí dentro se dispararía en
-        todas las pantallas del teléfono aunque nadie haya tocado la lupa.
+        The list is a separate component and only mounts when there is something to
+        ask. The sheet is ALWAYS mounted —open or closed, so it can
+        slide—, so a query written in here would fire on
+        every phone screen even if nobody has touched the magnifier.
       */}
       {query === '' ? (
         <p className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -116,8 +116,8 @@ function Results({
         <ResultRow key={transaction.id} transaction={transaction} tree={tree} onSelect={onSelect} />
       ))}
 
-      {/* Cuántos hay de los que caben. Sin esto, veinte resultados de
-          trescientos se leen como trescientos. */}
+      {/* How many of the ones that fit there are. Without this, twenty results out of
+          three hundred read as three hundred. */}
       {total > rows.length && (
         <p className="px-3 pt-3 text-center text-xs text-muted-foreground">
           {t('transactions.searchPanel.latest', { shown: rows.length, total })}
@@ -174,13 +174,13 @@ function SearchHead({ text, onChange }: { text: string; onChange: (text: string)
   );
 }
 
-/** Lo que se escribe, y la consulta que sale de ello con un poco de retraso. */
+/** What is typed, and the query that comes out of it with a small delay. */
 function useDebouncedSearch(isOpen: boolean) {
   const [text, setText] = useState('');
   const [query, setQuery] = useState('');
 
-  // Cada apertura empieza en blanco. Reabrir con lo de la vez pasada enseñaría
-  // los resultados de una pregunta que ya no se está haciendo.
+  // Every opening starts blank. Reopening with last time's text would show
+  // the results of a question that is no longer being asked.
   useOnChange([isOpen], () => {
     if (!isOpen) {
       setText('');
@@ -188,8 +188,8 @@ function useDebouncedSearch(isOpen: boolean) {
     }
   });
 
-  // Se escribe local y se consulta con retraso: sin esto cada tecla dispara
-  // una petición y la lista parpadea mientras se escribe.
+  // It is typed locally and queried with a delay: without this every key fires
+  // a request and the list flickers while typing.
   useEffect(() => {
     const id = setTimeout(() => setQuery(text.trim()), 300);
     return () => clearTimeout(id);

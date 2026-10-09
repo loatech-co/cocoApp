@@ -1,23 +1,23 @@
 import { t } from '@/shared/lib/i18n';
 /**
- * De dónde salió la clasificación de un movimiento, y quién puede cambiarla.
+ * Where a transaction's classification came from, and who can change it.
  *
- * ── Las cuatro fuentes, de mayor a menor ────────────────────────────────────
- * 1. Lo que la persona elige a mano.
- * 2. Su historial: lo que el servidor sugiere porque así lo clasificó antes.
- * 3. Sus palabras clave: lo que escribió en un concepto para reconocerlo.
- * 4. El diccionario del sistema: lo que sabemos de los comercios del país.
+ * ── The four sources, from highest to lowest ────────────────────────────────
+ * 1. What the person picks by hand.
+ * 2. Their history: what the server suggests because that is how they classified it before.
+ * 3. Their keywords: what they wrote on a concept to recognize it.
+ * 4. The system dictionary: what we know about the country's merchants.
  *
- * ── La regla ────────────────────────────────────────────────────────────────
- * Una fuente inferior NUNCA reemplaza a una superior. Lo elegido a mano no lo
- * toca nada automático; una sugerencia del historial puede corregir lo que
- * puso el diccionario, pero no al revés. Y una fuente sí puede reemplazarse a
- * sí misma: el historial que cambia de opinión mientras se escribe sigue
- * siendo el historial.
+ * ── The rule ────────────────────────────────────────────────────────────────
+ * A lower source NEVER replaces a higher one. Nothing automatic touches what was
+ * picked by hand; a history suggestion can correct what
+ * the dictionary set, but not the other way around. And a source can replace
+ * itself: the history that changes its mind while typing is still
+ * the history.
  *
- * Es una función y no un `if` en la ficha porque las fuentes llegan por
- * caminos distintos —una petición, la lectura de un recibo, un clic— y cada
- * camino tendría su propia versión de la regla. Aquí hay una.
+ * It is a function and not an `if` in the sheet because the sources arrive through
+ * different paths —a request, the reading of a receipt, a click— and each
+ * path would have its own version of the rule. Here there is one.
  */
 export type Origin = 'manual' | 'historial' | 'palabras-clave' | 'diccionario';
 
@@ -30,19 +30,19 @@ const RANK: Record<Origin, number> = {
 
 export interface Classification {
   categoryId: number | undefined;
-  /** `null` es «nadie ha dicho nada todavía». */
+  /** `null` is «nobody has said anything yet». */
   origin: Origin | null;
 }
 
 export const UNCLASSIFIED: Classification = { categoryId: undefined, origin: null };
 
-/** Lo que una fuente propone. Siempre dice quién es. */
+/** What a source proposes. It always says who it is. */
 export interface Proposal {
   categoryId: number | undefined;
   origin: Origin;
 }
 
-/** Qué queda después de que una fuente proponga algo. */
+/** What is left after a source proposes something. */
 export function apply(actual: Classification, proposal: Proposal): Classification {
   if (proposal.origin === 'manual') return { ...proposal };
   if (actual.origin === 'manual') return actual;
@@ -51,7 +51,7 @@ export function apply(actual: Classification, proposal: Proposal): Classificatio
   return RANK[proposal.origin] >= currentRank ? { ...proposal } : actual;
 }
 
-/** Para enseñarlo: «Sugerido por tu historial». */
+/** To show it: «Sugerido por tu historial». */
 export function originName(origin: Origin): string {
   switch (origin) {
     case 'manual':

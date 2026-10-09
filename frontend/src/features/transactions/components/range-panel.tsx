@@ -8,21 +8,21 @@ import { ToggleOption } from '@/shared/ui/atoms/toggle-option';
 import { Calendar } from '@/shared/ui/molecules/calendar';
 
 /**
- * Lo que hay dentro del panel: los atajos, el mes y el pie.
+ * What is inside the panel: the shortcuts, the month and the footer.
  *
- * ── Por qué es su propio componente ─────────────────────────────────────────
- * Porque se MONTA al abrir y se va al cerrar, y de ahí salen dos cosas. El
- * borrador nace fresco en cada apertura —si se canceló la vez anterior, lo que
- * quedó a medias no tiene por qué reaparecer— sin necesidad de rehacerlo a
- * mano. Y la consulta de la historia, que hace falta para saber dónde empieza
- * "Todo", solo se pide cuando alguien abre el panel: viviendo en el componente
- * de fuera se pedía en cada pantalla que tuviera un campo de fecha.
+ * ── Why it is its own component ─────────────────────────────────────────────
+ * Because it MOUNTS on opening and goes away on closing, and two things come from that. The
+ * draft is born fresh on every opening —if it was cancelled last time, what
+ * was left half done has no reason to reappear— without having to reset it by
+ * hand. And the history query, which is needed to know where
+ * "Todo" starts, is only requested when someone opens the panel: living in the outer
+ * component it was requested on every screen that had a date field.
  *
- * ── Por qué hay que confirmar con Aplicar ───────────────────────────────────
- * Elegir un rango a mano son DOS clics, y entre el primero y el segundo el
- * rango está a medias. Si cada clic recargara, la pantalla se refrescaría con
- * un recorte que nadie pidió —el día suelto del primer clic— y el segundo
- * llegaría tarde. El borrador vive aquí dentro hasta que se confirma.
+ * ── Why it has to be confirmed with Aplicar ─────────────────────────────────
+ * Picking a range by hand is TWO clicks, and between the first and the second the
+ * range is half done. If each click reloaded, the screen would refresh with
+ * a cut nobody asked for —the lone day of the first click— and the second one
+ * would arrive late. The draft lives in here until it is confirmed.
  */
 export function RangePanel({
   filters,
@@ -51,10 +51,10 @@ export function RangePanel({
   return (
     <div>
       <div className="flex flex-col sm:flex-row">
-        {/* ── Atajos ────────────────────────────────────────────────────────
-            En pantalla ancha son una columna; en un teléfono se vuelven fichas
-            que fluyen, porque una columna lateral dejaría el calendario en la
-            mitad del ancho y sin sitio para los días. */}
+        {/* ── Shortcuts ─────────────────────────────────────────────────────
+            On a wide screen they are a column; on a phone they become chips
+            that flow, because a side column would leave the calendar at
+            half the width and with no room for the days. */}
         {hasShortcuts && <RangePresets draft={draft} onSelect={choosePreset} />}
 
         <Calendar
@@ -88,7 +88,7 @@ function RangeFooter({
 }: {
   draft: Draft;
   anchor: string | null;
-  /** El primer día con movimientos, para decir desde cuándo es «todo». */
+  /** The first day with transactions, to say since when «todo» is. */
   first: string | undefined;
   onCancel: () => void;
   onApply: () => void;

@@ -11,7 +11,7 @@ import { type PendingPayment, type Transaction } from '@/shared/api/generated/mo
 import { keys } from '@/shared/api/query-keys';
 
 /*
-  What the tests of a movement's sheet share: the example tree, movement and
+  What the tests of a transaction's sheet share: the example tree, transaction and
   payments, the fake reading of a receipt, and the way to open the sheet with
   all of that in place.
 */

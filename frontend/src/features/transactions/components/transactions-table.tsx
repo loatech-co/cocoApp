@@ -14,7 +14,7 @@ import { WithTooltip } from '@/shared/ui/atoms/tooltip';
 import { Table, TableSkeleton, Td, Th, Tr } from '@/shared/ui/molecules/table';
 import { Select } from '@/shared/ui/organisms/select';
 
-/** Las columnas, en un solo sitio: el esqueleto tiene que tener las mismas. */
+/** The columns, in a single place: the skeleton has to have the same ones. */
 const COLUMNS = [
   t('transactions.table.columns.concept'),
   t('transactions.table.columns.period'),
@@ -29,21 +29,21 @@ interface ColumnSort {
   onChange: () => void;
 }
 
-/** Cómo pide la tabla el orden de una columna: por qué campo, y en qué sentido empieza. */
+/** How the table asks for a column's sort: by which field, and in which direction it starts. */
 type ColumnOrder = (field: string, first: 'asc' | 'desc') => ColumnSort;
 
 /**
- * La tabla de movimientos.
+ * The transactions table.
  *
- * ── Por qué es un componente y no dos tablas ────────────────────────────────
- * Porque el resumen y la pantalla de Movimientos enseñan lo MISMO: las mismas
- * columnas, la misma edición en la fila, el mismo modal. Escritas por separado
- * empiezan iguales y se van separando —una aprende a marcar lo que falta por
- * clasificar y la otra no— hasta que la misma plata se ve distinta según por
- * dónde se entre.
+ * ── Why it is a component and not two tables ────────────────────────────────
+ * Because the dashboard and the Movimientos screen show THE SAME: the same
+ * columns, the same in-row editing, the same modal. Written separately
+ * they start out the same and drift apart —one learns to mark what is left to
+ * classify and the other does not— until the same money looks different depending on
+ * where you come in.
  *
- * Lo que cambia entre las dos es el CONTORNO: si hay cabeceras que ordenan, si
- * hay pie de totales y cuántas filas caben. Eso es lo que se pasa.
+ * What changes between the two is the OUTLINE: whether there are headers that sort, whether
+ * there is a totals footer and how many rows fit. That is what gets passed.
  */
 export function TransactionsTable({
   transactions,
@@ -59,7 +59,7 @@ export function TransactionsTable({
   tree: CategoryTree[];
   isLoading?: boolean;
   onOpen: (transaction: Transaction) => void;
-  /** Sin esto las cabeceras no ordenan: en un resumen no tendría sentido. */
+  /** Without this the headers do not sort: in a dashboard it would make no sense. */
   sort?: ColumnOrder;
   pie?: ReactNode;
   emptyLabel?: ReactNode;
@@ -110,27 +110,27 @@ function Row({ transaction, tree, onOpen }: RowProps) {
   const update = useUpdateTransaction();
   const { costCenter, category } = selectedPath(tree, transaction.categoryId ?? undefined);
 
-  // Cambiar el selector guarda EXACTAMENTE lo elegido, sin adivinar el resto.
-  // La tentación es "conservar el concepto si existe con el mismo nombre en el
-  // categoría nuevo", pero eso mueve plata a un sitio que nadie pidió y nadie ve.
+  // Changing the selector saves EXACTLY what was picked, without guessing the rest.
+  // The temptation is "keep the concept if it exists with the same name in the
+  // new category", but that moves money to a place nobody asked for and nobody sees.
   const reclassify = (id: number | undefined): void => {
     update.mutate({ id: transaction.id, changes: { categoryId: id ?? null } });
   };
 
-  // Sin clasificar no es un error, es algo pendiente: la fila se marca para que
-  // se vea de lejos cuál falta por ordenar después de una importación.
+  // Unclassified is not an error, it is something pending: the row is marked so that
+  // you can tell from afar which ones are left to sort after an import.
   const isUnclassified = transaction.categoryId === null;
 
   /*
-    Un centro ESTÁTICO no se reclasifica desde aquí.
+    A STATIC center is not reclassified from here.
 
-    La estructura de los costos fijos no se improvisa —el alquiler no cambia
-    de categoría un martes—, y en una tabla de cien filas con un desplegable en
-    cada una, un clic distraído mueve plata de sitio sin que nadie lo note.
+    The structure of fixed costs is not improvised —rent does not change
+    category on a Tuesday—, and in a hundred-row table with a dropdown in
+    each one, a careless click moves money around without anyone noticing.
 
-    Tampoco desde el modal del movimiento: estático es estático. Si de verdad
-    hay que mover algo, se hace dinámico el centro desde Centros de costos —un
-    acto deliberado, en otra pantalla— y entonces se mueve.
+    Not from the transaction modal either: static is static. If something really
+    has to be moved, the center is made dynamic from Centros de costos —a
+    deliberate act, on another screen— and then it is moved.
   */
   const isStatic = costCenter?.isStatic ?? false;
   const reason = isStatic
@@ -147,8 +147,8 @@ function Row({ transaction, tree, onOpen }: RowProps) {
         {shortDay(transaction.date)}
       </Td>
 
-      {/* Los selectores paran el clic: desplegar una lista no puede abrir
-          además el modal que hay detrás. */}
+      {/* The selectors stop the click: opening a list must not also open
+          the modal behind it. */}
       <Td className="w-48">
         <span onClick={(e) => e.stopPropagation()}>
           <RowSelector
@@ -183,18 +183,18 @@ function Row({ transaction, tree, onOpen }: RowProps) {
 const monthOf = (iso: string): string => iso.slice(0, 7);
 
 /**
- * El periodo del movimiento.
+ * The transaction's period.
  *
- * Con respaldo en la fecha de pago a propósito: durante un despliegue conviven
- * unos segundos la API vieja —que no manda `period`— y el frontend nuevo, y un
- * campo ausente no puede dejar la pantalla en blanco.
+ * With a fallback to the payment date on purpose: during a deploy the old API
+ * —which does not send `period`— and the new frontend live together for a few seconds, and a
+ * missing field cannot leave the screen blank.
  */
-// `period` opcional en el tipo de entrada: es lo que dice la nota de arriba.
+// `period` optional in the input type: it is what the note above says.
 const period = (
   m: Pick<Transaction, 'date'> & { period?: Transaction['period'] | undefined },
 ): string => monthOf(m.period ?? m.date);
 
-/** El gasto pertenece a un mes y se pagó en otro. */
+/** The expense belongs to one month and was paid in another. */
 const isStale = (m: Transaction): boolean => period(m) !== monthOf(m.date);
 
 function RowSelector({
@@ -209,8 +209,8 @@ function RowSelector({
   value?: number | undefined;
   options: CategoryTree[];
   disabled?: boolean;
-  /** Por qué está bloqueado. Un control apagado sin explicación se lee como
-      un error de la aplicación. */
+  /** Why it is locked. A disabled control with no explanation reads as
+      an app error. */
   reason?: string | undefined;
   onSelect: (id: number | undefined) => void;
 }) {
@@ -254,10 +254,10 @@ function PeriodCell({ transaction }: { transaction: Transaction }) {
   return (
     <Td className="whitespace-nowrap text-muted-foreground">
       {/*
-        En ámbar cuando el mes al que PERTENECE el gasto no es aquel en que
-        salió la plata: la factura de julio pagada el 4 de agosto. Es el caso
-        que descuadra los totales de quien no lo nota —julio parece barato y
-        agosto caro— así que se marca, con punto y con explicación.
+        In amber when the month the expense BELONGS to is not the one in which
+        the money went out: the July bill paid on August 4. It is the case
+        that throws off the totals of whoever does not notice —July looks cheap and
+        August expensive— so it is marked, with a dot and with an explanation.
       */}
       {isStale(transaction) ? (
         <WithTooltip
@@ -267,9 +267,9 @@ function PeriodCell({ transaction }: { transaction: Transaction }) {
           })}
           className="items-center gap-1.5 font-medium text-warning"
         >
-          {/* El punto hace notar la marca: el color solo se pierde en una
-              columna de texto gris, y quien no lo nota no sabe que hay algo
-              que preguntar. */}
+          {/* The dot makes the mark noticeable: color alone gets lost in a
+              column of gray text, and whoever does not notice it does not know there is something
+              to ask. */}
           <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-warning" />
           {shortMonth(period(transaction))}
         </WithTooltip>
@@ -299,11 +299,11 @@ function NameCell({
             aria-label={t('transactions.table.unclassified')}
           />
         )}
-        {/* El nombre SALE del concepto: un movimiento es un registro y lo
-            toma de donde pertenece. Pintaba `description`, que dejó de
-            rellenarse cuando la ficha cambió su campo libre de «Concepto»
-            por un selector de conceptos —así que todo lo registrado a mano
-            decía «Sin concepto» aunque tuviera su concepto elegido—. */}
+        {/* The name COMES from the concept: a transaction is a record and it
+            takes it from where it belongs. It painted `description`, which stopped
+            being filled when the sheet swapped its free «Concepto» field
+            for a concept selector —so everything recorded by hand
+            said «Sin concepto» even though it had its concept picked—. */}
         <span className="block max-w-56 truncate font-medium">
           {transactionName(transaction, tree)}
         </span>
@@ -319,9 +319,9 @@ function MovementsHead({ sort }: { sort: ColumnOrder | undefined }) {
         <Th isSticky hasDivider={false} sort={sort?.('merchant', 'asc')}>
           {t('transactions.table.columns.concept')}
         </Th>
-        {/* El periodo antes que el pago: es el eje con el que se mira la app
-            —el mes AL QUE PERTENECE el gasto— y la fecha de pago es el dato
-            de apoyo que explica por qué a veces no coinciden. */}
+        {/* The period before the payment: it is the axis the app is viewed by
+            —the month the expense BELONGS to— and the payment date is the supporting
+            fact that explains why they sometimes do not match. */}
         <Th>{t('transactions.table.columns.period')}</Th>
         <Th sort={sort?.('date', 'desc')}>{t('transactions.table.columns.paidOn')}</Th>
         <Th>{t('transactions.table.columns.costCenter')}</Th>

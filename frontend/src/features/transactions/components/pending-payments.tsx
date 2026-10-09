@@ -12,22 +12,22 @@ import { Progress } from '@/shared/ui/atoms/progress';
 import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 import { Menu, MenuTitle } from '@/shared/ui/molecules/menu';
 
-/** Hoy en America/Bogota, para saber qué ya venció. */
+/** Today in America/Bogota, to know what is already overdue. */
 function today(): string {
   return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 /**
- * Lo que falta pagar este mes.
+ * What is left to pay this month.
  *
- * ── Por qué son los conceptos y no movimientos ──────────────────────────────
- * Porque un pago pendiente es, por definición, un movimiento que NO EXISTE. Se
- * deduce de los conceptos marcados como recurrentes: si toca este mes y no hay
- * ningún movimiento suyo en el periodo, falta.
+ * ── Why it is the concepts and not transactions ─────────────────────────────
+ * Because a pending payment is, by definition, a transaction that DOES NOT EXIST. It
+ * is deduced from the concepts marked as recurring: if it is due this month and there is
+ * no transaction of its own in the period, it is missing.
  *
- * ── Por qué del mes en curso y no del rango de arriba ───────────────────────
- * Porque "¿qué me falta pagar?" es siempre una pregunta sobre hoy. Revisar
- * 2024 no cambia lo que hay que pagar esta semana.
+ * ── Why the current month and not the range above ──────────────────────────
+ * Because "what do I still have to pay?" is always a question about today. Reviewing
+ * 2024 does not change what has to be paid this week.
  */
 export function PendingPayments({
   payments,
@@ -36,10 +36,10 @@ export function PendingPayments({
 }: {
   payments: PendingPayment[];
   /**
-   * Confirmar el pago: abre la ficha de un movimiento nuevo con el concepto,
-   * el valor esperado y la fecha de vencimiento ya puestos. Se le pasa el pago
-   * ENTERO y no su concepto: los otros dos datos están aquí, y pedirlos otra
-   * vez sería teclear mirando esta misma fila.
+   * Confirm the payment: opens a new transaction's sheet with the concept,
+   * the expected amount and the due date already set. It is passed the WHOLE
+   * payment and not its concept: the other two facts are here, and asking for them again
+   * would be typing while looking at this very row.
    */
   onSelect?: (payment: PendingPayment) => void;
   className?: string;
@@ -47,37 +47,37 @@ export function PendingPayments({
   const now = today();
 
   /*
-    ── Se puede mirar un centro de costos a la vez ───────────────────────────
-    Una suscripción se cobra sola y cuesta lo mismo todos los meses: no hay
-    nada que decidir con ella, y diez de esas empujan fuera de la vista lo que
-    sí hay que mirar —el recibo de la luz que llegó con recargo, el seguro que
-    vence el martes—.
+    ── One cost center at a time can be hidden ───────────────────────────────
+    A subscription charges itself and costs the same every month: there is
+    nothing to decide with it, and ten of those push out of sight what
+    does need looking at —the power bill that came with a surcharge, the insurance that
+    is due on Tuesday—.
 
-    Se apagan por CENTRO y con casillas, no con un interruptor de dos estados:
-    los centros son los que hay, no siempre dos, y una casilla por cada uno
-    dice cuáles existen además de dejar elegir. Es el mismo filtro que la barra
-    de arriba, en pequeño.
+    They are turned off by CENTER and with checkboxes, not with a two-state switch:
+    the centers are the ones there are, not always two, and one checkbox for each
+    says which ones exist besides letting you pick. It is the same filter as the bar
+    above, in small.
 
-    No se recuerda entre visitas, a propósito: es una forma de mirar esta lista
-    ahora, no una preferencia, y un filtro guardado que esconde plata es de los
-    que se olvidan puestos.
+    It is not remembered between visits, on purpose: it is a way of looking at this list
+    now, not a preference, and a saved filter that hides money is the kind
+    that gets forgotten switched on.
   */
   const [hidden, setHidden] = useState<ReadonlySet<string>>(() => new Set());
 
   const { costCenters, visible, total } = pendingView(payments, hidden);
 
   /*
-    Sin pendientes no hay tarjeta.
+    No pending payments, no card.
 
-    Vacía no dice "todo al día": dice "aquí hay una sección", y ocupa un tercio
-    de la fila para decirlo. En un periodo cerrado no puede quedar nada
-    —ya pasó— y en el mes en curso, con todo pagado, la buena noticia es que
-    la tarjeta no esté.
+    Empty it does not say "all up to date": it says "there is a section here", and it takes a third
+    of the row to say so. In a closed period nothing can be left
+    —it already happened— and in the current month, with everything paid, the good news is that
+    the card is not there.
 
-    Se decide también aquí y no solo en el resumen: la rejilla de allá necesita
-    saberlo para repartir las columnas, pero un componente que se pinta vacío
-    cuando lo llaman sin datos es una trampa esperando a la segunda pantalla
-    que lo use.
+    It is also decided here and not only in the dashboard: the grid over there needs
+    to know it to share out the columns, but a component that draws itself empty
+    when called without data is a trap waiting for the second screen
+    that uses it.
   */
   if (payments.length === 0) return null;
 
@@ -88,46 +88,46 @@ export function PendingPayments({
           <h2 className="font-display text-lg font-semibold">{t('transactions.pending.title')}</h2>
 
           {/*
-            Solo con más de un centro: una casilla única no separa nada, y un
-            control que no cambia nada se pulsa una vez y se deja de creer en
-            él.
+            Only with more than one center: a single checkbox separates nothing, and a
+            control that changes nothing gets pressed once and then nobody believes in
+            it.
 
-            El mismo desplegable que el filtro de la barra de arriba —`Menu`
-            con casillas dentro— porque hace lo mismo: recortar lo que se está
-            viendo. Se enciende cuando hay algo apagado, que es la señal que ya
-            usan los demás filtros de la app.
+            The same dropdown as the filter in the bar above —`Menu`
+            with checkboxes inside— because it does the same: cut what is being
+            viewed. It lights up when something is off, which is the signal the
+            app's other filters already use.
           */}
           {costCenters.length > 1 && (
             <CenterFilter costCenters={costCenters} hidden={hidden} setHidden={setHidden} />
           )}
         </div>
 
-        {/* El mismo rótulo siempre; lo único que cambia es la cifra, que es la
-            de lo que se ve. Añadirle un «solo fijos» al filtrar movía el texto
-            debajo del título cada vez que se pulsaba el botón. */}
+        {/* Always the same label; the only thing that changes is the figure, which is the
+            one of what is shown. Adding a «solo fijos» to it when filtering moved the text
+            under the title every time the button was pressed. */}
         <p className="truncate text-xs text-muted-foreground">
           {total > 0
             ? t('transactions.pending.aboutThisMonth', { amount: formatCOP(total) })
             : t('transactions.pending.thisMonth')}
         </p>
 
-        {/* Se desplaza en vez de crecer: la tarjeta comparte fila con la
-             gráfica y la dona, y una lista larga estiraría a las tres.
+        {/* It scrolls instead of growing: the card shares a row with the
+             chart and the donut, and a long list would stretch all three.
 
-             El par `-mr-3 pr-3` es para la barra de desplazamiento. En macOS
-             la barra FLOTA encima del contenido en vez de ocupar sitio, así
-             que no basta con que la lista quepa: hay que dejarle aire propio.
-             La lista se sale 12px sobre el relleno de la tarjeta —ahí va la
-             barra, encima del relleno y fuera de las filas— y su contenido
-             termina justo en el borde interior de la tarjeta. */}
+             The `-mr-3 pr-3` pair is for the scroll bar. On macOS
+             the bar FLOATS over the content instead of taking room, so
+             it is not enough for the list to fit: it needs its own air.
+             The list spills 12px over the card's padding —that is where the
+             bar goes, over the padding and outside the rows— and its content
+             ends right at the card's inner edge. */}
         <ul className="-mr-3 mt-4 flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto pr-3">
           {visible.map((payment) => (
             <PendingRow key={payment.categoryId} payment={payment} now={now} onSelect={onSelect} />
           ))}
-          {/* Apagados TODOS, la lista queda vacía y la tarjeta se quedaría sin
-              nada que enseñar salvo el botón para volver. Se dice, porque un
-              hueco en blanco se lee como «no hay nada pendiente», que es lo
-              contrario de lo que pasa. */}
+          {/* With ALL turned off, the list is empty and the card would be left with
+              nothing to show but the button to go back. It is said, because a
+              blank gap reads as «nothing pending», which is the
+              opposite of what is happening. */}
           {visible.length === 0 && (
             <li className="py-6 text-center text-sm text-muted-foreground">
               {t('transactions.pending.offCentersNote')}
@@ -139,7 +139,7 @@ export function PendingPayments({
   );
 }
 
-/** Lo que lleva cubierto un pago que se hace en varias veces. */
+/** What a payment made in several installments has covered so far. */
 function PendingProgress({
   payment,
   progress,
@@ -189,8 +189,8 @@ function PendingSummary({ payment, isOverdue }: { payment: PendingPayment; isOve
             {formatCOP(payment.expectedAmount)}
           </span>
         )}
-        {/* Vencido en ámbar, no en rojo: se debe, no salió mal.
-              El rojo está reservado a los errores. */}
+        {/* Overdue in amber, not in red: it is owed, nothing went wrong.
+              Red is reserved for errors. */}
         <span
           className={cn(
             'block text-xs',
@@ -216,11 +216,11 @@ function PendingRow({
   const isOverdue = payment.dueDate < now;
 
   /*
-      Cuánto lleva cubierto, para los que se pagan en varias veces.
+      How much it has covered so far, for those paid in several installments.
 
-      Es `null` cuando no hay un total al que llegar: sin esperado no
-      hay fracción que pintar, y una barra sin denominador es una
-      barra que miente. Esos se pintan como cualquier otro pendiente.
+      It is `null` when there is no total to reach: with no expected value there
+      is no fraction to paint, and a bar without a denominator is a
+      bar that lies. Those are painted like any other pending payment.
     */
   const total = Number(payment.expectedAmount ?? 0);
   const paidSoFar = Number(payment.paidAmount);
@@ -229,23 +229,23 @@ function PendingRow({
   return (
     <li
       /*
-          Los dos divisores que TOCA la fila señalada se apagan.
+          The two dividers that the pointed row TOUCHES are turned off.
 
-          El resaltado es un rectángulo redondeado, y una línea que
-          le entra por el canto lo parte: se lee como si la fila
-          estuviera cortada en vez de levantada. Apagando la raya de
-          arriba y la de abajo, la fila queda suelta entre las otras
-          —que es lo que está diciendo— y la lista no pierde su
-          retícula, porque las demás siguen ahí.
+          The highlight is a rounded rectangle, and a line that
+          enters it through the edge splits it: it reads as if the row
+          were cut instead of lifted. Turning off the line
+          above and the one below, the row stands loose among the others
+          —which is what it is saying— and the list does not lose its
+          grid, because the rest are still there.
 
-          En Tailwind 4 el divisor es el borde de ABAJO del elemento
-          anterior, así que hay dos que apagar y no uno: el propio,
-          que es el de abajo, y el del que va justo antes, que es el
-          de arriba. De ahí el `:has()`.
+          In Tailwind 4 the divider is the BOTTOM border of the previous
+          element, so there are two to turn off and not one: its own,
+          which is the bottom one, and that of the one right before, which is the
+          top one. Hence the `:has()`.
 
-          Y se desvanecen en vez de desaparecer: la fila ya cambia
-          de color con una transición, y una raya que salta mientras
-          el fondo se funde se ve como un fallo de pintado.
+          And they fade instead of disappearing: the row already changes
+          color with a transition, and a line that jumps while
+          the background blends looks like a painting glitch.
         */
       className={cn(
         'transition-colors',
@@ -257,17 +257,17 @@ function PendingRow({
         <PendingSummary payment={payment} isOverdue={isOverdue} />
 
         {/*
-            ── Lo que lleva cubierto ──────────────────────────────
-            La cifra de la derecha es el TOTAL del mes, igual que en
-            cualquier otro pendiente. Lo que esta línea añade es
-            dónde va: sin ella, un concepto que se paga en varias
-            veces se lee como uno que no se ha pagado nada, que es
-            justo lo contrario de lo que pasa.
+            ── What it has covered so far ─────────────────────────
+            The figure on the right is the month's TOTAL, same as in
+            any other pending payment. What this line adds is
+            how far along it is: without it, a concept paid in several
+            installments reads as one that has not been paid at all, which is
+            exactly the opposite of what is happening.
 
-            Y dice «Registrar otro» y no «Confirmar pago» porque eso
-            es lo que va a ocurrir al pulsar: la ficha se abre con el
-            valor VACÍO y la fecha de hoy, para anotar esta ida y no
-            para dar el mes por saldado.
+            And it says «Registrar otro» and not «Confirmar pago» because that
+            is what is going to happen on pressing: the sheet opens with the
+            amount EMPTY and today's date, to note down this installment and not
+            to mark the month as settled.
           */}
         <PendingProgress payment={payment} progress={progress} hasAction={onSelect !== undefined} />
       </CardRow>
@@ -320,46 +320,46 @@ function CenterFilter({
   );
 }
 
-/** Los centros ocultos después de pulsar la casilla de uno. */
+/** The hidden centers after pressing one's checkbox. */
 function toggleCenter(
   before: ReadonlySet<string>,
   id: string,
   isChecked: boolean,
 ): ReadonlySet<string> {
   const next = new Set(before);
-  // Desmarcar el último dejaría la tarjeta vacía sin
-  // decir por qué. Se permite —y la lista lo explica—
-  // porque negarlo obligaría a adivinar cuál de las
-  // casillas está trabada y por qué.
+  // Unchecking the last one would leave the card empty without
+  // saying why. It is allowed —and the list explains it—
+  // because refusing it would force guessing which of the
+  // checkboxes is stuck and why.
   if (isChecked) next.add(id);
   else next.delete(id);
   return next;
 }
 
-/** Lo que se ve: los centros que se pueden apagar, los pagos encendidos y su suma. */
+/** What is shown: the centers that can be turned off, the payments that are on and their sum. */
 function pendingView(payments: PendingPayment[], hidden: ReadonlySet<string>) {
   /*
-    ── Si el dato no viene, el filtro no existe ──────────────────────────────
-    El centro lo manda el servidor, y un servidor más viejo que esta pantalla
-    no lo manda. Filtrar sin él dejaría la lista vacía y el botón parecería
-    roto, que es justo lo que pasó: es la asimetría normal de un despliegue,
-    donde la pantalla y la API no llegan a la vez.
+    ── If the data does not come, the filter does not exist ─────────────────
+    The server sends the center, and a server older than this screen
+    does not send it. Filtering without it would leave the list empty and the button would look
+    broken, which is exactly what happened: it is the normal asymmetry of a deploy,
+    where the screen and the API do not arrive at the same time.
   */
   const isMissingData = payments.some(
     (p) => (p as Partial<PendingPayment>).costCenterId === undefined,
   );
 
-  // Los centros que de verdad tienen algo pendiente, en el orden en que
-  // aparecen: una casilla para un centro sin nada que mostrar no filtra nada.
+  // The centers that really have something pending, in the order in which
+  // they appear: a checkbox for a center with nothing to show filters nothing.
   const costCenters = isMissingData
     ? []
     : [...new Map(payments.map((p) => [String(p.costCenterId), p.costCenter])).entries()];
 
   const visible = payments.filter((p) => isMissingData || !hidden.has(String(p.costCenterId)));
 
-  // El total es el de lo que SE VE. Con la suma de todo bajo una lista
-  // recortada, la cifra contradice lo que hay debajo y no hay forma de saber
-  // cuál de las dos miente.
+  // The total is that of what IS SHOWN. With the sum of everything under a
+  // cut list, the figure contradicts what is below and there is no way to know
+  // which of the two is lying.
   const total = visible.reduce((s, p) => s + Number(p.expectedAmount ?? 0), 0);
 
   return { costCenters, visible, total };

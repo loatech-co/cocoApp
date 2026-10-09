@@ -4,7 +4,7 @@ import { useHistory } from '@/features/transactions/api/transactions';
 import { rangeOf, type Filters, type Preset } from '@/features/transactions/model/filters';
 import { monthOfIso, type VisibleMonth } from '@/shared/ui/molecules/calendar';
 
-/** Las dos fechas en orden, vengan como vengan: se puede pintar al revés. */
+/** The two dates in order, however they come: it can be painted backwards. */
 function sorted(a: string, b: string): { from: string; to: string } {
   return a <= b ? { from: a, to: b } : { from: b, to: a };
 }
@@ -15,17 +15,17 @@ export interface Draft {
   to: string;
 }
 
-/** El mes que conviene mostrar al abrir: donde termina el rango. */
+/** The month worth showing on opening: where the range ends. */
 function draftMonth(b: Draft): VisibleMonth {
-  // En "Todo" el rango puede llegar lejos; abrir allá no ayuda a nadie.
+  // In "Todo" the range can reach far; opening over there helps nobody.
   return monthOfIso(b.preset === 'todo' ? new Date().toISOString().slice(0, 10) : b.to);
 }
 
-/** El rango a medio elegir: el borrador, el primer clic y el mes a la vista. */
+/** The half-picked range: the draft, the first click and the month in view. */
 export function useRangeDraft(filters: Filters) {
   const initial: Draft = { preset: filters.preset, from: filters.from, to: filters.to };
   const [draft, setDraft] = useState<Draft>(initial);
-  /** El primer clic, a la espera del segundo. `null` = no hay nada a medias. */
+  /** The first click, waiting for the second. `null` = nothing is half done. */
   const [anchor, setAnchor] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [vista, setVista] = useState(() => draftMonth(initial));
@@ -50,11 +50,11 @@ export function useRangeDraft(filters: Filters) {
     setHovered(null);
   }
 
-  // Mientras hay un clic a medias manda la selección en curso, no el borrador:
-  // así se ve crecer el rango con el ratón antes de fijarlo.
+  // While there is a half-done click the ongoing selection rules, not the draft:
+  // that way you see the range grow with the mouse before fixing it.
   const painted = anchor !== null ? sorted(anchor, hovered ?? anchor) : draft;
-  // En "Todo" el rango va de 1970 a dentro de cinco años: pintarlo dejaría el
-  // calendario entero coloreado, que no informa de nada.
+  // In "Todo" the range goes from 1970 to five years from now: painting it would leave the
+  // whole calendar colored, which tells nothing.
   const isPainted = draft.preset !== 'todo' || anchor !== null;
 
   return {

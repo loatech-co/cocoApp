@@ -8,7 +8,7 @@ import { Button } from '@/shared/ui/atoms/button';
 import { DropSurface } from '@/shared/ui/atoms/drop-surface';
 import { FilePicker } from '@/shared/ui/atoms/file-picker';
 
-/** Soltar archivos encima: se marca mientras pasan por encima y se entregan al soltar. */
+/** Dropping files on top: it is marked while they pass over and they are handed over on drop. */
 function useFileDrop(isUploading: boolean, onFiles: (files: File[]) => void) {
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -32,46 +32,46 @@ function useFileDrop(isUploading: boolean, onFiles: (files: File[]) => void) {
 interface DropZoneProps {
   isUploading: boolean;
   progress: number;
-  /** Sin ningún soporte todavía: ocupa el ancho y explica. */
+  /** With no receipt yet: it takes the width and explains. */
   isAlone: boolean;
   /**
-   * Qué hace la baldosa pequeña al pulsarse, si no es abrir el buscador.
+   * What the small tile does when pressed, if not opening the file picker.
    *
-   * La galería la usa para llevar al cuadro grande en vez de al buscador del
-   * sistema: en 104px no caben ni la explicación de qué se acepta ni el botón
-   * de pegar, así que la baldosa pasó a ser una PUERTA y el cuadro grande el
-   * sitio donde de verdad se añade.
+   * The gallery uses it to lead to the big box instead of to the system's
+   * file picker: in 104px there is no room for the explanation of what is accepted nor the paste
+   * button, so the tile became a DOOR and the big box the
+   * place where things are really added.
    */
   onPress?: () => void;
   onFiles: (files: File[]) => void;
 }
 
 /**
- * El hueco donde se sueltan los recibos.
+ * The slot where receipts are dropped.
  *
- * ── Por qué es un cuadro punteado y no un botón ─────────────────────────────
- * Porque ocupa una plaza en la misma fila que las miniaturas y del mismo
- * tamaño: se lee como el sitio del próximo soporte, no como una acción en otro
- * sitio de la ficha. Y el borde punteado es lo que en todas partes significa
- * "aquí cabe algo que todavía no está" —un botón sólido diría lo contrario,
- * que ahí ya hay una cosa—.
+ * ── Why it is a dashed box and not a button ─────────────────────────────────
+ * Because it takes a place in the same row as the thumbnails and of the same
+ * size: it reads as the spot for the next receipt, not as an action somewhere
+ * else in the sheet. And the dashed border is what everywhere means
+ * "something that is not here yet fits here" —a solid button would say the opposite,
+ * that there is already a thing there—.
  *
- * ── Por qué también acepta que se suelte encima ─────────────────────────────
- * Porque el recibo casi siempre viene de otra ventana: del correo, de la
- * carpeta de descargas. Obligar a pasar por el diálogo de archivos es pedir
- * que se busque a mano lo que ya se tiene agarrado.
+ * ── Why it also accepts things dropped on it ────────────────────────────────
+ * Because the receipt almost always comes from another window: the email, the
+ * downloads folder. Forcing a trip through the file dialog is asking
+ * to look up by hand what you are already holding.
  *
- * ── Una CAJA, no un botón ───────────────────────────────────────────────────
- * Era un `<button>` entero, y por eso el botón de pegar tuvo que vivir fuera,
- * debajo: un botón dentro de otro no es HTML válido. Pero el pegar es una de
- * las tres formas de dar un archivo —arrastrarlo, elegirlo, pegarlo— y ponerlo
- * fuera lo dejaba pareciendo otra cosa, colgando del cuadro en vez de siendo
- * parte de él.
+ * ── A BOX, not a button ─────────────────────────────────────────────────────
+ * It was a whole `<button>`, and that is why the paste button had to live outside,
+ * below: a button inside another is not valid HTML. But pasting is one of
+ * the three ways to give a file —drag it, pick it, paste it— and putting it
+ * outside left it looking like something else, hanging from the box instead of being
+ * part of it.
  *
- * Así que el cuadro es una caja, y quien abre el buscador de archivos es un
- * botón que la cubre entera por debajo del contenido. El resultado a la vista
- * es el mismo —se pulsa en cualquier parte del cuadro y se abre el buscador— y
- * encima cabe lo que haga falta dentro.
+ * So the box is a box, and what opens the file picker is a
+ * button that covers it entirely beneath the content. The visible result
+ * is the same —you press anywhere on the box and the picker opens— and
+ * on top of it whatever is needed fits inside.
  */
 export function DropZone({ isUploading, progress, isAlone, onPress, onFiles }: DropZoneProps) {
   const field = useRef<HTMLInputElement>(null);
@@ -89,11 +89,11 @@ export function DropZone({ isUploading, progress, isAlone, onPress, onFiles }: D
       >
         <DropZoneLabel isUploading={isUploading} progress={progress} isAlone={isAlone} />
 
-        {/* La tercera forma de dar un archivo, dentro del cuadro y con las
-            otras dos: separada, se leía como otra cosa colgando debajo.
+        {/* The third way to give a file, inside the box and with the
+            other two: set apart, it read as something else hanging below.
 
-            `relative` para quedar por encima del botón que cubre la caja, o el
-            clic se lo llevaría él. */}
+            `relative` to sit above the button that covers the box, or the
+            click would go to it. */}
         {isAlone && !isUploading && (
           <PasteScreenshot onPaste={() => void paste()} problem={pasteProblem} />
         )}
@@ -109,7 +109,7 @@ export function DropZone({ isUploading, progress, isAlone, onPress, onFiles }: D
   );
 }
 
-/** El botón de pegar y, si el portapapeles no se dejó leer, por qué. */
+/** The paste button and, if the clipboard would not let itself be read, why. */
 function PasteScreenshot({ onPaste, problem }: { onPaste: () => void; problem: string | null }) {
   return (
     <div className="relative mt-4 flex flex-col items-center gap-1">
@@ -126,7 +126,7 @@ function PasteScreenshot({ onPaste, problem }: { onPaste: () => void; problem: s
   );
 }
 
-/** Lo que se lee dentro del cuadro: el avance, la explicación o el rótulo corto. */
+/** What is read inside the box: the progress, the explanation or the short label. */
 function DropZoneLabel({
   isUploading,
   progress,
@@ -141,19 +141,19 @@ function DropZoneLabel({
       {isUploading ? (
         <>
           <Loader2 className="size-5 animate-spin" aria-hidden="true" />
-          {/* El porcentaje, no una barra: en una caja de 104px una barra son
-              cuatro píxeles de alto que no se ven moverse. */}
+          {/* The percentage, not a bar: in a 104px box a bar is
+              four pixels tall that cannot be seen moving. */}
           <span className="tabular text-xs font-medium">{Math.round(progress * 100)} %</span>
         </>
       ) : isAlone ? (
         <>
           {/*
-            El texto dice QUÉ va aquí, no solo cómo ponerlo.
+            The text says WHAT goes here, not just how to put it.
 
-            Decía "Arrastrar un archivo aquí": con un rótulo de sección encima
-            que ponía "Soporte", eso bastaba. Sin el rótulo, "un archivo" no
-            dice de qué archivo se trata, y este cuadro es el único sitio de la
-            ficha donde se adjunta el recibo.
+            It said "Arrastrar un archivo aquí": with a section label above
+            that said "Soporte", that was enough. Without the label, "un archivo" does not
+            say which file it is about, and this box is the only place in the
+            sheet where the receipt is attached.
           */}
           <Upload className="size-6" aria-hidden="true" />
           <span className="text-center text-sm font-medium text-foreground">

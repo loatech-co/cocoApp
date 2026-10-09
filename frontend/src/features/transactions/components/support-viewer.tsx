@@ -14,7 +14,7 @@ import {
   useViewerZoom,
 } from './support-viewer-controls';
 
-/** Escape cierra, las flechas pasan de soporte, `+` y `-` amplían. */
+/** Escape closes, the arrows move between receipts, `+` and `-` zoom. */
 function useViewerKeys(
   index: number,
   total: number,
@@ -41,7 +41,7 @@ interface ViewerProps {
   transactionId: number;
   list: Receipt[];
   urls: Record<string, string>;
-  /** Por qué no se ve cada uno, si es que no se ve. Ver `FalloDeSoporte`. */
+  /** Why each one cannot be seen, if it cannot. See `ReceiptFailure`. */
   errors: Readonly<Record<string, ReceiptFailure>>;
   onRetry: () => void;
   index: number;
@@ -50,17 +50,17 @@ interface ViewerProps {
 }
 
 /**
- * El pase de soportes: el recibo a tamaño de leerlo.
+ * The receipts lightbox: the receipt at a readable size.
  *
- * ── Por qué el PDF también se dibuja ────────────────────────────────────────
- * Un `<iframe>` con el visor del navegador enseña el PDF, pero trae su propia
- * barra, su propio zoom y su propio idioma, y encima cambia según el navegador
- * y el sistema. Al lado de una imagen, que se amplía con los botones de aquí,
- * el mismo gesto hacía dos cosas distintas según qué soporte tocara.
+ * ── Why the PDF is drawn too ────────────────────────────────────────────────
+ * An `<iframe>` with the browser's viewer shows the PDF, but brings its own
+ * bar, its own zoom and its own language, and on top of that it changes with the browser
+ * and the system. Next to an image, which is enlarged with the buttons here,
+ * the same gesture did two different things depending on which receipt it touched.
  *
- * Dibujando la página en un lienzo, las dos son lo mismo: un mapa de bits que
- * este componente amplía, desplaza y descarga igual. Cuesta un render de
- * pdf.js y a cambio el visor se comporta siempre igual.
+ * Drawing the page on a canvas, both are the same: a bitmap that
+ * this component enlarges, pans and downloads the same way. It costs a pdf.js
+ * render and in exchange the viewer always behaves the same.
  */
 export function Lightbox(props: ViewerProps) {
   const { list, index, onGoTo, onClose } = props;
@@ -78,7 +78,7 @@ export function Lightbox(props: ViewerProps) {
       aria-modal="true"
       aria-label={receipt.fileName}
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
-      // Por encima del modal del movimiento, que está en z-50.
+      // Above the transaction modal, which is at z-50.
       className="fixed inset-0 z-[60] flex flex-col bg-sala/90 p-3 backdrop-blur-sm sm:p-6"
     >
       <ViewerHeader
@@ -90,7 +90,7 @@ export function Lightbox(props: ViewerProps) {
         onClose={onClose}
       />
 
-      {/* ── El recibo ─────────────────────────────────────────────────── */}
+      {/* ── The receipt ──────────────────────────────────────────────── */}
       <ViewerStage
         receipt={receipt}
         url={url}
@@ -106,8 +106,8 @@ export function Lightbox(props: ViewerProps) {
 
       <ViewerControls vista={vista} />
 
-      {/* Misma capa que el pase y DESPUÉS en el árbol: con el mismo z-index,
-          manda el que va después, así que el diálogo queda encima. */}
+      {/* Same layer as the lightbox and AFTER it in the tree: with the same z-index,
+          the later one wins, so the dialog stays on top. */}
       <DeleteFromViewer
         {...props}
         receipt={isConfirming ? receipt : null}
@@ -118,16 +118,16 @@ export function Lightbox(props: ViewerProps) {
 }
 
 /**
- * El hueco es OSCURO y la hoja flota encima.
+ * The slot is DARK and the page floats on top.
  *
- * Antes el contenedor entero era blanco, así que un recibo de 620px en una
- * pantalla ancha dejaba dos franjas blancas enormes a los lados: en una app de
- * fondo verde oscuro, y de noche, eso deslumbra. Lo blanco tiene que ser el
- * papel y nada más, que es además como se ve un documento en cualquier visor.
+ * Before, the whole container was white, so a 620px receipt on a
+ * wide screen left two huge white strips on the sides: in an app with a
+ * dark green background, and at night, that is blinding. What is white has to be the
+ * paper and nothing else, which is also how a document looks in any viewer.
  *
- * `overflow-auto`: ampliado, el recibo se recorre con la barra de
- * desplazamiento. Es lo que ya sabe hacer el navegador y no hay que reinventar
- * el arrastre.
+ * `overflow-auto`: enlarged, the receipt is browsed with the scroll
+ * bar. It is what the browser already knows how to do and there is no need to reinvent
+ * dragging.
  */
 interface ViewerStageProps {
   receipt: Receipt;
@@ -183,9 +183,9 @@ function ViewerSheet({ receipt, url, error, onRetry, scale, page, onPages }: Vie
         <img
           src={url}
           alt={receipt.fileName}
-          // El MISMO ancho que una página de PDF: si una imagen midiera otra
-          // cosa, el botón de ampliar haría dos cosas distintas según qué
-          // soporte estuviera abierto.
+          // The SAME width as a PDF page: if an image measured something
+          // else, the zoom button would do two different things depending on which
+          // receipt was open.
           className="h-fit max-w-none rounded-lg bg-white shadow-2xl"
           style={{ width: PAGE_WIDTH * scale }}
         />
@@ -196,7 +196,7 @@ function ViewerSheet({ receipt, url, error, onRetry, scale, page, onPages }: Vie
   );
 }
 
-/** Borrar el soporte que se está viendo, y qué enseñar después. */
+/** Delete the receipt being viewed, and what to show afterward. */
 function DeleteFromViewer({
   transactionId,
   list,
@@ -213,7 +213,7 @@ function DeleteFromViewer({
       onCancel={onFinish}
       onDeleted={() => {
         onFinish();
-        // Era el único: no queda nada que enseñar.
+        // It was the only one: there is nothing left to show.
         if (list.length === 1) onClose();
         else if (index === list.length - 1) onGoTo(index - 1);
       }}

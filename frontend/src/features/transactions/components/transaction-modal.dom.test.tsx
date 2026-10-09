@@ -17,12 +17,12 @@ import {
 } from '@/test-support/movement-sheet';
 
 /*
-  El lector de soportes, de mentira.
+  The receipt reader, faked.
 
-  El de verdad abre un PDF con pdf.js o enciende Tesseract, que no tienen nada
-  que hacer en una prueba de esta ficha: lo que aquí se comprueba es qué pasa
-  DESPUÉS de leer, no cómo se lee. Eso ya lo prueban `lib/palabras-clave` y el
-  paquete de lectura.
+  The real one opens a PDF with pdf.js or fires up Tesseract, which have no
+  business in a test of this sheet: what is checked here is what happens
+  AFTER reading, not how it is read. The keyword tests already cover that, and the
+  reading package.
 */
 vi.mock('@/features/transactions/api/read-receipt', () => ({
   readReceipt: vi.fn(),
@@ -31,58 +31,58 @@ vi.mock('@/features/transactions/api/read-receipt', () => ({
 afterEach(cleanup);
 
 /**
- * La ficha de un movimiento, abierta para EDITAR, tiene que llegar con su
- * clasificación puesta.
+ * A transaction's sheet, opened to EDIT, has to arrive with its
+ * classification set.
  *
- * Es lo que uno viene a comprobar cuando abre un movimiento ya registrado —«¿en
- * qué quedó clasificado esto?»—, y si los tres desplegables aparecen vacíos el
- * formulario está diciendo que no está clasificado, que es otra cosa. Peor: al
- * guardar cualquier corrección de la cifra, se guardaría también esa mentira.
+ * It is what you come to check when you open an already recorded transaction —«what
+ * did this end up classified as?»—, and if the three dropdowns appear empty the
+ * form is saying it is not classified, which is something else. Worse: on
+ * saving any correction of the amount, that lie would be saved too.
  *
- * Se prueba a través de la ficha entera y no de `rutaSeleccionada` —que ya tiene
- * las suyas— porque el fallo que esto vigila no está en la búsqueda por el
- * árbol: está en si lo que se busca llega, y cuándo.
+ * It is tested through the whole sheet and not through `selectedPath` —which already has
+ * its own— because the failure this guards against is not in the search through the
+ * tree: it is in whether what is searched for arrives, and when.
  */
-describe('La ficha de un movimiento que se edita', () => {
-  it('llega con su centro de costos, su categoría y su concepto puestos', () => {
+describe('The sheet of a transaction being edited', () => {
+  it('arrives with its cost center, its category and its concept set', () => {
     openSheet(TREE);
 
-    // La ficha abre en modo lectura: los campos se desbloquean al pedirlo.
+    // The sheet opens in read mode: the fields unlock when asked.
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
 
-    // La puerta es el buscador: enseña el concepto con su camino entero.
+    // The door is the search: it shows the concept with its whole path.
     expect(screen.getByRole('button', { name: /Concepto/ }).textContent).toContain(
       'Celsia (Energía)',
     );
     expect(screen.getByText(/Servicios públicos › Costos fijos/)).toBeDefined();
 
-    // Y la cascada sigue existiendo, detrás de su enlace, con los tres puestos.
+    // And the cascade still exists, behind its link, with all three set.
     fireEvent.click(screen.getByRole('button', { name: 'Elegir por centro y categoría' }));
     for (const name of ['Centro de costos', 'Categoría']) {
       const trigger = screen.getByRole('button', { name: new RegExp(name) });
-      expect(trigger, `el desplegable de ${name}`).toBeDefined();
+      expect(trigger, `the ${name} dropdown`).toBeDefined();
     }
     expect(screen.getByText('Costos fijos')).toBeDefined();
     expect(screen.getByText('Servicios públicos')).toBeDefined();
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
   });
 
-  it('los enseña aunque estén BLOQUEADOS por ser de un centro estático', () => {
+  it('shows them even when they are LOCKED for belonging to a static center', () => {
     /*
-      El fallo que arregla esto: `Combo`, bloqueado, pintaba el marcador e
-      ignoraba lo elegido. En un centro estático los tres desplegables salen
-      bloqueados a propósito —esa clasificación no se toca desde aquí—, así que
-      un movimiento bien clasificado se leía como uno sin clasificar.
+      The failure this fixes: `Combo`, when locked, painted the placeholder and
+      ignored what was picked. In a static center the three dropdowns come out
+      locked on purpose —that classification is not touched from here—, so
+      a well-classified transaction read as an unclassified one.
 
-      Bloqueado quiere decir «esto no se cambia desde aquí», nunca «esto está
-      vacío».
+      Locked means «this is not changed from here», never «this is
+      empty».
     */
     openSheet(treeWith(true));
 
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
 
-    // En un centro estático no hay nada que elegir pero sí que leer: el
-    // buscador y la cascada salen bloqueados y los dos dicen qué es.
+    // In a static center there is nothing to pick but there is something to read: the
+    // search and the cascade come out locked and both say what it is.
     expect(screen.getByText('Costos fijos')).toBeDefined();
     expect(screen.getByText('Servicios públicos')).toBeDefined();
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
@@ -90,10 +90,10 @@ describe('La ficha de un movimiento que se edita', () => {
     expect(screen.queryByRole('button', { name: 'Elegir por centro y categoría' })).toBeNull();
   });
 
-  it('también cuando el árbol de categorías llega DESPUÉS de abrirse', async () => {
-    // El caso real: la ficha se abre antes de que responda la consulta de
-    // categorías. Si la clasificación se resolviera una sola vez al montar, los
-    // tres desplegables se quedarían vacíos para siempre.
+  it('also when the category tree arrives AFTER it opens', async () => {
+    // The real case: the sheet opens before the categories query
+    // responds. If the classification were resolved only once on mount, the
+    // three dropdowns would stay empty forever.
     const client = testQueryClient();
     renderSheet({ transaction: TRANSACTION }, client);
 
@@ -106,40 +106,40 @@ describe('La ficha de un movimiento que se edita', () => {
 });
 
 /**
- * La ficha de CONFIRMAR UN PAGO.
+ * The CONFIRM A PAYMENT sheet.
  *
- * Se abre desde la tarjeta de pagos pendientes del resumen, y es la misma ficha
- * de siempre con otro punto de partida: el concepto ya se sabe, el valor y la
- * fecha son los esperados, y lo único que falta es el papel que los corrija.
+ * It is opened from the dashboard's pending payments card, and it is the same sheet
+ * as always with another starting point: the concept is already known, the amount and the
+ * date are the expected ones, and the only thing missing is the paper that corrects them.
  *
- * Lo que se vigila aquí es que llegue PUESTA. Una ficha de confirmar que abre
- * en blanco obliga a copiar a mano, mirando la misma tarjeta que se acaba de
- * pulsar, tres datos que la app ya tenía.
+ * What is guarded here is that it arrives FILLED IN. A confirm sheet that opens
+ * blank forces copying by hand, while looking at the same card that was just
+ * pressed, three facts the app already had.
  */
-describe('La ficha de confirmar un pago pendiente', () => {
-  it('se titula «Confirmar pago» y dice cuál', () => {
+describe('The sheet to confirm a pending payment', () => {
+  it('is titled «Confirmar pago» and says which one', () => {
     openConfirmation();
 
     expect(screen.getByRole('heading', { name: 'Confirmar pago' })).toBeDefined();
     expect(screen.getByText(/Celsia \(Energía\)\./)).toBeDefined();
   });
 
-  it('llega con el valor esperado y la fecha de vencimiento puestos', () => {
+  it('arrives with the expected amount and the due date set', () => {
     openConfirmation();
 
-    // Se enseña agrupado y se guarda sin puntos.
+    // It is shown grouped and saved without dots.
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');
     expect(screen.getByLabelText<HTMLInputElement>('Fecha').value).toMatch(/octubre/i);
   });
 
-  it('llega con su clasificación puesta, sin preguntarla otra vez', () => {
+  it('arrives with its classification set, without asking for it again', () => {
     openConfirmation();
 
     expect(screen.getByText(/Servicios públicos › Costos fijos/)).toBeDefined();
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
   });
 
-  it('abre directamente en el formulario, sin ninguna pantalla delante', () => {
+  it('opens straight into the form, with no screen in front', () => {
     openConfirmation();
 
     expect(screen.getByLabelText('Valor')).toBeDefined();
@@ -147,25 +147,25 @@ describe('La ficha de confirmar un pago pendiente', () => {
     expect(screen.queryByText('Subir un archivo')).toBeNull();
   });
 
-  it('avisa de que el valor es un esperado, no un dato', () => {
-    // Sin esto, un promedio de tres meses se ve igual que una cifra copiada del
-    // recibo, y quien confirme sin mirar registra el promedio.
+  it('warns that the amount is an expected value, not a fact', () => {
+    // Without this, a three-month average looks the same as a figure copied from the
+    // receipt, and whoever confirms without looking records the average.
     openConfirmation();
 
     expect(screen.getByText(/son los esperados/i)).toBeDefined();
   });
 
-  it('un concepto que nunca se ha pagado abre sin valor, y lo dice de otra forma', () => {
+  it('a concept that has never been paid opens with no amount, and says so differently', () => {
     openConfirmation({ ...PAYMENT, expectedAmount: null });
 
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('');
     expect(screen.getByText(/se leen el valor y la fecha/i)).toBeDefined();
   });
 
-  it('sin pago pendiente, un movimiento nuevo también abre en el formulario', () => {
-    // La pantalla de «cómo empezar» que había delante se retiró: costaba un
-    // clic en cada movimiento nuevo para una pregunta que casi siempre se
-    // contestaba igual. Sus dos otras vías viven ahora dentro del formulario.
+  it('without a pending payment, a new transaction also opens in the form', () => {
+    // The «cómo empezar» screen that was in front was removed: it cost a
+    // click on every new transaction for a question that was almost always
+    // answered the same way. Its other two paths now live inside the form.
     openNew();
 
     expect(screen.getByRole('heading', { name: /Nuevo/ })).toBeDefined();
@@ -177,29 +177,29 @@ describe('La ficha de confirmar un pago pendiente', () => {
 });
 
 /**
- * Abonar no es confirmar.
+ * Paying in installments is not confirming.
  *
- * Un concepto normal se CONFIRMA: lo que se espera que cueste es lo que va a
- * costar, y traerlo escrito ahorra un paso. Uno que se paga en varias veces se
- * ABONA, y entonces el valor esperado es la peor sugerencia posible: al primer
- * «guardar» sin mirar, el mes queda cubierto de golpe y el concepto sale de la
- * lista como si estuviera resuelto.
+ * A regular concept is CONFIRMED: what it is expected to cost is what it is going to
+ * cost, and bringing it written saves a step. One paid in several installments is
+ * PAID DOWN, and then the expected amount is the worst possible suggestion: at the first
+ * «guardar» without looking, the month is covered at once and the concept leaves the
+ * list as if it were settled.
  */
-describe('La ficha de un concepto que se paga en varias veces', () => {
-  /** Hoy en América/Bogotá, como lo escribe la aplicación. */
+describe('The sheet of a concept paid in several installments', () => {
+  /** Today in America/Bogotá, as the app writes it. */
   function today(): Date {
     return new Date(Date.now() - 5 * 60 * 60 * 1000);
   }
 
-  it('abre con el valor VACÍO, no con el total del mes', () => {
+  it('opens with the amount EMPTY, not with the month total', () => {
     openConfirmation(SPLIT_PAYMENT);
 
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('');
   });
 
-  it('y con la fecha de HOY, no con la del vencimiento', () => {
-    // La ida al mercado fue hoy. El día del vencimiento es cuándo empieza a
-    // contar el ciclo, no cuándo se gastó esto.
+  it('and with TODAY as the date, not the due date', () => {
+    // The trip to the market was today. The due date is when the cycle
+    // starts counting, not when this was spent.
     openConfirmation(SPLIT_PAYMENT);
 
     const date = screen.getByLabelText<HTMLInputElement>('Fecha').value;
@@ -207,32 +207,32 @@ describe('La ficha de un concepto que se paga en varias veces', () => {
     expect(date).not.toContain('25');
   });
 
-  it('se titula «Registrar otro», que es lo que ofrecía la lista', () => {
-    // Abrir «Registrar otro» y encontrarse «Confirmar pago» es prometer que
-    // esto cierra el mes.
+  it('is titled «Registrar otro», which is what the list offered', () => {
+    // Opening «Registrar otro» and finding «Confirmar pago» is promising that
+    // this closes the month.
     openConfirmation(SPLIT_PAYMENT);
 
     expect(screen.getByRole('heading', { name: 'Registrar otro' })).toBeDefined();
   });
 
-  it('avisa de que se anota lo de ESTA vez', () => {
-    // Sin decirlo, la caja vacía se lee como un campo que falta por llenar
-    // con el total, que es justo lo contrario.
+  it('warns that what is noted down is THIS time', () => {
+    // Without saying so, the empty box reads as a field still to be filled
+    // with the total, which is exactly the opposite.
     openConfirmation(SPLIT_PAYMENT);
 
     expect(screen.getByText(/no el total del mes/i)).toBeDefined();
   });
 
-  it('pero la clasificación sí viene puesta, como en cualquier pago', () => {
-    // Lo que cambia es el importe y la fecha; de qué concepto es, no.
+  it('but the classification does come set, as in any payment', () => {
+    // What changes is the amount and the date; which concept it is, does not.
     openConfirmation(SPLIT_PAYMENT);
 
     expect(screen.getByText(/Servicios públicos › Costos fijos/)).toBeDefined();
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
   });
 
-  it('y uno normal sigue llegando con su valor esperado', () => {
-    // La prueba que impide «arreglarlo» para todos: el alquiler se confirma.
+  it('and a regular one still arrives with its expected amount', () => {
+    // The test that keeps it from being «fixed» for everyone: rent is confirmed.
     openConfirmation(PAYMENT);
 
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');

@@ -5,13 +5,13 @@ import { useHistory } from '@/features/transactions/api/transactions';
 import { t } from '@/shared/lib/i18n';
 
 /**
- * Filtros compartidos por el Resumen y los Movimientos.
+ * Filters shared by the Resumen and the Movimientos.
  *
- * ── Por qué viven en la URL ─────────────────────────────────────────────────
- * Porque son el RECORTE que la persona está mirando, no un estado interno de
- * una pantalla. Al saltar del resumen a los movimientos el recorte se mantiene,
- * el botón de atrás funciona, y un enlace pegado a alguien abre exactamente lo
- * mismo. Guardados en memoria, cada salto los perdería.
+ * ── Why they live in the URL ────────────────────────────────────────────────
+ * Because they are the CUT the person is looking at, not internal state of
+ * a screen. When jumping from the dashboard to the transactions the cut is kept,
+ * the back button works, and a link pasted to someone opens exactly the
+ * same. Kept in memory, every jump would lose them.
  */
 
 export type Preset =
@@ -62,11 +62,11 @@ export const PRESETS: { value: Preset; label: string; help: string }[] = [
 ];
 
 /**
- * Hoy en America/Bogota (UTC−5, sin horario de verano).
+ * Today in America/Bogota (UTC−5, no daylight saving time).
  *
- * No se usa `new Date()` a secas: el navegador puede estar en otra zona, y
- * entonces "hoy" cambiaría según dónde esté la persona. El mes de la app tiene
- * que empezar y terminar igual para todos.
+ * A bare `new Date()` is not used: the browser can be in another zone, and
+ * then "today" would change depending on where the person is. The app's month has
+ * to start and end the same for everyone.
  */
 function todayInBogota(): Date {
   const now = new Date();
@@ -75,19 +75,19 @@ function todayInBogota(): Date {
 
 const aISO = (date: Date): string => date.toISOString().slice(0, 10);
 
-/** Hoy en Bogotá, en `YYYY-MM-DD`. */
+/** Today in Bogotá, as `YYYY-MM-DD`. */
 function todayIso(): string {
   return aISO(todayInBogota());
 }
 
 /**
- * Si el recorte que se está mirando llega hasta hoy.
+ * Whether the cut being looked at reaches today.
  *
- * Lo usan las piezas que hablan del MES EN CURSO —el presupuesto necesario y
- * los pagos pendientes— para saber si tienen algo que decir. Mirando agosto de
- * 2024, "lo que falta pagar este mes" no es una respuesta tardía: es la
- * respuesta a otra pregunta, puesta al lado de las cifras de un periodo que ya
- * cerró. Y ahí no hay nada pendiente, porque ya pasó.
+ * The pieces that talk about the CURRENT MONTH —the necessary budget and
+ * the pending payments— use it to know whether they have something to say. Looking at August
+ * 2024, "what is left to pay this month" is not a late answer: it is the
+ * answer to another question, placed next to the figures of a period that has already
+ * closed. And there nothing is pending, because it already happened.
  */
 export function reachesToday(filters: { to: string }): boolean {
   return filters.to >= todayIso();
@@ -96,11 +96,11 @@ const utc = (year: number, month: number, day: number): Date =>
   new Date(Date.UTC(year, month, day));
 
 /**
- * El rango de fechas que representa un preset.
+ * The date range a preset stands for.
  *
- * `historia` son las fechas del primer y el último movimiento. Solo la usa
- * "Todo", y es opcional porque llega de una consulta: mientras no esté, se cae
- * a un rango amplio, que devuelve exactamente los mismos movimientos.
+ * `history` is the dates of the first and the last transaction. Only
+ * "Todo" uses it, and it is optional because it comes from a query: while it is not there, it falls
+ * back to a wide range, which returns exactly the same transactions.
  */
 export function rangeOf(
   preset: Preset,
@@ -113,25 +113,25 @@ export function rangeOf(
 
   switch (preset) {
     case 'todo':
-      // Arranca en el PRIMER movimiento, no en 1970: con 1970 la gráfica
-      // estiraba su eje sobre medio siglo vacío para dibujar cuatro años de
-      // datos, y el botón de fechas prometía un periodo que nunca existió.
+      // It starts at the FIRST transaction, not in 1970: with 1970 the chart
+      // stretched its axis over half an empty century to draw four years of
+      // data, and the date button promised a period that never existed.
       return {
         from: history?.first ?? '1970-01-01',
         to: history?.last ?? aISO(utc(a + 5, 11, 31)),
       };
 
     case 'mes-actual':
-      // HASTA HOY, no hasta fin de mes: incluir días que no han ocurrido
-      // aplanaría cualquier promedio y haría parecer que se gastó de menos.
+      // UP TO TODAY, not to the end of the month: including days that have not happened
+      // would flatten any average and make it look like less was spent.
       return { from: aISO(utc(a, m, 1)), to: aISO(utc(a, m, d)) };
 
     case 'mes-pasado':
       return { from: aISO(utc(a, m - 1, 1)), to: aISO(utc(a, m, 0)) };
 
     case 'trimestre':
-      // Tres meses hacia atrás desde hoy, no "el trimestre calendario": el 2 de
-      // abril uno quiere ver enero–abril, no solo los dos días de abril.
+      // Three months back from today, not "the calendar quarter": on April
+      // 2 you want to see January–April, not just the two days of April.
       return { from: aISO(utc(a, m - 2, 1)), to: aISO(utc(a, m, d)) };
 
     case 'anio-actual':
@@ -151,22 +151,22 @@ export interface Filters {
   from: string;
   to: string;
   /**
-   * Centros de costos, categorías o conceptos marcados. Cada uno incluye su rama.
+   * Checked cost centers, categories or concepts. Each one includes its branch.
    *
-   * Es una LISTA porque el panel son casillas: la pregunta "¿cuánto me cuestan
-   * Casa y Transporte juntos?" no se puede hacer con un solo id.
+   * It is a LIST because the panel is checkboxes: the question "how much do Casa
+   * and Transporte cost me together?" cannot be asked with a single id.
    */
   categoryIds: number[];
   q?: string | undefined;
 }
 
 /**
- * Lee y escribe los filtros en la URL.
+ * Reads and writes the filters in the URL.
  *
- * El preset se guarda además del rango a propósito. Guardar solo las fechas
- * obligaría a adivinar qué botón estaba activo, y "del 1 al 30 de septiembre"
- * puede ser tanto "mes en curso" como un rango escrito a mano: son estados
- * distintos, porque el primero se mueve solo al día siguiente.
+ * The preset is saved on top of the range on purpose. Saving only the dates
+ * would force guessing which button was active, and "from September 1 to 30"
+ * can be both "mes en curso" and a range typed by hand: they are different
+ * states, because the first one moves by itself the next day.
  */
 export function useFilters(defaultPreset: Preset = 'mes-actual'): {
   filters: Filters;
@@ -210,7 +210,7 @@ export function useFilters(defaultPreset: Preset = 'mes-actual'): {
   return { filters, apply, clear, hasActiveFilters };
 }
 
-/** Los filtros tal como los espera la API. */
+/** The filters as the API expects them. */
 export function toApiParams(filters: Filters): {
   from: string;
   to: string;
@@ -225,7 +225,7 @@ export function toApiParams(filters: Filters): {
   };
 }
 
-/** Los parámetros de la URL después de aplicar unos cambios a los filtros. */
+/** The URL parameters after applying some changes to the filters. */
 function writeFilters(
   params: URLSearchParams,
   changes: Partial<Filters>,
@@ -237,16 +237,16 @@ function writeFilters(
     if (changes.preset === defaultPreset) next.delete('rango');
     else next.set('rango', changes.preset);
 
-    // Cambiar de preset descarta las fechas escritas a mano: dejarlas haría
-    // que el rango mostrado no fuera el del botón encendido.
+    // Switching presets discards the dates typed by hand: keeping them would make
+    // the range shown not be the one of the button that is on.
     if (changes.preset !== 'personalizado') {
       next.delete('desde');
       next.delete('hasta');
     }
   }
 
-  // Escribir una fecha a mano implica pasar a personalizado, o el rango se
-  // recalcularía desde el preset y el cambio se perdería al instante.
+  // Typing a date by hand implies switching to custom, or the range would be
+  // recomputed from the preset and the change would be lost instantly.
   if (changes.from !== undefined) {
     next.set('desde', changes.from);
     next.set('rango', 'personalizado');

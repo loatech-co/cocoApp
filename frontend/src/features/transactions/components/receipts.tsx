@@ -13,25 +13,25 @@ import { FilePreview } from './support-preview';
 import { UploadPanel } from './support-upload-panel';
 import { Lightbox } from './support-viewer';
 
-/** Lo que la galería recuerda: cuál se ve, cuál se borra, cuál está en grande. */
+/** What the gallery remembers: which one is shown, which one is being deleted, which one is enlarged. */
 function useSupportGallery(transactionId: number) {
   /**
-   * Añadiendo: se abre el panel de subir encima de la ficha.
+   * Adding: the upload panel opens on top of the sheet.
    *
-   * La baldosa de 104px no da para más que un icono: ni explica qué se acepta
-   * ni tiene sitio para el botón de pegar, que es de donde salen la mitad de
-   * los soportes. Así que se añade en el cuadro grande, y de ahí se vuelve.
+   * The 104px tile only has room for an icon: it neither explains what is accepted
+   * nor has room for the paste button, which is where half of the
+   * receipts come from. So adding happens in the big box, and you come back from there.
    */
   const [isAdding, setIsAdding] = useState(false);
-  /** El soporte que se va a borrar desde la columna, a la espera del sí. */
+  /** The receipt about to be deleted from the column, waiting for the yes. */
   const [isDeleting, setIsDeleting] = useState<Receipt | null>(null);
   const [enlargedIndex, setEnlargedIndex] = useState<number | null>(null);
   /**
-   * Cuál se está viendo arriba.
+   * Which one is being shown on top.
    *
-   * Se abre una ficha para mirar el papel, no para mirar ocho cuadraditos de
-   * 104px: la columna de un movimiento guardado enseña el documento en grande,
-   * igual que la de uno que se está creando.
+   * A sheet is opened to look at the paper, not to look at eight little
+   * 104px squares: the column of a saved transaction shows the document large,
+   * same as that of one being created.
    */
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -52,15 +52,15 @@ function useSupportGallery(transactionId: number) {
 type Gallery = ReturnType<typeof useSupportGallery>;
 
 /**
- * Los soportes de un movimiento: el recibo que prueba que ese pago existió.
+ * A transaction's receipts: the receipt that proves the payment existed.
  *
- * ── Por qué el documento en grande y no pestañas ────────────────────────────
- * Porque "Receipt 1 de 8" no dice nada. Ocho pestañas iguales obligan a
- * abrirlas una por una para encontrar la factura que uno busca, que es
- * exactamente el trabajo que uno venía a evitar. Una página dibujada se
- * reconoce de un vistazo: el recibo del agua no se parece al del colegio.
+ * ── Why the large document and not tabs ─────────────────────────────────────
+ * Because "Receipt 1 de 8" says nothing. Eight identical tabs force
+ * opening them one by one to find the bill you are looking for, which is
+ * exactly the work you came to avoid. A drawn page is
+ * recognized at a glance: the water bill does not look like the school one.
  *
- * Los archivos se piden con el token y llegan como `blob:`; el porqué está en
+ * The files are requested with the token and arrive as `blob:`; the why is in
  * `useSupportFiles`.
  */
 export function Receipts({ transactionId }: { transactionId: number }) {
@@ -69,15 +69,15 @@ export function Receipts({ transactionId }: { transactionId: number }) {
 
   if (g.files.isLoading) {
     /*
-      ── El alto ya reservado ──────────────────────────────────────────────
-      Mientras se piden, la columna ocupa lo mismo que lo que va a llegar:
-      el cuadro donde se sueltan mide 246 en el teléfono (su `min-h-36`, su
-      relleno, el rótulo y el botón de pegar) y la previsualización, de 220
-      para arriba. `min-h-62` son 248. Con un renglón suelto, la ficha —que en
-      el teléfono cuelga del borde de abajo— crecía 230px al llegar la
-      respuesta y todo lo de dentro saltaba hacia arriba: Lighthouse lo medía
-      como un desplazamiento de 0,199. Si el cuadro cambia de alto, esto
-      también.
+      ── The height already reserved ───────────────────────────────────────
+      While they are requested, the column takes the same as what is coming:
+      the drop box measures 246 on the phone (its `min-h-36`, its
+      padding, the label and the paste button) and the preview, from 220
+      up. `min-h-62` is 248. With a stray line, the sheet —which on
+      the phone hangs from the bottom edge— grew 230px when the
+      response arrived and everything inside jumped up: Lighthouse measured it
+      as a shift of 0.199. If the box changes height, this
+      does too.
     */
     return (
       <p className="flex min-h-62 flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -92,11 +92,11 @@ export function Receipts({ transactionId }: { transactionId: number }) {
       <GalleryPreview g={g} />
 
       {/*
-        ── Sin fila de miniaturas ────────────────────────────────────────────
-        Eran ocho cuadrados de 104px debajo del papel, y con la ficha topada en
-        720 se comían un tercio de la columna para decir algo que el papel ya
-        dice: cuál se está mirando. Lo que hacían —contar, elegir, añadir,
-        quitar— cabe sobre el propio documento y ahí no gasta alto.
+        ── No thumbnail row ──────────────────────────────────────────────────
+        They were eight 104px squares under the paper, and with the sheet capped at
+        720 they ate a third of the column to say something the paper already
+        says: which one is being looked at. What they did —count, pick, add,
+        remove— fits on the document itself and there it spends no height.
       */}
       {list.length === 0 && (
         <div className="flex min-h-0 flex-1">
@@ -120,28 +120,28 @@ export function Receipts({ transactionId }: { transactionId: number }) {
   );
 }
 
-/** El soporte que se está viendo, con sus mandos encima. */
+/** The receipt being shown, with its controls on top. */
 function GalleryPreview({ g }: { g: Gallery }) {
   const { list, urls, failures } = g.files;
-  // El que se está viendo, recortado: borrar el último dejaba el índice
-  // apuntando a un soporte que ya no existe.
+  // The one being shown, clamped: deleting the last one left the index
+  // pointing at a receipt that no longer exists.
   const i = Math.min(g.activeIndex, list.length - 1);
   const enseñado = i >= 0 ? list[i] : undefined;
   if (!enseñado) return null;
 
   return (
     <FilePreview
-      // La clave es el SOPORTE y no su url: con la url, el marco se desmontaba
-      // y se volvía a montar al llegar el archivo, que es justo el parpadeo que
-      // esto viene a quitar.
+      // The key is the RECEIPT and not its url: with the url, the frame unmounted
+      // and mounted again when the file arrived, which is exactly the flicker that
+      // this comes to remove.
       key={String(enseñado.id)}
       url={urls[String(enseñado.id)]}
       error={failures[String(enseñado.id)]}
       onRetry={g.files.retry}
       isImage={enseñado.mimeType.startsWith('image/')}
-      // Aquí SÍ hay pase a pantalla completa —el soporte ya existe en el
-      // servidor, con su descarga y su zoom—, así que la previsualización es
-      // también la puerta.
+      // Here there IS a full-screen lightbox —the receipt already exists on the
+      // server, with its download and its zoom—, so the preview is
+      // also the door.
       onOpen={() => g.setEnlargedIndex(i)}
       actions={
         <>
@@ -154,8 +154,8 @@ function GalleryPreview({ g }: { g: Gallery }) {
             <Plus className="size-4" aria-hidden="true" />
           </OverlayButton>
 
-          {/* Borrar pregunta antes: es lo único de esta barra que no se puede
-              deshacer. */}
+          {/* Deleting asks first: it is the only thing in this bar that cannot be
+              undone. */}
           <OverlayButton
             label={t('transactions.supports.deleteThis')}
             onClick={() => g.setIsDeleting(enseñado)}
@@ -168,7 +168,7 @@ function GalleryPreview({ g }: { g: Gallery }) {
   );
 }
 
-/** Lo que se abre encima de la galería: borrar, subir y el pase. */
+/** What opens on top of the gallery: delete, upload and the lightbox. */
 function GalleryOverlays({ g, transactionId }: { g: Gallery; transactionId: number }) {
   const { list, urls, failures } = g.files;
 
@@ -180,7 +180,7 @@ function GalleryOverlays({ g, transactionId }: { g: Gallery; transactionId: numb
         onCancel={() => g.setIsDeleting(null)}
         onDeleted={() => {
           g.setIsDeleting(null);
-          // Si se va el último de la fila, se enseña el anterior.
+          // If the last one in the row goes, the previous one is shown.
           g.setActiveIndex((n) => Math.max(0, Math.min(n, list.length - 2)));
         }}
       />

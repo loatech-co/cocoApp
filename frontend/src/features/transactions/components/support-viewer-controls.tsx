@@ -6,20 +6,20 @@ import { t } from '@/shared/lib/i18n';
 import { useOnChange } from '@/shared/lib/on-change';
 import { OverlayButton, ControlReadout } from '@/shared/ui/molecules/overlay-control';
 
-/** Los saltos del zoom. Fijos y pocos: un control continuo pide precisión que
-    nadie quiere darle a un recibo. */
+/** The zoom steps. Fixed and few: a continuous control asks for a precision
+    nobody wants to give a receipt. */
 const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3, 4];
-/** El índice del 100 %, por nombre: `ZOOMS.indexOf(2)` es el 200 %, no el 2º. */
+/** The index of 100 %, by name: `ZOOMS.indexOf(2)` is 200 %, not the 2nd. */
 const NORMAL = ZOOMS.indexOf(1);
 
-/** El zoom y la página del pase, que vuelven a empezar con cada soporte. */
+/** The lightbox's zoom and page, which start over with each receipt. */
 export function useViewerZoom(index: number) {
   const [zoom, setZoom] = useState(NORMAL);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
 
-  // Cambiar de soporte reinicia el zoom y la página: seguir en la página 3 de
-  // un recibo de una sola hoja deja el visor en blanco.
+  // Switching receipts resets the zoom and the page: staying on page 3 of
+  // a single-page receipt leaves the viewer blank.
   useOnChange([index], () => {
     setZoom(NORMAL);
     setPage(1);
@@ -31,13 +31,13 @@ export function useViewerZoom(index: number) {
     [],
   );
 
-  // `zoom` siempre está dentro de `ZOOMS`: lo recortan `cambiarZoom` y `NORMAL`.
+  // `zoom` is always inside `ZOOMS`: `changeZoom` and `NORMAL` clamp it.
   const scale = ZOOMS[zoom] ?? 1;
 
   return { zoom, setZoom, scale, changeZoom, page, setPage, pages, setPages };
 }
 
-/** El nombre, la posición y el peso del soporte, y lo que se hace con él entero. */
+/** The receipt's name, position and size, and what is done with it as a whole. */
 export function ViewerHeader({
   receipt,
   index,
@@ -64,9 +64,9 @@ export function ViewerHeader({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        {/* Descargar es un enlace, no un botón con JavaScript: el navegador
-            ya sabe guardar un archivo, y con `download` se guarda con su
-            nombre de verdad y no con el uuid del almacén. */}
+        {/* Downloading is a link, not a button with JavaScript: the browser
+            already knows how to save a file, and with `download` it is saved with its
+            real name and not with the storage uuid. */}
         {url && (
           <a
             href={url}
@@ -78,8 +78,8 @@ export function ViewerHeader({
             <Download className="size-4" aria-hidden="true" />
           </a>
         )}
-        {/* Poder quitar lo que se acaba de subir por error. Sin esto, una
-            foto movida se queda para siempre colgando del movimiento. */}
+        {/* Being able to remove what was just uploaded by mistake. Without this, a
+            blurry photo stays hanging from the transaction forever. */}
         <OverlayButton onClick={onDelete} label={t('transactions.supports.deleteTitle')}>
           <Trash2 className="size-4" aria-hidden="true" />
         </OverlayButton>
@@ -91,7 +91,7 @@ export function ViewerHeader({
   );
 }
 
-/** Una flecha a un lado del recibo, para pasar al soporte de al lado. */
+/** An arrow on one side of the receipt, to move to the receipt next to it. */
 export function ViewerArrow({
   direction,
   disabled: isDisabled,
@@ -124,7 +124,7 @@ export function ViewerArrow({
 interface ZoomProps {
   zoom: number;
   scale: number;
-  /** Un paso (`1`, `-1`) o `null` para volver al tamaño normal. */
+  /** A step (`1`, `-1`) or `null` to go back to the normal size. */
   onZoom: (step: number | null) => void;
 }
 
@@ -134,7 +134,7 @@ interface PageProps {
   onPage: (change: (page: number) => number) => void;
 }
 
-/** El zoom, y las páginas cuando el PDF tiene más de una. */
+/** The zoom, and the pages when the PDF has more than one. */
 export function ViewerControls({ vista }: { vista: ReturnType<typeof useViewerZoom> }) {
   return (
     <div className="mt-3 flex shrink-0 flex-wrap items-center justify-center gap-3">
@@ -160,8 +160,8 @@ function ZoomControls({ zoom, scale, onZoom }: ZoomProps) {
       >
         <Minus className="size-4" aria-hidden="true" />
       </OverlayButton>
-      {/* El porcentaje se pulsa para volver al tamaño normal: es donde todo el
-          mundo intenta pulsar cuando se ha perdido ampliando. */}
+      {/* The percentage is pressed to go back to the normal size: it is where
+          everyone tries to press when they got lost zooming. */}
       <ControlReadout width="zoom" onClick={() => onZoom(null)}>
         {Math.round(scale * 100)} %
       </ControlReadout>

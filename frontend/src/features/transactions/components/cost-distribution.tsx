@@ -10,30 +10,30 @@ import { BackCrumb } from '@/shared/ui/atoms/level-nav';
 interface DistributionProps {
   rows: { categoryId: number | null; name: string; total: string; count: number }[];
   level: string;
-  /** De quién son las filas. `null` cuando son los centros de costos. */
+  /** Whose rows these are. `null` when they are the cost centers. */
   parent: { id: number; name: string } | null;
   totalSpent: string;
-  /** El camino hasta donde se bajó. Vacío = se está en los centros de costos. */
+  /** The path down to where you drilled. Empty = you are at the cost centers. */
   path: { id: number; name: string }[];
   onDrillDown: (id: number) => void;
   onDrillUp: () => void;
 }
 
 /**
- * En qué se fue, al nivel que corresponda.
+ * What it went on, at the level that applies.
  *
- * Cada fila BAJA un nivel al tocarla: de centros a categorías, de categorías a
- * conceptos. Es la forma de responder "¿y dentro de esto, qué?" sin cambiar de
- * pantalla ni perder el rango de fechas.
+ * Each row goes DOWN a level when tapped: from centers to categories, from categories
+ * to concepts. It is the way to answer "and inside this, what?" without changing
+ * screens or losing the date range.
  */
 /**
- * En qué se repartió el gasto.
+ * How the spending was split.
  *
- * ── Por qué una dona y no barras ────────────────────────────────────────────
- * Porque la pregunta es de PROPORCIÓN, no de ranking: cuánto se lleva cada
- * centro DEL TOTAL. Una fila de barras compara unas con otras y deja el total
- * implícito; la dona lo pone en el centro y cada porción se lee contra él sin
- * hacer ninguna cuenta.
+ * ── Why a donut and not bars ────────────────────────────────────────────────
+ * Because the question is about PROPORTION, not ranking: how much each
+ * center takes OF THE TOTAL. A row of bars compares them with each other and leaves
+ * the total implicit; the donut puts it in the middle and each slice reads against
+ * it without doing any math.
  */
 export function Distribution({
   rows,
@@ -57,23 +57,23 @@ export function Distribution({
           <ShowNames isList={isList} onToggle={() => setIsList((wasList) => !wasList)} />
         </div>
 
-        {/* Bajar de nivel es un clic; subir tiene que serlo también. Sin esto,
-            entrar en un centro de costos era un viaje de ida: la única salida
-            era limpiar el filtro entero desde la barra de arriba. */}
+        {/* Going down a level is one click; going up has to be one too. Without this,
+            entering a cost center was a one-way trip: the only way out
+            was clearing the whole filter from the bar above. */}
         {path.length > 0 ? (
           <div className="flex min-w-0 self-start">
             <BackCrumb path={path.map((n) => n.name)} onBack={onDrillUp} />
           </div>
         ) : (
-          /* El NOMBRE de a quién pertenecen estas filas, no el nivel al que
-             están. "Por categoría" no dice de qué: las categorías de cuál centro. */
+          /* The NAME of whom these rows belong to, not the level they
+             are at. "Por categoría" does not say of what: the categories of which center. */
           <p className="truncate text-xs text-muted-foreground">
             {parent?.name ?? t('transactions.distribution.byLevel', { level })}
           </p>
         )}
 
-        {/* `flex-1` para que la dona tenga contra qué medir: la tarjeta ya
-            tiene alto —se lo dio la fila— y este es el trozo que le queda. */}
+        {/* `flex-1` so the donut has something to measure against: the card already
+            has a height —the row gave it one— and this is the piece it has left. */}
         <Donut
           className="mt-6 min-h-0 flex-1"
           isListVisible={isList}
@@ -90,12 +90,12 @@ export function Distribution({
   );
 }
 
-/* Esconder los nombres no cambia el ancho de la tarjeta: lo fija la
-    rejilla del resumen, no lo que haya dentro. */
-/* Mismo botón que los de la barra de filtros: la variante
-    `herramienta` y el tamaño `chip-icon`. Un control que hace lo
-    mismo —encender y apagar algo de la vista— tiene que verse igual
-    en las dos pantallas. */
+/* Hiding the names does not change the card's width: the dashboard
+    grid sets it, not what is inside. */
+/* Same button as the ones in the filter bar: the `tool`
+    variant and the `sm-icon` size. A control that does the
+    same —turning something in the view on and off— has to look the same
+    on both screens. */
 function ShowNames({ isList, onToggle }: { isList: boolean; onToggle: () => void }) {
   return (
     <Button

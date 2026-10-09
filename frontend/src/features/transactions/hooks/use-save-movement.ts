@@ -15,30 +15,30 @@ import { shrinkReceipts } from '@/shared/lib/shrink-receipt';
 
 import type { MovementSheetState } from './use-movement-form';
 
-/** Lo que se manda al servidor, sacado de lo escrito. */
+/** What is sent to the server, taken from what was typed. */
 function movementPayload(sheet: MovementSheetState) {
   return {
     date: sheet.date,
     amount: sheet.amount.replace(',', '.'),
     type: sheet.type,
     description: sheet.description.trim() || null,
-    // El comercio sigue a la descripción: es lo que alimenta la
-    // categorización automática de futuras importaciones.
+    // The merchant follows the description: it is what feeds the
+    // automatic categorization of future imports.
     merchant: sheet.description.trim() || null,
     notes: sheet.notes.trim() || null,
     categoryId: sheet.categoryId ?? null,
-    // De dónde entró, y el texto del que salió si hubo recibo: es lo que
-    // permite saber después por qué se clasificó así, y reinterpretarlo.
+    // Where it came in from, and the text it came from if there was a receipt: it is what
+    // lets you know later why it was classified that way, and reinterpret it.
     source: 'web' as const,
     rawText: sheet.textRead.trim() || null,
   };
 }
 
-/** Los soportes, ya con un movimiento del que colgar. */
+/** The receipts, now with a transaction to hang from. */
 async function uploadPending(id: number, pending: File[]): Promise<void> {
   const data = new FormData();
-  // Ver `shared/lib/encoger-soporte.ts`: lo que sube es un JPG liviano, no la
-  // foto de doce megapíxeles que da un teléfono.
+  // See `shared/lib/shrink-receipt.ts`: what is uploaded is a light JPG, not the
+  // twelve-megapixel photo a phone gives.
   for (const file of await shrinkReceipts(pending)) {
     data.append('files', file);
   }
@@ -46,16 +46,16 @@ async function uploadPending(id: number, pending: File[]): Promise<void> {
 }
 
 /**
- * ── Aprender, solo si hubo sugerencia ───────────────────────────────────────
- * Si alguna fuente automática propuso algo y el movimiento se guardó
- * clasificado, lo que quedó —aceptado o corregido— es una regla que vale la
- * pena recordar. Un movimiento clasificado a mano sin que nadie hubiera
- * sugerido nada no pasa por aquí: no hay nada que confirmar.
+ * ── Learn, only if there was a suggestion ───────────────────────────────────
+ * If any automatic source proposed something and the transaction was saved
+ * classified, what was left —accepted or corrected— is a rule worth
+ * remembering. A transaction classified by hand without anyone having
+ * suggested anything does not go through here: there is nothing to confirm.
  *
- * Sin esperar y sin fallar: aprender es de regalo, y una regla que no se pudo
- * guardar no puede convertir un gasto bien registrado en un error. De
- * descripciones vacías o genéricas el servidor no aprende; lo decide él, que
- * es quien tiene la lista.
+ * Without waiting and without failing: learning is a bonus, and a rule that could not be
+ * saved cannot turn a properly recorded expense into an error. From
+ * empty or generic descriptions the server does not learn; it decides that, since it
+ * is the one that has the list.
  */
 function learnFromSuggestion(body: ReturnType<typeof movementPayload>): void {
   if (body.categoryId === null || !body.description) return;
@@ -66,19 +66,19 @@ function learnFromSuggestion(body: ReturnType<typeof movementPayload>): void {
 }
 
 /**
- * Crea una categoría o un concepto dentro de lo que ya está elegido, y lo elige.
+ * Creates a category or a concept inside what is already picked, and picks it.
  *
- * ── Por qué aquí y no en Centros de costos ──────────────────────────────────
- * Porque el momento en que uno descubre que algo no existe es exactamente el
- * momento en que lo está buscando. Mandarlo a otra pantalla —y a volver, y a
- * buscar otra vez— es donde se abandona la tarea y el movimiento acaba sin
- * clasificar.
+ * ── Why here and not in Centros de costos ───────────────────────────────────
+ * Because the moment you discover something does not exist is exactly the
+ * moment you are looking for it. Sending you to another screen —and back, and
+ * searching again— is where the task gets abandoned and the transaction ends up
+ * unclassified.
  *
- * ── Por qué no vale para los centros de costos ──────────────────────────────
- * Porque un centro es la estructura de arriba y se define tres veces en la
- * vida de una cuenta. Poder inventar uno al vuelo mientras se registra un
- * gasto es como acaban las cuentas con "Casa", "casa" y "Hogar" siendo lo
- * mismo. Su combo no ofrece crear, y esto no se llama desde ahí.
+ * ── Why it does not apply to cost centers ───────────────────────────────────
+ * Because a center is the top structure and it is defined three times in the
+ * life of an account. Being able to make one up on the fly while recording an
+ * expense is how accounts end up with "Casa", "casa" and "Hogar" being the
+ * same. Its combo does not offer creating, and this is not called from there.
  */
 export function useCreateInside(sheet: MovementSheetState) {
   const createCategory = useCreateCategory();
@@ -104,7 +104,7 @@ export function useCreateInside(sheet: MovementSheetState) {
   return { createInside, isCreating: createCategory.isPending };
 }
 
-/** Deshace lo que ESTE intento creó, porque su soporte no llegó. */
+/** Undoes what THIS attempt created, because its receipt did not arrive. */
 async function undoCreation(
   remove: ReturnType<typeof useDeleteTransaction>,
   sheet: MovementSheetState,
@@ -122,30 +122,30 @@ async function undoCreation(
 }
 
 /**
- * Guardar la ficha: crear o actualizar, y subir sus soportes.
+ * Saving the sheet: create or update, and upload its receipts.
  *
- * ── Guardar son DOS peticiones, y o entran las dos o no entra ninguna ───────
- * Primero se crea el movimiento y después se suben sus soportes, porque un
- * soporte cuelga de un movimiento y hasta que no existe no hay de qué
- * colgarlo. Esa segunda petición puede fallar sola: el servidor se queda sin
- * recursos para tratar la imagen, se cae la conexión a mitad de una foto, el
- * archivo es un formato que allá no se puede abrir.
+ * ── Saving is TWO requests, and either both go in or neither does ───────────
+ * First the transaction is created and then its receipts are uploaded, because a
+ * receipt hangs from a transaction and until it exists there is nothing to
+ * hang it from. That second request can fail on its own: the server runs out of
+ * resources to process the image, the connection drops halfway through a photo, the
+ * file is a format that cannot be opened over there.
  *
- * Cuando eso pasa en un movimiento que se acaba de crear, se DESHACE: se borra
- * lo que se acababa de registrar y se dice que no quedó nada. Un gasto cuyo
- * soporte no llegó es peor que ningún gasto —queda anotada plata sin el papel
- * que la explica, y nada en la pantalla recuerda que falta—, así que la ficha
- * vuelve al estado del que salió y se reintenta entera.
+ * When that happens on a transaction that was just created, it is UNDONE: what
+ * had just been recorded is deleted and it is said that nothing was left. An expense whose
+ * receipt did not arrive is worse than no expense —money is noted down without the paper
+ * that explains it, and nothing on screen recalls it is missing—, so the sheet
+ * goes back to the state it came from and is retried whole.
  *
- * Antes se quedaba registrado y se avisaba. La razón era buena —pulsar
- * «Registrar» otra vez creaba un SEGUNDO movimiento por la misma plata— pero
- * la solución era peor que el problema: para no duplicar había que dejar a
- * medias. Deshaciendo no hay nada que duplicar, y el reintento es el mismo
- * camino de la primera vez.
+ * Before, it stayed recorded and a warning was shown. The reason was good —pressing
+ * «Registrar» again created a SECOND transaction for the same money— but
+ * the solution was worse than the problem: to avoid duplicating, things had to be left
+ * half done. Undoing, there is nothing to duplicate, and the retry is the same
+ * path as the first time.
  *
- * ── Y si el deshacer TAMBIÉN falla ──────────────────────────────────────────
- * Entonces sí quedó registrado, y hay que decirlo. Ahí se recuerda el id: el
- * siguiente intento ACTUALIZA ese movimiento en vez de crear otro.
+ * ── And if the undo ALSO fails ──────────────────────────────────────────────
+ * Then it did stay recorded, and that has to be said. There the id is remembered: the
+ * next attempt UPDATES that transaction instead of creating another.
  */
 export function useSaveMovement(
   sheet: MovementSheetState,
@@ -162,7 +162,7 @@ export function useSaveMovement(
     const body = movementPayload(sheet);
     const existing = transaction?.id ?? sheet.registered;
     let id = existing ?? undefined;
-    /** Lo creó ESTE intento. Es lo único que se puede deshacer sin preguntar. */
+    /** THIS attempt created it. It is the only thing that can be undone without asking. */
     let wasJustCreated = false;
 
     try {
@@ -181,8 +181,8 @@ export function useSaveMovement(
       onClose();
     } catch (e) {
       const message = e instanceof ApiClientError ? e.message : t('centers.saveFailed');
-      // Editando, o reintentando sobre uno que ya estaba: aquí no hay nada que
-      // deshacer. Lo que había antes sigue estando, que es lo correcto.
+      // Editing, or retrying on one that already existed: there is nothing here to
+      // undo. What was there before is still there, which is correct.
       if (!wasJustCreated || id === undefined) sheet.setError(message);
       else await undoCreation(remove, sheet, id, message);
     } finally {

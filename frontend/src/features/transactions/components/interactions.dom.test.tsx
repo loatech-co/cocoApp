@@ -10,19 +10,19 @@ import { keys } from '@/shared/api/query-keys';
 import { TransactionModal } from './transaction-modal';
 
 /*
-  Cuántas veces tiene que tocar la pantalla una persona para anotar un gasto.
+  How many times a person has to touch the screen to note down an expense.
 
-  La fase 2 lo fija como meta —cinco interacciones o menos con clasificación
-  completa, cuatro o menos cuando la sugerencia acierta— y hasta ahora el único
-  número que había era una cuenta a mano en el registro. Esta prueba CUENTA:
-  cada gesto de la persona pasa por `gesto()`, y lo que se afirma al final es
-  el total. Si la ficha gana un paso, el número sube y la prueba lo dice; si
-  pierde uno, también, para que se anote.
+  Phase 2 sets it as a goal —five interactions or fewer with full
+  classification, four or fewer when the suggestion is right— and until now the only
+  number there was a count by hand in the log. This test COUNTS:
+  each gesture of the person goes through `gesture()`, and what is asserted at the end is
+  the total. If the sheet gains a step, the number goes up and the test says so; if
+  it loses one, too, so it gets noted down.
 
-  Lo que NO cuenta como interacción: leer. Ver que la sugerencia ya está
-  puesta no es un gesto. Y se cuenta TODO desde que la ficha se abre: la ficha
-  nueva abre ya en el formulario —la pantalla de «cómo empezar» que había
-  delante se retiró—, así que el primer gesto es escribir el monto.
+  What does NOT count as an interaction: reading. Seeing that the suggestion is already
+  set is not a gesture. And EVERYTHING is counted from when the sheet opens: the new
+  sheet already opens in the form —the «cómo empezar» screen that was
+  in front was removed—, so the first gesture is typing the amount.
 */
 
 const red = vi.fn();
@@ -45,13 +45,13 @@ vi.mock('@/shared/api/api-client', async () => {
 vi.mock('@/features/transactions/api/read-receipt', () => ({ readReceipt: vi.fn() }));
 
 /*
-  La sugerencia del historial, de mentira y bajo control de cada prueba.
+  The history suggestion, faked and under each test's control.
 
-  La de verdad espera 400 ms y pregunta al servidor; aquí lo que se mide es
-  cuántos gestos ahorra cuando ACIERTA, no cuándo llega. Devuelve siempre lo
-  mismo porque, en una ficha a mano, la descripción de la que depende no se
-  escribe —el campo libre se cambió por el buscador—: es la forma de poner una
-  sugerencia encima del formulario sin pasar por un recibo.
+  The real one waits 400 ms and asks the server; what is measured here is
+  how many gestures it saves when it is RIGHT, not when it arrives. It always returns the
+  same because, in a by-hand sheet, the description it depends on is not
+  typed —the free-text field was swapped for the search—: it is the way to put a
+  suggestion on top of the form without going through a receipt.
 */
 const suggestion = vi.fn<
   () => { categoryId: number; confidence: number; reason: 'historial' } | null
@@ -86,7 +86,7 @@ const TREE = [
   },
 ] as unknown as CategoryTree[];
 
-/** El contador. Cada gesto de la persona pasa por aquí y por ningún otro sitio. */
+/** The counter. Every gesture of the person goes through here and through nowhere else. */
 let interactions = 0;
 function gesture(action: () => void): void {
   interactions += 1;
@@ -97,8 +97,8 @@ beforeEach(() => {
   interactions = 0;
   red.mockReset();
   suggestion.mockReturnValue(null);
-  // La red contesta por ruta: la ficha pide el árbol y los recientes nada más
-  // abrirse, y una respuesta única le daría un `{ id }` donde espera listas.
+  // The network answers by route: the sheet asks for the tree and the recent ones as soon as
+  // it opens, and a single response would give it an `{ id }` where it expects lists.
   red.mockImplementation((path: string, options?: { method?: string }) => {
     if (options?.method === 'POST' && path === '/transactions')
       return Promise.resolve({ data: { id: 42 } });
@@ -134,33 +134,33 @@ const typeAmount = () =>
   );
 
 async function save(): Promise<void> {
-  // El `async` sin `await` es a propósito: `act` asíncrono vacía además la
-  // cola de microtareas, donde se resuelven las peticiones que dispara el
-  // envío. Con la versión síncrona se miraría la red de antes.
-  // eslint-disable-next-line @typescript-eslint/require-await -- ver arriba
+  // The `async` with no `await` is on purpose: async `act` also flushes the
+  // microtask queue, where the requests fired by the
+  // submit resolve. With the synchronous version it would look at the network from before.
+  // eslint-disable-next-line @typescript-eslint/require-await -- see above
   await act(async () => {
     gesture(() => fireEvent.submit(document.getElementById('mov-valor')!.closest('form')!));
   });
 }
 
-/** Lo que se mandó a crear, para comprobar que fue CON clasificación. */
+/** What was sent to be created, to check it went WITH a classification. */
 const createdBody = () =>
   red.mock.calls.find(([path, o]) => path === '/transactions' && o?.method === 'POST')?.[1]
     ?.body as { categoryId: number | null; amount: unknown } | undefined;
 
 const wasLearned = () => red.mock.calls.some(([path]) => path === '/categorization/learn');
 
-describe('Registrar un gasto con clasificación completa', () => {
-  it('a mano, por el buscador: cinco gestos desde que se abre la ficha', async () => {
+describe('Recording an expense with full classification', () => {
+  it('by hand, through the search: five gestures from when the sheet opens', async () => {
     openNewSheet();
 
-    // La ficha abre en el formulario: no hay nada que pulsar antes de escribir.
+    // The sheet opens in the form: there is nothing to press before typing.
     expect(screen.queryByText('Registrar manualmente')).toBeNull();
 
     typeAmount(); // 1
 
-    // El buscador es un botón que abre la caja de búsqueda: abrirlo es un
-    // gesto, escribir es otro, elegir el resultado es el tercero.
+    // The search is a button that opens the search box: opening it is one
+    // gesture, typing is another, picking the result is the third.
     gesture(() => fireEvent.click(screen.getByRole('button', { name: /Concepto/ }))); // 2
     gesture(() =>
       fireEvent.change(screen.getByLabelText('Buscar concepto o categoría'), {
@@ -172,27 +172,27 @@ describe('Registrar un gasto con clasificación completa', () => {
     await save(); // 5
 
     expect(createdBody()).toMatchObject({ categoryId: 100 });
-    // Nadie sugirió nada: clasificar a mano no es confirmar una sugerencia.
+    // Nobody suggested anything: classifying by hand is not confirming a suggestion.
     expect(wasLearned()).toBe(false);
 
     /*
-      El número real, contándolo TODO desde que se abre la ficha: monto,
-      abrir el buscador, escribir, elegir y guardar. Son exactamente los
-      cinco que pide la meta (≤ 5); el sexto que había era la pantalla de
-      «cómo empezar», y ya no está.
+      The real number, counting EVERYTHING from when the sheet opens: amount,
+      opening the search, typing, picking and saving. They are exactly the
+      five the goal asks for (≤ 5); the sixth there used to be was the
+      «cómo empezar» screen, and it is gone.
     */
     expect(interactions).toBe(5);
   });
 
-  it('con una sugerencia que acierta: dos gestos desde que se abre la ficha', async () => {
+  it('with a suggestion that is right: two gestures from when the sheet opens', async () => {
     suggestion.mockReturnValue({ categoryId: 100, confidence: 0.9, reason: 'historial' });
     openNewSheet();
 
     typeAmount(); // 1
 
-    // La sugerencia ya está puesta y dice de dónde salió. Mirarla no es un
-    // gesto: la regla de no guardar nunca una clasificación sin que la
-    // persona la VEA se cumple con tenerla delante, no con un clic más.
+    // The suggestion is already set and says where it came from. Looking at it is not a
+    // gesture: the rule of never saving a classification without the
+    // person SEEING it is met by having it in front of them, not with one more click.
     expect(screen.getByRole('button', { name: /Concepto/ }).textContent).toContain(
       'Celsia (Energía)',
     );
@@ -203,17 +203,17 @@ describe('Registrar un gasto con clasificación completa', () => {
     expect(createdBody()).toMatchObject({ categoryId: 100 });
 
     /*
-      Hubo sugerencia, pero no hay de qué aprender: la ficha a mano no tiene
-      descripción —el campo libre se cambió por el buscador— y una regla
-      sin texto no es una regla. `learn` solo se llama con descripción, y
-      ese camino —el de un recibo leído— lo cubre la e2e de la API.
+      There was a suggestion, but there is nothing to learn from: the by-hand sheet has no
+      description —the free-text field was swapped for the search— and a rule
+      with no text is not a rule. `learn` is only called with a description, and
+      that path —the one of a read receipt— is covered by the API e2e.
     */
     expect(wasLearned()).toBe(false);
 
     /*
-      El número real, por debajo del ≤ 4 de la meta: monto y guardado, y
-      nada más. Sin el «cómo empezar» delante, la sugerencia que acierta deja
-      la ficha en dos gestos.
+      The real number, below the goal's ≤ 4: amount and save, and
+      nothing else. Without the «cómo empezar» in front, the suggestion that is right leaves
+      the sheet at two gestures.
     */
     expect(interactions).toBe(2);
   });

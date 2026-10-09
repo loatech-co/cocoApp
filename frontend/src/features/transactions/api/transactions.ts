@@ -19,14 +19,14 @@ import {
 import type { Changes } from '@/shared/api/pages';
 import { keys, useInvalidateDerived } from '@/shared/api/query-keys';
 
-// ── Movimientos ──────────────────────────────────────────────────────────────
+// ── Transactions ─────────────────────────────────────────────────────────────
 
 export type TransactionFilters = TransactionsListParams;
 
 export function useTransactions(
   filters: TransactionFilters = {},
-  // `enabled` para quien monta la consulta antes de necesitarla: la ficha de
-  // un movimiento está siempre montada y solo quiere los recientes al abrirse.
+  // `enabled` for whoever mounts the query before needing it: the sheet of
+  // a transaction is always mounted and only wants the recent ones when it opens.
   options: { enabled?: boolean } = {},
 ) {
   return useQuery({
@@ -37,14 +37,14 @@ export function useTransactions(
 }
 
 /**
- * Desde cuándo y hasta cuándo hay historia.
+ * From when and until when there is history.
  *
- * Es lo que hace que "Todo" signifique algo: sin esto el rango arrancaba en
- * 1970 y el eje de la gráfica se estiraba sobre medio siglo vacío.
+ * It is what makes "Todo" mean something: without this the range started in
+ * 1970 and the chart axis stretched over half an empty century.
  *
- * `staleTime` alto a propósito: el primer movimiento de alguien no cambia
- * salvo que borre el más antiguo, y volver a preguntarlo en cada pantalla
- * sería una consulta por nada.
+ * High `staleTime` on purpose: someone's first transaction does not change
+ * unless they delete the oldest one, and asking for it again on every screen
+ * would be a query for nothing.
  */
 export function useHistory() {
   return useQuery({
@@ -86,13 +86,13 @@ export function useDashboard(filters: SummaryFilters = {}): UseQueryResult<Dashb
   return useQuery({
     queryKey: keys.dashboard(filters),
     queryFn: async () => (await dashboardGet(withoutEmpty(filters))).data,
-    // Mantiene el gráfico anterior mientras llega el nuevo: sin esto, cada
-    // cambio de filtro vacía la pantalla y la tendencia parpadea.
+    // Keeps the previous chart while the new one arrives: without this, every
+    // filter change empties the screen and the trend flickers.
     placeholderData: (previous) => previous,
   });
 }
 
-// ── Edición ──────────────────────────────────────────────────────────────────
+// ── Editing ──────────────────────────────────────────────────────────────────
 
 export function useUpdateTransaction() {
   const invalidate = useInvalidateDerived();

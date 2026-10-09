@@ -15,53 +15,53 @@ interface PendingSupportsProps {
   files: File[];
   onAdd: (files: File[]) => void;
   onRemove: (index: number) => void;
-  /** Hands the sheet over to the camera; what it captures comes back through `onAñadir`'s owner. */
+  /** Hands the sheet over to the camera; what it captures comes back through `onAdd`'s owner. */
   onTakePhoto: () => void;
 }
 
 /**
- * Los soportes elegidos antes de que el movimiento exista.
+ * The receipts picked before the transaction exists.
  *
- * ── Por qué los `blob:` viven aquí ──────────────────────────────────────────
- * Porque los mira la previsualización y los mandos que pasan de uno a otro:
- * creados en cada sitio, el mismo archivo se cargaría dos veces en memoria.
- * Aquí se crean una vez y se sueltan juntos.
+ * ── Why the `blob:` URLs live here ──────────────────────────────────────────
+ * Because both the preview and the controls that move from one to the next look at them:
+ * created in each place, the same file would be loaded twice in memory.
+ * Here they are created once and released together.
  */
 export function PendingReceipts(props: PendingSupportsProps) {
   const { files, onAdd, onRemove, onTakePhoto } = props;
   const [activeIndex, setActiveIndex] = useState(0);
   const urls = useObjectUrls(files);
-  /** El panel de subir, sobre la ficha. El mismo que abre la galería de uno
-      ya guardado. */
+  /** The upload panel, over the sheet. The same one the gallery of an already
+      saved one opens. */
   const [isAdding, setIsAdding] = useState(false);
 
-  // El que se está viendo, recortado: quitar el último dejaba el índice
-  // apuntando a un archivo que ya no existe.
+  // The one being shown, clamped: removing the last one left the index
+  // pointing at a file that no longer exists.
   const i = Math.min(activeIndex, files.length - 1);
   const enseñado = i >= 0 ? files[i] : undefined;
 
   return (
     /*
-      `min-h-0 flex-1` SIEMPRE, y no solo cuando está vacía.
+      `min-h-0 flex-1` ALWAYS, and not only when it is empty.
 
-      Lo llevaba solo en el caso vacío, que es cuando el hueco de soltar tiene
-      que llenar la columna. Pero con un documento dentro pasa lo mismo: si
-      esta caja mide lo que miden sus hijos, el previsualizador no tiene contra
-      qué crecer y se queda en su alto mínimo con el resto de la columna en
-      blanco debajo.
+      It only had it in the empty case, which is when the drop slot has
+      to fill the column. But with a document inside the same happens: if
+      this box measures what its children measure, the previewer has nothing
+      to grow against and stays at its minimum height with the rest of the column
+      blank below.
     */
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/*
-        La misma columna que la de un movimiento ya guardado: UNA
-        previsualización con sus mandos encima, sin fila de miniaturas. Lo que
-        cambia es de dónde salen los archivos —de la memoria, no del servidor—
-        y que aquí no hay pase a pantalla completa que abrir: el soporte no
-        existe en ninguna parte hasta que se guarda el movimiento.
+        The same column as that of an already saved transaction: ONE
+        preview with its controls on top, no thumbnail row. What
+        changes is where the files come from —memory, not the server—
+        and that here there is no full-screen lightbox to open: the receipt does not
+        exist anywhere until the transaction is saved.
       */}
       {enseñado && (
         <FilePreview
-          // La clave es el ARCHIVO y no su url: con la url, el marco se
-          // desmontaba y se volvía a montar en cuanto se creaba el `blob:`.
+          // The key is the FILE and not its url: with the url, the frame
+          // unmounted and mounted again as soon as the `blob:` was created.
           key={`${enseñado.name}-${i}`}
           url={urls[i]}
           isImage={enseñado.type.startsWith('image/')}
@@ -101,12 +101,12 @@ export function PendingReceipts(props: PendingSupportsProps) {
 }
 
 /**
- * Sin ningún soporte todavía: el cuadro de soltar y las dos vías que antes
- * eran el selector.
+ * No receipt yet: the drop box and the two paths that used to
+ * be the chooser.
  *
  * "Cargar archivo" opens the same upload panel the chooser opened —drag, pick
  * or paste, over the sheet— and "Tomar foto" hands the sheet to the camera.
- * Both end in `escanear` through the owner's `onAñadir`, so what a file or a
+ * Both end in `scan` through the owner's `onAdd`, so what a file or a
  * photo does to the form is exactly what it did from the chooser; only where
  * it starts changed.
  *
@@ -143,7 +143,7 @@ function EmptyPendingSupports({
   );
 }
 
-/** Los mandos sobre el documento: pasar, añadir y quitar. */
+/** The controls over the document: move, add and remove. */
 function PendingActions({
   index,
   total,
@@ -165,9 +165,9 @@ function PendingActions({
         <Plus className="size-4" aria-hidden="true" />
       </OverlayButton>
 
-      {/* Aquí no se pregunta antes de quitar: lo que se va es un archivo que
-          todavía no se ha guardado en ninguna parte, así que volver a ponerlo
-          es arrastrarlo otra vez. */}
+      {/* No question is asked here before removing: what goes is a file that
+          has not been saved anywhere yet, so putting it back
+          is dragging it again. */}
       <OverlayButton
         label={t('transactions.supports.removeThis')}
         onClick={() => {

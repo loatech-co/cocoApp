@@ -10,12 +10,12 @@ import { MovementClassification } from './movement-classification';
 import { WhatWasRead, CouldNotRead } from './reading-notices';
 
 /**
- * La columna de los campos, cuando la ficha se puede tocar.
+ * The column of fields, when the sheet can be edited.
  *
- * El orden es el de la pregunta: de qué centro, de qué categoría, qué
- * concepto. Y después cuánto y cuándo, que son los dos datos que se copian del
- * papel. Sin rótulo de sección: tres campos con su nombre encima no necesitan
- * que alguien anuncie que son tres campos.
+ * The order is the question's: which center, which category, which
+ * concept. And then how much and when, which are the two facts copied from the
+ * paper. No section label: three fields with their name on them do not need
+ * someone announcing that they are three fields.
  */
 export function MovementFields(props: ComponentProps<typeof MovementClassification>) {
   const { sheet } = props;
@@ -23,13 +23,13 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
   return (
     <div className="flex flex-col gap-3">
       {/*
-        El aviso de lo que se leyó, DENTRO de la columna de campos.
+        The notice of what was read, INSIDE the fields column.
 
-        Estaba encima de la rejilla, a todo el ancho, y lo que dice —«verifica
-        esto antes de guardar»— no tiene nada que ver con el recibo de la
-        izquierda: habla de los campos de la derecha, que son los que se
-        rellenaron solos. Encabezando su columna, es el rótulo de lo que hay
-        debajo; cruzando la ficha entera, era un cartel.
+        It was above the grid, at full width, and what it says —«verifica
+        esto antes de guardar»— has nothing to do with the receipt on the
+        left: it talks about the fields on the right, which are the ones that
+        filled themselves in. Heading its column, it is the label of what is
+        below; across the whole sheet, it was a billboard.
       */}
       {sheet.reading && <WhatWasRead />}
       {sheet.unreadNotice && <CouldNotRead text={sheet.unreadNotice} />}
@@ -38,8 +38,8 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t('transactions.fields.amount')} id="mov-valor">
-          {/* Agrupa los miles al escribir y conserva el cursor. El porqué largo
-              está en el componente. */}
+          {/* Groups the thousands while typing and keeps the cursor. The long why
+              is in the component. */}
           <MoneyField
             id="mov-valor"
             value={sheet.amount}
@@ -55,17 +55,17 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
       </div>
 
       {/*
-        Las notas, dentro de la columna de campos y pegadas a los demás.
+        The notes, inside the fields column and right next to the others.
 
-        Estaban debajo de la rejilla y a todo el ancho: un recuadro de mil
-        píxeles para tres renglones que casi nunca se escriben. Y sin `mt-auto`:
-        una nota sobre este movimiento es un campo más de los que se rellenan
-        al registrarlo, y va donde va el siguiente, no donde sobra sitio.
+        They were under the grid and at full width: a box a thousand
+        pixels wide for three lines that are almost never written. And with no `mt-auto`:
+        a note about this transaction is one more field of the ones filled in
+        when recording it, and it goes where the next one goes, not where there is room to spare.
       */}
       <Field label={t('transactions.fields.notes')} id="mov-notas">
-        {/* Sin marcador. Decía «Opcional», que no es un ejemplo de lo que va
-            ahí sino una nota sobre la validación: este campo no lleva
-            `required`, y eso ya se sabe porque el formulario se envía sin él. */}
+        {/* No placeholder. It said «Opcional», which is not an example of what goes
+            there but a note about validation: this field has no
+            `required`, and that is already known because the form is submitted without it. */}
         <Textarea
           id="mov-notas"
           value={sheet.notes}

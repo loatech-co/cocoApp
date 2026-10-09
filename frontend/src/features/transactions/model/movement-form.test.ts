@@ -63,7 +63,7 @@ function reading(parts: Partial<Reading>): Reading {
   };
 }
 
-describe('hoyEnBogota', () => {
+describe('todayInBogota', () => {
   afterEach(() => vi.useRealTimers());
 
   it('is still the previous day in the first hours after UTC midnight', () => {
@@ -74,7 +74,7 @@ describe('hoyEnBogota', () => {
   });
 });
 
-describe('nombreDelTipo and mayuscula', () => {
+describe('typeName and capitalize', () => {
   it('names an income and everything else as an expense', () => {
     expect(typeName('income')).toBe('ingreso');
     expect(typeName('expense')).toBe('gasto');
@@ -101,7 +101,7 @@ describe('initialAmountAndDate', () => {
       ...parts,
     }) as PendingPayment;
 
-  it('opens a movement with its own amount and date', () => {
+  it('opens a transaction with its own amount and date', () => {
     const movement = { amount: '45000.50', date: '2026-04-02' } as Transaction;
 
     expect(initialAmountAndDate(movement, payment({}))).toEqual({
@@ -131,7 +131,7 @@ describe('initialAmountAndDate', () => {
     });
   });
 
-  it('starts a blank movement empty and dated today', () => {
+  it('starts a blank transaction empty and dated today', () => {
     expect(initialAmountAndDate(null, null)).toEqual({ amount: '', date: '2026-05-20' });
   });
 });

@@ -7,12 +7,12 @@ import { Input } from '@/shared/ui/atoms/input';
 import { DateSelector } from './date-selector';
 
 /**
- * La fecha se escribe, y lo escrito se entiende.
+ * The date is typed, and what is typed is understood.
  *
- * Abrir el calendario para poner el 3 de marzo del año pasado son cuatro clics
- * de flecha antes de empezar a mirar. Quien tiene el recibo delante ya sabe la
- * fecha, así que el camino corto es teclearla —y que la app la entienda como
- * la escriba cada quien, que es distinto de obligar a un formato.
+ * Opening the calendar to set March 3 of last year is four arrow
+ * clicks before you start looking. Whoever has the receipt in front of them already knows the
+ * date, so the short path is typing it —and having the app understand it however
+ * each person writes it, which is different from forcing a format.
  */
 afterEach(cleanup);
 
@@ -26,7 +26,7 @@ function type(text: string, onSelect = vi.fn()) {
   return onSelect;
 }
 
-describe('El campo de fecha que se escribe', () => {
+describe('The date field that is typed', () => {
   it.each([
     ['19 de septiembre 2026', '2026-09-19'],
     ['19 de septiembre de 2026', '2026-09-19'],
@@ -35,36 +35,36 @@ describe('El campo de fecha que se escribe', () => {
     ['10/09/2026', '2026-09-10'],
     ['10-09-2026', '2026-09-10'],
     ['2026-09-10', '2026-09-10'],
-  ])('entiende «%s»', (typed, iso) => {
+  ])('understands «%s»', (typed, iso) => {
     expect(type(typed)).toHaveBeenCalledWith(iso);
   });
 
-  it('lo que no se entiende vuelve a la última fecha válida', () => {
-    // Quedarse con un texto que no es una fecha dejaría el campo diciendo una
-    // cosa y el formulario guardando otra.
+  it('what is not understood goes back to the last valid date', () => {
+    // Keeping a text that is not a date would leave the field saying one
+    // thing and the form saving another.
     const onSelect = type('el martes pasado');
 
     expect(onSelect).not.toHaveBeenCalled();
     expect(dateField().value).toBe('4 de abril de 2026');
   });
 
-  it('vaciarlo tampoco borra la fecha por accidente', () => {
+  it('emptying it does not delete the date by accident either', () => {
     const onSelect = type('   ');
 
     expect(onSelect).not.toHaveBeenCalled();
     expect(dateField().value).toBe('4 de abril de 2026');
   });
 
-  it('normaliza aunque se escriba la MISMA fecha de otra forma', () => {
-    // Aquí `onElegir` no se dispara —el valor no cambia—, así que si el campo
-    // no se reescribiera solo, se quedaría con el «04/04/2026» tecleado.
+  it('normalizes even if the SAME date is typed another way', () => {
+    // Here `onSelect` does not fire —the value does not change—, so if the field
+    // did not rewrite itself, it would keep the typed «04/04/2026».
     const onSelect = type('04/04/2026');
 
     expect(onSelect).not.toHaveBeenCalled();
     expect(dateField().value).toBe('4 de abril de 2026');
   });
 
-  it('Enter confirma sin enviar el formulario', () => {
+  it('Enter confirms without submitting the form', () => {
     const onSelect = vi.fn();
     const onSubmit = vi.fn((e: React.SubmitEvent) => e.preventDefault());
 
@@ -84,48 +84,48 @@ describe('El campo de fecha que se escribe', () => {
 });
 
 /*
-  Los ganchos que la etiqueta flotante de `Campo` necesita, en el selector de
-  fecha. Vivían en `shared/ui/atoms/field.test.tsx`; están aquí porque el
-  selector es de la feature de movimientos y `shared` no importa de una
+  The hooks the floating label of `Field` needs, in the date
+  selector. They lived in `shared/ui/atoms/field.test.tsx`; they are here because the
+  selector belongs to the transactions feature and `shared` does not import from a
   feature.
 */
-describe('El selector de fecha dentro de un campo', () => {
-  it('el selector de fecha dice lo mismo, y su icono va al final sin flecha', () => {
+describe('The date selector inside a field', () => {
+  it('the date selector says the same, and its icon goes at the end with no arrow', () => {
     const { container } = render(<DateSelector value="2026-04-04" onSelect={() => {}} />);
 
     /*
-      El selector de fecha SE ESCRIBE, así que la etiqueta flota por donde
-      flota la de cualquier campo de texto: `:placeholder-shown`. Para que esa
-      regla enganche hacen falta las dos cosas —un marcador declarado y un
-      valor dentro—, y por eso se comprueban las dos y no la clase que pinta.
+      The date selector IS TYPED, so the label floats the way
+      the label of any text field floats: `:placeholder-shown`. For that
+      rule to hook, two things are needed —a declared placeholder and a
+      value inside—, and that is why both are checked and not the class that paints.
     */
     const field = container.querySelector('input:not([type="hidden"])');
     expect(field?.getAttribute('placeholder')).toBeTruthy();
     expect((field as HTMLInputElement | null)?.value).toBe('4 de abril de 2026');
 
-    // Y el valor viaja en ISO para el formulario, no como se escribe.
+    // And the value travels in ISO for the form, not as it is typed.
     expect(container.querySelector<HTMLInputElement>('input[type="hidden"]')?.value).toBe(
       '2026-04-04',
     );
-    // El calendario es la señal de que esto abre un calendario, que es el
-    // papel de la flecha en un desplegable: con las dos, había dos iconos
-    // diciendo lo mismo, uno a cada lado del valor.
+    // The calendar is the signal that this opens a calendar, which is the
+    // role of the arrow in a dropdown: with both, there were two icons
+    // saying the same thing, one on each side of the value.
     expect(container.querySelector('.lucide-calendar-days')).not.toBeNull();
     expect(container.querySelector('.lucide-chevron-down')).toBeNull();
   });
 
-  it('el valor de un selector de fecha arranca donde arranca su etiqueta', () => {
+  it('the value of a date selector starts where its label starts', () => {
     /*
-      Esto se rompió y se veía como un escalón: la etiqueta a 12px del borde y
-      el valor a 20.
+      This broke and looked like a step: the label 12px from the edge and
+      the value at 20.
 
-      La causa es de orden, no de valor: `cva` emite base, variante y tamaño en
-      ese orden, así que el `px-5` del tamaño gana a cualquier `px-3` escrito en
-      la variante. Lo tiene que poner la llamada, que es lo último que ve `cn`.
+      The cause is order, not value: `cva` emits base, variant and size in
+      that order, so the size's `px-5` beats any `px-3` written in
+      the variant. The call has to set it, which is the last thing `cn` sees.
 
-      Se compara contra el `Input`, que es el vecino con el que tiene que
-      alinearse, y no contra un `'px-3'` literal: si algún día el relleno de
-      los campos cambia, esta prueba sigue midiendo lo que importa.
+      It is compared against the `Input`, which is the neighbor it has to
+      line up with, and not against a literal `'px-3'`: if some day the padding of
+      the fields changes, this test keeps measuring what matters.
     */
     const textField = render(<Input />);
     const fieldPadding = (textField.container.querySelector('input')?.className ?? '')
@@ -135,14 +135,12 @@ describe('El selector de fecha dentro de un campo', () => {
 
     cleanup();
 
-    // La CAJA del campo, que es la que lleva el relleno. El botón de dentro es
-    // el del calendario, y ese se sangra solo.
+    // The field's BOX, which is the one with the padding. The button inside is
+    // the calendar's, and that one indents itself.
     const date = render(<DateSelector value="2026-04-04" onSelect={() => {}} />);
     const box = date.container.querySelector('input:not([type="hidden"])')?.parentElement;
     const datePadding = (box?.className ?? '').split(/\s+/).filter((c) => c.startsWith('px-'));
 
-    expect(datePadding, 'el selector de fecha se sangra como un campo de texto').toEqual(
-      fieldPadding,
-    );
+    expect(datePadding, 'the date selector indents like a text field').toEqual(fieldPadding);
   });
 });

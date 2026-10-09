@@ -7,24 +7,24 @@ import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 import { DropZone } from './support-drop-zone';
 
 /**
- * El cuadro de subir, sobre la ficha que lo pidió.
+ * The upload box, over the sheet that asked for it.
  *
- * ── Por qué un panel encima y no un paso dentro ─────────────────────────────
- * Porque añadir un soporte no es una etapa del formulario: es algo que se hace
- * EN MEDIO de otra cosa —revisando una ficha, corrigiendo una cifra— y se
- * vuelve a lo que se estaba haciendo. Un paso obliga a salir de la ficha,
- * cambia lo que se ve y deja la duda de si lo escrito sigue ahí; un panel
- * encima deja la ficha a la vista, detrás.
+ * ── Why a panel on top and not a step inside ────────────────────────────────
+ * Because adding a receipt is not a stage of the form: it is something done
+ * IN THE MIDDLE of something else —reviewing a sheet, correcting an amount— and
+ * then you go back to what you were doing. A step forces leaving the sheet,
+ * changes what is on screen and leaves the doubt of whether what was written is
+ * still there; a panel on top keeps the sheet in sight, behind.
  *
- * Y sirve para los dos sitios que lo abren: la vía «Subir un archivo» de un
- * movimiento nuevo y la baldosa de la galería de uno que ya tiene soportes. Sin
- * él eran dos pantallas distintas para el mismo gesto.
+ * And it serves both places that open it: the «Subir un archivo» path of a
+ * new transaction and the gallery tile of one that already has receipts. Without
+ * it they were two different screens for the same gesture.
  *
- * ── Por qué Escape se atrapa en CAPTURA ─────────────────────────────────────
- * La ficha del movimiento escucha Escape en el documento para cerrarse. Este
- * panel se monta después, así que su oyente correría el segundo y la ficha se
- * cerraría igual —con lo escrito dentro—. En captura llega primero y detiene
- * el evento: Escape cierra el panel y nada más.
+ * ── Why Escape is caught in CAPTURE ─────────────────────────────────────────
+ * The transaction sheet listens for Escape on the document to close itself. This
+ * panel mounts later, so its listener would run second and the sheet would
+ * close anyway —with what was written inside—. In capture it arrives first and
+ * stops the event: Escape closes the panel and nothing else.
  */
 export function UploadPanel({
   isUploading,
@@ -54,16 +54,16 @@ export function UploadPanel({
       role="dialog"
       aria-modal="true"
       aria-label={t('transactions.supports.add')}
-      // Por encima de la ficha, que está en z-50, igual que el pase.
+      // Above the sheet, which is at z-50, same as the lightbox.
       className={cn(
         'fixed inset-0 z-[60] flex items-end justify-center bg-[var(--velo)] backdrop-blur-sm',
-        // 24 hasta el canto de la pantalla, como todas las fichas del teléfono.
+        // 24 to the edge of the screen, like every sheet on the phone.
         'p-6',
         'se-revela sm:items-center sm:p-4',
       )}
-      // `onMouseDown` y no `onClick`: con clic, arrastrar desde dentro del
-      // panel hasta el velo —que es justo lo que se hace al soltar un
-      // archivo— lo cerraría a mitad del gesto.
+      // `onMouseDown` and not `onClick`: with click, dragging from inside the
+      // panel to the scrim —which is exactly what dropping a
+      // file does— would close it mid-gesture.
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div

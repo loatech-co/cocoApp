@@ -6,17 +6,17 @@ import { PdfCanvas } from '@/shared/ui/atoms/pdf-canvas';
 import { Progress } from '@/shared/ui/atoms/progress';
 
 /**
- * El documento, con una banda de luz cruzándolo mientras se lee.
+ * The document, with a band of light crossing it while it is read.
  *
- * ── Por qué se enseña el documento y no un girador ─────────────────────────
- * Porque un girador dice «espera» y nada más: es el mismo dibujo para cargar
- * una lista, guardar un formulario o leer un recibo. Aquí está pasando algo
- * concreto y que se puede enseñar —una máquina está mirando ESE papel—, y
- * enseñarlo hace dos cosas que el girador no: se entiende que la espera tiene
- * un motivo, y se ve qué documento se está leyendo, que es justo el dato que
- * hace falta si lo que sale no cuadra.
+ * ── Why the document is shown and not a spinner ────────────────────────────
+ * Because a spinner says «wait» and nothing else: it is the same drawing for loading
+ * a list, saving a form or reading a receipt. Here something
+ * concrete is happening that can be shown —a machine is looking at THAT paper—, and
+ * showing it does two things the spinner does not: you understand the wait has
+ * a reason, and you see which document is being read, which is exactly the fact
+ * needed if what comes out does not add up.
  *
- * El `blob:` vive exactamente lo que dura este paso: ver `useObjectUrl`.
+ * The `blob:` lives exactly as long as this step: see `useObjectUrl`.
  */
 export function Scanning({
   file,
@@ -32,23 +32,23 @@ export function Scanning({
   return (
     <div className="flex flex-col items-center gap-4 py-6" role="status" aria-live="polite">
       {/*
-        El cristal del escáner: el documento dentro, recortado, y las dos capas
-        del barrido encima. `overflow-hidden` es lo que mantiene la banda
-        dentro del marco, y `select-none` evita que un arrastre sobre él
-        seleccione media ficha.
+        The scanner glass: the document inside, clipped, and the two layers
+        of the sweep on top. `overflow-hidden` is what keeps the band
+        inside the frame, and `select-none` keeps a drag over it from
+        selecting half the sheet.
       */}
       <div
         className={cn(
           'relative w-full max-w-sm select-none overflow-hidden rounded-lg',
           'border border-border bg-card',
-          // Una hoja es más alta que ancha. Fijando la proporción, el marco no
-          // cambia de tamaño cuando la imagen acaba de cargar.
+          // A page is taller than it is wide. Fixing the aspect ratio, the frame does not
+          // change size when the image finishes loading.
           'aspect-[3/4]',
         )}
       >
         {url === null ? null : isImage ? (
-          // `object-top`: lo que hace falta ver de un recibo está arriba —el
-          // comercio, la fecha—, no en su centro geométrico.
+          // `object-top`: what you need to see of a receipt is at the top —the
+          // merchant, the date—, not in its geometric center.
           <img src={url} alt="" className="size-full object-cover object-top opacity-80" />
         ) : (
           <div className="grid size-full place-items-center overflow-hidden">
@@ -61,30 +61,30 @@ export function Scanning({
 
       <p className="text-sm font-medium">{stage}</p>
 
-      {/* El OCR de un escaneo tarda segundos y sin barra parece colgado. La
-          barra es la compartida: esta medía 4px de alto y 192 de ancho y la de
-          la importación 8px y todo el ancho, siendo la misma espera del mismo
-          trabajo. */}
+      {/* The OCR of a scan takes seconds and without a bar it looks hung. The
+          bar is the shared one: this one measured 4px tall and 192 wide and the
+          import's 8px and full width, while being the same wait for the same
+          work. */}
       <Progress value={progress?.progress ?? 0} label={stage} className="w-full max-w-sm" />
     </div>
   );
 }
 
-/** Las dos capas del barrido, encima del documento. */
+/** The two layers of the sweep, on top of the document. */
 function ScanSweep() {
   return (
     <>
       {/*
-        El rastro: lo ya barrido queda un poco más claro que lo que falta.
-        Sin esto la banda parece un reflejo suelto pasando por encima; con
-        él, parece que va dejando el trabajo hecho detrás.
+        The trail: what was already swept stays a bit lighter than what is left.
+        Without this the band looks like a stray reflection passing over; with
+        it, it looks like it leaves the finished work behind.
       */}
       <span
         aria-hidden="true"
         className="deja-rastro pointer-events-none absolute inset-0 bg-accent/25"
       />
 
-      {/* La banda, con su canto de avance brillante. */}
+      {/* The band, with its bright leading edge. */}
       <span
         aria-hidden="true"
         className={cn(

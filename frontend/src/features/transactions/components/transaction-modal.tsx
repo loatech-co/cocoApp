@@ -23,45 +23,45 @@ import { Scanning } from './reading-progress';
 
 interface MovementModalProps {
   isOpen: boolean;
-  /** Sin movimiento, el formulario crea. Con movimiento, edita ese. */
+  /** Without a transaction, the form creates. With one, it edits that one. */
   transaction?: Transaction | null | undefined;
   /**
-   * El pago pendiente que se viene a confirmar, desde la tarjeta del resumen.
+   * The pending payment being confirmed, from the dashboard card.
    *
-   * ── Por qué es el pago entero y no solo su concepto ─────────────────────
-   * Porque un pago pendiente ya trae dicho casi todo el movimiento: de qué
-   * concepto es, cuándo vencía y cuánto suele costar. Pasando solo el
-   * concepto, las otras dos cosas había que teclearlas mirando la misma
-   * tarjeta que se acababa de pulsar.
+   * ── Why it is the whole payment and not just its concept ────────────────
+   * Because a pending payment already carries almost the whole transaction:
+   * which concept it is, when it was due and how much it usually costs. Passing
+   * only the concept, the other two had to be typed while looking at the same
+   * card that had just been tapped.
    *
-   * ── Y por qué eso cambia la ficha entera ────────────────────────────────
-   * Confirmar un pago no es registrar un gasto desde cero: no hay que decidir
-   * CÓMO empezar —el concepto ya está, lo que falta es el papel— así que se
-   * abre directamente en el formulario, con los campos puestos y la columna
-   * del soporte esperando. Lo que hay escrito es lo ESPERADO, y el soporte lo
-   * corrige: ver `PendingSupportsColumn`.
+   * ── And why that changes the whole sheet ────────────────────────────────
+   * Confirming a payment is not recording an expense from scratch: there is no
+   * need to decide HOW to start —the concept is there, what is missing is the
+   * paper— so it opens straight into the form, with the fields filled in and the
+   * receipt column waiting. What is written is what is EXPECTED, and the receipt
+   * corrects it: see `PendingReceipts`.
    */
   payment?: PendingPayment | null;
-  /** Con qué tipo abrir al CREAR. Lo elige el menú de "Nuevo movimiento". */
+  /** Which type to open with when CREATING. The "Nuevo movimiento" menu picks it. */
   defaultType?: TransactionType;
   onClose: () => void;
 }
 
 /**
- * El ÚNICO formulario de movimiento: crea y edita.
+ * THE ONLY transaction form: it creates and it edits.
  *
- * Tener dos —uno para registrar y otro para corregir— garantiza que se
- * separen: se añade un campo en uno y se olvida en el otro, y la persona
- * descubre que solo puede poner notas cuando edita. Un solo componente, dos
- * modos.
+ * Having two —one to record and another to correct— guarantees they drift
+ * apart: a field is added to one and forgotten in the other, and the person
+ * finds out they can only add notes when editing. One component, two
+ * modes.
  *
- * ── La cascada de tres niveles ──────────────────────────────────────────────
- * Centro de costos → categoría → concepto. Se guarda el CONCEPTO, que es la hoja:
- * los dos de arriba existen para sumar, no para clasificar. Elegir uno de
- * arriba y dejarlo ahí sería un movimiento que no aparece en ningún desglose
- * por concepto.
+ * ── The three-level cascade ─────────────────────────────────────────────────
+ * Cost center → category → concept. The CONCEPT is what gets saved, it is the leaf:
+ * the two above exist to add up, not to classify. Picking one of the upper
+ * ones and leaving it there would make a transaction that shows up in no
+ * per-concept breakdown.
  *
- * Lo que necesita para funcionar lo junta `useMovementSheet`.
+ * What it needs to work is gathered by `useMovementSheet`.
  */
 export function TransactionModal(props: MovementModalProps) {
   const { isOpen, transaction, payment, defaultType = 'expense', onClose } = props;
@@ -85,10 +85,10 @@ export function TransactionModal(props: MovementModalProps) {
           type: sheet.type,
           isEditing,
           isEditable: sheet.isEditable,
-          // Lleva el `!movimiento` a propósito: `pago` sigue puesto mientras la
-          // ficha está abierta, y en cuanto se guarda deja de ser un pendiente.
-          // Sin eso, la ficha de un movimiento ya existente podría titularse
-          // «Confirmar pago» por venir de esa tarjeta.
+          // The `!transaction` is there on purpose: `payment` stays set while the
+          // sheet is open, and as soon as it is saved it stops being pending.
+          // Without it, the sheet of an existing transaction could be titled
+          // «Confirmar pago» just for having come from that card.
           isConfirming: payment != null && !transaction ? payment : null,
         }}
         onEdit={() => sheet.setEditable(true)}
@@ -96,11 +96,11 @@ export function TransactionModal(props: MovementModalProps) {
         onClose={onClose}
       />
 
-      {/* `min-h-0` es lo que permite que esto se encoja dentro de la columna:
-          sin él mide lo que mida su contenido y se lleva por delante el alto
-          máximo del panel. Y es a su vez una columna porque el panel tiene
-          alto mínimo: con eso el formulario puede estirarse y llevarse sus
-          botones al fondo en vez de dejarlos a media altura. */}
+      {/* `min-h-0` is what lets this shrink inside the column: without
+          it, it measures whatever its content measures and blows through the
+          panel's max height. And it is a column in turn because the panel has
+          a min height: with that the form can stretch and take its buttons
+          to the bottom instead of leaving them halfway up. */}
       <ModalBody>
         <MovementSteps sheet={movementSheet} transaction={transaction} onClose={onClose} />
 
@@ -124,7 +124,7 @@ export function TransactionModal(props: MovementModalProps) {
   );
 }
 
-/** La cámara, la lectura o el formulario: lo que ocupa la ficha ahora. */
+/** The camera, the reading or the form: whatever fills the sheet right now. */
 function MovementSteps({
   sheet: movementSheet,
   transaction,
@@ -170,7 +170,7 @@ function MovementSteps({
   );
 }
 
-/** El velo y el panel de la ficha. */
+/** The sheet's scrim and panel. */
 function SheetOverlay({
   isEditing,
   onClose,
@@ -182,34 +182,34 @@ function SheetOverlay({
 }) {
   return (
     <div
-      // El velo compartido, `--velo`. Aquí hubo un `bg-carbon-950/50` que no
-      // pintaba nada —`carbon` no era un color de ninguna paleta de este
-      // proyecto—, así que el modal flotaba sobre la página sin velo detrás.
+      // The shared scrim, `--velo`. There used to be a `bg-carbon-950/50` here
+      // that painted nothing —`carbon` was not a color in any palette of this
+      // project—, so the modal floated over the page with no scrim behind it.
       className={cn(
         'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] backdrop-blur-sm',
         /*
-          ── 24 hasta el borde de la pantalla, en el teléfono ──────────────
-          La ficha no va a sangre. Pegada a los tres cantos, se lee como otra
-          PANTALLA: se come el ancho entero, la esquina de abajo desaparece y
-          lo único que dice que la aplicación sigue detrás es una franja de
-          velo arriba. Separada, vuelve a leerse como lo que es —algo que está
-          ENCIMA— y el velo se ve por los cuatro lados.
+          ── 24 to the edge of the screen, on the phone ────────────────────
+          The sheet is not full-bleed. Stuck to three edges, it reads as another
+          SCREEN: it eats the whole width, the bottom corner disappears and
+          the only thing saying the app is still behind is a strip of scrim
+          at the top. Set apart, it reads again as what it is —something that is
+          ON TOP— and the scrim shows on all four sides.
 
-          Es distancia de la ficha al canto de la pantalla, no relleno de la
-          ficha: lo de dentro sigue en 16, que es lo que `Modal` y
-          `CabeceraDeModal` ya fijan.
+          It is distance from the sheet to the edge of the screen, not padding of
+          the sheet: the inside stays at 16, which is what `Modal` and
+          `CabeceraDeModal` already set.
         */
         'p-6',
         'se-revela sm:items-center sm:p-4',
       )}
-      // `onMouseDown` sobre el velo, y no `onClick` en cualquier sitio.
+      // `onMouseDown` on the scrim, and not `onClick` anywhere.
       //
-      // Con clic, un arrastre que EMPIEZA dentro del panel y termina fuera
-      // —soltar el ratón un dedo más allá del borde— dispara el clic en el
-      // ancestro común, que es el velo, y la ficha se cerraba con todo lo
-      // escrito dentro. Aquí eso no es un caso raro: la previsualización del
-      // soporte se recorre arrastrando, así que el gesto que cierra la ficha
-      // es el mismo con el que se mira el recibo.
+      // With click, a drag that STARTS inside the panel and ends outside
+      // —releasing the mouse a finger past the edge— fires the click on the
+      // common ancestor, which is the scrim, and the sheet closed with everything
+      // written inside. Here that is not a rare case: the receipt preview
+      // is browsed by dragging, so the gesture that closes the sheet
+      // is the same one used to look at the receipt.
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -220,13 +220,13 @@ function SheetOverlay({
             ? t('transactions.sheet.editMovementTitle')
             : t('transactions.sheet.newMovementTitle')
         }
-        // En móvil entra desde abajo y ocupa el ancho: es el patrón que la
-        // gente espera de una app, y deja el pulgar cerca de los botones.
+        // On mobile it comes in from the bottom and takes the width: it is the
+        // pattern people expect from an app, and it keeps the thumb near the buttons.
         //
-        // El ancho lo pone `PANEL_DE_MODAL`, que lo topa en 720 para todas las
-        // fichas. Y las cuatro esquinas, ya no solo las de arriba: separada
-        // del borde de abajo, las de abajo también se ven, y dos cantos rectos
-        // debajo de dos curvos es una caja a medio dibujar.
+        // The width is set by `PANEL_DE_MODAL`, which caps it at 720 for every
+        // sheet. And all four corners, not just the top ones: set apart
+        // from the bottom edge, the bottom ones show too, and two straight edges
+        // under two curved ones is a half-drawn box.
         className={cn(MODAL_PANEL, FLOATING_SURFACE, 'emerge', 'rounded-lg')}
       >
         {children}
@@ -236,11 +236,11 @@ function SheetOverlay({
 }
 
 /**
- * Los tres golpes: qué está a punto de pasar, que no se deshace, y la
- * pregunta. Lo que se salta del patrón es la frase del medio, y no es un
- * detalle: el nombre de este movimiento ES el de su concepto, así que la
- * papelera parece estar apuntando al concepto. No lo está. Sin esa frase,
- * nadie borra un gasto mal anotado por miedo a llevarse «Aseo» por delante.
+ * The three beats: what is about to happen, that it cannot be undone, and the
+ * question. What breaks the pattern is the middle sentence, and it is not a
+ * detail: the name of this transaction IS its concept's, so the
+ * trash can seems to be pointing at the concept. It is not. Without that sentence,
+ * nobody deletes a mistyped expense for fear of taking «Aseo» down with it.
  */
 function ConfirmMovementDeletion({
   isOpen,

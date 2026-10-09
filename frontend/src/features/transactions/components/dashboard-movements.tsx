@@ -11,7 +11,7 @@ import { TableFooter, Td } from '@/shared/ui/molecules/table';
 
 type Table = ReturnType<typeof useDashboardPage>['table'];
 
-/** La tabla del resumen: todo lo que cae en el recorte, paginado. */
+/** The dashboard table: everything that falls in the cut, paginated. */
 export function DashboardMovements({
   table,
   tree,

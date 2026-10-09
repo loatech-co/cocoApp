@@ -16,7 +16,7 @@ import {
 
 import type { Origin } from './precedence';
 
-/** Un concepto que la lectura dejó entre lo que dudar, para el buscador. */
+/** A concept the reading left to choose between, for the search. */
 export interface ReceiptCandidate {
   id: number;
   name: string;
@@ -24,10 +24,10 @@ export interface ReceiptCandidate {
 }
 
 /**
- * Lo que una fuente automática propone para clasificar.
+ * What an automatic source proposes for classifying.
  *
- * `candidatos`, cuando viene, REEMPLAZA los que el buscador tenía a la vista;
- * sin él, se quedan los que había.
+ * `candidates`, when it comes, REPLACES the ones the search had in view;
+ * without it, the ones there were stay.
  */
 export interface AutoProposal {
   categoryId: number | undefined;
@@ -39,7 +39,7 @@ export function todayInBogota(): string {
   return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
-/** `expense` → "gasto". El tipo, dicho como se dice. */
+/** `expense` → "gasto". The type, said the way it is said. */
 export function typeName(type: TransactionType): string {
   return type === 'income'
     ? t('transactions.types.incomeNoun')
@@ -51,30 +51,30 @@ export function capitalize(text: string): string {
 }
 
 /**
- * El valor y la fecha con los que nace la ficha.
+ * The amount and the date the sheet is born with.
  *
- * Confirmando un pago, nacen puestos. Son lo ESPERADO: el promedio de los
- * meses que sí se pagaron y el día en que vencía. No son el dato bueno —el
- * dato bueno lo dice el recibo— pero son mucho mejor que una caja vacía, y el
- * gesto que los corrige es adjuntar el soporte, que es a lo que se viene.
+ * When confirming a payment, they are born set. They are the EXPECTED: the average of the
+ * months that were paid and the day it was due. They are not the good fact —the
+ * good fact is what the receipt says— but they are much better than an empty box, and the
+ * gesture that corrects them is attaching the receipt, which is what you come for.
  *
- * Un valor esperado que nadie corrige se registra como si fuera el real, y por
- * eso la cabecera lo dice con todas las letras en vez de dejar que parezca un
- * dato.
+ * An expected amount nobody corrects gets recorded as if it were the real one, and that is
+ * why the header says so in so many words instead of letting it look like a
+ * fact.
  *
- * ── Lo que se cubre a pedazos entra VACÍO, y con la fecha de hoy ────────────
- * Un concepto normal se confirma: lo que se espera que cueste es lo que va a
- * costar, y traerlo escrito ahorra el paso. Uno que se paga en varias veces no
- * se confirma, se ABONA: lo que trae la cabeza de quien abre esta ficha es lo
- * que acaba de gastar en el supermercado, y el total del mes no tiene nada que
- * ver con eso.
+ * ── What is covered in pieces comes in EMPTY, and with today's date ─────────
+ * A regular concept is confirmed: what it is expected to cost is what it is going to
+ * cost, and bringing it written saves the step. One paid in several installments is not
+ * confirmed, it is PAID DOWN: what the head of whoever opens this sheet carries is
+ * what they just spent at the supermarket, and the month total has nothing to
+ * do with that.
  *
- * Poner ahí 1.200.000 —el presupuesto entero— sería la peor sugerencia
- * posible: al primer «guardar» sin mirar, el mes queda cubierto de golpe y el
- * concepto sale de la lista como si ya estuviera resuelto.
+ * Putting 1,200,000 there —the whole budget— would be the worst possible
+ * suggestion: at the first «guardar» without looking, the month is covered at once and the
+ * concept leaves the list as if it were already settled.
  *
- * Y la fecha es HOY y no el vencimiento, por lo mismo: la ida al mercado fue
- * hoy. El día 1 es cuándo empieza a contar el ciclo, no cuándo se gastó esto.
+ * And the date is TODAY and not the due date, for the same reason: the trip to the market was
+ * today. Day 1 is when the cycle starts counting, not when this was spent.
  */
 export function initialAmountAndDate(
   transaction: Transaction | null | undefined,
@@ -95,12 +95,12 @@ export function initialAmountAndDate(
 }
 
 /**
- * Busca un concepto por su nombre en el árbol.
+ * Looks up a concept by its name in the tree.
  *
- * Sin distinguir mayúsculas ni tildes: lo que devuelve el clasificador viene
- * de una tabla de firmas escrita a mano, y lo que hay en el árbol lo escribió
- * una persona. "Celsia (Energia)" y "Celsia (Energía)" son el mismo concepto y
- * no hay ninguna razón para que un acento los separe.
+ * Ignoring capitals and accents: what the classifier returns comes
+ * from a hand-written signature table, and what is in the tree was written by
+ * a person. "Celsia (Energia)" and "Celsia (Energía)" are the same concept and
+ * there is no reason for an accent to split them.
  */
 function conceptNamed(tree: CategoryTree[], name: string): CategoryTree | undefined {
   const wanted = normalize(name);
@@ -116,12 +116,12 @@ function conceptNamed(tree: CategoryTree[], name: string): CategoryTree | undefi
 }
 
 /**
- * Lo que lo ESCRITO propone: las palabras clave y los nombres de la persona en
- * su árbol, y si no, el diccionario del sistema.
+ * What the TYPED text proposes: the person's keywords and names in
+ * their tree, and if not, the system dictionary.
  *
- * Si lleva a un solo concepto, se propone. Si el diccionario lleva a una
- * categoría o a varios conceptos, se propone la categoría y los candidatos
- * quedan a la vista en el buscador.
+ * If it leads to a single concept, it is proposed. If the dictionary leads to a
+ * category or to several concepts, the category is proposed and the candidates
+ * stay in view in the search.
  */
 export function proposalFromText(
   index: readonly IndexEntry[],
@@ -148,7 +148,7 @@ export function proposalFromText(
     return {
       categoryId: resolved.category ? Number(resolved.category.id) : undefined,
       origin: 'diccionario',
-      // Del texto, solo se ponen a la vista si hay alguno.
+      // From the text, they are only put in view if there is any.
       ...(candidates.length > 0 ? { candidates } : {}),
     };
   }
@@ -156,15 +156,15 @@ export function proposalFromText(
 }
 
 /**
- * Lo que el recibo dice de la clasificación, por su fuente y su certeza.
+ * What the receipt says about the classification, by its source and its certainty.
  *
- * Con ids cuando los hay —`enElArbol`—: alta propone el concepto; media
- * propone la categoría, si la hay, y deja los candidatos a la vista en el
- * buscador para que la persona elija. Nunca se adivina entre varios.
+ * With ids when there are any —`inTree`—: high proposes the concept; medium
+ * proposes the category, if there is one, and leaves the candidates in view in the
+ * search for the person to pick. It never guesses among several.
  *
- * Las palabras clave de la persona y el catálogo van con rango de palabras
- * clave; el diccionario, con el suyo. Sin ids —un árbol que no llegó—, por el
- * nombre, como siempre. `null` si el recibo no dijo nada de esto.
+ * The person's keywords and the catalog go with keyword
+ * rank; the dictionary, with its own. Without ids —a tree that did not arrive—, by
+ * name, as always. `null` if the receipt said nothing about this.
  */
 export function proposalFromReading(reading: Reading, tree: CategoryTree[]): AutoProposal | null {
   const inTree = reading.inTree;
@@ -194,25 +194,25 @@ export function proposalFromReading(reading: Reading, tree: CategoryTree[]): Aut
       })),
     };
   }
-  // Hubo lectura en el árbol, aunque no alcanzó para proponer nada.
+  // There was a reading in the tree, even though it was not enough to propose anything.
   return { categoryId: undefined, origin };
 }
 
 /**
- * Qué decir cuando leer no sacó nada útil, o `null` si sí sacó algo.
+ * What to say when reading extracted nothing useful, or `null` if it did extract something.
  *
- * ── Leer y no sacar nada NO es haber leído ──────────────────────────────────
- * Antes se anunciaba «Los datos se extrajeron del soporte» pasara lo que
- * pasara, incluso con los tres campos vacíos. Y hay dos maneras de no sacar
- * nada, que no se arreglan igual:
+ * ── Reading and extracting nothing is NOT having read ───────────────────────
+ * Before, «Los datos se extrajeron del soporte» was announced no matter
+ * what, even with all three fields empty. And there are two ways of extracting
+ * nothing, which are not fixed the same way:
  *
- * · No se pudo sacar TEXTO del archivo —un PDF que no abre, una imagen que el
- *   reconocimiento no descifra—. Ahí no hay nada que revisar.
- * · Se sacó el texto pero no se reconoció ni valor ni fecha ni concepto. Ahí
- *   el documento sí se leyó; lo que no cuadró es su forma.
+ * · No TEXT could be extracted from the file —a PDF that does not open, an image that
+ *   recognition cannot decipher—. There is nothing to review there.
+ * · The text was extracted but neither amount nor date nor concept was recognized. There
+ *   the document was read; what did not fit is its shape.
  *
- * En los dos casos el archivo se queda adjunto: se subió para guardarlo, no
- * solo para leerlo.
+ * In both cases the file stays attached: it was uploaded to keep it, not
+ * only to read it.
  */
 export function unreadNotice(reading: Reading, text: string): string | null {
   const hasSomethingUseful =

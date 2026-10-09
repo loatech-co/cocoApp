@@ -31,8 +31,8 @@ beforeEach(() => {
 });
 afterEach(() => vi.useRealTimers());
 
-describe('rangoDe', () => {
-  it('runs "everything" from the first to the last movement', () => {
+describe('rangeOf', () => {
+  it('runs "everything" from the first to the last transaction', () => {
     expect(rangeOf('todo', { first: '2022-04-04', last: '2026-05-01' })).toEqual({
       from: '2022-04-04',
       to: '2026-05-01',
@@ -48,14 +48,14 @@ describe('rangoDe', () => {
   });
 });
 
-describe('llegaHastaHoy', () => {
+describe('reachesToday', () => {
   it('is true for a range that reaches today and false for a closed one', () => {
     expect(reachesToday({ to: '2026-05-20' })).toBe(true);
     expect(reachesToday({ to: '2026-05-19' })).toBe(false);
   });
 });
 
-describe('aParametros', () => {
+describe('toApiParams', () => {
   const base: Filters = {
     preset: 'mes-actual',
     from: '2026-05-01',
@@ -77,7 +77,7 @@ describe('aParametros', () => {
   });
 });
 
-describe('useFiltros', () => {
+describe('useFilters', () => {
   it('reads the default preset with no active filters from an empty URL', () => {
     const { result } = renderFilters();
 
@@ -116,7 +116,7 @@ describe('useFiltros', () => {
     expect(result.current.filters).toMatchObject({ from: '2026-04-01', to: '2026-04-30' });
   });
 
-  it('uses the movement history for "everything"', () => {
+  it('uses the transaction history for "everything"', () => {
     history.data = { first: '2023-02-01', last: '2026-05-18' };
     const { result } = renderFilters('/', 'todo');
 

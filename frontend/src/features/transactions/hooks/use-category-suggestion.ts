@@ -5,26 +5,26 @@ import { categorizationSuggest } from '@/shared/api/generated/categorization-v2/
 import type { Suggestion } from '@/shared/api/generated/model';
 
 /**
- * Espera antes de consultar, en milisegundos.
+ * Wait before querying, in milliseconds.
  *
- * Sin ella, escribir "Exito Poblado" dispararía trece peticiones. Con 400 ms se
- * consulta cuando la persona deja de escribir, que es cuando la descripción ya
- * significa algo.
+ * Without it, typing "Exito Poblado" would fire thirteen requests. With 400 ms it
+ * queries when the person stops typing, which is when the description already
+ * means something.
  */
 const WAIT_MS = 400;
 
-/** Por debajo de esto, la descripción no da para sugerir nada. */
+/** Below this, the description is not enough to suggest anything. */
 const MIN_CHARACTERS = 3;
 
 /**
- * Sugerencia de categoría para lo que se está escribiendo.
+ * Category suggestion for what is being typed.
  *
- * La decisión la toma el servidor: solo él tiene el historial completo de la
- * persona, que es la señal más fuerte —mejor que cualquier lista de palabras
- * clave, porque refleja cómo organiza SUS finanzas—.
+ * The server makes the decision: only it has the person's full
+ * history, which is the strongest signal —better than any keyword
+ * list, because it reflects how THEY organize their finances—.
  *
- * Devuelve `null` cuando no hay nada seguro que decir, y la interfaz
- * sencillamente no muestra nada. Sugerir mal es peor que no sugerir.
+ * Returns `null` when there is nothing certain to say, and the interface
+ * simply shows nothing. Suggesting wrong is worse than not suggesting.
  */
 export function useCategorySuggestion(description: string): Suggestion | null {
   const [stabilized, setStabilized] = useState('');
@@ -37,8 +37,8 @@ export function useCategorySuggestion(description: string): Suggestion | null {
   const query = useQuery({
     queryKey: ['categorization', 'suggest', stabilized],
     enabled: stabilized.length >= MIN_CHARACTERS,
-    // El historial no cambia entre pulsaciones: recordar la respuesta evita
-    // repetir la misma consulta al borrar y volver a escribir.
+    // The history does not change between keystrokes: remembering the response avoids
+    // repeating the same query when deleting and typing again.
     staleTime: 60_000,
     queryFn: async () => {
       const response = await categorizationSuggest({ description: stabilized });

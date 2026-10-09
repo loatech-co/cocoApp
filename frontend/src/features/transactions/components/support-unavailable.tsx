@@ -6,28 +6,28 @@ import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 
 /**
- * El hueco de un soporte que no se ve, diciendo por qué.
+ * The slot of a receipt that cannot be seen, saying why.
  *
- * ── Los dos motivos no se contestan igual ───────────────────────────────────
- * `ausente` es definitivo: el servidor miró el disco y el archivo no está, así
- * que reintentar no lo va a traer y lo útil es decir dónde mirar —la ficha
- * está en la base, el archivo en el disco de cada servidor, y se sincronizan
- * aparte—.
+ * ── The two reasons are not answered the same way ───────────────────────────
+ * `ausente` is final: the server looked at the disk and the file is not there, so
+ * retrying will not bring it and the useful thing is to say where to look —the
+ * record is in the database, the file on each server's disk, and they sync
+ * separately—.
  *
- * `sin-cargar` no dice nada del archivo: la descarga se cayó y puede haber
- * sido un 500, la sesión caducada o la red. Ahí sí se reintenta, y prometer
- * que «no está» sería mentir sobre algo que probablemente está.
+ * `sin-cargar` says nothing about the file: the download failed and it may have
+ * been a 500, an expired session or the network. There retrying makes sense, and
+ * claiming it «no está» would be lying about something that is probably there.
  *
- * Los dos iban por el mismo camino, y un soporte que existía recibía «no está
+ * Both went down the same path, and a receipt that existed got «no está
  * en el servidor».
  *
- * ── Por qué no es rojo ──────────────────────────────────────────────────────
- * Porque no falló nada de lo que se acaba de hacer: el movimiento está bien y
- * su ficha también. El rojo de esta app está reservado a lo que salió mal y a
- * lo que no se puede deshacer.
+ * ── Why it is not red ───────────────────────────────────────────────────────
+ * Because nothing that was just done failed: the transaction is fine and
+ * so is its sheet. Red in this app is reserved for what went wrong and for
+ * what cannot be undone.
  *
- * `oscuro` es para el pase a pantalla completa, cuyo fondo ya lo es: el gris
- * de la app desaparecería encima.
+ * `isDark` is for the full-screen lightbox, whose background already is: the
+ * app's gray would disappear on top of it.
  */
 export function UnavailableReceipt({
   error,

@@ -6,20 +6,20 @@ import { loadPdfjs } from '@/shared/lib/pdf';
 import type { TreeClassification, Reading } from '@coco/receipt-parser';
 
 /**
- * Leer un recibo: sacarle el texto y, con él, de qué es.
+ * Reading a receipt: extracting its text and, with it, what it is for.
  *
- * ── Por qué en el navegador y no en el servidor ─────────────────────────────
- * Es la misma decisión que ya tomó el importador de extractos, por las mismas
- * tres razones: el documento no sale del equipo mientras se lee, el OCR no
- * cuesta un peso, y cada persona pone su propia CPU —que es la única forma de
- * que esto escale en un plan compartido donde no hay ni tesseract instalado—.
+ * ── Why in the browser and not on the server ────────────────────────────────
+ * It is the same decision the statement importer already made, for the same
+ * three reasons: the document does not leave the device while it is read, the OCR does not
+ * cost a cent, and each person brings their own CPU —which is the only way
+ * for this to scale on a shared plan where not even tesseract is installed—.
  *
- * ── La cascada ──────────────────────────────────────────────────────────────
- * Primero el texto embebido del PDF: es exacto y tarda milisegundos. Casi
- * todos los recibos de servicios son digitales y lo traen. Solo cuando no hay
- * texto —un escaneo, una foto— se enciende el OCR, que tarda segundos y se
- * equivoca de letra. El orden importa: al revés, cada recibo digital pagaría
- * el precio del peor caso.
+ * ── The cascade ─────────────────────────────────────────────────────────────
+ * First the PDF's embedded text: it is exact and takes milliseconds. Almost
+ * every utility receipt is digital and carries it. Only when there is no
+ * text —a scan, a photo— does the OCR fire up, which takes seconds and gets
+ * letters wrong. The order matters: the other way around, every digital receipt would pay
+ * the price of the worst case.
  */
 
 export interface ParsedReceipt {
@@ -33,16 +33,16 @@ export interface ReadingProgress {
   stage: string;
 }
 
-/** Por debajo de esto, lo que dice tener el PDF no es el recibo. */
+/** Below this, what the PDF claims to have is not the receipt. */
 const MIN_TEXT_LENGTH = 20;
 
 /**
- * El texto de un PDF, en líneas.
+ * The text of a PDF, in lines.
  *
- * Las líneas no son un detalle: la mitad de las reglas del monto miran QUÉ
- * DICE la línea donde está el número —si dice "total a pagar" o si dice
- * "NIT"—. pdf.js entrega fragmentos sueltos con sus coordenadas, así que se
- * reagrupan por altura: dos fragmentos a la misma Y son la misma línea.
+ * The lines are not a detail: half of the amount rules look at WHAT
+ * THE LINE SAYS where the number is —whether it says "total a pagar" or
+ * "NIT"—. pdf.js hands over loose fragments with their coordinates, so they are
+ * regrouped by height: two fragments at the same Y are the same line.
  */
 async function pdfText(file: File, pages = 2): Promise<string> {
   const pdfjs = await loadPdfjs();
@@ -57,9 +57,9 @@ async function pdfText(file: File, pages = 2): Promise<string> {
     const rows = new Map<number, { x: number; s: string }[]>();
     for (const item of content.items) {
       if (!('str' in item) || item.str.trim() === '') continue;
-      // `transform` llega sin tipar desde pdfjs. Es la matriz de 6 números de
-      // PDF: las dos últimas posiciones son el desplazamiento, x y luego y.
-      // Las seis posiciones están siempre: los valores por defecto no se usan.
+      // `transform` arrives untyped from pdfjs. It is the PDF 6-number
+      // matrix: the last two positions are the offset, x and then y.
+      // All six positions are always there: the defaults are not used.
       const [, , , , x = 0, y = 0] = item.transform as number[];
       const lineY = Math.round(y);
       const row = rows.get(lineY);
@@ -84,11 +84,11 @@ async function pdfText(file: File, pages = 2): Promise<string> {
 }
 
 /**
- * La primera página de un PDF como imagen, para dárselas al OCR.
+ * The first page of a PDF as an image, to hand it to the OCR.
  *
- * A 2 de escala y no a 1: Tesseract lee mucho mejor con más píxeles, y el
- * coste de rasterizar una página más grande es despreciable al lado de lo que
- * tarda el reconocimiento.
+ * At scale 2 and not 1: Tesseract reads much better with more pixels, and the
+ * cost of rasterizing a larger page is negligible next to how long
+ * the recognition takes.
  */
 async function firstPageAsImage(file: File): Promise<Blob | null> {
   const pdfjs = await loadPdfjs();
@@ -137,7 +137,7 @@ export function ocrPaths(origin: string = window.location.href) {
   };
 }
 
-/** OCR. Se carga a demanda: son varios megas que casi nunca hacen falta. */
+/** OCR. Loaded on demand: it is several megabytes that are almost never needed. */
 async function ocr(source: Blob, onProgress?: (p: ReadingProgress) => void): Promise<string> {
   const { createWorker } = await import('tesseract.js');
   onProgress?.({ progress: 0.3, stage: t('transactions.reading.stages.preparing') });
@@ -163,19 +163,19 @@ async function ocr(source: Blob, onProgress?: (p: ReadingProgress) => void): Pro
 }
 
 /**
- * Lee un archivo y dice de qué es.
+ * Reads a file and says what it is for.
  *
- * ── El OCR aquí; la interpretación, en la API ───────────────────────────────
- * Sacar el texto sigue siendo cosa del navegador —el documento no sale del
- * equipo mientras se lee, y cada persona pone su CPU—. Pero lo que ese texto
- * SIGNIFICA lo decide el servidor: `/transactions/interpret` tiene el árbol de
- * la persona, su historial y el diccionario, y es el único sitio donde cambian
- * las reglas. Antes se clasificaba aquí con una copia de esas reglas, y la app
- * del teléfono habría necesitado otra.
+ * ── The OCR here; the interpretation, in the API ────────────────────────────
+ * Extracting the text is still the browser's job —the document does not leave the
+ * device while it is read, and each person brings their CPU—. But what that text
+ * MEANS is decided by the server: `/transactions/interpret` has the person's
+ * tree, their history and the dictionary, and it is the only place where the
+ * rules change. Before, it was classified here with a copy of those rules, and the
+ * phone app would have needed another one.
  *
- * `periodo` ayuda a elegir entre las varias fechas que trae un recibo —la de
- * expedición, la de vencimiento, la del próximo corte—: la buena es la que
- * cae en el mes del gasto.
+ * `period` helps pick among the several dates a receipt carries —the
+ * issue date, the due date, the next cutoff—: the right one is the one that
+ * falls in the month of the expense.
  */
 export async function readReceipt(
   file: File,
@@ -194,7 +194,7 @@ export async function readReceipt(
   return { text, source, reading: readingFrom(interpretation, source) };
 }
 
-/** El texto del archivo: el que trae dentro un PDF, o el que reconoce el OCR. */
+/** The file's text: the one a PDF carries inside, or the one the OCR recognizes. */
 async function extractText(
   file: File,
   onProgress: ((p: ReadingProgress) => void) | undefined,
@@ -215,7 +215,7 @@ async function extractText(
   }
 
   if (text.replace(/\s/g, '').length < MIN_TEXT_LENGTH) {
-    // Un escaneo: el PDF es una foto con forma de documento.
+    // A scan: the PDF is a photo shaped like a document.
     onProgress?.({ progress: 0.2, stage: t('transactions.reading.stages.scan') });
     const image = await firstPageAsImage(file);
     if (image) return { text: await ocr(image, onProgress), source: 'ocr' };
@@ -224,7 +224,7 @@ async function extractText(
   return { text, source: 'texto-embebido' };
 }
 
-/** Lo que el servidor entiende del texto. */
+/** What the server understands of the text. */
 async function interpretText(
   text: string,
   file: File,
@@ -238,20 +238,20 @@ async function interpretText(
     });
     return response.data;
   } catch (e) {
-    // El archivo ya está adjunto; lo que falló es entenderlo. Se dice así, y
-    // quien lo lee escribe los datos a mano en la misma ficha.
+    // The file is already attached; what failed is understanding it. It is said that way, and
+    // whoever reads it types the data by hand in the same sheet.
     const detail = e instanceof ApiClientError ? ` (${e.message})` : '';
     throw new Error(t('transactions.reading.serverFailed', { detail }), { cause: e });
   }
 }
 
 /**
- * La respuesta del servidor, con la forma que la ficha ya entiende.
+ * The server's response, in the shape the sheet already understands.
  *
- * `Lectura` es lo que la ficha consumía cuando se clasificaba aquí; mantener
- * la forma deja la ficha igual y cambia solo de dónde viene la decisión. La
- * confianza se traduce de la certeza: alta sin revisar es seguro; lo demás,
- * por debajo del umbral, para que la ficha lo diga.
+ * `Reading` is what the sheet consumed when it was classified here; keeping
+ * the shape leaves the sheet the same and only changes where the decision comes from. The
+ * confidence is translated from the certainty: high without review is certain; the rest,
+ * below the threshold, so that the sheet says so.
  */
 function readingFrom(i: Interpretation, source: 'texto-embebido' | 'ocr'): Reading {
   const c = i.classification;

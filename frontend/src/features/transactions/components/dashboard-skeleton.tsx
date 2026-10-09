@@ -2,7 +2,7 @@ import { TrendSkeleton } from '@/features/transactions/components/trend';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
-/** El resumen mientras llegan sus cifras, con las medidas de lo que viene. */
+/** The dashboard while its figures arrive, with the measurements of what is coming. */
 export function DashboardSkeleton() {
   return (
     <>
@@ -11,8 +11,8 @@ export function DashboardSkeleton() {
           <Skeleton key={i} className="h-24 rounded-lg" />
         ))}
       </div>
-      {/* La misma fila de abajo, con las mismas medidas: un esqueleto que
-        se recoloca al llegar los datos es peor que no ponerlo. */}
+      {/* The same bottom row, with the same measurements: a skeleton that
+        shifts around when the data arrives is worse than none. */}
       <div className="grid gap-3 sm:gap-5 lg:auto-rows-[420px] lg:grid-cols-2 xl:grid-cols-4">
         <Card className="h-full min-h-0 lg:col-span-2">
           <CardContent className="flex h-full flex-col p-4 sm:p-6">

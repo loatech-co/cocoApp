@@ -16,18 +16,18 @@ const DATA = {
 } as unknown as Dashboard;
 
 /*
-  La tarjeta de Ingresos está «Pronto»: apagada con la tinta del tema, nunca
-  con opacidad. Al 60 % el rótulo y la etiqueta bajaban a 2,6:1 y 2,3:1, y
-  axe lo marcaba en los recorridos.
+  The Income card is «Pronto»: dimmed with the theme's ink, never
+  with opacity. At 60 % the label and the tag dropped to 2.6:1 and 2.3:1, and
+  axe flagged it in the walkthroughs.
 */
-describe('La tarjeta que todavía no está', () => {
-  it('se apaga sin opacidad', () => {
+describe('The card that is not there yet', () => {
+  it('dims without opacity', () => {
     const { container } = render(<DashboardKpis data={DATA} isUpToDate />);
 
     expect(container.querySelector('[class*="opacity-"]')).toBeNull();
   });
 
-  it('su etiqueta «Pronto» usa el tono apagado de la etiqueta', () => {
+  it('its «Pronto» tag uses the muted tone of the tag', () => {
     render(<DashboardKpis data={DATA} isUpToDate />);
 
     const isSoon = screen.getByText('Pronto');

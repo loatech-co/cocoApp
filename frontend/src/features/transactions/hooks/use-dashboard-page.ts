@@ -13,18 +13,18 @@ import {
 } from '@/shared/api/generated/model';
 
 /**
- * Cuántas filas trae cada página de la tabla del resumen.
+ * How many rows each page of the dashboard table brings.
  *
- * La tabla enseña TODO lo que cae en el recorte, paginado. Enseñar "solo un
- * poco" obliga a saltar a otra pantalla para terminar la pregunta que uno ya
- * estaba haciendo aquí.
+ * The table shows EVERYTHING that falls in the cut, paginated. Showing "just a
+ * little" forces jumping to another screen to finish the question you were already
+ * asking here.
  */
 export const PAGE_SIZE = 25;
 
-/** La página, el orden y los movimientos de la tabla del resumen. */
+/** The page, the sort and the transactions of the dashboard table. */
 function useDashboardTable(filters: ReturnType<typeof useFilters>['filters']) {
-  // Los mismos filtros que el resto de la pantalla: si la lista de aquí abajo
-  // no respondiera al recorte, contradiría las cifras de arriba.
+  // The same filters as the rest of the screen: if the list down here
+  // did not respond to the cut, it would contradict the figures above.
   const [page, setPage] = useState(1);
   const [order, setOrder] = useState<SortOrder>('-date');
   const transactions = useTransactions({
@@ -35,11 +35,11 @@ function useDashboardTable(filters: ReturnType<typeof useFilters>['filters']) {
   });
 
   /**
-   * Conecta una cabecera con el orden.
+   * Connects a header with the sort.
    *
-   * `primero` es la dirección del PRIMER clic, y no es la misma en todas: en
-   * una fecha o un valor uno quiere ver lo más grande y lo más reciente
-   * arriba; en un nombre, la A.
+   * `first` is the direction of the FIRST click, and it is not the same for all: on
+   * a date or an amount you want to see the biggest and the most recent
+   * on top; on a name, the A.
    */
   const orderBy = (field: string, first: 'asc' | 'desc') => ({
     direction:
@@ -57,28 +57,28 @@ function useDashboardTable(filters: ReturnType<typeof useFilters>['filters']) {
   return { page, setPage, transactions, orderBy };
 }
 
-/** La ficha del movimiento que se abre desde el resumen, y con qué se abre. */
+/** The transaction sheet opened from the dashboard, and what it opens with. */
 function useDashboardSheet() {
-  // El mismo modal que en Movimientos: editar desde el resumen no puede ser
-  // otra pantalla ni otro formulario.
+  // The same modal as in Movimientos: editing from the dashboard cannot be
+  // another screen or another form.
   const [editing, setEditing] = useState<Transaction | null | undefined>(undefined);
-  /** El pago pendiente que se está confirmando. Cambia la ficha entera. */
+  /** The pending payment being confirmed. It changes the whole sheet. */
   const [confirming, setConfirming] = useState<PendingPayment | null>(null);
   const [newType, setNewType] = useState<TransactionType>('expense');
 
   return { editing, setEditing, confirming, setConfirming, newType, setNewType };
 }
 
-/** El camino hasta lo que se está desglosando. */
+/** The path down to what is being broken down. */
 function breakdownPath(tree: Category[], categoryIds: readonly number[]): Category[] {
-  // Solo con UNA categoría marcada: con varias no hay un "dentro de" único del
-  // que volver.
+  // Only with ONE category checked: with several there is no single "inside of" to
+  // go back from.
   if (categoryIds.length !== 1) return [];
   const { costCenter, category, concept } = selectedPath(tree, categoryIds[0]);
   return [costCenter, category, concept].filter((n): n is Category => n !== undefined);
 }
 
-/** Todo lo que el resumen lee y recuerda: filtros, cifras, tabla y ficha. */
+/** Everything the dashboard reads and remembers: filters, figures, table and sheet. */
 export function useDashboardPage() {
   const { filters, apply, clear, hasActiveFilters } = useFilters();
   const dashboard = useDashboard(toApiParams(filters));
@@ -88,25 +88,25 @@ export function useDashboardPage() {
   const sheet = useDashboardSheet();
 
   /*
-    ── Lo que habla del mes en curso solo aparece si se está mirando el mes ──
-    El presupuesto necesario y los pagos pendientes NO son del recorte: son
-    siempre del mes de hoy. Puestos al lado de las cifras de agosto de 2024,
-    no llegan tarde —responden otra pregunta—, y en un periodo que ya cerró no
-    queda nada pendiente, porque ya pasó.
+    ── What talks about the current month only shows up if the month is being viewed ──
+    The necessary budget and the pending payments are NOT about the cut: they are
+    always about today's month. Placed next to the figures of August 2024,
+    they are not late —they answer another question—, and in a period already closed
+    nothing is left pending, because it already happened.
 
-    La prueba es si el recorte llega hasta hoy. Así el mes en curso los
-    enseña, y también el año en curso o todo el histórico —que lo contienen—,
-    mientras que cualquier periodo cerrado los esconde.
+    The test is whether the cut reaches today. That way the current month
+    shows them, and so do the current year or the whole history —which contain it—,
+    while any closed period hides them.
   */
   const isUpToDate = reachesToday(filters);
 
   /*
-    La tarjeta de pendientes solo existe si hay algo pendiente.
+    The pending card only exists if there is something pending.
 
-    Vacía no dice "todo al día": dice "aquí hay una sección", y ocupa un tercio
-    de la fila para decirlo. En un periodo cerrado no puede quedar nada
-    pendiente —ya pasó— y en el mes en curso, con todo pagado, la buena noticia
-    es que la tarjeta no esté.
+    Empty it does not say "all up to date": it says "there is a section here", and it takes a third
+    of the row to say so. In a closed period nothing can be left
+    pending —it already happened— and in the current month, with everything paid, the good news
+    is that the card is not there.
   */
   const hasPending = isUpToDate && (dashboard.data?.pending.length ?? 0) > 0;
 

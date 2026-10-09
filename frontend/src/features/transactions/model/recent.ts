@@ -1,20 +1,20 @@
 import type { IndexEntry } from '@coco/receipt-parser';
 
 /**
- * Los conceptos que alguien usó últimamente, para el buscador en blanco.
+ * The concepts someone used lately, for the blank search.
  *
- * De los movimientos más recientes —ya vienen ordenados por fecha— se toman
- * los conceptos distintos, en el orden en que aparecen, hasta `maximo`. Solo
- * conceptos: una categoría elegida en un movimiento viejo no es «lo que suelo
- * usar», es un movimiento que se quedó a medio clasificar.
+ * From the most recent transactions —they already come sorted by date— the
+ * distinct concepts are taken, in the order they appear, up to `max`. Only
+ * concepts: a category picked in an old transaction is not «what I usually
+ * use», it is a transaction that was left half classified.
  */
 export function recentConcepts(
   transactions: readonly { categoryId: number | null }[] | undefined | null,
   index: readonly IndexEntry[],
   max = 5,
 ): number[] {
-  // Si la respuesta no es una lista —una API vieja, un error envuelto— no hay
-  // recientes, y ya. Los recientes son una comodidad: no pueden tumbar la ficha.
+  // If the response is not a list —an old API, a wrapped error— there are no
+  // recent ones, and that is it. The recent ones are a convenience: they cannot bring down the sheet.
   if (!isList(transactions)) return [];
 
   const concepts = new Set(index.filter((e) => e.level === 'concepto').map((e) => String(e.id)));
@@ -34,9 +34,9 @@ export function recentConcepts(
 }
 
 /**
- * `Array.isArray` a secas estrecha un `readonly T[]` a `any[]`, y con eso cada
- * `categoryId` de abajo pasa a ser `any` para el lint. Un predicado propio
- * conserva el tipo.
+ * A bare `Array.isArray` narrows a `readonly T[]` to `any[]`, and with that every
+ * `categoryId` below becomes `any` for the lint. A predicate of our own
+ * keeps the type.
  */
 function isList(x: unknown): x is readonly { categoryId: number | null }[] {
   return Array.isArray(x);

@@ -7,12 +7,12 @@ import type { TreeNode } from '@/shared/lib/searchable-tree';
 import { ConceptSearch } from './concept-search';
 
 /**
- * El buscador que reemplaza a la cascada.
+ * The search that replaces the cascade.
  *
- * Lo que el plan pide probar, uno por uno: encuentra por nombre y por palabra
- * clave sin importar tildes ni mayúsculas; enseña la ruta de cada resultado;
- * elegir un concepto o una categoría avisa con su id; «Crear concepto» pide
- * solo la categoría.
+ * What the plan asks to test, one by one: it finds by name and by
+ * keyword regardless of accents or capitals; it shows each result's path;
+ * picking a concept or a category reports its id; «Crear concepto» asks
+ * only for the category.
  */
 afterEach(cleanup);
 
@@ -68,15 +68,15 @@ const type = (text: string) =>
   });
 const option = (name: RegExp) => screen.getByRole('option', { name });
 
-describe('Buscar', () => {
-  it('encuentra por nombre, sin tildes ni mayúsculas', () => {
+describe('Search', () => {
+  it('finds by name, regardless of accents or capitals', () => {
     renderSearch();
     open();
     type('EDUCACION');
     expect(option(/^Educación/)).toBeDefined();
   });
 
-  it('encuentra por palabra clave: «d1» es Mercado', () => {
+  it('finds by keyword: «d1» is Mercado', () => {
     renderSearch();
     open();
     type('d1');
@@ -84,14 +84,14 @@ describe('Buscar', () => {
     expect(screen.queryByRole('option', { name: /^Supermercado/ })).toBeNull();
   });
 
-  it('cada resultado enseña su ruta, que es lo que distingue dos nombres parecidos', () => {
+  it('each result shows its path, which is what tells two similar names apart', () => {
     renderSearch();
     open();
     type('mercado');
     expect(option(/^Mercado/).textContent).toContain('Alimentación › Costos variables');
   });
 
-  it('una categoría se marca como tal', () => {
+  it('a category is marked as such', () => {
     renderSearch();
     open();
     type('alimentacion');
@@ -101,8 +101,8 @@ describe('Buscar', () => {
   });
 });
 
-describe('Elegir', () => {
-  it('un concepto avisa con su id: con él se completan categoría y centro', () => {
+describe('Select', () => {
+  it('a concept reports its id: with it the category and center are completed', () => {
     const { onSelect } = renderSearch();
     open();
     type('celsia');
@@ -110,7 +110,7 @@ describe('Elegir', () => {
     expect(onSelect).toHaveBeenCalledWith(100);
   });
 
-  it('una categoría también vale: hay cuentas con categorías y sin conceptos', () => {
+  it('a category is valid too: there are accounts with categories and no concepts', () => {
     const { onSelect } = renderSearch();
     open();
     type('educacion');
@@ -118,7 +118,7 @@ describe('Elegir', () => {
     expect(onSelect).toHaveBeenCalledWith(11);
   });
 
-  it('Enter elige lo único que queda', () => {
+  it('Enter picks the only thing left', () => {
     const { onSelect } = renderSearch();
     open();
     type('celsia');
@@ -126,7 +126,7 @@ describe('Elegir', () => {
     expect(onSelect).toHaveBeenCalledWith(100);
   });
 
-  it('lo elegido se lee en el campo con su ruta, y se puede quitar', () => {
+  it('what was picked reads in the field with its path, and can be removed', () => {
     const { onSelect } = renderSearch({ value: 200 });
     expect(screen.getByRole('button', { name: /Concepto/ }).textContent).toContain('Mercado');
     open();
@@ -135,15 +135,15 @@ describe('Elegir', () => {
   });
 });
 
-describe('Crear lo que no existe', () => {
-  it('ofrece crear el concepto con lo escrito y pide SOLO la categoría', () => {
+describe('Create what does not exist', () => {
+  it('offers to create the concept with what was typed and asks ONLY for the category', () => {
     const { onCreateConcept } = renderSearch();
     open();
     type('Gimnasio');
     expect(screen.queryByRole('option')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: /Crear concepto «Gimnasio»/ }));
-    // Ahora se pregunta en qué categoría va: las categorías, y nada más.
+    // Now it asks which category it goes in: the categories, and nothing else.
     expect(screen.getByText(/¿En qué categoría va «Gimnasio»\?/)).toBeDefined();
     expect(screen.queryByRole('option', { name: /^Celsia/ })).toBeNull();
     expect(screen.queryByRole('option', { name: /^Costos fijos/ })).toBeNull();
@@ -152,7 +152,7 @@ describe('Crear lo que no existe', () => {
     expect(onCreateConcept).toHaveBeenCalledWith('Gimnasio', 20);
   });
 
-  it('no ofrece crear lo que ya existe con ese nombre', () => {
+  it('does not offer to create what already exists with that name', () => {
     renderSearch();
     open();
     type('Mercado');
@@ -160,8 +160,8 @@ describe('Crear lo que no existe', () => {
   });
 });
 
-describe('Con el buscador en blanco', () => {
-  it('enseña los recientes, hasta cinco', () => {
+describe('With the search blank', () => {
+  it('shows the recent ones, up to five', () => {
     renderSearch({ recent: [201, 100, 200, 201] });
     open();
     expect(screen.getByText('Recientes')).toBeDefined();
@@ -172,7 +172,7 @@ describe('Con el buscador en blanco', () => {
     expect(names).toHaveLength(3);
   });
 
-  it('si el recibo dejó candidatos, van ellos primero, con su ruta', () => {
+  it('if the receipt left candidates, they go first, with their path', () => {
     const { onSelect } = renderSearch({
       candidates: [
         { id: 200, name: 'Mercado', path: 'Alimentación › Costos variables' },
@@ -188,8 +188,8 @@ describe('Con el buscador en blanco', () => {
   });
 });
 
-describe('En un centro estático', () => {
-  it('se lee lo elegido pero no se puede cambiar', () => {
+describe('In a static center', () => {
+  it('what was picked can be read but not changed', () => {
     renderSearch({ value: 100, disabled: true });
     const field = screen.getByText(/Celsia/).closest('[aria-disabled="true"]');
     expect(field).not.toBeNull();
@@ -198,12 +198,12 @@ describe('En un centro estático', () => {
 });
 
 /*
-  La estructura ARIA, que axe vigila en los recorridos: el panel es un
-  diálogo (lleva una caja de texto y botones, que una lista no puede
-  contener) y de cada lista cuelgan solo opciones, directas o en un grupo.
+  The ARIA structure, which axe watches in the walkthroughs: the panel is a
+  dialog (it holds a text box and buttons, which a list cannot
+  contain) and only options hang from each list, directly or in a group.
 */
-describe('Estructura accesible', () => {
-  /** Lo que cuelga de una lista tiene que ser una opción o un grupo de opciones. */
+describe('Accessible structure', () => {
+  /** What hangs from a list has to be an option or a group of options. */
   function optionsOnly(list: HTMLElement): void {
     for (const child of Array.from(list.children)) {
       const role = child.getAttribute('role');
@@ -217,7 +217,7 @@ describe('Estructura accesible', () => {
     }
   }
 
-  it('el panel es un diálogo con la caja de búsqueda y una lista de opciones', () => {
+  it('the panel is a dialog with the search box and a list of options', () => {
     renderSearch();
     open();
     const trigger = screen.getByRole('button', { name: /Concepto/ });
@@ -229,21 +229,21 @@ describe('Estructura accesible', () => {
     optionsOnly(screen.getByRole('listbox', { name: 'Resultados' }));
   });
 
-  it('los recientes van en un grupo con nombre', () => {
+  it('the recent ones go in a named group', () => {
     renderSearch({ recent: [200] });
     open();
     optionsOnly(screen.getByRole('listbox', { name: 'Resultados' }));
     expect(screen.getByRole('group', { name: 'Recientes' })).toBeDefined();
   });
 
-  it('sin nada que ofrecer no hay lista: lo vacío se dice fuera de ella', () => {
+  it('with nothing to offer there is no list: the empty case is said outside it', () => {
     renderSearch();
     open();
     type('zzz');
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
-  it('la lista de categorías para crear también lleva solo opciones', () => {
+  it('the list of categories to create in also holds only options', () => {
     renderSearch({ onCreateConcept: vi.fn() });
     open();
     type('Gimnasio');

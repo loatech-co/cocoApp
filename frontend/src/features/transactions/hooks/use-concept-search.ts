@@ -3,14 +3,14 @@ import { useMemo, useState } from 'react';
 import { toSearchableNodes, type TreeNode } from '@/shared/lib/searchable-tree';
 import { searchInTree, indexTree, type IndexEntry } from '@coco/receipt-parser';
 
-/** Qué se está haciendo dentro del panel: buscar, o elegir dónde va lo nuevo. */
+/** What is being done inside the panel: searching, or picking where the new one goes. */
 export type SearchMode = 'buscar' | 'categoria-para-nuevo';
 
 function normal(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-/** Lo que sale del árbol para lo escrito: lo elegido, los resultados y las listas. */
+/** What comes out of the tree for what was typed: what is picked, the results and the lists. */
 function useConceptLists({
   tree,
   value,
@@ -38,8 +38,8 @@ function useConceptLists({
     [index, categories, query],
   );
 
-  // Crear solo cuando lo escrito no existe ya: con un nombre que coincide,
-  // «crear» produciría dos conceptos idénticos sumando por separado.
+  // Create only when what was typed does not exist yet: with a matching name,
+  // «crear» would produce two identical concepts adding up separately.
   const canCreate =
     query.trim() !== '' &&
     !results.some((r) => r.level === 'concepto' && r.normalizedName === normal(query));
@@ -48,8 +48,8 @@ function useConceptLists({
 }
 
 /**
- * Lo que el buscador de conceptos de la ficha recuerda y calcula: lo escrito,
- * el modo, el índice del árbol y las listas que salen de él.
+ * What the sheet's concept search remembers and computes: what was typed,
+ * the mode, the tree index and the lists that come out of it.
  */
 export function useConceptSearch({
   tree,
@@ -63,9 +63,9 @@ export function useConceptSearch({
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<SearchMode>('buscar');
   /**
-   * El nombre del concepto que se va a crear, mientras se elige su categoría.
-   * Aparte de `busca`, porque en ese paso la caja pasa a filtrar categorías y
-   * si siguiera diciendo «Gimnasio» no encontraría ninguna.
+   * The name of the concept about to be created, while its category is picked.
+   * Separate from `query`, because in that step the box switches to filtering categories and
+   * if it still said «Gimnasio» it would find none.
    */
   const [newName, setNewName] = useState('');
   const lists = useConceptLists({ tree, value, recent, query });
@@ -92,9 +92,9 @@ export function useConceptSearch({
 }
 
 function recentFromIndex(index: readonly IndexEntry[], recent: readonly number[]): IndexEntry[] {
-  // Sin repetidos aunque lleguen: quien los calcula ya los quita, pero una
-  // lista con el mismo concepto dos veces se vería como un error del
-  // buscador y no de quien lo llamó.
+  // No duplicates even if they arrive: whoever computes them already removes them, but a
+  // list with the same concept twice would look like an error of the
+  // search and not of whoever called it.
   return [...new Set(recent.map(String))]
     .map((r) => index.find((e) => e.level === 'concepto' && String(e.id) === r))
     .filter((e): e is IndexEntry => e !== undefined)

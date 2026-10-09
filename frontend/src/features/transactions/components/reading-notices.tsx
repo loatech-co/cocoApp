@@ -3,11 +3,11 @@ import { Sparkles, TriangleAlert } from 'lucide-react';
 import { t } from '@/shared/lib/i18n';
 
 /**
- * Lo que el soporte NO dijo.
+ * What the receipt did NOT say.
  *
- * Mismo sitio y misma forma que `LoQueLei` —es la otra respuesta a la misma
- * pregunta— y el tono de lo pendiente, no el del error: no se rompió nada, hay
- * trabajo que hacer a mano.
+ * Same place and same shape as `WhatWasRead` —it is the other answer to the same
+ * question— and the tone of what is pending, not the error one: nothing broke, there is
+ * work to do by hand.
  */
 export function CouldNotRead({ text }: { text: string }) {
   return (
@@ -19,44 +19,44 @@ export function CouldNotRead({ text }: { text: string }) {
 }
 
 /**
- * El aviso de que hay datos leídos por la máquina.
+ * The notice that there is data read by the machine.
  *
- * ── Por qué el acento y no el ámbar ─────────────────────────────────────────
- * Porque no ha pasado nada malo. El ámbar de esta app está para lo que está
- * PENDIENTE —un pago que vence, un movimiento sin clasificar— y un naranja
- * intenso encima de un formulario que acaba de rellenarse solo se lee como un
- * error, cuando lo que hubo fue un acierto. El acento llama sin alarmar.
+ * ── Why the accent and not amber ────────────────────────────────────────────
+ * Because nothing bad has happened. Amber in this app is for what is
+ * PENDING —a payment coming due, an unclassified transaction— and an intense
+ * orange on top of a form that just filled itself in reads as an
+ * error, when what happened was a hit. The accent calls without alarming.
  *
- * ── La única cosa quieta que usa `accent` ───────────────────────────────────
- * En el resto de la app `accent` es la superficie de lo que RESPONDE: la
- * opción bajo el cursor, la fila señalada, el botón encendido. Este aviso no
- * responde a nada y aun así lo usa, a propósito: es lo más parecido que tiene
- * este tema a un realce que llame sin alarmar, y ponerlo en `info` —que es lo
- * que le tocaría por tono— lo dejaría igual que cualquier otra nota, cuando
- * este es el único sitio donde la aplicación pide que se revise lo que ella
- * misma acaba de escribir.
+ * ── The only still thing that uses `accent` ─────────────────────────────────
+ * In the rest of the app `accent` is the surface of what RESPONDS: the
+ * option under the cursor, the pointed row, the toggled-on button. This notice does not
+ * respond to anything and it still uses it, on purpose: it is the closest thing this
+ * theme has to a highlight that calls without alarming, and putting it in `info` —which is what
+ * its tone would call for— would leave it like any other note, when
+ * this is the only place where the app asks for a review of what it
+ * just wrote itself.
  *
- * Con el token, el contraste lo garantiza el tema: verde muy claro sobre casi
- * blanco, verde muy oscuro con letra menta sobre casi negro.
+ * With the token, the theme guarantees the contrast: very light green on almost
+ * white, very dark green with mint text on almost black.
  *
- * ── Por qué una sola frase ──────────────────────────────────────────────────
- * Porque el detalle de por qué se clasificó así no cambia lo que hay que
- * hacer, que es mirar los campos. Contarlo entero ocupaba tres renglones y
- * empujaba hacia abajo justo lo que se pedía revisar.
+ * ── Why a single sentence ───────────────────────────────────────────────────
+ * Because the detail of why it was classified that way does not change what has to be
+ * done, which is looking at the fields. Telling it all took three lines and
+ * pushed down exactly what it was asking to review.
  */
 export function WhatWasRead() {
   return (
     /*
-      ── `min-h-16`: la mitad más alto ─────────────────────────────────────────
-      Medía lo que su renglón y su relleno, 44px, y con eso era una tira que la
-      vista se salta para ir a los campos. Es lo primero que hay que leer de
-      esta columna —dice que lo de abajo lo escribió una máquina y hay que
-      comprobarlo—, así que tiene que pesar como algo y no como un borde.
+      ── `min-h-16`: half again as tall ────────────────────────────────────────
+      It measured its line plus its padding, 44px, and with that it was a strip the
+      eye skips to go to the fields. It is the first thing to read in
+      this column —it says that what is below was written by a machine and has to be
+      checked—, so it has to weigh like something and not like an edge.
 
-      Y es un MÍNIMO y no un relleno mayor porque en una columna de la mitad de
-      ancho la frase cae en dos renglones, y dos renglones con el relleno de
-      arriba y abajo miden exactamente estos 64: el aviso se ve igual quepa la
-      frase de una o de dos, en vez de dar un salto al cambiar el ancho.
+      And it is a MINIMUM and not more padding because in a half-width
+      column the sentence falls on two lines, and two lines with the top
+      and bottom padding measure exactly these 64: the notice looks the same whether the
+      sentence fits on one or two, instead of jumping when the width changes.
     */
     <p className="flex min-h-16 items-center gap-2 rounded-lg bg-accent px-4 py-3 text-sm font-medium text-accent-foreground">
       <Sparkles className="size-4 shrink-0" aria-hidden="true" />

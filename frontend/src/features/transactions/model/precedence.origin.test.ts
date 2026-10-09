@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { originName } from './precedence';
 
-describe('nombreDelOrigen', () => {
+describe('originName', () => {
   it('names each source the way the sheet shows it', () => {
     expect(originName('manual')).toBe('elegido');
     expect(originName('historial')).toBe('sugerido por tu historial');

@@ -10,8 +10,8 @@ import { MenuRichOption } from '@/shared/ui/molecules/menu-rich-option';
 import { ClassificationFilter } from './classification-filter';
 
 /**
- * Los desplegables de la barra de filtros: ordenar, filtrar por clasificación
- * y registrar un movimiento nuevo. La búsqueda y el rango viven en
+ * The filter bar dropdowns: sort, filter by classification
+ * and record a new transaction. Search and the range live in
  * `toolbar-filters.tsx`.
  */
 
@@ -66,9 +66,9 @@ export function ClassificationMenu({
       isActive={filters.categoryIds.length > 0}
       width="lg"
       kind="panel"
-      // Este panel trae cabecera, lista y pie separados por líneas que
-      // cruzan de lado a lado: con el acolchado del menú quedarían
-      // cortadas 4px antes de cada borde.
+      // This panel brings a header, a list and a footer separated by lines that
+      // cross from side to side: with the menu's padding they would be
+      // cut 4px short of each edge.
       isUnpadded
     >
       <ClassificationFilter
@@ -80,10 +80,10 @@ export function ClassificationMenu({
   );
 }
 
-/* Por el mismo camino que los demás menús de esta barra: el alto y el radio se
-   los pone `size="sm"` dentro del botón, que es donde viven. Escritos aquí,
-   este botón medía distinto que el selector de fechas que tiene al lado y la
-   fila se veía descuadrada. */
+/* The same way as the other menus in this bar: the height and the radius
+   come from `size="sm"` inside the button, which is where they live. Written here,
+   this button measured differently from the date selector next to it and the
+   row looked misaligned. */
 export function NewMovementMenu({ onNew }: { onNew: (type: TransactionType) => void }) {
   return (
     <Menu
@@ -105,9 +105,9 @@ export function NewMovementMenu({ onNew }: { onNew: (type: TransactionType) => v
               onNew('expense');
             }}
           />
-          {/* Apagada, no escondida: los ingresos existen en el modelo
-              —el resumen ya los suma— y quitar la opción haría creer que
-              la aplicación no sabe registrarlos. Apagada dice que sabrá. */}
+          {/* Disabled, not hidden: income exists in the model
+              —the dashboard already adds it up— and removing the option would suggest
+              the app does not know how to record it. Disabled says it will. */}
           <MenuRichOption
             Icon={TrendingUp}
             color="income"

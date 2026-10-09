@@ -22,7 +22,7 @@ interface RowProps {
   onDrillUp: () => void;
 }
 
-/** La fila de la gráfica, los pagos pendientes y la distribución. */
+/** The row with the chart, the pending payments and the distribution. */
 export function DashboardCharts({
   data,
   hasPending,
@@ -31,81 +31,81 @@ export function DashboardCharts({
   onDrillDown,
   onDrillUp,
 }: RowProps) {
-  /* La gráfica dice CUÁNDO se gastó y la dona EN QUÉ. Son la misma
-      pregunta partida en dos, así que van a la misma altura: una
-      debajo de la otra obliga a desplazarse para cruzarlas. */
+  /* The chart says WHEN the money was spent and the donut ON WHAT. They are the
+      same question split in two, so they go at the same height: one
+      below the other forces scrolling to cross-check them. */
   /*
-    ── Quién manda sobre el alto de esta fila ────────────────────────
-    La gráfica. Su lienzo tiene una PROPORCIÓN propia —16:7— así que
-    mide por sí mismo, sin preguntarle a nadie, y con un tope para que
-    en una pantalla ancha no se estire sin fin. De ahí sale el alto de
-    su tarjeta, de ahí el de la fila, y la tarjeta de la dona se estira
-    hasta igualarlo.
+    ── Who rules the height of this row ──────────────────────────────
+    The chart. Its canvas has its own ASPECT RATIO —16:7— so it
+    measures itself, without asking anyone, and with a cap so that
+    on a wide screen it does not stretch forever. From there comes the
+    height of its card, from there the row's, and the donut card stretches
+    to match it.
 
-    Lo que no puede pasar es lo contrario: que la gráfica mida contra
-    su tarjeta y la tarjeta contra la gráfica. Eso no es una cadena, es
-    un círculo, y el navegador lo resuelve como puede —que fue lo que
-    se salió de la página—.
+    What cannot happen is the opposite: the chart measuring against
+    its card and the card against the chart. That is not a chain, it is
+    a circle, and the browser solves it however it can —which is what
+    spilled off the page—.
 
-    ── El alto ──────────────────────────────────────────────────────
-    UN número —420px— y va en la PISTA de la rejilla, no en la caja.
+    ── The height ───────────────────────────────────────────────────
+    ONE number —420px— and it goes on the grid TRACK, not on the box.
 
-    Con `h-[380px]` en la caja la pista seguía siendo `auto`: nadie le
-    había dicho cuánto mide. Entonces el `h-full` de cada tarjeta no
-    tenía contra qué resolverse, así que cada una crecía con su
-    contenido —la lista de pendientes son ocho filas, 670px—, la pista
-    crecía con ellas y la caja se quedaba en 380. Las tarjetas se
-    salían por debajo y pintaban encima de la tabla de movimientos.
+    With `h-[380px]` on the box the track was still `auto`: nobody had
+    told it how tall it is. So each card's `h-full` had nothing to
+    resolve against, and each one grew with its
+    content —the pending list is eight rows, 670px—, the track
+    grew with them and the box stayed at 380. The cards
+    spilled out the bottom and painted over the transactions table.
 
-    Declarando la PISTA, el alto es un dato desde el principio: las
-    tres tarjetas miden 420, su `h-full` resuelve, y lo que no quepa se
-    desplaza dentro de la suya.
+    Declaring the TRACK, the height is a given from the start: the
+    three cards measure 420, their `h-full` resolves, and whatever does not fit
+    scrolls inside its own.
 
-    El `min-h-0` de cada tarjeta es la otra mitad. Un elemento de
-    rejilla tiene `min-height: auto`, que es su mínimo de contenido: sin
-    ponerlo en cero, la lista larga vuelve a mandar sobre los 420 y
-    estamos donde empezamos.
+    Each card's `min-h-0` is the other half. A grid
+    item has `min-height: auto`, which is its content minimum: without
+    setting it to zero, the long list rules over the 420 again and
+    we are back where we started.
 
-    ── El ancho de las dos columnas de la derecha ────────────────────
-    Las dos MISMAS: pagos pendientes y distribución son dos respuestas
-    del mismo tamaño y una más angosta que la otra se lee como si
-    importara menos. Se escriben con `repeat(2, …)` para que no puedan
-    separarse cuando alguien toque una y se olvide de la otra.
+    ── The width of the two right-hand columns ───────────────────────
+    The two are THE SAME: pending payments and distribution are two answers
+    of the same size, and one narrower than the other reads as if it
+    mattered less. They are written with `repeat(2, …)` so they cannot
+    drift apart when someone touches one and forgets the other.
 
-    Nunca menos del 20 % de la fila y nunca más de 30rem —la medida
-    que ya tenía la distribución—, con los dos extremos concretos:
-    dejarlas en `auto` las haría depender de su contenido, y su
-    contenido depende de ellas.
+    Never less than 20 % of the row and never more than 30rem —the size
+    the distribution already had—, with both ends concrete:
+    leaving them `auto` would make them depend on their content, and their
+    content depends on them.
   */
   return (
     <div
       className={cn(
-        // `auto-rows` y no `grid-rows`: con la gráfica a todo el ancho
-        // hay DOS filas, y las dos miden lo mismo.
+        // `auto-rows` and not `grid-rows`: with the chart at full width
+        // there are TWO rows, and both measure the same.
         'grid gap-3 sm:gap-5 lg:auto-rows-[420px]',
         /*
-          ── La MISMA rejilla que los indicadores de arriba ────────────
-          Cuatro columnas, y cada tarjeta ocupa las que le tocan. Esto
-          no es una coincidencia bonita: es lo único que hace que los
-          cantos de esta fila caigan sobre los de la de arriba, y dos
-          filas de tarjetas desalineadas se leen como dos rejillas.
+          ── The SAME grid as the indicators above ─────────────────────
+          Four columns, and each card takes the ones it gets. This
+          is not a pretty coincidence: it is the only thing that makes the
+          edges of this row land on the ones of the row above, and two
+          misaligned rows of cards read as two grids.
 
-          Y es además la forma correcta de decir "la mitad". Un
-          `minmax(50%, …)` mide el 50 % del ANCHO TOTAL, huecos
-          incluidos, así que la gráfica salía más ancha que dos
-          indicadores juntos: los huecos se descontaban de las otras
-          dos. Ocupando dos columnas de cuatro, la gráfica mide dos
-          indicadores más el hueco de en medio, que es exactamente la
-          mitad de la fila.
+          And it is also the right way to say "half". A
+          `minmax(50%, …)` measures 50 % of the TOTAL WIDTH, gaps
+          included, so the chart came out wider than two
+          indicators together: the gaps came out of the other
+          two. Taking two columns out of four, the chart measures two
+          indicators plus the gap in between, which is exactly
+          half the row.
 
-          ── Y por qué a 1280 cambia el reparto ────────────────────────
-          Porque a 1024 la cuenta no da: si la gráfica se lleva la
-          mitad, a la dona y a los pagos pendientes les toca un cuarto
-          cada una, y un cuarto de 1100px son 275 —menos de lo que
-          necesitan—. Así que ahí no se estrecha ninguna: la gráfica
-          pasa a ancho completo y las otras dos bajan debajo, mitad y
-          mitad. Es el mismo corte que ya usan los indicadores, que
-          hasta 1280 van de dos en dos.
+          ── And why the split changes at 1280 ─────────────────────────
+          Because at 1024 the math does not work: if the chart takes
+          half, the donut and the pending payments get a quarter
+          each, and a quarter of 1100px is 275 —less than they
+          need—. So there none of them narrows: the chart
+          goes full width and the other two drop below, half and
+          half. It is the same breakpoint the indicators already use, which
+          go two by two up to 1280.
         */
         'lg:grid-cols-2 xl:grid-cols-4',
       )}
@@ -121,9 +121,9 @@ export function DashboardCharts({
         <PendingPayments
           className="min-h-0"
           payments={data.pending}
-          // Abre la ficha de «Confirmar pago»: el concepto, el valor
-          // esperado y la fecha de vencimiento ya están dichos aquí, así
-          // que lo que queda es adjuntar el soporte y confirmar.
+          // Opens the «Confirmar pago» sheet: the concept, the expected
+          // amount and the due date are already stated here, so
+          // what is left is attaching the receipt and confirming.
           onSelect={onSelectPayment}
         />
       )}
@@ -148,9 +148,9 @@ function Behavior({ hasPending, children }: { hasPending: boolean; children: Rea
     <Card
       className={cn(
         'h-full min-h-0',
-        // Con pendientes: toda la fila hasta 1280, y media a partir
-        // de ahí. Sin ellos son dos tarjetas, y la dona se queda con
-        // una columna —la de un indicador— en vez de con media fila.
+        // With pending payments: the whole row up to 1280, and half from
+        // there on. Without them there are two cards, and the donut keeps
+        // one column —an indicator's— instead of half the row.
         hasPending ? 'lg:col-span-2' : 'xl:col-span-3',
       )}
     >
@@ -159,17 +159,17 @@ function Behavior({ hasPending, children }: { hasPending: boolean; children: Rea
           {t('transactions.dashboard.behaviour')}
         </h2>
         {/*
-          `flex-1` con un mínimo, no una proporción fija.
+          `flex-1` with a minimum, not a fixed aspect ratio.
 
-          Con proporción, el alto de la gráfica salía de su ancho —y al
-          angostarse su columna, de golpe medía menos que las tarjetas
-          de al lado—: la fila la estiraban ellas, la gráfica se
-          quedaba con su alto pequeño y aparecía pegada arriba con el
-          resto de la tarjeta en blanco.
+          With an aspect ratio, the chart's height came from its width —and when
+          its column narrowed, it suddenly measured less than the cards
+          next to it—: they stretched the row, the chart
+          kept its small height and showed up stuck to the top with the
+          rest of the card blank.
 
-          Ahora se estira hasta el alto de la fila, sea quien sea el
-          que lo fije, y el mínimo evita que se aplaste cuando la fila
-          es baja.
+          Now it stretches to the row's height, whoever
+          sets it, and the minimum keeps it from flattening when the row
+          is short.
         */}
         <div className="min-h-0 flex-1">{children}</div>
       </CardContent>

@@ -16,7 +16,7 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
-/** Promedio y pico, encima de la gráfica. */
+/** Average and peak, above the chart. */
 export function TrendSummary({
   granularity,
   average,
@@ -43,7 +43,7 @@ export function TrendSummary({
   );
 }
 
-/** Las dos series dibujadas: el gasto con su relleno y, si lo hay, el ingreso. */
+/** The two series drawn: expense with its fill and, if there is any, income. */
 export function TrendLines({
   expenses,
   income,
@@ -100,17 +100,17 @@ function ExpenseFill() {
   return (
     <defs>
       <linearGradient id="tendencia-relleno" x1="0" y1="0" x2="0" y2="1">
-        {/* `--expense` y `--income`, no `--chart-1` y `--chart-2`.
-          La rampa de gráficas es una serie de colores que se distinguen
-          ENTRE SÍ; aquí las dos series no son dos series cualesquiera,
-          son lo que sale y lo que entra, y eso ya tiene color en esta
-          app. Con la rampa, el gasto salía teal en la gráfica y pino en
-          la tabla, y el ingreso oro aquí y verde allá: la misma plata
-          con cuatro colores según por dónde se mirara.
+        {/* `--expense` and `--income`, not `--chart-1` and `--chart-2`.
+          The chart ramp is a series of colors that tell apart
+          FROM EACH OTHER; here the two series are not just any two series,
+          they are what goes out and what comes in, and that already has a color in this
+          app. With the ramp, expense came out teal in the chart and pine in
+          the table, and income gold here and green there: the same money
+          in four colors depending on where you looked.
 
-          La dona sí se queda con su propia rampa, y por un motivo que
-          aquí no aplica: pinta ÁREAS, y un color que se distingue como
-          trazo de 2px puede ser invisible como relleno. */}
+          The donut does keep its own ramp, and for a reason that
+          does not apply here: it paints AREAS, and a color that stands out as a
+          2px stroke can be invisible as a fill. */}
         <stop offset="0%" stopColor="var(--color-expense)" stopOpacity="0.25" />
         <stop offset="100%" stopColor="var(--color-expense)" stopOpacity="0.02" />
       </linearGradient>
@@ -118,7 +118,7 @@ function ExpenseFill() {
   );
 }
 
-/** Tres guías: sin ellas no se puede comparar la altura de un punto con la de otro que esté lejos. */
+/** Three guides: without them you cannot compare the height of a point with that of another one far away. */
 function Guides() {
   return (
     <>
@@ -138,7 +138,7 @@ function Guides() {
   );
 }
 
-/** El punto resaltado sobre la línea. */
+/** The highlighted point on the line. */
 export function Point({
   x,
   value,
@@ -164,9 +164,9 @@ export function Point({
 }
 
 /*
-  La tarjeta salta al lado CONTRARIO del puntero en vez de seguirlo.
-  Siguiéndolo se saldría del gráfico en los extremos, y taparía
-  justo el punto que se está mirando.
+  The card jumps to the side OPPOSITE the pointer instead of following it.
+  Following it, it would run off the chart at the ends, and it would cover
+  exactly the point being looked at.
 */
 export function TrendCard({
   card,
@@ -188,8 +188,8 @@ export function TrendCard({
       className={cn(
         'pointer-events-none absolute min-w-36 rounded-lg p-3',
         FLOATING_SURFACE,
-        // Sin medir todavía se pinta invisible: un primer fotograma en
-        // la esquina y otro en su sitio se ve como un salto.
+        // Not yet measured, it is drawn invisible: a first frame in
+        // the corner and another in its place looks like a jump.
         !isMeasured && 'opacity-0',
       )}
     >
@@ -212,9 +212,9 @@ export function TrendCard({
 }
 
 /*
-  El eje. Las etiquetas se COLOCAN por su posición, no se reparten en
-  columnas iguales: repartidas, treinta días dejan once píxeles por
-  etiqueta y los números se pisan unos con otros.
+  The axis. The labels are PLACED by their position, not spread in
+  equal columns: spread out, thirty days leave eleven pixels per
+  label and the numbers step on each other.
 */
 export function TrendAxis({
   labels,

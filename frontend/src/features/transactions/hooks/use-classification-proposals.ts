@@ -12,26 +12,26 @@ import { indexTree } from '@coco/receipt-parser';
 import type { MovementSheetState } from './use-movement-form';
 
 /**
- * Las fuentes automáticas de la clasificación, y los conceptos recientes.
+ * The automatic sources of the classification, and the recent concepts.
  *
- * ── Las fuentes ─────────────────────────────────────────────────────────────
- * Tres, y las tres pasan por `proponer`, que aplica la precedencia:
+ * ── The sources ─────────────────────────────────────────────────────────────
+ * Three, and all three go through `propose`, which applies the precedence:
  *
- * · El HISTORIAL, que vive en el servidor: `/categorization/suggest` con lo
- *   que se está escribiendo (con espera entre teclas; ver el hook).
- * · Las PALABRAS CLAVE y los nombres de la persona: lo escrito se busca en su
- *   árbol; si lleva a un solo concepto, se propone.
- * · El DICCIONARIO del sistema: si lo escrito nombra un comercio conocido, sus
- *   términos se buscan en el árbol. Ver `proposalFromText`.
+ * · The HISTORY, which lives on the server: `/categorization/suggest` with what
+ *   is being typed (with a wait between keys; see the hook).
+ * · The person's KEYWORDS and names: what was typed is searched in their
+ *   tree; if it leads to a single concept, it is proposed.
+ * · The system DICTIONARY: if what was typed names a known merchant, its
+ *   terms are searched in the tree. See `proposalFromText`.
  *
- * Solo con la ficha en el formulario y editable: proponer sobre una ficha de
- * solo lectura sería cambiarle la clasificación a un movimiento guardado.
+ * Only with the sheet in the form and editable: proposing on a
+ * read-only sheet would change the classification of a saved transaction.
  *
- * ── La recurrencia NO se edita aquí ─────────────────────────────────────────
- * Es del CONCEPTO, no del movimiento, y su sitio es Centros de costos. Editable
- * desde la ficha, un formulario que uno abre para corregir una cifra podía
- * cambiar cada cuánto vuelve un pago, y eso reaparece semanas después en la
- * tarjeta de pagos pendientes sin que nadie recuerde haberlo tocado.
+ * ── Recurrence is NOT edited here ───────────────────────────────────────────
+ * It belongs to the CONCEPT, not the transaction, and its place is Centros de costos. Editable
+ * from the sheet, a form you open to correct an amount could
+ * change how often a payment comes back, and that shows up weeks later in the
+ * pending payments card without anyone remembering touching it.
  */
 export function useClassificationProposals(
   sheet: MovementSheetState,
@@ -50,8 +50,8 @@ export function useClassificationProposals(
 
   const historySuggestion = useCategorySuggestion(isProposing ? sheet.description : '');
   useOnChange([historySuggestion?.categoryId], () => {
-    // Solo con un id de verdad: una respuesta con otra forma no puede vaciar
-    // lo que otra fuente ya había puesto.
+    // Only with a real id: a response with another shape cannot empty
+    // what another source had already set.
     if (typeof historySuggestion?.categoryId !== 'number') return;
     sheet.setWasSuggested(true);
     sheet.propose({ categoryId: historySuggestion.categoryId, origin: 'historial' });
@@ -78,8 +78,8 @@ export function useClassificationProposals(
     },
   );
 
-  // Los conceptos usados últimamente, para el buscador en blanco. Solo al
-  // crear: editando, el concepto ya está puesto.
+  // The concepts used lately, for the blank search. Only when
+  // creating: when editing, the concept is already set.
   const recentTransactions = useTransactions({ perPage: 40 }, { enabled: isOpen && !transaction });
   return useMemo(
     () => recentConcepts(recentTransactions.data?.data ?? [], treeIndex),

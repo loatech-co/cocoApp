@@ -14,18 +14,18 @@ interface ReadViewProps {
   /** ISO 4217 code of the movement being read. */
   currency: string;
   date: string;
-  /** `YYYY-MM-DD` del día 1 del mes al que PERTENECE el gasto. */
+  /** `YYYY-MM-DD` of day 1 of the month the expense BELONGS to. */
   period?: string | undefined;
   path: string[];
 }
 
 /**
- * La columna de los datos cuando solo se está mirando: el movimiento y, si
- * las hay, sus notas.
+ * The data column when you are only looking: the transaction and, if
+ * there are any, its notes.
  *
- * Las notas van con lo que dicen los datos y no debajo de los soportes: el
- * recibo es la prueba de lo que pasó y la nota es el comentario de alguien
- * sobre eso, así que va del lado en el que se cuenta lo que pasó.
+ * The notes go with what the data says and not under the receipts: the
+ * receipt is the proof of what happened and the note is someone's comment
+ * about it, so it goes on the side where what happened is told.
  */
 export function MovementReadColumn({ notes, ...reading }: ReadViewProps & { notes: string }) {
   return (
@@ -34,8 +34,8 @@ export function MovementReadColumn({ notes, ...reading }: ReadViewProps & { note
 
       {notes.trim() !== '' && (
         <Section title={t('transactions.fields.notes')}>
-          {/* `whitespace-pre-line`: las notas se escriben con saltos de línea
-              y aplanarlas convierte una lista en un párrafo. */}
+          {/* `whitespace-pre-line`: notes are written with line breaks
+              and flattening them turns a list into a paragraph. */}
           <p className="whitespace-pre-line text-sm">{notes}</p>
         </Section>
       )}
@@ -44,28 +44,28 @@ export function MovementReadColumn({ notes, ...reading }: ReadViewProps & { note
 }
 
 /**
- * El movimiento cuando solo se está mirando.
+ * The transaction when you are only looking.
  *
- * ── Por qué no son los mismos campos, apagados ──────────────────────────────
- * Porque un campo apagado sigue siendo un campo: tiene su marco, su etiqueta
- * encima y su altura de control, y ocupa el sitio de una caja donde se podría
- * escribir aunque no se pueda. Ocho de esos, uno debajo de otro, son un
- * formulario que no deja rellenarse —que se lee como una avería— cuando lo
- * que uno viene a hacer es LEER un dato: cuánto fue, cuándo, de qué.
+ * ── Why these are not the same fields, disabled ─────────────────────────────
+ * Because a disabled field is still a field: it has its frame, its label
+ * above and its control height, and it takes the place of a box where you could
+ * type even though you cannot. Eight of those, one under another, are a
+ * form that will not let itself be filled —which reads as a fault— when what
+ * you came to do is READ a piece of data: how much, when, for what.
  *
- * ── De dónde sale la jerarquía ──────────────────────────────────────────────
- * De que no todo pese igual. La cifra manda: va grande, en su color. Debajo,
- * sus dos datos inseparables —de qué es y cuándo se pagó— en la misma caja,
- * porque se leen juntos.
+ * ── Where the hierarchy comes from ──────────────────────────────────────────
+ * From not everything weighing the same. The amount rules: it goes big, in its color. Below,
+ * its two inseparable facts —what it is for and when it was paid— in the same box,
+ * because they are read together.
  *
- * ── Partido en dos: arriba CUÁNTO, abajo de qué ─────────────────────────────
- * Juntos, la cifra tenía cuatro líneas pegadas debajo y el bloque se leía como
- * un párrafo que empieza con un número grande. La línea los separa en dos
- * registros: el dato que se viene a ver, y el contexto que lo explica.
+ * ── Split in two: HOW MUCH on top, what for below ───────────────────────────
+ * Together, the amount had four lines stuck under it and the block read like
+ * a paragraph that starts with a big number. The line splits them into two
+ * registers: the fact you came to see, and the context that explains it.
  *
- * Y es una TARJETA de verdad: `Card` es la superficie que la aplicación ya usa
- * para "esto es una cosa", y aquí dice lo mismo: el movimiento es un objeto, y
- * lo de abajo son sus anexos.
+ * And it is a real CARD: `Card` is the surface the app already uses
+ * for "this is one thing", and here it says the same: the transaction is an object, and
+ * what is below is its attachments.
  */
 function ReadView({ type, name, value, currency, date, period, path }: ReadViewProps) {
   return (
@@ -73,16 +73,16 @@ function ReadView({ type, name, value, currency, date, period, path }: ReadViewP
       <Card className="overflow-hidden">
         <div className="px-4 py-5">
           {/*
-            SIN `tabular`: aquí no hay columna, hay un número solo y grande, y
-            el ancho fijo de las cifras tabulares separa los dígitos como si
-            alguien le hubiera metido interletraje.
+            NO `tabular`: there is no column here, there is a single big number, and
+            the fixed width of tabular figures spreads the digits apart as if
+            someone had added letter-spacing.
 
-            Una flecha, no un signo. El menos delante de una cifra es una
-            convención de TABLA; aquí la ficha entera es un gasto, y lo dice el
-            título. La flecha dice lo mismo mejor: sube y sale, baja y entra.
+            An arrow, not a sign. A minus in front of an amount is a
+            TABLE convention; here the whole sheet is an expense, and the
+            title says so. The arrow says the same thing better: up and out, down and in.
 
-            36px y los mismos en todas las pantallas: es el dato principal, no
-            el único.
+            36px and the same on every screen: it is the main fact, not
+            the only one.
           */}
           <p className="flex items-center gap-2 font-display text-4xl font-bold leading-none text-acento-tinta">
             <ArrowUpRight
@@ -104,17 +104,17 @@ function ReadView({ type, name, value, currency, date, period, path }: ReadViewP
   );
 }
 
-/** De qué es y cuándo se pagó, debajo de la cifra. */
+/** What it is for and when it was paid, under the amount. */
 function ReadDetails({
   name,
   date,
   period,
   path,
 }: Pick<ReadViewProps, 'name' | 'date' | 'period' | 'path'>) {
-  // El periodo solo se nombra cuando NO es el mes del pago. Repetir
-  // "septiembre" dos veces seguidas no informa; decirlo cuando la factura de
-  // agosto se pagó en septiembre, sí —es lo que descuadra los totales de quien
-  // no lo nota—.
+  // The period is only named when it is NOT the month of the payment. Repeating
+  // "septiembre" twice in a row says nothing; saying it when the August bill
+  // was paid in September does —it is what throws off the totals of whoever
+  // does not notice—.
   const paymentMonth = date.slice(0, 7);
   const isStale = period !== undefined && period !== '' && period.slice(0, 7) !== paymentMonth;
 
@@ -122,9 +122,9 @@ function ReadDetails({
     <div className="flex flex-col gap-1 border-t border-border px-4 py-3">
       <p className="truncate text-base font-medium">{name || t('transactions.noConcept')}</p>
 
-      {/* El camino, sin etiqueta y sin fichas. Con fichas parecían pestañas
-          —algo que se pulsa y cambia lo de abajo— y aquí no se pulsa nada: es
-          dónde vive este movimiento, que se lee como una ruta. */}
+      {/* The path, with no label and no chips. With chips they looked like tabs
+          —something you tap that changes what is below— and nothing is tapped here: it is
+          where this transaction lives, which reads as a path. */}
       {path.length > 0 && (
         <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
           {path.map((segment, i) => (

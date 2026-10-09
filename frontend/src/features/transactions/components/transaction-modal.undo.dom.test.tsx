@@ -11,12 +11,12 @@ import { keys } from '@/shared/api/query-keys';
 import { TransactionModal } from './transaction-modal';
 
 /*
-  La red, de mentira.
+  The network, faked.
 
-  `ApiClientError` se reexporta DE VERDAD —no una copia— porque la ficha
-  decide qué mensaje enseñar con un `instanceof`: una clase paralela con el
-  mismo nombre no coincidiría, y la prueba pasaría por el camino equivocado
-  sin que se notara.
+  `ApiClientError` is re-exported FOR REAL —not a copy— because the sheet
+  decides which message to show with an `instanceof`: a parallel class with the
+  same name would not match, and the test would take the wrong path
+  without anyone noticing.
 */
 const { ApiClientError } =
   await vi.importActual<typeof import('@/shared/api/api-client')>('@/shared/api/api-client');
@@ -47,12 +47,12 @@ vi.mock('@/shared/api/api-client', async () => {
 vi.mock('@/features/transactions/api/read-receipt', () => ({ readReceipt: vi.fn() }));
 
 /*
-  El encogido, de paso.
+  The shrinking, stubbed along the way.
 
-  El de verdad abre la imagen con el navegador para saber cuánto mide, y jsdom
-  no dibuja: se quedaría esperando hasta agotar su reloj de cinco segundos.
-  Aquí se prueba qué pasa cuando la SUBIDA falla, no cómo se prepara el archivo
-  —eso tiene sus propias pruebas en `lib/encoger-soporte.dom.test.ts`—.
+  The real one opens the image with the browser to find out its size, and jsdom
+  does not draw: it would wait until its five-second clock ran out.
+  What is tested here is what happens when the UPLOAD fails, not how the file is
+  prepared —that has its own tests in `shared/lib/shrink-receipt.dom.test.ts`—.
 */
 vi.mock('@/shared/lib/shrink-receipt', () => ({
   shrinkReceipts: (files: File[]) => Promise.resolve(files),
@@ -77,13 +77,13 @@ const TREE = [
 ] as unknown as CategoryTree[];
 
 /*
-  Lo que el lector de mentira devuelve: un archivo que se abrió y en el que no
-  se reconoció nada.
+  What the fake reader returns: a file that opened and in which nothing
+  was recognized.
 
-  El primer soporte de un movimiento nuevo se LEE —desde que la ficha abre en
-  el formulario no hay un «Registrar manualmente» que diga lo contrario—, y
-  aquí lo que se prueba es qué pasa cuando la SUBIDA falla, no la lectura.
-  Un lector que no saca nada deja el formulario como estaba.
+  The first receipt of a new transaction is READ —since the sheet opens in
+  the form there is no «Registrar manualmente» saying otherwise—, and
+  what is tested here is what happens when the UPLOAD fails, not the reading.
+  A reader that extracts nothing leaves the form as it was.
 */
 const EMPTY_READING: Awaited<ReturnType<typeof readReceipt>> = {
   text: '',
@@ -104,8 +104,8 @@ const EMPTY_READING: Awaited<ReturnType<typeof readReceipt>> = {
 beforeEach(() => {
   red.mockReset();
   apiUpload.mockReset();
-  // La lectura espera un piso de cuatro segundos aunque ya haya terminado;
-  // con el reloj falso se le pasa por encima en `adjuntar`.
+  // The reading waits a four-second floor even if it is already done;
+  // with the fake clock it is skipped over in `attach`.
   vi.useFakeTimers();
   vi.mocked(readReceipt).mockReset();
   vi.mocked(readReceipt).mockResolvedValue(EMPTY_READING);
@@ -135,11 +135,11 @@ function openNewSheet() {
     </QueryClientProvider>,
   );
 
-  // La ficha nueva abre ya en el formulario.
+  // The new sheet already opens in the form.
   return vista;
 }
 
-/** Adjunta un archivo por el campo de verdad, que va escondido. */
+/** Attaches a file through the real input, which is hidden. */
 async function attach(container: HTMLElement): Promise<void> {
   const field = container.querySelector('input[type="file"]')!;
   expect(field).not.toBeNull();
@@ -148,21 +148,21 @@ async function attach(container: HTMLElement): Promise<void> {
   Object.defineProperty(field, 'files', { value: [file], configurable: true });
 
   /*
-    El `async` sin `await` dentro es a propósito, y no es intercambiable.
+    The `async` with no `await` inside is on purpose, and it is not interchangeable.
 
-    `act` mira si lo que le devuelven es un thenable: con la versión síncrona
-    vacía los efectos y vuelve; con la asíncrona vacía ADEMÁS la cola de
-    microtareas, que es donde se resuelven las promesas que disparó el evento.
-    Esta prueba depende de eso —el cambio de archivo lanza la lectura del
-    soporte, que es asíncrona— y con `act(() => …)` mira el DOM de antes.
+    `act` checks whether what it gets back is a thenable: with the synchronous version
+    it flushes the effects and returns; with the async one it ALSO flushes the
+    microtask queue, which is where the promises fired by the event resolve.
+    This test depends on that —the file change kicks off the reading of the
+    receipt, which is async— and with `act(() => …)` it looks at the DOM from before.
   */
-  // eslint-disable-next-line @typescript-eslint/require-await -- ver arriba
+  // eslint-disable-next-line @typescript-eslint/require-await -- see above
   await act(async () => {
     fireEvent.change(field);
   });
 
-  // El piso de la espera de la lectura: hasta que pasa, la ficha enseña el
-  // documento leyéndose y no el formulario.
+  // The floor of the reading wait: until it passes, the sheet shows the
+  // document being read and not the form.
   await act(async () => {
     await vi.advanceTimersByTimeAsync(4000);
   });
@@ -173,15 +173,15 @@ async function record(): Promise<void> {
   fireEvent.change(value, { target: { value: '120000' } });
 
   /*
-    El `async` sin `await` dentro es a propósito, y no es intercambiable.
+    The `async` with no `await` inside is on purpose, and it is not interchangeable.
 
-    `act` mira si lo que le devuelven es un thenable: con la versión síncrona
-    vacía los efectos y vuelve; con la asíncrona vacía ADEMÁS la cola de
-    microtareas, que es donde se resuelven las promesas que disparó el evento.
-    Esta prueba depende de eso —el cambio de archivo lanza la lectura del
-    soporte, que es asíncrona— y con `act(() => …)` mira el DOM de antes.
+    `act` checks whether what it gets back is a thenable: with the synchronous version
+    it flushes the effects and returns; with the async one it ALSO flushes the
+    microtask queue, which is where the promises fired by the event resolve.
+    This test depends on that —the file change kicks off the reading of the
+    receipt, which is async— and with `act(() => …)` it looks at the DOM from before.
   */
-  // eslint-disable-next-line @typescript-eslint/require-await -- ver arriba
+  // eslint-disable-next-line @typescript-eslint/require-await -- see above
   await act(async () => {
     fireEvent.submit(value.closest('form')!);
   });
@@ -190,11 +190,11 @@ async function record(): Promise<void> {
 const calls = () => red.mock.calls.map(([path, options]) => [path, options?.method]);
 
 /**
- * La red contesta por RUTA, no una cosa para todo.
+ * The network answers by ROUTE, not one thing for everything.
  *
- * La ficha consulta el árbol de categorías nada más abrirse, y una respuesta
- * única le devolvía el `{ id }` de un movimiento donde esperaba una lista:
- * reventaba pintando los desplegables, antes de llegar a lo que se prueba.
+ * The sheet queries the category tree as soon as it opens, and a single
+ * response handed it a transaction's `{ id }` where it expected a list:
+ * it blew up drawing the dropdowns, before reaching what is being tested.
  */
 function respond({ onDelete }: { onDelete: () => Promise<unknown> }): void {
   red.mockImplementation((path: string, options?: { method?: string }) => {
@@ -205,15 +205,15 @@ function respond({ onDelete }: { onDelete: () => Promise<unknown> }): void {
 }
 
 /**
- * Un movimiento no se guarda sin el soporte que se le adjuntó.
+ * A transaction is not saved without the receipt attached to it.
  *
- * Registrar son DOS peticiones —el movimiento y después sus soportes— y la
- * segunda puede fallar sola. Antes el movimiento se quedaba: había plata
- * anotada sin el papel que la explica, y nada en la pantalla recordaba que
- * faltaba. Ahora se deshace.
+ * Recording is TWO requests —the transaction and then its receipts— and the
+ * second one can fail on its own. Before, the transaction stayed: there was money
+ * noted down without the paper that explains it, and nothing on screen recalled
+ * it was missing. Now it is undone.
  */
-describe('Cuando el soporte falla al registrar', () => {
-  it('borra el movimiento que se acababa de crear', async () => {
+describe('When the receipt fails on record', () => {
+  it('deletes the transaction that had just been created', async () => {
     respond({ onDelete: () => Promise.resolve({ data: undefined }) });
     apiUpload.mockRejectedValue(
       new ApiClientError(503, 'service_unavailable', 'Al servidor se le acabaron los recursos.'),
@@ -223,16 +223,16 @@ describe('Cuando el soporte falla al registrar', () => {
     await attach(container);
     await record();
 
-    // Se creó, falló el soporte, y lo creado se fue.
+    // It was created, the receipt failed, and what was created is gone.
     expect(apiUpload).toHaveBeenCalledOnce();
     expect(calls()).toContainEqual(['/transactions/42', 'DELETE']);
 
-    // Y se dice sin rodeos: no quedó nada. Quien lea otra cosa se va a quedar
-    // buscando en la tabla un movimiento que no existe.
+    // And it is said plainly: nothing was left. Whoever reads anything else will be
+    // looking in the table for a transaction that does not exist.
     expect(screen.getByText(/No quedó registrado nada/)).toBeDefined();
   });
 
-  it('si tampoco se pudo deshacer, lo dice y no duplica al reintentar', async () => {
+  it('if it could not be undone either, it says so and does not duplicate on retry', async () => {
     respond({ onDelete: () => Promise.reject(new Error('sin conexión')) });
     apiUpload.mockRejectedValue(
       new ApiClientError(503, 'service_unavailable', 'Falló el soporte.'),
@@ -244,8 +244,8 @@ describe('Cuando el soporte falla al registrar', () => {
 
     expect(screen.getByText(/quedó registrado/)).toBeDefined();
 
-    // El reintento ACTUALIZA el 42 en vez de crear un segundo movimiento por
-    // la misma plata: es el caso que obligaba a recordar el id.
+    // The retry UPDATES 42 instead of creating a second transaction for
+    // the same money: it is the case that required remembering the id.
     red.mockClear();
     await record();
 
@@ -257,18 +257,18 @@ describe('Cuando el soporte falla al registrar', () => {
 });
 
 /**
- * Lo que la web guarda ahora dice de dónde entró. El texto de un recibo solo
- * viaja cuando hubo lectura; adjuntar a mano no lee —otra prueba lo protege—,
- * así que aquí `rawText` va vacío a propósito.
+ * What the web saves now says where it came in from. A receipt's text only
+ * travels when there was a reading; attaching by hand does not read —another test guards that—,
+ * so here `rawText` goes empty on purpose.
  */
-describe('Lo que la web guarda', () => {
+describe('What the web saves', () => {
   const creation = () =>
     red.mock.calls.find(
       ([path, options]) =>
         path === '/transactions' && (options as { method?: string } | undefined)?.method === 'POST',
     );
 
-  it('manda source «web»; sin texto leído, rawText va vacío', async () => {
+  it('sends source «web»; with no text read, rawText goes empty', async () => {
     respond({ onDelete: () => Promise.resolve({ data: undefined }) });
     apiUpload.mockResolvedValue({ data: [] });
 
@@ -276,14 +276,14 @@ describe('Lo que la web guarda', () => {
     await attach(container);
     await record();
 
-    expect(creation(), 'se creó el movimiento').toBeDefined();
+    expect(creation(), 'the transaction was created').toBeDefined();
     const body = (creation()![1] as { body: Record<string, unknown> }).body;
     expect(body.source).toBe('web');
     expect(body.rawText).toBeNull();
-    // Y lo de siempre sigue viajando igual.
+    // And the usual stuff still travels the same.
     expect(body.amount).toBe('120000');
-    // El soporte sí se leyó —es el primero de un movimiento nuevo—, pero no
-    // sacó texto, y un texto vacío no viaja como cadena vacía: viaja como nulo.
+    // The receipt was read —it is the first of a new transaction—, but it
+    // extracted no text, and an empty text does not travel as an empty string: it travels as null.
     expect(vi.mocked(readReceipt)).toHaveBeenCalledOnce();
   });
 });

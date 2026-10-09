@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { classify, conceptSignatures, type SearchableNode } from '@coco/receipt-parser';
 
 /**
- * El diccionario dentro de la lectura de un recibo, y su sitio en la fila.
+ * The dictionary inside the reading of a receipt, and its place in the line.
  *
- * Tres cosas que no pueden fallar: que hable solo cuando nadie más reconoció
- * nada, que las palabras clave de la persona le ganen siempre, y que lo que
- * diga lleve ids y una certeza —porque es lo que la ficha necesita para
- * proponer sin adivinar—.
+ * Three things that cannot fail: that it speaks only when nobody else recognized
+ * anything, that the person's keywords always beat it, and that what it
+ * says carries ids and a certainty —because that is what the sheet needs to
+ * propose without guessing—.
  */
 const TREE: SearchableNode[] = [
   {
@@ -33,7 +33,7 @@ const TREE: SearchableNode[] = [
   },
 ];
 
-/** Las firmas que salen de las palabras clave de ESTE árbol. */
+/** The signatures that come out of the keywords of THIS tree. */
 const ownSignatures = conceptSignatures([
   {
     concept: 'Restaurantes',
@@ -46,27 +46,27 @@ const ownSignatures = conceptSignatures([
 const read = (text: string, tree: SearchableNode[] = TREE) =>
   classify({ text, source: 'texto-embebido', signatures: ownSignatures, tree });
 
-/** Sin árbol de verdad: la propiedad ni siquiera se pasa. */
+/** No real tree: the property is not even passed. */
 const readWithoutTree = (text: string) =>
   classify({ text, source: 'texto-embebido', signatures: ownSignatures });
 
-describe('El diccionario como última fuente de la lectura', () => {
-  it('reconoce un comercio y lo lleva al concepto de la persona: certeza media aquí, porque hay dos «Mercado»', () => {
-    // «Mercado» existe dos veces en este árbol —Alimentación y Hogar—, así
-    // que el diccionario NO elige: deja los dos a la vista.
+describe('The dictionary as the last source of the reading', () => {
+  it("recognizes a merchant and takes it to the person's concept: medium certainty here, because there are two «Mercado»", () => {
+    // «Mercado» exists twice in this tree —Alimentación and Hogar—, so
+    // the dictionary does NOT pick: it leaves both in view.
     const l = read('KOBA COLOMBIA SAS Total 45.000');
     expect(l.inTree?.source).toBe('diccionario');
     expect(l.inTree?.certainty).toBe('media');
     expect(l.inTree?.conceptId).toBeUndefined();
     expect(l.inTree?.candidates.map((c) => c.id).sort()).toEqual([200, 220]);
-    // Y la ruta de cada candidato es lo que distingue a uno del otro.
+    // And each candidate's path is what tells one from the other.
     expect(l.inTree?.candidates.map((c) => c.path).sort()).toEqual([
       'Alimentación › Costos variables',
       'Hogar › Costos variables',
     ]);
   });
 
-  it('con un solo destino, certeza alta y el id del concepto', () => {
+  it('with a single destination, high certainty and the concept id', () => {
     const singleMarket: SearchableNode[] = [
       {
         id: 2,
@@ -86,7 +86,7 @@ describe('El diccionario como última fuente de la lectura', () => {
     expect(l.costCenter).toBe('Costos variables');
   });
 
-  it('nunca pasa del umbral de revisión: propone, no decide', () => {
+  it('never goes over the review threshold: it proposes, it does not decide', () => {
     const singleMarket: SearchableNode[] = [
       {
         id: 2,
@@ -99,16 +99,16 @@ describe('El diccionario como última fuente de la lectura', () => {
     expect(l.confidence).toBeLessThan(0.8);
   });
 
-  it('lleva a una categoría sin conceptos: certeza media con la categoría', () => {
+  it('leads to a category with no concepts: medium certainty with the category', () => {
     const l = read('UBER *TRIP 18.500');
     expect(l.inTree).toMatchObject({ source: 'diccionario', certainty: 'media', categoryId: 21 });
     expect(l.inTree?.conceptId).toBeUndefined();
     expect(l.category).toBe('Transporte');
   });
 
-  it('las palabras clave de la persona le ganan al diccionario', () => {
-    // «rappi» es palabra clave de «Restaurantes»: eso es una firma propia, y
-    // una firma reconocida apaga al diccionario aunque RAPPI esté en él.
+  it("the person's keywords beat the dictionary", () => {
+    // «rappi» is a keyword of «Restaurantes»: that is a signature of their own, and
+    // a recognized signature silences the dictionary even if RAPPI is in it.
     const l = read('RAPPI*PEDIDO 32.000');
     expect(l.inTree?.source).toBe('palabras-clave');
     expect(l.inTree?.certainty).toBe('alta');
@@ -116,13 +116,13 @@ describe('El diccionario como última fuente de la lectura', () => {
     expect(l.concept).toBe('Restaurantes');
   });
 
-  it('un comercio desconocido no propone nada', () => {
+  it('an unknown merchant proposes nothing', () => {
     const l = read('FERRETERIA LA ESQUINA 80.000');
     expect(l.inTree).toBeNull();
     expect(l.concept).toBeNull();
   });
 
-  it('sin el árbol, el diccionario no habla: no hay dónde buscar', () => {
+  it('without the tree, the dictionary does not speak: there is nowhere to search', () => {
     const l = readWithoutTree('KOBA COLOMBIA SAS');
     expect(l.inTree).toBeNull();
     expect(l.concept).toBeNull();

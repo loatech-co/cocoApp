@@ -6,25 +6,25 @@ import { Button } from '@/shared/ui/atoms/button';
 import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 
 /**
- * La cámara, dentro de la aplicación.
+ * The camera, inside the app.
  *
- * ── Por qué no basta con `capture` en un `<input type="file">` ──────────────
- * Porque `capture` solo lo entienden los navegadores móviles. En un escritorio
- * el atributo se ignora en silencio y el botón abre el explorador de archivos:
- * quien pulsa "Usar la cámara" en un portátil con webcam se encuentra
- * buscando una carpeta, sin ningún mensaje que explique por qué.
+ * ── Why `capture` on an `<input type="file">` is not enough ─────────────────
+ * Because only mobile browsers understand `capture`. On a desktop
+ * the attribute is silently ignored and the button opens the file explorer:
+ * whoever presses "Usar la cámara" on a laptop with a webcam finds themselves
+ * looking for a folder, with no message explaining why.
  *
- * `getUserMedia` funciona en los dos sitios y hace lo mismo en ambos.
+ * `getUserMedia` works in both places and does the same in both.
  *
- * ── Por qué la cámara trasera ───────────────────────────────────────────────
- * `facingMode: environment`. En un teléfono, la que apunta al papel es la de
- * atrás; la frontal enfoca a quien sostiene el teléfono. En un portátil solo
- * hay una y la petición se cumple igual.
+ * ── Why the back camera ─────────────────────────────────────────────────────
+ * `facingMode: environment`. On a phone, the one that points at the paper is the
+ * back one; the front one focuses on whoever is holding the phone. On a laptop there is only
+ * one and the request is met all the same.
  *
- * ── Por qué se apaga al salir ───────────────────────────────────────────────
- * Una pista de vídeo que nadie detiene deja la luz de la cámara encendida
- * hasta que se recarga la página. Eso no es un consumo: es una aplicación
- * mirando cuando ya nadie se lo pidió.
+ * ── Why it turns off on leaving ─────────────────────────────────────────────
+ * A video track nobody stops leaves the camera light on
+ * until the page reloads. That is not a resource drain: it is an app
+ * watching when nobody asked it to anymore.
  */
 export function CameraCapture({
   onCapture,
@@ -39,9 +39,9 @@ export function CameraCapture({
     <div className="flex flex-col gap-3">
       <Viewfinder video={video} state={state} />
 
-      {/* El mismo pie que las demás fichas: a la derecha en el escritorio y
-          apilado a ancho completo en el teléfono. Los dos botones se repartían
-          el ancho a medias, así que «Cancelar» pesaba igual que «Capturar». */}
+      {/* The same footer as the other sheets: on the right on desktop and
+          stacked full width on the phone. The two buttons split
+          the width in half, so «Cancelar» weighed the same as «Capturar». */}
       <ModalFooter>
         <Button type="button" variant="outline" onClick={onClose}>
           <X className="size-4" aria-hidden="true" />
@@ -62,7 +62,7 @@ export function CameraCapture({
 
 type CameraState = 'pidiendo' | 'lista' | 'sin-permiso' | 'sin-camara';
 
-/** Pide la cámara de atrás al montar y la suelta al desmontar. */
+/** Asks for the back camera on mount and releases it on unmount. */
 function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; state: CameraState } {
   const video = useRef<HTMLVideoElement>(null);
   const track = useRef<MediaStream | null>(null);
@@ -70,13 +70,13 @@ function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; state: 
 
   useEffect(() => {
     let isAlive = true;
-    // Se lee con una función: el análisis de tipos no ve que la limpieza lo
-    // apaga mientras se espera, y daría cada comprobación por inútil.
+    // It is read through a function: type analysis does not see that the cleanup
+    // turns it off while waiting, and it would deem every check useless.
     const isStillAlive = (): boolean => isAlive;
 
     void (async () => {
-      // Fuera de un contexto seguro (http) `mediaDevices` no existe, aunque el
-      // tipo de la biblioteca diga que siempre está. El `as` ensancha el tipo.
+      // Outside a secure context (http) `mediaDevices` does not exist, even though the
+      // library type says it is always there. The `as` widens the type.
       const devices = navigator.mediaDevices as Partial<MediaDevices> | undefined;
       if (!devices?.getUserMedia) {
         setState('sin-camara');
@@ -99,7 +99,7 @@ function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; state: 
         setState('lista');
       } catch (e) {
         if (!isStillAlive()) return;
-        // `NotFoundError` es que no hay cámara; el resto, que no dieron permiso.
+        // `NotFoundError` means there is no camera; the rest, that permission was not given.
         setState((e as Error).name === 'NotFoundError' ? 'sin-camara' : 'sin-permiso');
       }
     })();
@@ -114,7 +114,7 @@ function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; state: 
   return { video, state };
 }
 
-/** Saca una foto del vídeo y la entrega como archivo. */
+/** Takes a photo from the video and hands it over as a file. */
 function captureFrame(element: HTMLVideoElement | null, onCapture: (file: File) => void): void {
   if (!element) return;
 
@@ -123,8 +123,8 @@ function captureFrame(element: HTMLVideoElement | null, onCapture: (file: File) 
   canvas.height = element.videoHeight;
   canvas.getContext('2d')?.drawImage(element, 0, 0);
 
-  // JPEG al 92 %: lo que importa aquí es que el OCR lea bien. El servidor lo
-  // pasa después a gris y lo comprime con los mismos parámetros del lote.
+  // JPEG at 92 %: what matters here is that the OCR reads well. The server then
+  // turns it gray and compresses it with the same parameters as the batch.
   canvas.toBlob(
     (image) => {
       if (!image) return;

@@ -18,48 +18,48 @@ import { ClassificationMenu, NewMovementMenu, SortMenu } from './toolbar-menus';
 
 interface ToolbarFiltersProps {
   title: string;
-  /** Lo que se está viendo, en una línea. Ej: "377 movimientos". */
+  /** What is being viewed, in one line. E.g.: "377 movimientos". */
   subtitle?: string;
-  /** Alias de `subtitulo`, por compatibilidad con las llamadas existentes. */
+  /** Alias of `subtitle`, for compatibility with the existing calls. */
   summary?: string;
   filters: Filters;
   apply: (changes: Partial<Filters>) => void;
   clear: () => void;
   hasActiveFilters: boolean;
-  /** Solo donde ordenar significa algo: una lista. */
+  /** Only where sorting means something: a list. */
   sort?: { value: SortOrder; onChange: (value: SortOrder) => void };
-  /** Botones propios de la pantalla, a la derecha del todo. */
+  /** The screen's own buttons, at the far right. */
   /**
-   * Registrar un movimiento nuevo, del tipo que se elija.
+   * Record a new transaction, of the type chosen.
    *
-   * Vive aquí y no en un botón flotante porque un botón flotante no dice de
-   * QUÉ pantalla es: tapaba una esquina de todas por igual, incluidas
-   * aquellas donde registrar un movimiento no significa nada. Al lado del
-   * recorte, en cambio, se lee como lo que es: lo que se puede hacer con lo
-   * que se está mirando.
+   * It lives here and not in a floating button because a floating button does not say
+   * WHICH screen it belongs to: it covered a corner of all of them alike, including
+   * those where recording a transaction means nothing. Next to the
+   * cut, on the other hand, it reads as what it is: what can be done with what
+   * is being looked at.
    */
   onNew?: (type: TransactionType) => void;
   actions?: ReactNode;
 }
 
 /**
- * La cabecera con los filtros que comparten el Resumen y los Movimientos.
+ * The header with the filters shared by the Resumen and the Movimientos.
  *
- * ── Por qué el título vive aquí dentro ──────────────────────────────────────
- * Porque el título y el recorte son la misma frase: "Movimientos · 377 de
- * 2022 a 2026". Separarlos en dos bloques deja el qué arriba y el cuánto
- * abajo, y obliga a mirar dos sitios para saber qué se está viendo.
+ * ── Why the title lives in here ─────────────────────────────────────────────
+ * Because the title and the cut are the same sentence: "Movimientos · 377 de
+ * 2022 a 2026". Splitting them into two blocks leaves the what on top and the how much
+ * below, and forces looking in two places to know what is being viewed.
  *
- * ── Por qué los controles son iconos y no una fila de campos ────────────────
- * Porque casi siempre están vacíos. Una fila de selectores siempre visibles
- * ocupa el ancho entero para decir "todos, todos, todos"; plegados detrás de
- * un icono, el espacio se lo queda el contenido, y el icono se enciende cuando
- * hay algo puesto.
+ * ── Why the controls are icons and not a row of fields ──────────────────────
+ * Because they are almost always empty. A row of always-visible selectors
+ * takes the whole width to say "all, all, all"; folded behind
+ * an icon, the content keeps the space, and the icon lights up when
+ * something is set.
  *
- * ── Por qué es el MISMO componente en las dos pantallas ─────────────────────
- * Porque son dos vistas del mismo recorte. Si el resumen filtrara distinto que
- * la lista, las cifras de arriba no explicarían las filas de abajo y habría
- * que desconfiar de ambas.
+ * ── Why it is the SAME component on both screens ────────────────────────────
+ * Because they are two views of the same cut. If the dashboard filtered differently from
+ * the list, the figures on top would not explain the rows below and you would have
+ * to distrust both.
  */
 export function ToolbarFilters(props: ToolbarFiltersProps) {
   const { title, subtitle, summary, filters, apply, clear, hasActiveFilters } = props;
@@ -75,26 +75,26 @@ export function ToolbarFilters(props: ToolbarFiltersProps) {
       align="bottom"
       actions={
         /*
-        ── La fila entera, en el teléfono ──────────────────────────────────
-        `w-full` y sin envolver: los tres controles que quedan —buscar,
-        filtrar y el rango— caben en una línea, y el rango se queda con el
-        hueco que sobra porque su etiqueta es un dato y no una palabra fija.
+        ── The whole row, on the phone ─────────────────────────────────────
+        `w-full` and no wrapping: the three controls that remain —search,
+        filter and the range— fit on one line, and the range keeps the
+        leftover space because its label is a fact and not a fixed word.
 
-        Envolviendo, un cuarto control tiraba al rango a un segundo renglón él
-        solo, alineado a la derecha y con media fila vacía a su izquierda.
+        Wrapping, a fourth control pushed the range to a second line all
+        alone, aligned to the right and with half an empty row on its left.
       */
         <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap">
-          {/* ── Búsqueda ─────────────────────────────────────────────────── */}
+          {/* ── Search ───────────────────────────────────────────────────── */}
           {isMobile ? (
             <PhoneSearch search={search} isFiltering={(filters.q ?? '') !== ''} />
           ) : (
             <DesktopSearch search={search} />
           )}
 
-          {/* ── Orden ────────────────────────────────────────────────────── */}
+          {/* ── Sort ─────────────────────────────────────────────────────── */}
           {sort && <SortMenu sort={sort} />}
 
-          {/* ── Clasificación ────────────────────────────────────────────── */}
+          {/* ── Classification ───────────────────────────────────────────── */}
           <ClassificationMenu tree={categories.data ?? []} filters={filters} apply={apply} />
 
           <DateSelector
@@ -108,11 +108,11 @@ export function ToolbarFilters(props: ToolbarFiltersProps) {
           {hasActiveFilters && <ClearFiltersButton onClick={clear} />}
 
           {/*
-          ── Y en el teléfono NO está ────────────────────────────────────────
-          Registrar un movimiento vive en el (+) del centro de la barra de
-          abajo, que está siempre a la vista y siempre en el mismo sitio, sea
-          cual sea la pantalla. Aquí arriba era el mismo botón repetido, y en
-          una fila de cuatro controles era el que menos cabía.
+          ── And on the phone it is NOT here ────────────────────────────────
+          Recording a transaction lives in the (+) at the center of the bottom
+          bar, which is always in sight and always in the same place, whatever
+          the screen. Up here it was the same button repeated, and in
+          a row of four controls it was the one that fit least.
         */}
           {onNew && !isMobile && <NewMovementMenu onNew={onNew} />}
 
@@ -123,22 +123,22 @@ export function ToolbarFilters(props: ToolbarFiltersProps) {
   );
 }
 
-/** Lo escrito en la búsqueda, si el campo está abierto, y el campo mismo. */
+/** What is typed in the search, whether the field is open, and the field itself. */
 function useToolbarSearch(filters: Filters, apply: (changes: Partial<Filters>) => void) {
-  // La búsqueda se escribe local y se manda con retraso: sin esto cada tecla
-  // dispararía una consulta y la lista parpadearía mientras se escribe.
+  // The search is typed locally and sent with a delay: without this every key
+  // would fire a query and the list would flicker while typing.
   const [text, setText] = useState(filters.q ?? '');
 
-  // El campo empieza plegado y se abre al pulsar la lupa. Se queda abierto
-  // mientras haya algo escrito: plegarlo escondería el filtro que está
-  // recortando la pantalla, y no habría forma de saber por qué faltan filas.
+  // The field starts folded and opens on pressing the magnifier. It stays open
+  // while there is something typed: folding it would hide the filter that is
+  // cutting the screen, and there would be no way to know why rows are missing.
   const [isSearching, setIsSearching] = useState((filters.q ?? '') !== '');
   const field = useRef<HTMLInputElement>(null);
 
   useOnChange([filters.q], () => {
     setText(filters.q ?? '');
-    // Si el filtro llega puesto desde la URL, el campo tiene que estar a la
-    // vista: un recorte activo que no se ve no se puede quitar.
+    // If the filter arrives set from the URL, the field has to be in
+    // sight: an active cut that cannot be seen cannot be removed.
     if ((filters.q ?? '') !== '') setIsSearching(true);
   });
 
@@ -155,10 +155,10 @@ function useToolbarSearch(filters: Filters, apply: (changes: Partial<Filters>) =
 type ToolbarSearch = ReturnType<typeof useToolbarSearch>;
 
 /*
-  En el teléfono el campo no se despliega EN la fila: la levanta una hoja,
-  igual que el filtro y el rango. Un campo que aparece en medio de una fila de
-  iconos empuja a los otros tres fuera de la pantalla, y el teclado del sistema
-  sube justo encima de la lista que se está recortando.
+  On the phone the field does not unfold IN the row: a sheet lifts it,
+  same as the filter and the range. A field that appears in the middle of a row of
+  icons pushes the other three off the screen, and the system keyboard
+  comes up right on top of the list being cut.
 */
 function PhoneSearch({ search, isFiltering }: { search: ToolbarSearch; isFiltering: boolean }) {
   const { text, setText, isSearching, setIsSearching, field } = search;
@@ -199,10 +199,10 @@ function PhoneSearch({ search, isFiltering }: { search: ToolbarSearch; isFilteri
         }
         onClose={() => setIsSearching(false)}
       >
-        {/* Qué hace esto, y no lo que hace la lupa de la barra de abajo.
-          Las dos se ven igual y contestan preguntas distintas: aquella
-          BUSCA un movimiento en toda la aplicación; esta RECORTA lo que
-          se está mirando, y lo que escriba se queda puesto al cerrar. */}
+        {/* What this does, and not what the magnifier in the bottom bar does.
+          Both look the same and answer different questions: that one
+          SEARCHES for a transaction across the whole app; this one CUTS what
+          is being looked at, and what is typed stays set on closing. */}
         <p className="px-3 py-2 text-sm text-muted-foreground">
           {t('transactions.toolbar.searchHelp')}
         </p>
@@ -224,7 +224,7 @@ function DesktopSearch({ search }: { search: ToolbarSearch }) {
         title={t('shell.bottomBar.search')}
         onClick={() => {
           setIsSearching(true);
-          // El foco no se hereda de un elemento que acaba de nacer.
+          // Focus is not inherited from an element that was just born.
           setTimeout(() => field.current?.focus(), 0);
         }}
       >

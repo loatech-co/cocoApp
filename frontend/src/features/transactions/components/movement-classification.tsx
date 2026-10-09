@@ -12,13 +12,13 @@ import { ConceptSearch } from './concept-search';
 interface ClassificationProps {
   sheet: MovementSheetState;
   tree: CategoryTree[];
-  /** El centro GUARDADO es estático: ni el buscador ni la cascada se mueven. */
+  /** The SAVED center is static: neither the search nor the cascade moves. */
   isStatic: boolean;
   createInside: (name: string, parentId: number | undefined) => Promise<void>;
   isCreating: boolean;
 }
 
-/** Lo que el buscador dice debajo: de dónde salió lo que hay puesto. */
+/** What the search says underneath: where what is set came from. */
 function searchHelp(sheet: MovementSheetState): string | undefined {
   const { classification, categoryId, receiptCandidates } = sheet;
   if (classification.origin && classification.origin !== 'manual' && categoryId !== undefined) {
@@ -32,24 +32,24 @@ function searchHelp(sheet: MovementSheetState): string | undefined {
 }
 
 /**
- * ── Un solo buscador para clasificar ────────────────────────────────────────
- * Se escribe «d1» y aparece «Mercado · Alimentación › Costos variables»: un
- * clic y los tres niveles quedan puestos. La cascada de centro, categoría y
- * concepto sigue ahí, detrás del enlace de abajo, para quien quiera ir nivel a
- * nivel; pero ya no es la puerta.
+ * ── A single search to classify ─────────────────────────────────────────────
+ * You type «d1» and «Mercado · Alimentación › Costos variables» shows up: one
+ * click and the three levels are set. The cascade of center, category and
+ * concept is still there, behind the link below, for whoever wants to go level by
+ * level; but it is no longer the door.
  *
- * Lo que el buscador dice debajo —«sugerido por tu historial»— es la regla de
- * no guardar nunca una clasificación sugerida sin que la persona la vea.
+ * What the search says underneath —«sugerido por tu historial»— is the rule of
+ * never saving a suggested classification without the person seeing it.
  *
- * ── Los tres se bloquean si el centro GUARDADO es estático ──────────────────
- * Esta regla estaba y se perdió al rediseñar la ficha: los desplegables
- * pasaron a bloquearse solo por dependencia —«elige antes un centro»— y el
- * estático dejó de contar, así que un movimiento de Costos fijos se podía
- * reclasificar desde aquí aunque la tabla no lo permitiera. La misma plata se
- * movía o no según por dónde se entrara.
+ * ── All three lock if the SAVED center is static ────────────────────────────
+ * This rule existed and was lost when the sheet was redesigned: the dropdowns
+ * started locking only by dependency —«elige antes un centro»— and the
+ * static one stopped counting, so a Costos fijos transaction could be
+ * reclassified from here even though the table did not allow it. The same money
+ * moved or not depending on where you came in.
  *
- * Lo que protege un centro estático es su estructura. Borrar el movimiento sí
- * se puede —eso es el registro, no la estructura—; moverlo de concepto, no.
+ * What a static center protects is its structure. Deleting the transaction is
+ * allowed —that is the record, not the structure—; moving it to another concept is not.
  */
 export function MovementClassification({
   sheet,
@@ -75,8 +75,8 @@ export function MovementClassification({
       />
 
       {!isStatic && (
-        // -mt-3 y no -mt-2: el botón mide 24 y su letra 16, así que el texto
-        // queda donde estaba.
+        // -mt-3 and not -mt-2: the button measures 24 and its text 16, so the text
+        // stays where it was.
         <div className="-mt-3 flex self-start">
           <TextButton
             tone="subtle"
@@ -103,10 +103,10 @@ export function MovementClassification({
 }
 
 /**
- * La cascada de siempre: de qué centro, de qué categoría, qué concepto.
+ * The usual cascade: which center, which category, which concept.
  *
- * El centro no ofrece crear: un centro es la estructura de arriba y se define
- * tres veces en la vida de una cuenta.
+ * The center does not offer creating: a center is the top structure and it is defined
+ * three times in the life of an account.
  */
 function ClassificationCascade(props: ClassificationProps) {
   const { sheet, tree, isStatic, createInside, isCreating } = props;
@@ -162,7 +162,7 @@ function ClassificationCascade(props: ClassificationProps) {
   );
 }
 
-/** El centro de costos. No ofrece crear: es la estructura de arriba. */
+/** The cost center. It does not offer creating: it is the top structure. */
 function CostCenterField({
   costCenter,
   tree,

@@ -10,75 +10,75 @@ import { OverlayButton, ControlReadout } from '@/shared/ui/molecules/overlay-con
 
 import { UnavailableReceipt } from './support-unavailable';
 
-/** Los saltos del zoom, como múltiplos de la escala que llena la caja. */
+/** The zoom steps, as multiples of the scale that fills the box. */
 const PREVIEW_STEPS = [1, 1.5, 2, 3];
 
 interface PreviewProps {
   /**
-   * El documento. Mientras no esté, se enseña el marco vacío con su girador.
+   * The document. While it is not there, the empty frame shows with its spinner.
    *
-   * ── Por qué el marco va PRIMERO ───────────────────────────────────────────
-   * El soporte de un movimiento guardado se descarga: hay un momento —corto en
-   * una imagen, largo en un PDF de varias hojas— en el que no hay nada que
-   * pintar. Sin marco, la columna se queda vacía y aparece de golpe un bloque
-   * que empuja lo de abajo; con él, el sitio ya está hecho y lo único que
-   * cambia es lo que hay dentro.
+   * ── Why the frame goes FIRST ──────────────────────────────────────────────
+   * The receipt of a saved transaction is downloaded: there is a moment —short for
+   * an image, long for a multi-page PDF— in which there is nothing to
+   * draw. Without a frame, the column stays empty and a block suddenly appears
+   * that pushes what is below; with it, the spot is already made and the only thing that
+   * changes is what is inside.
    *
-   * Es la misma razón por la que una tabla enseña sus filas en gris antes de
-   * tener datos: lo que no puede cambiar de tamaño es la página.
+   * It is the same reason a table shows its rows in gray before
+   * having data: what cannot change size is the page.
    */
   url?: string | undefined;
   /**
-   * El documento no se está viendo, y por qué.
+   * The document is not being shown, and why.
    *
-   * Sin esto se dibujaba el mismo girador que mientras se espera, y un soporte
-   * que no iba a llegar giraba para siempre: quien mira no puede distinguir
-   * «está tardando» de «no está», que piden cosas distintas.
+   * Without this the same spinner as while waiting was drawn, and a receipt
+   * that was never going to arrive spun forever: whoever is looking cannot tell
+   * «está tardando» from «no está», which call for different things.
    */
   error?: ReceiptFailure | undefined;
-  /** Solo hace algo con `sin-cargar`: lo ausente no vuelve por reintentarlo. */
+  /** It only does something with `sin-cargar`: what is missing does not come back by retrying. */
   onRetry?: (() => void) | undefined;
   isImage: boolean;
   /**
-   * Abre el pase a pantalla completa, si lo hay.
+   * Opens the full-screen lightbox, if there is one.
    *
-   * Solo lo tiene un soporte ya guardado: el que todavía está esperando a que
-   * se guarde el movimiento no existe en ninguna parte que se pueda abrir. Sin
-   * esto, el botón aparecería en los dos sitios y en uno no haría nada.
+   * Only an already saved receipt has it: the one still waiting for the
+   * transaction to be saved does not exist anywhere that can be opened. Without
+   * this, the button would appear in both places and in one it would do nothing.
    */
   onOpen?: (() => void) | undefined;
   /**
-   * Lo que se puede hacer con ESTE documento: borrarlo, añadir otro, pasar al
-   * siguiente.
+   * What can be done with THIS document: delete it, add another, go to the
+   * next one.
    *
-   * Van aquí desde que no hay miniaturas. La fila de miniaturas era la que
-   * decía cuántos documentos hay, cuál se está viendo y por dónde se añade o
-   * se quita uno; sin ella, todo eso tiene que caber sobre el papel o
-   * desaparece.
+   * They are here since there are no thumbnails. The thumbnail row was the one that
+   * said how many documents there are, which one is being viewed and where one is added or
+   * removed; without it, all that has to fit over the paper or
+   * it disappears.
    */
   actions?: ReactNode;
 }
 
 /**
- * El soporte en grande, recorrible.
+ * The receipt, large and pannable.
  *
- * ── Por qué llena la caja y no entra entera ─────────────────────────────────
- * Porque esta columna existe exactamente para leer el total. Ver `usePanZoom`,
- * que es quien encuadra y recorta el arrastre.
+ * ── Why it fills the box and does not fit whole ─────────────────────────────
+ * Because this column exists precisely to read the total. See `usePanZoom`,
+ * which is what frames it and clamps the drag.
  *
- * ── Por qué arrastrar y no barras de desplazamiento ─────────────────────────
- * Porque es un documento, no una página: el gesto con el que todo el mundo
- * mueve un plano o un mapa es agarrarlo.
+ * ── Why dragging and not scroll bars ────────────────────────────────────────
+ * Because it is a document, not a page: the gesture with which everyone
+ * moves a plan or a map is grabbing it.
  */
 export function FilePreview({ url, error, onRetry, isImage, onOpen, actions }: PreviewProps) {
   /*
-    El zoom multiplica la escala que ya LLENA la caja, así que el 100 % es el
-    documento cubriendo el marco y no su tamaño natural.
+    The zoom multiplies the scale that already FILLS the box, so 100 % is the
+    document covering the frame and not its natural size.
 
-    No baja del 100 % a propósito: por debajo aparecerían franjas vacías a los
-    lados, y una previsualización con huecos se lee como un error de montaje.
-    Para ver la hoja entera está el pase a pantalla completa del movimiento ya
-    guardado.
+    It does not go below 100 % on purpose: below it empty strips would appear on the
+    sides, and a preview with gaps reads as an assembly error.
+    To see the whole page there is the full-screen lightbox of the already
+    saved transaction.
   */
   const marco = useRef<HTMLDivElement>(null);
   const vista = usePanZoom(marco, PREVIEW_STEPS);
@@ -86,34 +86,34 @@ export function FilePreview({ url, error, onRetry, isImage, onOpen, actions }: P
   return (
     <div
       ref={marco}
-      // `touch-action: none` para que el dedo mueva el documento y no desplace
-      // la ficha entera por detrás.
+      // `touch-action: none` so the finger moves the document and does not scroll
+      // the whole sheet behind it.
       className={cn(
         /*
-          ── El alto lo pone la COLUMNA, no este marco ──────────────────────
-          Tuvo 480 y luego 350 fijos, y un alto fijo se equivoca por los dos
-          lados: dejaba un palmo de vacío entre el papel y el pie de su
-          columna, y en una ventana baja se comía el sitio de todo lo demás.
+          ── The height is set by the COLUMN, not by this frame ────────────
+          It had a fixed 480 and then 350, and a fixed height is wrong on both
+          sides: it left a hand's width of empty space between the paper and the foot of its
+          column, and in a short window it ate the room of everything else.
 
-          Con `flex-1` mide lo que le sobre a su columna, que es exactamente
-          lo que mide la columna de campos: las dos son celdas de la misma
-          fila de la rejilla. El documento se reencuadra solo —el marco se
-          mide con un `ResizeObserver` y la escala sale de ahí— así que crecer
-          no le cuesta nada.
+          With `flex-1` it measures what its column has left over, which is exactly
+          what the fields column measures: both are cells of the same
+          grid row. The document reframes itself —the frame is
+          measured with a `ResizeObserver` and the scale comes from there— so growing
+          costs it nothing.
 
-          El suelo de 220 (`min-h-55`) es para el caso en que no haya alto que repartir:
-          una previsualización de cuarenta píxeles no enseña nada y el
-          `ResizeObserver` se quedaría midiendo una franja.
+          The floor of 220 (`min-h-55`) is for the case where there is no height to share:
+          a forty-pixel preview shows nothing and the
+          `ResizeObserver` would be left measuring a strip.
         */
         'relative min-h-55 flex-1 touch-none select-none overflow-hidden rounded-lg bg-card ring-1 ring-border',
         vista.canPan && (vista.isDragging ? 'cursor-grabbing' : 'cursor-grab'),
       )}
       {...vista.handlers}
     >
-      {/* El pase a pantalla completa, arriba y en la esquina contraria a los
-          mandos del zoom: son dos cosas distintas —una amplía dentro del
-          marco, la otra saca el documento del marco— y juntas se pulsarían la
-          una por la otra. */}
+      {/* The full-screen lightbox, at the top and in the corner opposite the
+          zoom controls: they are two different things —one enlarges inside the
+          frame, the other takes the document out of the frame— and together one would be pressed
+          for the other. */}
       <PreviewActions onOpen={onOpen} actions={actions} />
 
       <PreviewZoom
@@ -136,11 +136,11 @@ export function FilePreview({ url, error, onRetry, isImage, onOpen, actions }: P
 }
 
 /**
- * Los mandos del zoom, sobre una pastilla oscura: encima de un recibo —que es
- * blanco— cualquier control claro desaparece.
+ * The zoom controls, on a dark pill: on top of a receipt —which is
+ * white— any light control disappears.
  *
- * Solo con el documento cargado: ampliar un marco vacío no hace nada, y un
- * control que no responde se lee como un fallo.
+ * Only with the document loaded: enlarging an empty frame does nothing, and a
+ * control that does not respond reads as a failure.
  */
 function PreviewZoom({
   isVisible,
@@ -184,7 +184,7 @@ function PreviewZoom({
   );
 }
 
-/** Lo que hay dentro del marco: el fallo, el girador, la imagen o el PDF. */
+/** What is inside the frame: the failure, the spinner, the image or the PDF. */
 function PreviewDocument({
   url,
   error,
@@ -204,8 +204,8 @@ function PreviewDocument({
 
   if (!url) {
     return (
-      // El girador en el centro del marco, con el mismo gris que el resto de
-      // lo que está esperando en esta app.
+      // The spinner in the center of the frame, with the same gray as the rest of
+      // what is waiting in this app.
       <span
         className="grid size-full place-items-center"
         role="status"
@@ -217,8 +217,8 @@ function PreviewDocument({
   }
 
   if (!isImage) {
-    // A 1400 y no a 240: esto se mira para leer una cifra, y el tamaño de una
-    // miniatura la deja borrosa.
+    // At 1400 and not 240: this is looked at to read a figure, and a
+    // thumbnail's size leaves it blurry.
     return <PdfCanvas url={url} width={1400} onResize={onResize} style={framing} />;
   }
 
@@ -228,20 +228,20 @@ function PreviewDocument({
       alt=""
       draggable={false}
       /*
-        `max-w-none`, y no es cosmético: es lo que deformaba la imagen.
+        `max-w-none`, and it is not cosmetic: it is what distorted the image.
 
-        El preflight de Tailwind declara `img, video { max-width: 100%;
-        height: auto }` para que ninguna imagen suelta se salga de su columna.
-        Aquí eso es justo lo contrario de lo que hace falta: el encuadre calcula
-        un ancho y un alto que YA guardan la proporción —la escala es la misma
-        para los dos ejes— y los pinta en el `style`. El `max-width` del
-        preflight le gana al ancho en línea —un máximo siempre gana— pero no
-        toca el alto, así que la imagen se quedaba con el ancho del marco y el
-        alto entero: estirada.
+        Tailwind's preflight declares `img, video { max-width: 100%;
+        height: auto }` so that no stray image spills out of its column.
+        Here that is exactly the opposite of what is needed: the framing computes
+        a width and a height that ALREADY keep the aspect ratio —the scale is the same
+        for both axes— and paints them in the `style`. The preflight's
+        `max-width` beats the inline width —a max always wins— but does not
+        touch the height, so the image kept the frame's width and the
+        full height: stretched.
 
-        No le pasaba al PDF porque lo pinta un `<canvas>`, y esa regla del
-        preflight es solo para `img` y `video`. De ahí que pareciera que
-        fallaba con «algunas imágenes».
+        It did not happen to the PDF because a `<canvas>` paints it, and that
+        preflight rule is only for `img` and `video`. Hence it looked like it
+        failed with «some images».
       */
       className="max-w-none"
       onLoad={(e) => onResize(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
@@ -250,7 +250,7 @@ function PreviewDocument({
   );
 }
 
-/** Lo que se hace con el documento, arriba a la derecha, y el pase si lo hay. */
+/** What is done with the document, top right, and the lightbox if there is one. */
 function PreviewActions({ onOpen, actions }: Pick<PreviewProps, 'onOpen' | 'actions'>) {
   if (onOpen === undefined && !actions) return null;
 

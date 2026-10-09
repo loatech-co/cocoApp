@@ -6,7 +6,7 @@ import { TextButton } from '@/shared/ui/atoms/text-button';
 import { CreateOption, Option } from '@/shared/ui/organisms/combo';
 import { readablePath, type IndexEntry } from '@coco/receipt-parser';
 
-/** El paso de elegir en qué categoría va el concepto que se va a crear. */
+/** The step of picking which category the concept about to be created goes in. */
 export function CategoryForNew({
   newName,
   categories,
@@ -60,7 +60,7 @@ export interface ResultsProps {
   onRequestCategory: () => void;
 }
 
-/** Lo que se ofrece al buscar: lo del recibo, lo reciente o lo que coincide, y crear. */
+/** What is offered while searching: what came from the receipt, the recent or the matches, and create. */
 export function SearchResults(props: ResultsProps) {
   const { query, results, chosen, canCreate, onSelect } = props;
   const isSearching = query.trim() !== '';
@@ -112,7 +112,7 @@ export function SearchResults(props: ResultsProps) {
   );
 }
 
-/** Con la caja en blanco: lo que dejó el recibo, o lo usado últimamente. */
+/** With the box blank: what the receipt left, or what was used lately. */
 function NotSearching({ candidates, recent, chosen, onSelect, onSelectCandidate }: ResultsProps) {
   return (
     <>
@@ -164,7 +164,7 @@ function CreateConcept({
   );
 }
 
-/** Nombre y camino. Una categoría se marca para que no se confunda con un concepto. */
+/** Name and path. A category is marked so it is not mistaken for a concept. */
 function Row({ input }: { input: IndexEntry }) {
   return (
     <span className="flex min-w-0 items-baseline gap-2">
@@ -182,17 +182,17 @@ function Row({ input }: { input: IndexEntry }) {
 }
 
 /*
-  ── La forma de la lista: opciones, y nada más ────────────────────────────────
-  Una `listbox` solo puede contener opciones o grupos de opciones. Eran un
-  `<ul>` con cada opción dentro de un `<li>` —un lector de pantalla encontraba
-  «elemento de lista» entre la lista y la opción—, y con los rótulos y el
-  «Nada coincide» como filas más. Ahora las opciones cuelgan directamente de
-  la lista, los rótulos dan nombre a un `group`, y lo vacío se dice FUERA de la
-  lista, que entonces no se pinta: una lista sin opciones no es una lista.
+  ── The shape of the list: options, and nothing else ─────────────────────────
+  A `listbox` can only contain options or groups of options. It was a
+  `<ul>` with each option inside an `<li>` —a screen reader found
+  «list item» between the list and the option—, and with the labels and the
+  «Nada coincide» as more rows. Now the options hang straight from
+  the list, the labels name a `group`, and the empty case is said OUTSIDE the
+  list, which is then not drawn: a list with no options is not a list.
 */
 const LIST = 'max-h-64 overflow-y-auto p-1';
 
-/** Hay algo que ofrecer en la lista de resultados. */
+/** There is something to offer in the results list. */
 function hasOptions({ query, results, recent, candidates, chosen }: ResultsProps): boolean {
   if (chosen) return true;
   if (query.trim() !== '') return results.length > 0;
