@@ -17,6 +17,9 @@ import { readEnv } from '../env';
  * Values are read through `readEnv` before validating, so the quotes
  * LiteSpeed leaves inside a value on the server (`"production"`) and empty
  * strings are handled exactly as the rest of the code already handles them.
+ * `readEnv` also falls back to the OLD name of a variable renamed to English
+ * (`RENAMED_ENV`, step 7.2-r3), so the schema declares only the new names and
+ * a server that still has the old ones starts the same.
  *
  * Nothing optional became required. The conditional rules mirror what the
  * code already demanded, only earlier:
@@ -71,12 +74,12 @@ const envSchema = z.object({
 
   DATABASE_URL: POSTGRES_URL,
   DIRECT_URL: POSTGRES_URL.optional(),
-  PERMITIR_BASE_REMOTA: optionalText,
+  ALLOW_REMOTE_DATABASE: optionalText,
 
   SUPABASE_URL: HTTP_URL.optional(),
   SUPABASE_ANON_KEY: optionalText,
   SUPABASE_SERVICE_ROLE_KEY: optionalText,
-  PERMITIR_AUTH_DESTRUCTIVA: optionalText,
+  ALLOW_DESTRUCTIVE_AUTH: optionalText,
 
   BOOTSTRAP_ADMIN_EMAIL: optionalText,
   CHECK_BREACHED_PASSWORDS: z.enum(['true', 'false']).optional(),
@@ -87,9 +90,9 @@ const envSchema = z.object({
     .optional(),
   LOG_PROXY_HEADERS: z.enum(['true', 'false']).optional(),
 
-  SOPORTES_DIR: optionalText,
-  SOPORTES_STORAGE: z.enum(['supabase', 'disk']).optional(),
-  SOPORTES_BUCKET: optionalText,
+  RECEIPTS_DIR: optionalText,
+  RECEIPTS_STORAGE: z.enum(['supabase', 'disk']).optional(),
+  RECEIPTS_BUCKET: optionalText,
   AUTO_CHARGE: optionalText,
   SPA_DIST_PATH: optionalText,
   FEATURES: FEATURES.optional(),
@@ -117,9 +120,9 @@ function requiredByContext(env: CleanEnv): [string, string][] {
   }
 
   // The same default as `chosenStore`: Supabase in production, disk elsewhere.
-  const storage = env.SOPORTES_STORAGE ?? (nodeEnv === 'production' ? 'supabase' : 'disk');
+  const storage = env.RECEIPTS_STORAGE ?? (nodeEnv === 'production' ? 'supabase' : 'disk');
   if (storage === 'supabase') {
-    const why = 'when receipts are stored in Supabase (SOPORTES_STORAGE)';
+    const why = 'when receipts are stored in Supabase (RECEIPTS_STORAGE)';
     require('SUPABASE_URL', why);
     require('SUPABASE_SERVICE_ROLE_KEY', why);
   }

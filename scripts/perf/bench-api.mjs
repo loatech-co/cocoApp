@@ -56,8 +56,8 @@ export async function startBenchApi({ port = 0 } = {}) {
     JWT_SECRET: 'bench-only-secret-never-used-anywhere-else',
     CHECK_BREACHED_PASSWORDS: 'false',
     CORS_ORIGINS: 'http://localhost:5173',
-    SOPORTES_DIR: mkdtempSync(join(tmpdir(), 'coco-bench-soportes-')),
-    SOPORTES_STORAGE: 'disk',
+    RECEIPTS_DIR: mkdtempSync(join(tmpdir(), 'coco-bench-soportes-')),
+    RECEIPTS_STORAGE: 'disk',
   });
 
   const api = join(repo, 'api');

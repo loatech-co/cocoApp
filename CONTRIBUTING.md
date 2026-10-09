@@ -578,6 +578,13 @@ and keys outside `NODE_ENV=test`, the Storage key when receipts go to
 Supabase. The spec (`env.spec.ts`) keeps the CI test env, the local env and
 the server's quoted env valid.
 
+Renaming a variable is expand and contract, because the server's `.env` is
+not deployed with the code: add the pair to `RENAMED_ENV`
+(`api/src/common/env.ts`) so `readEnv` falls back to the old name with a
+warning at boot, add the new name on the server with the same value, and
+remove the old one (and the pair) in a later step. The 7.2-r3 renames and
+their state are in `docs/runbook.md`.
+
 ## Size limits
 
 At most **300 lines per file** and **50 per function**, blank lines and

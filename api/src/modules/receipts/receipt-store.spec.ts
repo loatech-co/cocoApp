@@ -1,18 +1,18 @@
 import { chosenStore, createReceiptStore, SupabaseReceiptStore } from './receipt-store';
 
 describe('receipt store', () => {
-  const saved = process.env.SOPORTES_STORAGE;
+  const saved = process.env.RECEIPTS_STORAGE;
   afterEach(() => {
-    if (saved === undefined) delete process.env.SOPORTES_STORAGE;
-    else process.env.SOPORTES_STORAGE = saved;
+    if (saved === undefined) delete process.env.RECEIPTS_STORAGE;
+    else process.env.RECEIPTS_STORAGE = saved;
     jest.restoreAllMocks();
   });
 
-  it('defaults to Supabase in production and disk elsewhere; SOPORTES_STORAGE decides when set', () => {
-    delete process.env.SOPORTES_STORAGE;
+  it('defaults to Supabase in production and disk elsewhere; RECEIPTS_STORAGE decides when set', () => {
+    delete process.env.RECEIPTS_STORAGE;
     expect(chosenStore({ NODE_ENV: 'production' })).toBe('supabase');
     expect(chosenStore({ NODE_ENV: 'development' })).toBe('disk');
-    process.env.SOPORTES_STORAGE = 'disk';
+    process.env.RECEIPTS_STORAGE = 'disk';
     expect(chosenStore({ NODE_ENV: 'production' })).toBe('disk');
   });
 
@@ -97,7 +97,7 @@ describe('receipt store', () => {
   });
 
   describe('createReceiptStore', () => {
-    const keys = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SOPORTES_BUCKET'] as const;
+    const keys = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'RECEIPTS_BUCKET'] as const;
     const before = keys.map((k) => process.env[k]);
     afterEach(() => {
       keys.forEach((k, i) => {
@@ -107,18 +107,18 @@ describe('receipt store', () => {
     });
 
     it('builds the disk store outside production', () => {
-      process.env.SOPORTES_STORAGE = 'disk';
+      process.env.RECEIPTS_STORAGE = 'disk';
       expect(createReceiptStore({}).describe()).toMatch(/^disk /);
     });
 
     it('needs the Supabase url and key to build the bucket store', () => {
-      process.env.SOPORTES_STORAGE = 'supabase';
+      process.env.RECEIPTS_STORAGE = 'supabase';
       Reflect.deleteProperty(process.env, 'SUPABASE_URL');
       expect(() => createReceiptStore({})).toThrow(/needs SUPABASE_URL/);
 
       process.env.SUPABASE_URL = 'https://x.supabase.co';
       process.env.SUPABASE_SERVICE_ROLE_KEY = 'k';
-      Reflect.deleteProperty(process.env, 'SOPORTES_BUCKET');
+      Reflect.deleteProperty(process.env, 'RECEIPTS_BUCKET');
       expect(createReceiptStore({}).describe()).toContain('"soportes"');
     });
   });

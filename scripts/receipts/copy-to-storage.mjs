@@ -37,7 +37,8 @@ if (!from) {
 const clean = (value) => value?.replace(/^['"]|['"]$/g, '');
 const url = clean(process.env.SUPABASE_URL)?.replace(/\/$/, '');
 const key = clean(process.env.SUPABASE_SERVICE_ROLE_KEY);
-const bucket = process.env.SOPORTES_BUCKET ?? 'soportes';
+// RECEIPTS_BUCKET; SOPORTES_BUCKET is its old name, read until step 7.10.
+const bucket = process.env.RECEIPTS_BUCKET ?? process.env.SOPORTES_BUCKET ?? 'soportes';
 const databaseUrl = clean(process.env.DIRECT_URL ?? process.env.DATABASE_URL);
 if (!url || !key || !databaseUrl) {
   console.error('SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and DATABASE_URL are required.');

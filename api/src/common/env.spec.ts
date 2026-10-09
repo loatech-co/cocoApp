@@ -3,6 +3,8 @@ import {
   ALLOW_REMOTE_DATABASE,
   isProduction,
   readEnv,
+  RENAMED_ENV,
+  renamedEnvWarnings,
   whyRefuseToStart,
   whyNotTouchRealAccounts,
   stripQuotes,
@@ -183,5 +185,86 @@ describe('Not touching real accounts from a local session', () => {
         [ALLOW_DESTRUCTIVE_AUTH]: 'true',
       }),
     ).not.toBeNull();
+  });
+});
+
+/**
+ * The variables renamed to English (step 7.2-r3), by expand and contract:
+ * until the server loses the old names, a new name falls back to its old one.
+ */
+describe('Variables renamed to English', () => {
+  const secret = 'value-that-must-not-reach-the-log';
+  // The old names through the table, so they appear in one place only.
+  const OLD_BUCKET = RENAMED_ENV.RECEIPTS_BUCKET;
+
+  it('neither name set: nothing to read and nothing to say', () => {
+    expect(readEnv('RECEIPTS_BUCKET', {})).toBeUndefined();
+    expect(renamedEnvWarnings({})).toEqual([]);
+  });
+
+  it('only the new name: read, and no warning', () => {
+    const env = { RECEIPTS_BUCKET: secret };
+    expect(readEnv('RECEIPTS_BUCKET', env)).toBe(secret);
+    expect(renamedEnvWarnings(env)).toEqual([]);
+  });
+
+  it('only the old name: read under the new one, with a warning that names it', () => {
+    const env = { [OLD_BUCKET]: `"${secret}"` };
+    expect(readEnv('RECEIPTS_BUCKET', env)).toBe(secret);
+
+    const warnings = renamedEnvWarnings(env);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain(OLD_BUCKET);
+    expect(warnings[0]).toContain('RECEIPTS_BUCKET');
+    expect(warnings[0]).not.toContain(secret);
+  });
+
+  it('both, with the same value (the server after the expansion): no warning', () => {
+    const env = { RECEIPTS_BUCKET: secret, [OLD_BUCKET]: `'${secret}'` };
+    expect(readEnv('RECEIPTS_BUCKET', env)).toBe(secret);
+    expect(renamedEnvWarnings(env)).toEqual([]);
+  });
+
+  it('both, with different values: the new one wins, and the warning says so without either value', () => {
+    const env = { RECEIPTS_BUCKET: secret, [OLD_BUCKET]: 'old-value' };
+    expect(readEnv('RECEIPTS_BUCKET', env)).toBe(secret);
+
+    const warnings = renamedEnvWarnings(env);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('RECEIPTS_BUCKET wins');
+    expect(warnings[0]).not.toContain(secret);
+    expect(warnings[0]).not.toContain('old-value');
+  });
+
+  it('an empty new name counts as unset, so the old one is read', () => {
+    expect(readEnv('RECEIPTS_DIR', { RECEIPTS_DIR: ' ', [RENAMED_ENV.RECEIPTS_DIR]: '/x' })).toBe(
+      '/x',
+    );
+  });
+
+  it('covers the five renamed variables, and only names that are not read elsewhere', () => {
+    expect(RENAMED_ENV).toEqual({
+      RECEIPTS_DIR: 'SOPORTES_DIR',
+      RECEIPTS_STORAGE: 'SOPORTES_STORAGE',
+      RECEIPTS_BUCKET: 'SOPORTES_BUCKET',
+      ALLOW_REMOTE_DATABASE: 'PERMITIR_BASE_REMOTA',
+      ALLOW_DESTRUCTIVE_AUTH: 'PERMITIR_AUTH_DESTRUCTIVA',
+    });
+    const env = Object.fromEntries(Object.values(RENAMED_ENV).map((old) => [old, 'x']));
+    expect(renamedEnvWarnings(env)).toHaveLength(5);
+  });
+
+  it('the escape hatches still open under their old names', () => {
+    const remote = {
+      NODE_ENV: 'development',
+      DATABASE_URL: 'postgresql://u:p@db.example.com:5432/postgres',
+    };
+    expect(whyRefuseToStart({ ...remote, [RENAMED_ENV.ALLOW_REMOTE_DATABASE]: 'si' })).toBeNull();
+    expect(
+      whyNotTouchRealAccounts({
+        NODE_ENV: 'development',
+        [RENAMED_ENV.ALLOW_DESTRUCTIVE_AUTH]: 'si',
+      }),
+    ).toBeNull();
   });
 });

@@ -41,7 +41,7 @@ export const ACCEPTED_TYPES: Record<string, string> = {
 /**
  * The store's folder.
  *
- * In production `SOPORTES_DIR` sets it and it points OUTSIDE `public_html`.
+ * In production `RECEIPTS_DIR` sets it and it points OUTSIDE `public_html`.
  * In development it falls back to `api/.soportes`, which is in `.gitignore`:
  * real receipts never get into the repository, not even by accident.
  */
@@ -50,7 +50,7 @@ export function storeFolder(): string {
   // with the quotes inside the value, and a path starting with `"` is not
   // absolute, so `resolve` hung it from the working directory. See
   // `common/env.ts`.
-  const declared = readEnv('SOPORTES_DIR');
+  const declared = readEnv('RECEIPTS_DIR');
   if (declared) return resolve(declared);
   return resolve(__dirname, '..', '..', '..', '.soportes');
 }

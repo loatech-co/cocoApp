@@ -17,13 +17,6 @@
     "semestral": 1,
     "trimestral": 1
   },
-  "api/src/common/config": {
-    "PERMITIR_AUTH_DESTRUCTIVA": 2,
-    "PERMITIR_BASE_REMOTA": 1,
-    "SOPORTES_BUCKET": 1,
-    "SOPORTES_DIR": 3,
-    "SOPORTES_STORAGE": 4
-  },
   "api/src/modules/admin": {
     "de": 4
   },
@@ -52,11 +45,6 @@
   "e2e/support": {
     "Cuenta": 1,
     "EXCEPCIONES": 1,
-    "PERMITIR_AUTH_DESTRUCTIVA": 1,
-    "PERMITIR_BASE_REMOTA": 1,
-    "SOPORTES_BUCKET": 1,
-    "SOPORTES_DIR": 1,
-    "SOPORTES_STORAGE": 1,
     "cuenta": 3,
     "entrar": 2,
     "file:entorno.mjs": 1,
@@ -90,9 +78,5 @@
   },
   "ios/CocoTests/Shared": {
     "testMes": 1
-  },
-  "scripts/perf": {
-    "SOPORTES_DIR": 1,
-    "SOPORTES_STORAGE": 1
   }
 }

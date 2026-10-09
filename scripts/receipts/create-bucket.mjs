@@ -11,7 +11,8 @@
 
 const url = process.env.SUPABASE_URL?.replace(/^['"]|['"]$/g, '').replace(/\/$/, '');
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^['"]|['"]$/g, '');
-const bucket = process.env.SOPORTES_BUCKET ?? 'soportes';
+// RECEIPTS_BUCKET; SOPORTES_BUCKET is its old name, read until step 7.10.
+const bucket = process.env.RECEIPTS_BUCKET ?? process.env.SOPORTES_BUCKET ?? 'soportes';
 
 if (!url || !key) {
   console.error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');

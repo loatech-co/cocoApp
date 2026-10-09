@@ -28,11 +28,68 @@
  * a quote in the middle stays as it is.
  */
 export function readEnv(name: string, env: NodeJS.ProcessEnv = process.env): string | undefined {
+  const value = readOne(name, env);
+  if (value !== undefined) return value;
+
+  const oldName = OLD_NAME_OF[name];
+  return oldName === undefined ? undefined : readOne(oldName, env);
+}
+
+function readOne(name: string, env: NodeJS.ProcessEnv): string | undefined {
   const raw = env[name]?.trim();
   if (!raw) return undefined;
 
   const clean = stripQuotes(raw);
   return clean === '' ? undefined : clean;
+}
+
+/**
+ * The variables renamed to English (step 7.2-r3): new name → old name.
+ *
+ * Renamed by expand and contract. The server's `.env` got the new names next
+ * to the old ones, with the same values; until the old ones are removed there
+ * (the contraction, step 7.10), `readEnv` asked for a new name falls back to
+ * its old one, and `renamedEnvWarnings` says so in the log at boot. Then this
+ * table, the fallback and the warnings go.
+ *
+ * Only the NAMES change: the values (`si`, the `soportes` bucket, the server
+ * folder) stay as they are (ADR 0026).
+ */
+export const RENAMED_ENV = {
+  RECEIPTS_DIR: 'SOPORTES_DIR',
+  RECEIPTS_STORAGE: 'SOPORTES_STORAGE',
+  RECEIPTS_BUCKET: 'SOPORTES_BUCKET',
+  ALLOW_REMOTE_DATABASE: 'PERMITIR_BASE_REMOTA',
+  ALLOW_DESTRUCTIVE_AUTH: 'PERMITIR_AUTH_DESTRUCTIVA',
+} as const;
+
+const OLD_NAME_OF: Partial<Record<string, string>> = RENAMED_ENV;
+
+/**
+ * What the boot log has to say about the renamed variables. Names only,
+ * never values: a value can be a secret, and the log leaves the server.
+ *
+ *   · only the old name set        → it is read, and the warning asks for the new one
+ *   · both set, different values   → the new one wins, and the warning says so
+ *   · both set, same value, or only the new one, or neither → nothing to say
+ */
+export function renamedEnvWarnings(env: NodeJS.ProcessEnv = process.env): string[] {
+  const warnings: string[] = [];
+  for (const [newName, oldName] of Object.entries(RENAMED_ENV)) {
+    const current = readOne(newName, env);
+    const old = readOne(oldName, env);
+    if (old === undefined) continue;
+    if (current === undefined) {
+      warnings.push(
+        `${oldName} is a deprecated name: set ${newName} instead (read as ${newName} for now).`,
+      );
+    } else if (current !== old) {
+      warnings.push(
+        `${newName} and the deprecated ${oldName} have different values: ${newName} wins.`,
+      );
+    }
+  }
+  return warnings;
 }
 
 /** `"thing"` and `'thing'` are `thing`. Anything else stays the same. */
@@ -62,7 +119,7 @@ export function stripQuotes(value: string): string {
  * in production believing it is a development session.
  *
  * A variable the startup depends on cannot be read more fragilely than
- * `SOPORTES_DIR`.
+ * `RECEIPTS_DIR`.
  */
 export function isProduction(env: NodeJS.ProcessEnv = process.env): boolean {
   return stripQuotes((env.NODE_ENV ?? '').trim()) === 'production';
@@ -72,7 +129,7 @@ export function isProduction(env: NodeJS.ProcessEnv = process.env): boolean {
 const HOSTS_LOCALES = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0', 'host.docker.internal']);
 
 /** The escape hatch, for when pointing elsewhere is deliberate. */
-export const ALLOW_REMOTE_DATABASE = 'PERMITIR_BASE_REMOTA';
+export const ALLOW_REMOTE_DATABASE = 'ALLOW_REMOTE_DATABASE';
 
 /** The host of a connection URL, or `null` if it cannot be read. */
 function databaseHost(url: string): string | null {
@@ -103,7 +160,7 @@ function databaseHost(url: string): string | null {
  *
  * ── And why there is an escape hatch ─────────────────────────────────────────
  * Because this guards against an OVERSIGHT, not a decision. Whoever really
- * needs to point elsewhere says so out loud with `PERMITIR_BASE_REMOTA=si`,
+ * needs to point elsewhere says so out loud with `ALLOW_REMOTE_DATABASE=si`,
  * and then it is a deliberate act visible in the environment and in the log,
  * not an inherited value nobody checked.
  */
@@ -129,7 +186,7 @@ export function whyRefuseToStart(env: NodeJS.ProcessEnv = process.env): string |
 }
 
 /** The escape hatch of the lock below. */
-export const ALLOW_DESTRUCTIVE_AUTH = 'PERMITIR_AUTH_DESTRUCTIVA';
+export const ALLOW_DESTRUCTIVE_AUTH = 'ALLOW_DESTRUCTIVE_AUTH';
 
 /**
  * Why this session may NOT touch real accounts, or `null` if it may.

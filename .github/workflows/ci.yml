@@ -74,7 +74,7 @@ jobs:
             echo 'JWT_SECRET=ci-only-jwt-secret-at-least-32-characters-long'
             echo 'CHECK_BREACHED_PASSWORDS=false'
             echo 'BOOTSTRAP_ADMIN_EMAIL=admin-e2e@pruebas.coco'
-            echo 'SOPORTES_DIR=.soportes-test'
+            echo 'RECEIPTS_DIR=.soportes-test'
           } > api/.env.test
 
       - name: Application role (coco_app)

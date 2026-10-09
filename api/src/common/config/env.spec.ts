@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { RENAMED_ENV } from '../env';
 import { ENV_VARIABLES, whyTheEnvironmentIsInvalid } from './env';
 
 /** What `.github/workflows/ci.yml` writes into `api/.env.test`. */
@@ -13,7 +14,7 @@ const CI_TEST_ENV = {
   JWT_SECRET: 'ci-only-jwt-secret-at-least-32-characters-long',
   CHECK_BREACHED_PASSWORDS: 'false',
   BOOTSTRAP_ADMIN_EMAIL: 'admin-e2e@pruebas.coco',
-  SOPORTES_DIR: '.soportes-test',
+  RECEIPTS_DIR: '.soportes-test',
 };
 
 const SUPABASE = {
@@ -30,8 +31,8 @@ const LOCAL_ENV = {
   DATABASE_URL: 'postgresql://coco:x@localhost:5432/coco',
   DIRECT_URL: 'postgresql://coco:x@localhost:5432/coco',
   ...SUPABASE,
-  SOPORTES_DIR: '"/Users/someone/VS Code/soportes"',
-  PERMITIR_AUTH_DESTRUCTIVA: 'si',
+  RECEIPTS_DIR: '"/Users/someone/VS Code/soportes"',
+  ALLOW_DESTRUCTIVE_AUTH: 'si',
 };
 
 describe('whyTheEnvironmentIsInvalid', () => {
@@ -58,7 +59,7 @@ describe('whyTheEnvironmentIsInvalid', () => {
     });
 
     it('treats an empty value as absent, not as invalid', () => {
-      expect(whyTheEnvironmentIsInvalid({ ...CI_TEST_ENV, PORT: '', SOPORTES_STORAGE: ' ' })).toBe(
+      expect(whyTheEnvironmentIsInvalid({ ...CI_TEST_ENV, PORT: '', RECEIPTS_STORAGE: ' ' })).toBe(
         null,
       );
     });
@@ -83,7 +84,7 @@ describe('whyTheEnvironmentIsInvalid', () => {
       expect(
         whyTheEnvironmentIsInvalid({
           ...CI_TEST_ENV,
-          SOPORTES_STORAGE: 'supabase',
+          RECEIPTS_STORAGE: 'supabase',
           SUPABASE_URL: 'https://example.supabase.co',
         }),
       ).toContain('SUPABASE_SERVICE_ROLE_KEY is required when receipts are stored in Supabase');
@@ -120,9 +121,18 @@ describe('whyTheEnvironmentIsInvalid', () => {
       );
     });
 
+    it('validates a renamed variable set only under its old name', () => {
+      expect(
+        whyTheEnvironmentIsInvalid({ ...CI_TEST_ENV, [RENAMED_ENV.RECEIPTS_STORAGE]: 's3' }),
+      ).toContain('RECEIPTS_STORAGE');
+      expect(
+        whyTheEnvironmentIsInvalid({ ...CI_TEST_ENV, [RENAMED_ENV.RECEIPTS_STORAGE]: 'supabase' }),
+      ).toContain('SUPABASE_URL is required');
+    });
+
     it('rejects a storage that does not exist', () => {
-      expect(whyTheEnvironmentIsInvalid({ ...CI_TEST_ENV, SOPORTES_STORAGE: 's3' })).toContain(
-        'SOPORTES_STORAGE',
+      expect(whyTheEnvironmentIsInvalid({ ...CI_TEST_ENV, RECEIPTS_STORAGE: 's3' })).toContain(
+        'RECEIPTS_STORAGE',
       );
     });
   });

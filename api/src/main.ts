@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { AppModule } from './app.module';
 import { configureApp, parseOrigins } from './bootstrap';
 import { whyTheEnvironmentIsInvalid } from './common/config/env';
-import { whyRefuseToStart } from './common/env';
+import { renamedEnvWarnings, whyRefuseToStart } from './common/env';
 import { defaultLogDirectory, JsonLogger, parseLogLevel } from './common/logging/json-logger';
 import { installSafetyNet } from './common/process/safety-net';
 import { installBigIntSerializer } from './common/serialization/bigint';
@@ -113,6 +113,10 @@ async function bootstrap(): Promise<void> {
     minLevel: parseLogLevel(process.env.LOG_LEVEL),
   });
   Logger.overrideLogger(jsonLogger);
+
+  // A variable still set only under its old Spanish name (step 7.2-r3) is
+  // read, and said here, in the file log, so the server's leftovers show up.
+  for (const warning of renamedEnvWarnings()) new Logger('Bootstrap').warn(warning);
 
   installSafetyNet();
   installBigIntSerializer();

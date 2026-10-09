@@ -116,7 +116,7 @@ La app lee `CocoAPIBaseURL` de su Info.plist. `project.yml` lo escribe como
     -derivedDataPath /tmp/dd-coco build
   ```
 
-La API local arranca contra cocoApp-dev con `PERMITIR_AUTH_DESTRUCTIVA=si`
+La API local arranca contra cocoApp-dev con `ALLOW_DESTRUCTIVE_AUTH=si`
 solo en local. ATS permite red local sin TLS únicamente por
 `NSAllowsLocalNetworking`; cualquier otro host sigue exigiendo HTTPS. El
 usuario de desarrollo y su contraseña están en `api/.env.supabase-dev` (nunca

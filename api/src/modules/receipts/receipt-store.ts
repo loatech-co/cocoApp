@@ -10,7 +10,7 @@ import { readEnv } from '../../common/env';
  * The service only knows this interface. Two implementations:
  *   - `SupabaseReceiptStore`: a PRIVATE Supabase Storage bucket, reached only
  *     by the API with the service-role key. Production.
- *   - `DiskReceiptStore`: the folder in SOPORTES_DIR, as before. Local work
+ *   - `DiskReceiptStore`: the folder in RECEIPTS_DIR, as before. Local work
  *     and tests, and the production fallback of last resort.
  *
  * The key (`<userId>/<uuid>.<ext>`, from `claveNueva`) and the sha256 in
@@ -32,9 +32,9 @@ export interface ReceiptStore {
 
 export const RECEIPT_STORE = Symbol('RECEIPT_STORE');
 
-/** `SOPORTES_STORAGE` if set; otherwise Supabase in production and disk elsewhere. */
+/** `RECEIPTS_STORAGE` if set; otherwise Supabase in production and disk elsewhere. */
 export function chosenStore(env: NodeJS.ProcessEnv): 'supabase' | 'disk' {
-  const declared = readEnv('SOPORTES_STORAGE');
+  const declared = readEnv('RECEIPTS_STORAGE');
   if (declared === 'supabase' || declared === 'disk') return declared;
   return env.NODE_ENV === 'production' ? 'supabase' : 'disk';
 }
@@ -45,9 +45,9 @@ export function createReceiptStore(env: NodeJS.ProcessEnv = process.env): Receip
   const url = readEnv('SUPABASE_URL');
   const key = readEnv('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !key) {
-    throw new Error('SOPORTES_STORAGE=supabase needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+    throw new Error('RECEIPTS_STORAGE=supabase needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
   }
-  return new SupabaseReceiptStore(url, key, readEnv('SOPORTES_BUCKET') ?? 'soportes');
+  return new SupabaseReceiptStore(url, key, readEnv('RECEIPTS_BUCKET') ?? 'soportes');
 }
 
 class DiskReceiptStore implements ReceiptStore {
@@ -61,7 +61,7 @@ class DiskReceiptStore implements ReceiptStore {
       ok: doesExist,
       detail: doesExist
         ? folder
-        : `${folder} does not exist — check SOPORTES_DIR (mind the quotes)`,
+        : `${folder} does not exist — check RECEIPTS_DIR (mind the quotes)`,
     });
   }
 

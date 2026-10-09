@@ -321,6 +321,35 @@ value) and they used to win; changing them in hPanel does nothing now.
 Supabase Auth's signing keys rotate without a redeploy: the API verifies
 against the project's JWKS.
 
+## Environment variables renamed to English (7.2-r3)
+
+Five variables changed name, by expand and contract. Only the names: the
+values stay (`si` is still `si`, the bucket is still `soportes`, ADR 0026).
+
+| Old (until 7.10)            | New                      |
+| --------------------------- | ------------------------ |
+| `SOPORTES_DIR`              | `RECEIPTS_DIR`           |
+| `SOPORTES_STORAGE`          | `RECEIPTS_STORAGE`       |
+| `SOPORTES_BUCKET`           | `RECEIPTS_BUCKET`        |
+| `PERMITIR_BASE_REMOTA`      | `ALLOW_REMOTE_DATABASE`  |
+| `PERMITIR_AUTH_DESTRUCTIVA` | `ALLOW_DESTRUCTIVE_AUTH` |
+
+- **Transition.** The API reads the new name and, if it is missing, the old
+  one (`RENAMED_ENV` in `api/src/common/env.ts`). At boot it logs a warning
+  per variable set only under its old name, or under both with different
+  values (the new one wins). Names only, never values. The scripts that read
+  the bucket fall back the same way.
+- **Server (expanded in 7.2-r3).** `hbuilds/config/.env` has the new names
+  next to the old ones, with the same values; the copy from before is
+  `.env.before-r3` (mode 600). A deploy whose `api.log` carries no
+  `deprecated name` warning is reading the new names.
+- **Local.** An `api/.env` with the old names still starts, with the
+  warning. Rename the lines when convenient.
+- **Contraction (7.10).** Remove the old lines from the server `.env` (a
+  deletion on the server: backup first, per `CLAUDE.md`), then delete
+  `RENAMED_ENV`, the fallback, the warnings and the scripts' fallback, and
+  `.env.before-r3`.
+
 ## Renew the iOS build every 7 days
 
 **Reconnect the iPhone and press Run in Xcode before the 7 days end.**

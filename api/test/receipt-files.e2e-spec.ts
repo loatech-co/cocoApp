@@ -10,7 +10,7 @@ import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/receipts/receip
  * Deleting a receipt, a movement, or one leg of a transfer used to delete the
  * rows and leave the files behind. Runs against whichever store the app is
  * configured with: the disk in the normal suite, and the Supabase dev bucket
- * when started with SOPORTES_STORAGE=supabase (the end-to-end check before
+ * when started with RECEIPTS_STORAGE=supabase (the end-to-end check before
  * deploying the move to Storage).
  */
 describe('Receipt files follow their rows (e2e)', () => {
