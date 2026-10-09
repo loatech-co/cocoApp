@@ -40,9 +40,10 @@ import tseslint from 'typescript-eslint';
  * read with `t` (`shared/lib/i18n.ts`). `i18next/no-literal-string`, in
  * `jsx-text-only` mode, fails on any text with letters written as a JSX child
  * in `frontend/src` (attributes and module strings are not linted: too many
- * of them are classes, ids and keys; `locales/inventario.test.ts` guards the
- * catalog's side). Strings without letters (`·`, `—`, `%`, numbers) are
- * never flagged.
+ * of them are classes, ids and keys; `locales/attributes.test.ts` reads the
+ * attributes a person reads or hears —`aria-label`, `placeholder`, `title`,
+ * `alt`…— and `locales/catalog.test.ts` guards the catalog's side).
+ * Strings without letters (`·`, `—`, `%`, numbers) are never flagged.
  *
  * THE list of exceptions: a text that is not here goes to the catalog. Each
  * entry is matched as a whole word list (a regex, as the plugin reads it) and
