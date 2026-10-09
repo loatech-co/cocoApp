@@ -7,14 +7,15 @@ import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/receipts/receip
 import { newStorageKey, storeFolder, hashOf } from '../src/modules/receipts/receipts.storage';
 
 /**
- * Soportes — el recibo de un movimiento.
+ * Receipts — the proof of a transaction.
  *
- * Lo que se protege aquí no es que la función devuelva lo que debe: es que NO
- * devuelva lo que no debe. Un recibo lleva el nombre del titular, un número de
- * cuenta y a veces un consumo que dice si la casa estuvo vacía en agosto. La
- * mitad de estas pruebas comprueban puertas cerradas.
+ * What is protected here is not that the feature returns what it should: it
+ * is that it does NOT return what it should not. A receipt carries the
+ * holder's name, an account number and sometimes a usage figure that tells
+ * whether the house was empty in August. Half of these tests check closed
+ * doors.
  */
-describe('Soportes (e2e)', () => {
+describe('Receipts (e2e)', () => {
   let env: TestEnvironment;
   let http: ReturnType<typeof request>;
 
@@ -30,9 +31,9 @@ describe('Soportes (e2e)', () => {
 
   afterAll(async () => {
     await env.close();
-    // El almacén de pruebas se va entero: son bytes de mentira, pero acumular
-    // basura entre corridas acaba escondiendo un fallo real detrás de un
-    // archivo que quedó de la vez pasada.
+    // The test store goes entirely: they are fake bytes, but piling up garbage
+    // between runs ends up hiding a real failure behind a file left over from
+    // last time.
     rmSync(storeFolder(), { recursive: true, force: true });
   });
 
@@ -46,7 +47,7 @@ describe('Soportes (e2e)', () => {
     betoId = b.id;
   });
 
-  /** Un movimiento con sus soportes, escritos como los escribe el importador. */
+  /** A transaction with its receipts, written the way the importer writes them. */
   const withReceipts = async (
     auth: string,
     userId: bigint,
@@ -88,15 +89,15 @@ describe('Soportes (e2e)', () => {
     name: `${text}.pdf`,
     mime: 'application/pdf',
     ext: 'pdf',
-    // Un PDF de verdad empieza por %PDF-: así el content-type no es una
-    // promesa que nadie comprueba.
+    // A real PDF starts with %PDF-: that way the content-type is not a promise
+    // nobody checks.
     bytes: Buffer.from(`%PDF-1.4\n${text}\n%%EOF\n`),
   });
 
   // ── Puertas cerradas ──────────────────────────────────────────────────────
 
-  describe('Quién NO puede ver un soporte', () => {
-    it('sin sesión, 401 en listar y en descargar', async () => {
+  describe('Who CANNOT see a receipt', () => {
+    it('without a session, 401 on list and on download', async () => {
       const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       await http.get(`/api/v2/transactions/${transactionId}/receipts`).expect(401);
@@ -105,7 +106,7 @@ describe('Soportes (e2e)', () => {
         .expect(401);
     });
 
-    it('con un token inventado, 401', async () => {
+    it('with a made-up token, 401', async () => {
       const { transactionId } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       await http
@@ -114,11 +115,11 @@ describe('Soportes (e2e)', () => {
         .expect(401);
     });
 
-    it('Beto no ve los soportes de un movimiento de Ana', async () => {
+    it("Beto does not see the receipts of a transaction of Ana's", async () => {
       const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
-      // La lista no dice "prohibido": para esa consulta esos soportes no
-      // existen. Decir "prohibido" confirmaría que el movimiento es de alguien.
+      // The list does not say "forbidden": for that query those receipts do not
+      // exist. Saying "forbidden" would confirm the transaction belongs to someone.
       const list = await http
         .get(`/api/v2/transactions/${transactionId}/receipts`)
         .set('Authorization', beto)
@@ -131,10 +132,10 @@ describe('Soportes (e2e)', () => {
         .expect(404);
     });
 
-    it('Beto no puede colar el soporte de Ana por un movimiento suyo', async () => {
-      // El ataque obvio contra una comprobación a medias: el id del movimiento
-      // es mío, el del soporte es de otro. Las tres condiciones van en el mismo
-      // WHERE justamente por esto.
+    it("Beto cannot sneak Ana's receipt through a transaction of his own", async () => {
+      // The obvious attack against a half-done check: the transaction id is
+      // mine, the receipt's is someone else's. The three conditions go in the
+      // same WHERE precisely because of this.
       const anas = await withReceipts(ana, anaId, [pdf('el-de-ana')]);
       const betos = await withReceipts(beto, betoId, [pdf('el-de-beto')]);
 
@@ -144,7 +145,7 @@ describe('Soportes (e2e)', () => {
         .expect(404);
     });
 
-    it('Beto no puede subir un soporte a un movimiento de Ana', async () => {
+    it("Beto cannot upload a receipt to a transaction of Ana's", async () => {
       const { transactionId } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       const image = await sharp({
@@ -153,19 +154,19 @@ describe('Soportes (e2e)', () => {
         .png()
         .toBuffer();
 
-      // 404 y no 403: confirmar que el movimiento existe ya es contar algo de
-      // la base de otro.
+      // 404 and not 403: confirming the transaction exists already tells
+      // something about someone else's data.
       await http
         .post(`/api/v2/transactions/${transactionId}/receipts`)
         .set('Authorization', beto)
         .attach('files', image, { filename: 'x.png', contentType: 'image/png' })
         .expect(404);
 
-      // Y no se creó nada: la propiedad se comprueba ANTES de procesar.
+      // And nothing was created: ownership is checked BEFORE processing.
       expect(await env.prisma.receipt.count({ where: { transactionId } })).toBe(1);
     });
 
-    it('sin sesión no se sube ni se borra', async () => {
+    it('without a session nothing is uploaded or deleted', async () => {
       const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       await http
@@ -181,7 +182,7 @@ describe('Soportes (e2e)', () => {
         .expect(401);
     });
 
-    it('Beto no puede borrar un soporte de Ana', async () => {
+    it("Beto cannot delete a receipt of Ana's", async () => {
       const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       await http
@@ -192,12 +193,12 @@ describe('Soportes (e2e)', () => {
       expect(await env.prisma.receipt.count({ where: { transactionId } })).toBe(1);
     });
 
-    it('una clave que se sale del almacén no entrega nada', async () => {
+    it('a key that escapes the store returns nothing', async () => {
       const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
-      // Nadie puede escribir esto desde fuera —la clave la genera el servidor—
-      // pero si algún día una llega torcida, el resolver es lo único que queda
-      // entre eso y el sistema de archivos.
+      // Nobody can write this from outside —the server generates the key— but
+      // if one ever arrives crooked, the resolver is the only thing left between
+      // it and the file system.
       await env.prisma.receipt.update({
         where: { id: receipts[0]!.id },
         data: { storageKey: '../../../../../../etc/passwd' },
@@ -210,10 +211,10 @@ describe('Soportes (e2e)', () => {
     });
   });
 
-  // ── Lo que sí ─────────────────────────────────────────────────────────────
+  // ── What does work ────────────────────────────────────────────────────────
 
-  describe('Lo que ve el dueño', () => {
-    it('lista sus soportes en orden', async () => {
+  describe('What the owner sees', () => {
+    it('lists their receipts in order', async () => {
       const { transactionId } = await withReceipts(ana, anaId, [
         pdf('uno'),
         pdf('dos'),
@@ -228,12 +229,12 @@ describe('Soportes (e2e)', () => {
       expect(r.body.data.map((s: { position: number }) => s.position)).toEqual([1, 2, 3]);
       expect(r.body.data[0].fileName).toBe('uno.pdf');
       expect(r.body.data.every((s: { isAvailable: boolean }) => s.isAvailable)).toBe(true);
-      // La ficha NO lleva la ruta del almacén. Enseñarla no abriría ninguna
-      // puerta —no hay servidor de archivos detrás— pero dibuja el mapa.
+      // The record does NOT carry the store path. Showing it would open no door
+      // —there is no file server behind it— but it draws the map.
       expect(r.body.data[0]).not.toHaveProperty('storage_key');
     });
 
-    it('descarga el archivo, con su tipo y sus bytes', async () => {
+    it('downloads the file, with its type and its bytes', async () => {
       const first = pdf('recibo-de-agosto');
       const { transactionId, receipts } = await withReceipts(ana, anaId, [first]);
 
@@ -245,12 +246,12 @@ describe('Soportes (e2e)', () => {
       expect(r.headers['content-type']).toContain('application/pdf');
       expect(r.headers['x-content-type-options']).toBe('nosniff');
       expect(r.headers['cache-control']).toContain('no-store');
-      // Los bytes, exactos: el interceptor que envuelve todo en `{data, meta}`
-      // tiene que dejar pasar un flujo sin tocarlo.
+      // The bytes, exact: the interceptor that wraps everything in `{data, meta}`
+      // has to let a stream through untouched.
       expect(Buffer.from(r.body).equals(first.bytes)).toBe(true);
     });
 
-    it('un movimiento sin soportes devuelve una lista vacía, no un error', async () => {
+    it('a transaction without receipts returns an empty list, not an error', async () => {
       const transaction = await http
         .post('/api/v2/transactions')
         .set('Authorization', ana)
@@ -265,10 +266,10 @@ describe('Soportes (e2e)', () => {
       expect(r.body.data).toEqual([]);
     });
 
-    it('la ficha queda sin archivo si el almacén no lo tiene', async () => {
+    it('the record is left without a file if the store does not have it', async () => {
       const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
-      // Un almacén a medio sincronizar: la fila existe, el binario todavía no.
+      // A half-synced store: the row exists, the binary not yet.
       await env.prisma.receipt.update({
         where: { id: receipts[0]!.id },
         data: { storageKey: `${anaId}/no-existe.pdf` },
@@ -279,13 +280,13 @@ describe('Soportes (e2e)', () => {
         .set('Authorization', ana)
         .expect(200);
 
-      // Se lista igual, marcado como no isAvailable: esconderlo haría creer que
-      // el soporte nunca se cargó, que es un problema distinto.
+      // It is listed all the same, marked as not isAvailable: hiding it would
+      // suggest the receipt was never uploaded, which is a different problem.
       expect(r.body.data).toHaveLength(1);
       expect(r.body.data[0].isAvailable).toBe(false);
     });
 
-    it('sube un soporte y lo deja en gris, liviano y con el nombre del movimiento', async () => {
+    it('uploads a receipt and leaves it grey, light and named after the transaction', async () => {
       const transaction = await http
         .post('/api/v2/transactions')
         .set('Authorization', ana)
@@ -299,8 +300,8 @@ describe('Soportes (e2e)', () => {
 
       const id = Number(transaction.body.data.id);
 
-      // Una imagen A COLOR y grande: es lo que llega de la cámara de un móvil,
-      // y es donde se nota si el tratamiento corrió o no.
+      // A large COLOUR image: it is what comes from a phone camera, and it is
+      // where it shows whether the processing ran or not.
       const color = await sharp({
         create: { width: 2400, height: 3000, channels: 3, background: { r: 200, g: 40, b: 40 } },
       })
@@ -316,13 +317,13 @@ describe('Soportes (e2e)', () => {
       expect(r.body.data).toHaveLength(1);
       const receipt = r.body.data[0];
 
-      // El nombre sale del MOVIMIENTO, no del archivo, y la barra que no cabe
-      // en un nombre de archivo se cambia por un guion —igual que en el lote—.
+      // The name comes from the TRANSACTION, not from the file, and the slash
+      // that does not fit in a file name becomes a hyphen —same as in the batch—.
       expect(receipt.fileName).toBe('PILA - Seguridad Social - 2026-08-12.jpg');
       expect(receipt.mimeType).toBe('image/jpeg');
       expect(receipt.position).toBe(1);
 
-      // Y el archivo guardado es gris y de 1100 de ancho, no la imagen original.
+      // And the saved file is grey and 1100 wide, not the original image.
       const saved = await env.prisma.receipt.findFirst({
         where: { transactionId: BigInt(id) },
       });
@@ -336,7 +337,7 @@ describe('Soportes (e2e)', () => {
       expect(bytes.length).toBeLessThan(color.length / 4);
     });
 
-    it('el "i de N" se recalcula al agregar, sin renombrar lo anterior', async () => {
+    it('the "i of N" is recomputed on add, without renaming the earlier ones', async () => {
       const transaction = await http
         .post('/api/v2/transactions')
         .set('Authorization', ana)
@@ -372,15 +373,15 @@ describe('Soportes (e2e)', () => {
         .attach('files', await image(230), { filename: 'c.png', contentType: 'image/png' })
         .expect(201);
 
-      // El tercero continúa la cuenta, y los dos primeros NO cambian de name:
-      // el total no está horneado en ninguno, se cuenta al mirarlos.
+      // The third continues the count, and the first two do NOT change name:
+      // the total is baked into none of them, it is counted when they are read.
       expect(third.body.data.map((s: { position: number }) => s.position)).toEqual([1, 2, 3]);
       expect(new Set(third.body.data.map((s: { fileName: string }) => s.fileName))).toEqual(
         new Set(['Claro Movil - 2026-08-12.jpg']),
       );
     });
 
-    it('subir el mismo archivo dos veces no lo duplica', async () => {
+    it('uploading the same file twice does not duplicate it', async () => {
       const transaction = await http
         .post('/api/v2/transactions')
         .set('Authorization', ana)
@@ -406,12 +407,12 @@ describe('Soportes (e2e)', () => {
         .attach('files', image, { filename: 'otro-nombre.png', contentType: 'image/png' })
         .expect(201);
 
-      // La huella es del archivo YA TRATADO: dos originales distintos que
-      // acaban en el mismo JPG en gris son el mismo soporte.
+      // The fingerprint is of the file AFTER processing: two different originals
+      // that end up as the same grey JPG are the same receipt.
       expect(second.body.data).toHaveLength(1);
     });
 
-    it('rechaza lo que no es un PDF ni una imagen', async () => {
+    it('rejects what is neither a PDF nor an image', async () => {
       const transaction = await http
         .post('/api/v2/transactions')
         .set('Authorization', ana)
@@ -438,7 +439,7 @@ describe('Soportes (e2e)', () => {
         .expect(415);
     });
 
-    it('borrar el movimiento se lleva sus soportes', async () => {
+    it('deleting the transaction takes its receipts with it', async () => {
       const { transactionId } = await withReceipts(ana, anaId, [pdf('uno'), pdf('dos')]);
 
       await http

@@ -3,13 +3,14 @@ import request from 'supertest';
 import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 
 /**
- * Fase 3 — el único cerebro (e2e).
+ * Phase 3 — the single brain (e2e).
  *
- * Lo que no puede fallar: que un texto se vuelva un gasto clasificado en UNA
- * petición; que repetir la petición no cree un segundo gasto; que Wallet y el
- * SMS del mismo pago acaben en una sola fila; y que `interpret` no escriba.
+ * What cannot fail: that a text becomes a classified expense in ONE request;
+ * that repeating the request does not create a second expense; that Wallet and
+ * the SMS of the same payment end up in a single row; and that `interpret`
+ * does not write.
  */
-describe('Fase 3 — Interpretar y capturar (e2e)', () => {
+describe('Phase 3 — Interpret and capture (e2e)', () => {
   let env: TestEnvironment;
   let http: ReturnType<typeof request>;
   let user: TestUser;
@@ -28,8 +29,8 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     await env.clean();
     user = await env.createUser();
 
-    // Un árbol mínimo: Costos variables › Alimentación › Mercado, y una
-    // categoría «Transporte» sin conceptos.
+    // A minimal tree: Costos variables › Alimentación › Mercado, and a
+    // «Transporte» category with no concepts.
     const costCenter = await env.prisma.category.create({
       data: { userId: user.id, name: 'Costos variables', kind: 'expense' },
     });
@@ -56,8 +57,8 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
   const SMS =
     'Bancolombia le informa compra por $45.000 en KOBA COLOMBIA el 03/10/2026 con tu tarjeta *1234';
 
-  describe('Un SMS bancario', () => {
-    it('se vuelve un gasto clasificado en una sola petición', async () => {
+  describe('A bank SMS', () => {
+    it('becomes a classified expense in a single request', async () => {
       const r = await capture({ text: SMS, source: 'sms', externalRef: 'sms-001' });
 
       expect(r.status).toBe(200);
@@ -78,7 +79,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(await countTransactions()).toBe(1);
     });
 
-    it('repetido con el mismo external_ref no crea un segundo gasto, y contesta lo mismo', async () => {
+    it('repeated with the same external_ref creates no second expense, and answers the same', async () => {
       const first = await capture({ text: SMS, source: 'sms', externalRef: 'sms-002' });
       const second = await capture({ text: SMS, source: 'sms', externalRef: 'sms-002' });
 
@@ -88,7 +89,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(await countTransactions()).toBe(1);
     });
 
-    it('un comercio que lleva a una categoría sin concepto: se guarda con la categoría y por revisar', async () => {
+    it('a merchant that leads to a category with no concept: saved with the category and for review', async () => {
       const r = await capture({
         text: 'UBER *TRIP $18.500 03/10/2026',
         source: 'sms',
@@ -98,7 +99,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(r.status).toBe(200);
       expect(r.body.data.classification.certainty).toBe('medium');
       expect(r.body.data.transaction.needsReview).toBe(true);
-      // La categoría queda puesta: ya está en el sitio correcto a medias.
+      // The category is set: it is already halfway in the right place.
       const transport = await env.prisma.category.findFirst({
         where: { userId: user.id, name: 'Transporte' },
       });
@@ -106,7 +107,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(r.body.data.summary).toContain('(por revisar)');
     });
 
-    it('un comercio desconocido se guarda sin clasificar y por revisar: nunca adivina', async () => {
+    it('an unknown merchant is saved unclassified and for review: it never guesses', async () => {
       const r = await capture({
         text: 'FERRETERIA LA ESQUINA $80.000 03/10/2026',
         source: 'sms',
@@ -120,7 +121,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     });
   });
 
-  describe('Wallet y SMS del mismo pago', () => {
+  describe('Wallet and SMS of the same payment', () => {
     const t0 = new Date('2026-10-02T15:00:00-05:00');
     const later = (ms: number) => new Date(t0.getTime() + ms).toISOString();
 
@@ -134,7 +135,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
         capturedAt: t0.toISOString(),
       });
 
-    it('el SMS que llega a los dos minutos se FUSIONA con la transacción de Wallet', async () => {
+    it('the SMS that arrives two minutes later MERGES with the Wallet transaction', async () => {
       await wallet();
       const sms = await capture({
         text: 'Bancolombia: compra por $120.000 en EXITO POBLADO el 02/10/2026',
@@ -147,7 +148,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(sms.body.data.isMerged).toBe(true);
       expect(sms.body.data.isDuplicate).toBe(false);
       expect(await countTransactions()).toBe(1);
-      // Y la de Wallet quedó enriquecida con el texto del SMS, sin perder lo suyo.
+      // And the Wallet one was enriched with the SMS text, without losing its own.
       const onlyOne = await env.prisma.transaction.findFirstOrThrow({
         where: { userId: user.id },
       });
@@ -157,7 +158,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(sms.body.data.summary).toMatch(/^Era el mismo pago/);
     });
 
-    it('un parecido parcial —mismo monto, fuera de la ventana— crea el gasto marcado para revisar', async () => {
+    it('a partial match —same amount, outside the window— creates the expense flagged for review', async () => {
       await wallet();
       const sms = await capture({
         text: 'Bancolombia: compra por $120.000 en EXITO POBLADO el 02/10/2026',
@@ -171,7 +172,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(await countTransactions()).toBe(2);
     });
 
-    it('dos capturas del MISMO origen nunca se fusionan: dos SMS son dos compras', async () => {
+    it('two captures from the SAME source never merge: two SMS are two purchases', async () => {
       await capture({
         text: 'compra por $6.000 en TOSTAO 02/10/2026',
         source: 'sms',
@@ -190,8 +191,8 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     });
   });
 
-  describe('Interpretar', () => {
-    it('devuelve lo entendido y NO escribe nada', async () => {
+  describe('Interpret', () => {
+    it('returns what it understood and writes NOTHING', async () => {
       const before = await countTransactions();
       const r = await interpret({ text: SMS });
 
@@ -207,12 +208,12 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(await countTransactions()).toBe(before);
     });
 
-    it('sin texto ni comercio, 422', async () => {
+    it('without text or merchant, 422', async () => {
       const r = await interpret({});
       expect(r.status).toBe(422);
     });
 
-    it('Wallet sin monto se interpreta igual, y se marca', async () => {
+    it('Wallet without an amount is interpreted all the same, and flagged', async () => {
       const r = await interpret({ merchant: 'Exito Poblado', date: '2026-10-02' });
       expect(r.status).toBe(200);
       expect(r.body.data.amount).toBeNull();
@@ -220,7 +221,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     });
   });
 
-  describe('Lo que la persona eligió en el teléfono', () => {
+  describe('What the person chose on the phone', () => {
     const transportId = async () =>
       (
         await env.prisma.category.findFirstOrThrow({
@@ -228,8 +229,8 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
         })
       ).id;
 
-    it('el concepto elegido MANDA sobre lo que propone el motor', async () => {
-      // El diccionario llevaría el SMS de Koba a Mercado; la persona dijo otra cosa.
+    it('the chosen concept OVERRIDES what the engine proposes', async () => {
+      // The dictionary would send the Koba SMS to Mercado; the person said otherwise.
       const transport = await transportId();
       const taxi = await env.prisma.category.create({
         data: { userId: user.id, name: 'Taxi', kind: 'expense', parentId: transport },
@@ -250,12 +251,12 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
         name: 'Taxi',
         reason: 'Lo eligió la persona.',
       });
-      // Lo leído del texto se conserva.
+      // What was read from the text is kept.
       expect(r.body.data.transaction.amount).toBe('45000.00');
       expect(r.body.data.transaction.date).toBe('2026-10-03');
     });
 
-    it('una captura ios_manual sin texto ni comercio, con monto y concepto, se crea', async () => {
+    it('an ios_manual capture without text or merchant, with amount and concept, is created', async () => {
       const r = await capture({
         source: 'ios_manual',
         externalRef: 'e-2',
@@ -274,13 +275,13 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(await countTransactions()).toBe(1);
     });
 
-    it('sin texto, sin comercio y sin concepto sigue siendo 422', async () => {
+    it('without text, merchant or concept it is still 422', async () => {
       const r = await capture({ source: 'ios_manual', externalRef: 'e-3', amount: '12000' });
       expect(r.status).toBe(422);
       expect(await countTransactions()).toBe(0);
     });
 
-    it('una categoría (profundidad 2) se guarda con certeza media y por revisar', async () => {
+    it('a category (depth 2) is saved with medium certainty and for review', async () => {
       const transport = await transportId();
       const r = await capture({
         source: 'ios_manual',
@@ -300,7 +301,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(r.body.data.summary).toContain('(por revisar)');
     });
 
-    it('un centro de costos no clasifica nada: 422', async () => {
+    it('a cost center classifies nothing: 422', async () => {
       const costCenter = await env.prisma.category.findFirstOrThrow({
         where: { userId: user.id, name: 'Costos variables' },
       });
@@ -314,7 +315,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(await countTransactions()).toBe(0);
     });
 
-    it('un concepto archivado, o de otra persona, es 422', async () => {
+    it("an archived concept, or someone else's, is 422", async () => {
       await env.prisma.category.update({
         where: { id: groceriesId },
         data: { isArchived: true },
@@ -347,7 +348,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(await countTransactions()).toBe(0);
     });
 
-    it('la nota se guarda en notes, y sin monto se le añade el aviso', async () => {
+    it('the note is saved in notes, and without an amount the warning is added', async () => {
       const withAmount = await capture({
         source: 'ios_manual',
         externalRef: 'e-8',
@@ -371,7 +372,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       );
     });
 
-    it('Wallet con fecha en Bogotá: el día es el que manda la app, no el UTC de captured_at', async () => {
+    it('Wallet with a date in Bogotá: the day is the one the app sends, not the UTC of captured_at', async () => {
       const r = await capture({
         source: 'wallet',
         externalRef: 'e-10',
@@ -384,7 +385,7 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(r.body.data.transaction.date).toBe('2026-10-03');
     });
 
-    it('un id de categoría que no es numérico, 400', async () => {
+    it('a non-numeric category id, 400', async () => {
       const r = await capture({
         source: 'ios_manual',
         externalRef: 'e-11',
@@ -395,8 +396,8 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     });
   });
 
-  describe('El movimiento que crea la web', () => {
-    it('acepta las columnas nuevas y sigue funcionando igual sin ellas', async () => {
+  describe('The transaction the web creates', () => {
+    it('accepts the new columns and still works the same without them', async () => {
       const withNothing = await http
         .post('/api/v2/transactions')
         .set('Authorization', env.as(user))
