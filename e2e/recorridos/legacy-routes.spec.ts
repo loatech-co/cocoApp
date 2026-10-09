@@ -28,11 +28,14 @@ test.describe('the Spanish routes, signed in', () => {
 
   test('the redirect replaces the old address in the history', async ({ page }) => {
     await page.goto('/cost-centers');
+    const before = await page.evaluate(() => window.history.length);
     await page.goto('/cuentas');
     await expect(page).toHaveURL(/\/accounts$/);
 
-    await page.goBack();
-    await expect(page).toHaveURL(/\/cost-centers$/);
+    // One entry more, for /accounts: a redirect that pushed would leave two.
+    // Counted instead of walked with goBack(): Chromium skips, on the way back,
+    // an entry that was reached without a user gesture, and every goto() is one.
+    expect(await page.evaluate(() => window.history.length)).toBe(before + 1);
   });
 
   test('a summary link with the Spanish filters opens the same cut', async ({ page }) => {
