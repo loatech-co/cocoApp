@@ -53,7 +53,7 @@ final class WebBridgeTests: XCTestCase {
 
     func testJavascriptToGoEscapes() {
         let js = WebBridge.javascriptToGo("/centros\"de\\costos\nx")
-        XCTAssertTrue(js.contains("window.__coco.ir(\"/centros\\\"de\\\\costos\\nx\")"), js)
+        XCTAssertTrue(js.contains("window.__coco.navigate(\"/centros\\\"de\\\\costos\\nx\")"), js)
         XCTAssertFalse(js.contains("\n"))
     }
 
@@ -75,12 +75,13 @@ final class WebBridgeTests: XCTestCase {
     }
 
     func testWebEvent() {
-        XCTAssertEqual(WebEvent(message: ["tipo": "salir"]), .signOut)
-        XCTAssertEqual(WebEvent(message: ["tipo": "sesionCerrada"]), .sessionClosed)
-        XCTAssertEqual(WebEvent(message: ["tipo": "sinSesion"]), .signedOut)
-        XCTAssertEqual(WebEvent(message: ["tipo": "abrirCaptura"]), .openCapture)
-        XCTAssertNil(WebEvent(message: ["tipo": "borrarTodo"]))
-        XCTAssertNil(WebEvent(message: "salir"))
+        XCTAssertEqual(WebEvent(message: ["type": "signOut"]), .signOut)
+        XCTAssertEqual(WebEvent(message: ["type": "sessionClosed"]), .sessionClosed)
+        XCTAssertEqual(WebEvent(message: ["type": "noSession"]), .noSession)
+        XCTAssertEqual(WebEvent(message: ["type": "openCapture"]), .openCapture)
+        XCTAssertNil(WebEvent(message: ["type": "wipeEverything"]))
+        XCTAssertNil(WebEvent(message: ["tipo": "signOut"]))
+        XCTAssertNil(WebEvent(message: "signOut"))
     }
 
     // MARK: Handler de sesión
@@ -108,8 +109,8 @@ final class WebBridgeTests: XCTestCase {
     // MARK: Avisos hacia la web
 
     func testNoticesUseTheContractNamesAndNeverFailOnAnOldWeb() {
-        XCTAssertEqual(WebNotice.captured.rawValue, "capturado")
-        XCTAssertEqual(WebNotice.foreground.rawValue, "primerPlano")
+        XCTAssertEqual(WebNotice.captured.rawValue, "captured")
+        XCTAssertEqual(WebNotice.foreground.rawValue, "foreground")
         for notice in WebNotice.allCases {
             XCTAssertEqual(WebBridge.javascript(for: notice), "window.__coco?.\(notice.rawValue)?.(); true;")
         }
@@ -125,12 +126,12 @@ final class WebBridgeTests: XCTestCase {
 
         let withoutCoco = await p.notify(.captured)
         XCTAssertTrue(withoutCoco)
-        _ = try await p.webView.evaluateJavaScript("window.__coco = { ir() {} }; true;")
+        _ = try await p.webView.evaluateJavaScript("window.__coco = { navigate() {} }; true;")
         let oldWeb = await p.notify(.foreground)
         XCTAssertTrue(oldWeb)
 
         _ = try await p.webView.evaluateJavaScript(
-            "window.avisos = []; window.__coco = { capturado() { avisos.push('c') }, primerPlano() { avisos.push('p') } }; true;"
+            "window.avisos = []; window.__coco = { captured() { avisos.push('c') }, foreground() { avisos.push('p') } }; true;"
         )
         await p.notify(.captured)
         await p.notify(.foreground)
@@ -144,7 +145,7 @@ final class WebBridgeTests: XCTestCase {
         let (value, error) = await p.answerSessionRequest(
             isMainFrame: true, originProtocol: "https", host: "dev-cocoapp.viteri.me", port: 0)
         XCTAssertNil(value)
-        XCTAssertEqual(error, "sin-sesion")
+        XCTAssertEqual(error, "no-session")
     }
 
     @MainActor
@@ -153,7 +154,7 @@ final class WebBridgeTests: XCTestCase {
         let (value, error) = await p.answerSessionRequest(
             isMainFrame: false, originProtocol: "https", host: "dev-cocoapp.viteri.me", port: 0)
         XCTAssertNil(value)
-        XCTAssertEqual(error, "origen-no-permitido")
+        XCTAssertEqual(error, "origin-not-allowed")
     }
 
     @MainActor

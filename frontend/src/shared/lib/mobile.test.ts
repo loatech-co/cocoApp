@@ -107,7 +107,7 @@ describe('Inside the phone app', () => {
   it('with the mark and the bridge, yes', () => {
     vi.stubGlobal('navigator', { userAgent: `Mozilla/5.0 ${USER_AGENT_APP}0.1.0` });
     vi.stubGlobal('window', {
-      webkit: { messageHandlers: { cocoSesion: { postMessage: () => Promise.resolve() } } },
+      webkit: { messageHandlers: { cocoSession: { postMessage: () => Promise.resolve() } } },
     });
     expect(useIsInNativeApp()).toBe(true);
   });

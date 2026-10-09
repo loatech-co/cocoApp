@@ -36,13 +36,13 @@ afterEach(() => {
 });
 
 describe('No session, embedded in the app', () => {
-  it('does not draw the sign-in form and sends «sinSesion» only once', () => {
-    const { cocoEventos: events } = fakeNativeApp();
+  it('does not draw the sign-in form and sends «noSession» only once', () => {
+    const { cocoEvents: events } = fakeNativeApp();
     const { rerender } = renderShell('auth');
 
     expect(screen.queryByRole('form', { name: 'Entrar' })).toBeNull();
     expect(screen.getByRole('status').textContent).toContain('Abriendo tu sesión desde la app…');
-    expect(events.postMessage).toHaveBeenCalledWith({ tipo: 'sinSesion' });
+    expect(events.postMessage).toHaveBeenCalledWith({ type: 'noSession' });
 
     // One more render is not one more notice: it would be polling the app.
     rerender(
@@ -65,12 +65,12 @@ describe('No session, embedded in the app', () => {
   });
 
   it('the admin guard does the same', () => {
-    const { cocoEventos: events } = fakeNativeApp();
+    const { cocoEvents: events } = fakeNativeApp();
     renderShell('admin', '/administracion');
 
     expect(screen.queryByRole('form', { name: 'Entrar' })).toBeNull();
     expect(screen.getByRole('status').textContent).toContain('Abriendo tu sesión desde la app…');
-    expect(events.postMessage).toHaveBeenCalledWith({ tipo: 'sinSesion' });
+    expect(events.postMessage).toHaveBeenCalledWith({ type: 'noSession' });
   });
 
   it('with a session it draws the page', () => {

@@ -44,7 +44,7 @@ describe('refocus(): the phone app came back to the foreground', () => {
   });
 });
 
-describe('invalidateDerived(): what `capturado` refreshes', () => {
+describe('invalidateDerived(): what `captured` refreshes', () => {
   it('marks movements, accounts and the summary stale, and nothing else', () => {
     const client = createQueryClient();
     client.setQueryData(keys.transactions({ page: 1 }), {});

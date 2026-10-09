@@ -116,9 +116,9 @@ function NavigationBridge({ openSearch }: { openSearch: () => void }) {
   useEffect(
     () =>
       registerBridge({
-        ir: (route) => void navigate(route),
-        abrirBusqueda: openSearch,
-        capturado: () => invalidateDerived(queryClient),
+        navigate: (route) => void navigate(route),
+        openSearch,
+        captured: () => invalidateDerived(queryClient),
       }),
     [navigate, openSearch, queryClient],
   );

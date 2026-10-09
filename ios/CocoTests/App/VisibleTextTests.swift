@@ -55,7 +55,7 @@ final class VisibleTextTests: XCTestCase {
             reason: "Texto de la captura que viaja a la API: es un dato, no depende del idioma del teléfono"),
         .init(
             file: "Coco/Features/Web/WebBridge.swift",
-            text: "(typeof window.__coco?.ir === 'function') ? (window.__coco.ir(%@), true) : false;",
+            text: "(typeof window.__coco?.%@ === 'function') ? (%@, true) : false;",
             reason: "JavaScript que se evalúa en la web"),
     ]
 

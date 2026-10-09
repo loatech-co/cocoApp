@@ -107,13 +107,6 @@ final class ContractsTests: XCTestCase {
         let match = try XCTUnwrap(regex.firstMatch(in: source, range: NSRange(source.startIndex..., in: source)))
         let value = try XCTUnwrap(Range(match.range(at: 1), in: source)).map { String(source[$0]) }
         XCTAssertEqual(value, Brand.userAgentApp)
-        // Los avisos de la app a la web (`AvisosDeLaApp`): si la web ya los
-        // declara, se llaman igual que los manda la app.
-        if source.contains("interface AvisosDeLaApp") {
-            for notice in WebNotice.allCases {
-                XCTAssertTrue(source.contains("  \(notice.rawValue)(): void;"), notice.rawValue)
-            }
-        }
         let spec = root.appending(path: "api/openapi.v2.json")
         guard let openAPI = try? String(contentsOf: spec, encoding: .utf8) else {
             throw XCTSkip("No está el contrato v2 al lado: \(spec.path)")
@@ -121,5 +114,45 @@ final class ContractsTests: XCTestCase {
         XCTAssertTrue(openAPI.contains(#""name": "\#(RequestBuilder.nativeClientHeader.lowercased())""#))
         XCTAssertTrue(openAPI.contains(#""enum": ["\#(RequestBuilder.nativeClient)"]"#))
         XCTAssertTrue(openAPI.contains(#""required": ["\#(RequestBuilder.attachmentsField)"]"#))
+    }
+
+    /// Las dos mitades del puente con la web se llaman igual. Lee
+    /// `native-contract.ts` y `bridge.ts` y falla si un nombre de un lado no
+    /// está en el otro: los dos manejadores, los avisos (`AppNotices`), lo
+    /// que la app llama en `window.__coco` y los eventos de `BridgeEvent`, en
+    /// los dos sentidos.
+    func testBridgeNamesMatchTheWeb() throws {
+        let root = (0..<5).reduce(URL(fileURLWithPath: #filePath)) { url, _ in url.deletingLastPathComponent() }
+        let lib = root.appending(path: "frontend/src/shared/lib")
+        guard
+            let contract = try? String(contentsOf: lib.appending(path: "native-contract.ts"), encoding: .utf8),
+            let bridge = try? String(contentsOf: lib.appending(path: "bridge.ts"), encoding: .utf8)
+        else { throw XCTSkip("No está el repo al lado: \(lib.path)") }
+
+        XCTAssertTrue(bridge.contains("        \(WebBridge.sessionHandler)?: {"), WebBridge.sessionHandler)
+        XCTAssertTrue(bridge.contains("        \(WebBridge.eventsHandler)?: {"), WebBridge.eventsHandler)
+
+        let notices = try XCTUnwrap(Self.block(after: "export interface AppNotices {", in: contract))
+        XCTAssertEqual(Self.members(of: notices), Set(WebNotice.allCases.map(\.rawValue)))
+
+        let calls = try XCTUnwrap(Self.block(after: "interface WebBridge extends AppNotices {", in: bridge))
+        XCTAssertEqual(Self.members(of: calls), Set(WebFunction.allCases.map(\.rawValue)))
+
+        let events = try XCTUnwrap(Self.block(after: "export interface BridgeEvent {", in: contract))
+        let typeLine = try XCTUnwrap(events.split(separator: "\n").first { $0.contains("type:") })
+        let names = typeLine.matches(of: #/'([A-Za-z]+)'/#).map { String($0.1) }
+        XCTAssertEqual(Set(names), Set(WebEvent.allCases.map(\.rawValue)))
+    }
+
+    /// Lo que va entre `header` y la llave que lo cierra.
+    private static func block(after header: String, in source: String) -> Substring? {
+        guard let start = source.range(of: header) else { return nil }
+        guard let end = source[start.upperBound...].range(of: "\n}") else { return nil }
+        return source[start.upperBound..<end.lowerBound]
+    }
+
+    /// Los nombres de los métodos de un bloque `interface`: `  name(...): void;`.
+    private static func members(of block: Substring) -> Set<String> {
+        Set(block.matches(of: #/\n  ([A-Za-z]+)\(/#).map { String($0.1) })
     }
 }

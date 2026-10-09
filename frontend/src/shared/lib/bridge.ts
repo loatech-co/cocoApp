@@ -1,7 +1,7 @@
 import { t } from '@/shared/lib/i18n';
 import {
   USER_AGENT_APP,
-  type AvisosDeLaApp,
+  type AppNotices,
   type BridgeEvent,
   type BridgeMessage,
   type BridgeSession,
@@ -27,7 +27,7 @@ import {
  * A `User-Agent` can be faked with a browser extension. With that signal alone
  * the normal web would stop renewing by cookie and sit waiting for an app that
  * does not exist. That is why `isInNativeApp()` also requires the bridge to BE
- * there: `window.webkit.messageHandlers.cocoSesion.postMessage` has to be a
+ * there: `window.webkit.messageHandlers.cocoSession.postMessage` has to be a
  * function. One without the other is not the app.
  *
  * ── What the app calls on the web ───────────────────────────────────────────
@@ -38,18 +38,18 @@ import {
 
 /**
  * What the app can call from Swift (`evaluateJavaScript`). The notices
- * without an answer (`capturado`, `primerPlano`) are a contract with iOS and
+ * without an answer (`captured`, `foreground`) are a contract with iOS and
  * live in `native-contract.ts`.
  */
-interface WebBridge extends AvisosDeLaApp {
+interface WebBridge extends AppNotices {
   /** Navigates without reloading: `react-router` changes the route inside. */
-  ir(path: string): void;
+  navigate(path: string): void;
   /** Opens the search sheet. The native «Buscar» tab calls here. */
-  abrirBusqueda(): void;
+  openSearch(): void;
   /** The app pushes a session: on a start without one, or after the native login. */
-  recibirSesion(session: BridgeSession): void;
+  receiveSession(session: BridgeSession): void;
   /** The app closed the real session (401 on renewal): the web clears its memory. */
-  sesionCerrada(): void;
+  sessionClosed(): void;
 }
 
 /*
@@ -62,9 +62,9 @@ declare global {
     webkit?: {
       messageHandlers?: {
         /** With an answer (`WKScriptMessageHandlerWithReply`). */
-        cocoSesion?: { postMessage(message: BridgeMessage): Promise<unknown> };
+        cocoSession?: { postMessage(message: BridgeMessage): Promise<unknown> };
         /** Without an answer (`WKScriptMessageHandler`). */
-        cocoEventos?: { postMessage(event: BridgeEvent): void };
+        cocoEvents?: { postMessage(event: BridgeEvent): void };
       };
     };
     __coco?: WebBridge;
@@ -83,7 +83,7 @@ const TIMEOUT_MS = 10_000;
 /** Why the bridge failed. `reason` is stable; the message is for the log. */
 export class BridgeError extends Error {
   constructor(
-    readonly reason: 'sin-puente' | 'tiempo' | 'sin-sesion' | 'respuesta',
+    readonly reason: 'no-bridge' | 'timeout' | 'no-session' | 'bad-response',
     message = t('errors.bridge.noSession'),
   ) {
     super(message);
@@ -96,7 +96,7 @@ export function isInNativeApp(): boolean {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
   return (
     navigator.userAgent.includes(USER_AGENT_APP) &&
-    typeof window.webkit?.messageHandlers?.cocoSesion?.postMessage === 'function'
+    typeof window.webkit?.messageHandlers?.cocoSession?.postMessage === 'function'
   );
 }
 
@@ -121,13 +121,13 @@ function isBridgeSession(value: unknown): value is BridgeSession {
  * the app to push one. What it NEVER does is tell the app to wipe its keychain.
  */
 export function requestSession(): Promise<BridgeSession> {
-  const handler = window.webkit?.messageHandlers?.cocoSesion;
-  if (!handler) return Promise.reject(new BridgeError('sin-puente', t('errors.bridge.missing')));
+  const handler = window.webkit?.messageHandlers?.cocoSession;
+  if (!handler) return Promise.reject(new BridgeError('no-bridge', t('errors.bridge.missing')));
 
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(
-      () => reject(new BridgeError('tiempo', t('errors.bridge.timeout'))),
+      () => reject(new BridgeError('timeout', t('errors.bridge.timeout'))),
       TIMEOUT_MS,
     );
   });
@@ -135,11 +135,11 @@ export function requestSession(): Promise<BridgeSession> {
   const response = Promise.resolve()
     // Inside the `then` so that a `postMessage` that throws synchronously
     // ends up as a rejection and not as an exception outside the promise.
-    .then(() => handler.postMessage({ tipo: 'pedirSesion' }))
+    .then(() => handler.postMessage({ type: 'requestSession' }))
     .then(
       (value) => {
         if (!isBridgeSession(value)) {
-          throw new BridgeError('respuesta', t('errors.bridge.notASession'));
+          throw new BridgeError('bad-response', t('errors.bridge.notASession'));
         }
         return value;
       },
@@ -148,7 +148,7 @@ export function requestSession(): Promise<BridgeSession> {
         // depending on the WebKit version it arrives bare or wrapped in an `Error`.
         const detail =
           cause instanceof Error ? cause.message : typeof cause === 'string' ? cause : undefined;
-        throw new BridgeError('sin-sesion', detail);
+        throw new BridgeError('no-session', detail);
       },
     );
 
@@ -163,5 +163,5 @@ export function requestSession(): Promise<BridgeSession> {
  * break the web for a notice that has no recipient.
  */
 export function notifyApp(event: BridgeEvent): void {
-  window.webkit?.messageHandlers?.cocoEventos?.postMessage(event);
+  window.webkit?.messageHandlers?.cocoEvents?.postMessage(event);
 }

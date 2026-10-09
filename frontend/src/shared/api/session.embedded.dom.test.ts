@@ -63,81 +63,81 @@ describe('With a bridge', () => {
   it('renew() does not touch /auth/refresh and stores what the app answers', async () => {
     const network = fetchReplying(200);
     vi.stubGlobal('fetch', network);
-    const { cocoSesion } = fakeNativeApp();
+    const { cocoSession } = fakeNativeApp();
 
     await expect(renew()).resolves.toBe(true);
 
     expect(network).not.toHaveBeenCalled();
-    expect(cocoSesion.postMessage).toHaveBeenCalledWith({ tipo: 'pedirSesion' });
+    expect(cocoSession.postMessage).toHaveBeenCalledWith({ type: 'requestSession' });
     expect(currentToken()).toBe('token-de-la-app');
     expect(currentState().user?.email).toBe('g@coco.app');
     expect(currentState().isLoading).toBe(false);
   });
 
   it('two renew() at once are ONE message to the app', async () => {
-    const { cocoSesion } = fakeNativeApp();
+    const { cocoSession } = fakeNativeApp();
 
     await Promise.all([renew(), renew()]);
 
     // The app rotates the refresh on every use and GoTrue detects reuse: two
     // requests at once would kill the family. That is why they share a promise.
-    expect(cocoSesion.postMessage).toHaveBeenCalledTimes(1);
+    expect(cocoSession.postMessage).toHaveBeenCalledTimes(1);
   });
 
   it('if the bridge fails, it clears the memory and does NOT tell the app', async () => {
-    const { cocoEventos } = fakeNativeApp({ failWith: 'sin network' });
+    const { cocoEvents } = fakeNativeApp({ failWith: 'sin network' });
 
     await expect(renew()).resolves.toBe(false);
 
     expect(currentToken()).toBeNull();
     expect(currentState().isLoading).toBe(false);
     // A network failure of the bridge never wipes the keychain.
-    expect(cocoEventos.postMessage).not.toHaveBeenCalled();
+    expect(cocoEvents.postMessage).not.toHaveBeenCalled();
   });
 
-  it('signOut() sends «salir» and does not call /auth/logout', async () => {
+  it('signOut() sends «signOut» and does not call /auth/logout', async () => {
     const network = fetchReplying(204);
     vi.stubGlobal('fetch', network);
-    const { cocoEventos } = fakeNativeApp();
+    const { cocoEvents } = fakeNativeApp();
     await renew();
 
     await signOut();
 
-    expect(cocoEventos.postMessage).toHaveBeenCalledWith({ tipo: 'salir' });
+    expect(cocoEvents.postMessage).toHaveBeenCalledWith({ type: 'signOut' });
     expect(network).not.toHaveBeenCalled();
     expect(currentToken()).toBeNull();
   });
 
-  it('changePassword() sends «sesionCerrada»', async () => {
+  it('changePassword() sends «sessionClosed»', async () => {
     vi.stubGlobal('fetch', fetchReplying(204));
-    const { cocoEventos } = fakeNativeApp();
+    const { cocoEvents } = fakeNativeApp();
     await renew();
 
     await changePassword('vieja', 'nueva');
 
-    expect(cocoEventos.postMessage).toHaveBeenCalledWith({ tipo: 'sesionCerrada' });
+    expect(cocoEvents.postMessage).toHaveBeenCalledWith({ type: 'sessionClosed' });
     expect(currentToken()).toBeNull();
   });
 
-  it('signOutEverywhere() sends «sesionCerrada»', async () => {
+  it('signOutEverywhere() sends «sessionClosed»', async () => {
     vi.stubGlobal('fetch', fetchReplying(204));
-    const { cocoEventos } = fakeNativeApp();
+    const { cocoEvents } = fakeNativeApp();
     await renew();
 
     await signOutEverywhere();
 
-    expect(cocoEventos.postMessage).toHaveBeenCalledWith({ tipo: 'sesionCerrada' });
+    expect(cocoEvents.postMessage).toHaveBeenCalledWith({ type: 'sessionClosed' });
     expect(currentToken()).toBeNull();
   });
 
   it('discardSession() does NOT tell the app', async () => {
-    const { cocoEventos } = fakeNativeApp();
+    const { cocoEvents } = fakeNativeApp();
     await renew();
 
     discardSession();
 
     expect(currentToken()).toBeNull();
-    expect(cocoEventos.postMessage).not.toHaveBeenCalled();
+    expect(cocoEvents.postMessage).not.toHaveBeenCalled();
   });
 
   it('receiveSession() restores and sessionClosed() clears', () => {

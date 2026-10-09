@@ -23,21 +23,21 @@ import { receiveSession, sessionClosed } from './session';
  * leaves it clean on unmount (and `StrictMode` does not leave two copies).
  */
 export function registerBridge(actions: {
-  ir: (path: string) => void;
-  abrirBusqueda: () => void;
+  navigate: (path: string) => void;
+  openSearch: () => void;
   /** A capture synced in the app: refetch what a new movement changes. */
-  capturado: () => void;
+  captured: () => void;
 }): () => void {
   // Outside the app there is nothing to remove.
   if (!isInNativeApp()) return () => undefined;
 
   window.__coco = {
-    ir: actions.ir,
-    abrirBusqueda: actions.abrirBusqueda,
-    capturado: actions.capturado,
-    primerPlano: refocus,
-    recibirSesion: receiveSession,
-    sesionCerrada: sessionClosed,
+    navigate: actions.navigate,
+    openSearch: actions.openSearch,
+    captured: actions.captured,
+    foreground: refocus,
+    receiveSession: receiveSession,
+    sessionClosed,
   };
 
   return () => {

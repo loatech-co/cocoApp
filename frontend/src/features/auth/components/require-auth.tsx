@@ -54,7 +54,7 @@ function NoSession({ isInIndex }: { isInIndex: boolean }) {
  */
 function SessionFromApp() {
   useEffect(() => {
-    notifyApp({ tipo: 'sinSesion' });
+    notifyApp({ type: 'noSession' });
   }, []);
 
   return <Waiting text={t('auth.guard.openingFromApp')} />;

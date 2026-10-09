@@ -268,7 +268,7 @@ export async function signOut(): Promise<void> {
   // memory; calling from here as well would be a logout without a cookie that
   // closes nothing.
   if (isInNativeApp()) {
-    notifyApp({ tipo: 'salir' });
+    notifyApp({ type: 'signOut' });
     clearSession();
     return;
   }
@@ -291,7 +291,7 @@ export async function signOutEverywhere(): Promise<void> {
   clearSession();
   // The server already killed the whole family, the keychain's included: the
   // app only has to discard it, without calling anything.
-  if (isInNativeApp()) notifyApp({ tipo: 'sesionCerrada' });
+  if (isInNativeApp()) notifyApp({ type: 'sessionClosed' });
   if (!response.ok && response.status !== 401) {
     throw new SessionError(response.status, 'logout_all_failed', t('errors.signOutAllFailed'));
   }
@@ -318,7 +318,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
   // included. Reflecting it here keeps the app from still believing it is
   // authenticated.
   clearSession();
-  if (isInNativeApp()) notifyApp({ tipo: 'sesionCerrada' });
+  if (isInNativeApp()) notifyApp({ type: 'sessionClosed' });
 }
 
 /**

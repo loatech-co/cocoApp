@@ -21,7 +21,7 @@ persona hace. Lo que usan varias features sin ser de ninguna va a `Core/`
 | `Coco/Features/Capture` | Formulario rápido, cámara, lectura del recibo (Vision), lista de capturas |
 | `Coco/Features/Capture/Queue` | Capturas pendientes en disco, reintentos, envío en dos fases |
 | `Coco/Features/Session` | La sesión nativa (refresh en el Keychain, access en memoria, single-flight) y entrar |
-| `Coco/Features/Web` | El `WKWebView` único y el puente `cocoSesion` |
+| `Coco/Features/Web` | El `WKWebView` único y el puente `cocoSession` |
 | `Coco/Features/CategoryTree` | El árbol de categorías guardado en el teléfono y su buscador |
 | `Coco/Features/Shortcuts` | Las acciones de Atajos (App Intents) y el `AppShortcutsProvider` |
 | `Coco/Features/Reminders` | Notificaciones locales y el aviso de que la firma caduca |
@@ -227,7 +227,7 @@ vieja recibe 400 en las capturas manuales y la cola las marca como fallidas
 
 La app es la única dueña del refresh token (Keychain). La web embebida nunca
 ve una cookie `coco_refresh` ni un token por URL: pide el access token por el
-puente `cocoSesion` y lo guarda en memoria, como en el navegador. Para
+puente `cocoSession` y lo guarda en memoria, como en el navegador. Para
 verificarlo: Safari → Develop → Simulator → Coco, y en la consola
 `document.cookie === ''`.
 

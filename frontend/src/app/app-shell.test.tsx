@@ -152,7 +152,7 @@ describe('The shell embedded in the app', () => {
     expect(container.querySelector('aside')).toBeNull();
   });
 
-  it('it does mount the search, and window.__coco.abrirBusqueda() opens it', () => {
+  it('it does mount the search, and window.__coco.openSearch() opens it', () => {
     renderShell();
 
     const sheets = document.querySelectorAll('[data-superficie="panel"]');
@@ -160,15 +160,15 @@ describe('The shell embedded in the app', () => {
     expect(sheets.length).toBe(1);
     expect(sheets[0]!.getAttribute('data-abierta')).toBe('no');
 
-    act(() => window.__coco!.abrirBusqueda());
+    act(() => window.__coco!.openSearch());
     expect(sheets[0]!.getAttribute('data-abierta')).toBe('si');
   });
 
-  it('window.__coco.ir() changes the page without reloading', () => {
+  it('window.__coco.navigate() changes the page without reloading', () => {
     const { container } = renderShell();
     expect(container.textContent).toContain('la página');
 
-    act(() => window.__coco!.ir('/centros-de-costos'));
+    act(() => window.__coco!.navigate('/centros-de-costos'));
 
     expect(container.textContent).toContain('los centros');
     expect(container.textContent).not.toContain('la página');

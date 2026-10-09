@@ -104,7 +104,7 @@ final class DependenciesTests: XCTestCase {
         XCTAssertEqual(notifier.badges.last, 1, "el notificador real también recibe la cuenta")
     }
 
-    /// Cada captura que llega a la API se le avisa a la web (`capturado`), y
+    /// Cada captura que llega a la API se le avisa a la web (`captured`), y
     /// el aviso al sistema sigue saliendo.
     func testASavedCaptureNotifiesTheWeb() async {
         let real = NotifierDouble()

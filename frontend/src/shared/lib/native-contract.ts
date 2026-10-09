@@ -18,7 +18,7 @@
  * The mark the app puts in the `WKWebView` User-Agent
  * (`applicationNameForUserAgent`), followed by its version: `CocoiOS/0.1.0`.
  * The web looks for it to know it runs inside the app; alone it is not enough
- * —a UA can be faked—, so the bridge is required too (`MensajeAlPuente`).
+ * —a UA can be faked—, so the bridge is required too (`cocoSession`).
  */
 export const USER_AGENT_APP = 'CocoiOS/';
 
@@ -53,20 +53,20 @@ export interface BridgeSession {
 
 /** Web → app, with a reply (`WKScriptMessageHandlerWithReply`). */
 export interface BridgeMessage {
-  tipo: 'pedirSesion';
+  type: 'requestSession';
 }
 
 /**
  * Web → app, no reply.
  *
- * `salir`: the person signed out on the web; the app closes the real session
- * with its refresh. `sesionCerrada`: the web closed it server-side (password
+ * `signOut`: the person signed out on the web; the app closes the real session
+ * with its refresh. `sessionClosed`: the web closed it server-side (password
  * change, sign out everywhere); the app drops the keychain without calling
- * anything. `sinSesion`: the web started without a session and waits for the
- * app to push one. `abrirCaptura`: open the native quick form.
+ * anything. `noSession`: the web started without a session and waits for the
+ * app to push one. `openCapture`: open the native quick form.
  */
 export interface BridgeEvent {
-  tipo: 'salir' | 'sesionCerrada' | 'sinSesion' | 'abrirCaptura';
+  type: 'signOut' | 'sessionClosed' | 'noSession' | 'openCapture';
 }
 
 /**
@@ -74,16 +74,16 @@ export interface BridgeEvent {
  * `evaluateJavaScript`, and only if `window.__coco` exists (there is no
  * `__coco` before there is a session, and then there is nothing to refresh).
  *
- * `capturado`: a capture made in the app finished syncing (the API answered
+ * `captured`: a capture made in the app finished syncing (the API answered
  * 2xx). The web refetches movements, accounts and the summary, which are what
  * a new movement changes.
- * `primerPlano`: the app, or the tab that holds the web view, came back to the
+ * `foreground`: the app, or the tab that holds the web view, came back to the
  * foreground. A `WKWebView` gets no window focus, so without this the web
  * never refetches what went stale while it was hidden.
  */
-export interface AvisosDeLaApp {
-  capturado(): void;
-  primerPlano(): void;
+export interface AppNotices {
+  captured(): void;
+  foreground(): void;
 }
 
 // ─── Receipts ────────────────────────────────────────────────────────────────

@@ -12,23 +12,28 @@ enum LoadState: Equatable {
     case webSessionStuck
 }
 
-/// Lo que la web cuenta por `cocoEventos`, sin respuesta.
-enum WebEvent: Equatable {
+/// Lo que la web cuenta por `cocoEvents`, sin respuesta. Cada caso se llama
+/// como el `type` de `BridgeEvent` en `frontend/src/shared/lib/native-contract.ts`.
+enum WebEvent: String, CaseIterable, Equatable {
     case signOut
     case sessionClosed
-    case signedOut
+    case noSession
     case openCapture
 
     init?(message: Any) {
-        guard let dict = message as? [String: Any], let kind = dict["tipo"] as? String else { return nil }
-        switch kind {
-        case "salir": self = .signOut
-        case "sesionCerrada": self = .sessionClosed
-        case "sinSesion": self = .signedOut
-        case "abrirCaptura": self = .openCapture
-        default: return nil
-        }
+        guard let dict = message as? [String: Any], let kind = dict["type"] as? String else { return nil }
+        self.init(rawValue: kind)
     }
+}
+
+/// Lo que la app llama en `window.__coco`, además de los avisos (`WebNotice`).
+/// Cada caso se llama como un miembro de `WebBridge` en
+/// `frontend/src/shared/lib/bridge.ts`.
+enum WebFunction: String, CaseIterable {
+    case navigate
+    case openSearch
+    case receiveSession
+    case sessionClosed
 }
 
 /// Dueño del ÚNICO `WKWebView` de la app, y los dos extremos del puente con
@@ -38,8 +43,8 @@ enum WebEvent: Equatable {
 final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessageHandler, WKNavigationDelegate,
     WKUIDelegate
 {
-    static let sessionHandler = "cocoSesion"
-    static let eventsHandler = "cocoEventos"
+    static let sessionHandler = "cocoSession"
+    static let eventsHandler = "cocoEvents"
     nonisolated static let deliveryWindow: TimeInterval = 30
     nonisolated static let maxConsecutiveDeliveries = 2
 
@@ -119,7 +124,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     }
 
     func openSearch() {
-        webView.evaluateJavaScript("window.__coco?.abrirBusqueda?.(); true;") { _, _ in }
+        webView.evaluateJavaScript("window.__coco?.\(WebFunction.openSearch.rawValue)?.(); true;") { _, _ in }
     }
 
     func reload() {
@@ -142,7 +147,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     // MARK: Sesión hacia la web
 
-    /// `window.__coco.recibirSesion({...})` como mucho una vez cada 30 s.
+    /// `window.__coco.receiveSession({...})` como mucho una vez cada 30 s.
     func pushSession() async {
         let now = clock()
         guard Self.shouldDeliver(last: lastDelivery, now: now, consecutiveDeliveries: consecutiveDeliveries) else {
@@ -162,18 +167,19 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         deliveryPending = false
         lastDelivery = now
         consecutiveDeliveries += 1
-        _ = try? await webView.evaluateJavaScript("window.__coco?.recibirSesion?.(\(json)); true;")
+        _ = try? await webView.evaluateJavaScript(
+            "window.__coco?.\(WebFunction.receiveSession.rawValue)?.(\(json)); true;")
     }
 
     func notifySessionClosed() {
         consecutiveDeliveries = 0
         lastDelivery = nil
-        webView.evaluateJavaScript("window.__coco?.sesionCerrada?.(); true;") { _, _ in }
+        webView.evaluateJavaScript("window.__coco?.\(WebFunction.sessionClosed.rawValue)?.(); true;") { _, _ in }
     }
 
     // MARK: Handlers
 
-    /// `cocoSesion`: responde solo al frame principal del origen de la API.
+    /// `cocoSession`: responde solo al frame principal del origen de la API.
     func userContentController(
         _ c: WKUserContentController, didReceive m: WKScriptMessage,
         replyHandler: @escaping @MainActor (Any?, String?) -> Void
@@ -197,20 +203,20 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
                 originProtocol: originProtocol, host: host, port: port, base: configuration.base,
                 isMainFrame: isMainFrame)
         else {
-            return (nil, "origen-no-permitido")
+            return (nil, "origin-not-allowed")
         }
         do {
             let s = try await session.webSession()
             return (try s.asDictionary(), nil)
         } catch SessionError.offline {
             deliveryPending = true
-            return (nil, "sin-conexion")
+            return (nil, "offline")
         } catch {
-            return (nil, "sin-sesion")
+            return (nil, "no-session")
         }
     }
 
-    /// `cocoEventos`: lo que la web cuenta sin esperar respuesta.
+    /// `cocoEvents`: lo que la web cuenta sin esperar respuesta.
     func userContentController(_ c: WKUserContentController, didReceive m: WKScriptMessage) {
         let source = m.frameInfo.securityOrigin
         guard
@@ -232,7 +238,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
             // El servidor ya mató la familia (cambio de contraseña, salir de
             // todos los dispositivos): solo queda olvidar lo local.
             await session.discard()
-        case .signedOut:
+        case .noSession:
             await pushSession()
         case .openCapture:
             navigation.go(.quickForm(withCamera: false))
@@ -327,9 +333,11 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         return scheme.lowercased() == "https" ? 443 : 80
     }
 
-    /// `window.__coco.go(path)` si existe; devuelve `true` si navegó.
+    /// `window.__coco.navigate(path)` si existe; devuelve `true` si navegó.
     nonisolated static func javascriptToGo(_ path: String) -> String {
-        "(typeof window.__coco?.ir === 'function') ? (window.__coco.ir(\(jsonString(path))), true) : false;"
+        let name = WebFunction.navigate.rawValue
+        let call = "window.__coco.\(name)(\(jsonString(path)))"
+        return "(typeof window.__coco?.\(name) === 'function') ? (\(call), true) : false;"
     }
 
     /// Una cadena como literal de JavaScript: por JSON, que ya escapa comillas,

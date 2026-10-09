@@ -14,22 +14,22 @@ import { USER_AGENT_APP, type BridgeSession } from '@/shared/lib/native-contract
  * It only makes sense with a DOM: outside jsdom there is no `window` to dress.
  */
 export function fakeNativeApp(options: { session?: unknown; failWith?: string } = {}) {
-  const cocoSesion = {
+  const cocoSession = {
     postMessage: vi.fn(() =>
       options.failWith !== undefined
         ? Promise.reject(new Error(options.failWith))
         : Promise.resolve(options.session ?? APP_SESSION),
     ),
   };
-  const cocoEventos = { postMessage: vi.fn() };
+  const cocoEvents = { postMessage: vi.fn() };
 
   Object.defineProperty(navigator, 'userAgent', {
     value: `Mozilla/5.0 (iPhone) ${USER_AGENT_APP}0.1.0`,
     configurable: true,
   });
-  window.webkit = { messageHandlers: { cocoSesion, cocoEventos } };
+  window.webkit = { messageHandlers: { cocoSession, cocoEvents } };
 
-  return { cocoSesion, cocoEventos };
+  return { cocoSession, cocoEvents };
 }
 
 /** Undoes `fakeNativeApp()`: back to being a normal browser. */
@@ -42,7 +42,7 @@ export function leaveNativeApp(): void {
   delete window.__coco;
 }
 
-/** What the app answers to `pedirSesion`: a session WITHOUT a refresh token. */
+/** What the app answers to `requestSession`: a session WITHOUT a refresh token. */
 export const APP_SESSION: BridgeSession = {
   accessToken: 'token-de-la-app',
   expiresIn: 900,
