@@ -3,7 +3,8 @@ paths:
   - 'api/prisma/**'
   - 'api/src/prisma/**'
   - 'api/src/**/*.repository.ts'
-  - 'scripts/*migracion*.sh'
+  - 'scripts/*migration*.sh'
+  - 'scripts/db/**'
   - 'scripts/close-data-api.sql'
   - 'scripts/backup.sh'
 ---
@@ -41,16 +42,19 @@ en UTC, posterior a todos los existentes.
 **A producción solo con `scripts/deploy-migrations.sh`, leyendo `migrate status` antes de confirmar.**
 
 Esa confirmación es lo único entre una errata y producción; el script cierra
-además la API de datos de Supabase, y sus tres cuentas deben dar `0`
-([ADR 0007](../../docs/adr/0007-close-supabase-data-api-by-script.md)): una
-tabla nueva nace abierta a la clave pública.
+además la API de datos de Supabase y cuenta tres cosas: `tables_without_rls`
+y `open_grants` deben dar `0`, y `policies` da `14`, todas `TO coco_app`
+([ADR 0007](../../docs/adr/0007-close-supabase-data-api-by-script.md)). Una
+tabla nueva nace abierta a la clave pública, y un `policies` en `0` es que la
+seguridad por filas se cayó, no que todo está cerrado.
 
 **Toda tabla de un usuario se lee y se escribe dentro de `forUser`, con su política de RLS.**
 
 La API corre como `coco_app`, sin `BYPASSRLS`; una consulta fuera de
 `forUser` ve cero filas. Una tabla nueva trae su política en la misma
 migración. ([ADR 0010](../../docs/adr/0010-rls-with-application-role.md);
-implementación en el PR #31, aún sin activar en producción.)
+activa en producción desde 7.11-b,
+[ADR 0024](../../docs/adr/0024-rls-active-in-production.md).)
 
 **Toda tabla nueva lleva `created_at` y `updated_at`; restricciones e índices con nombre normalizado (`uq_`, `fk_`, `idx_`).**
 

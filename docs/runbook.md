@@ -70,7 +70,8 @@ use it needs to be contracted (the stop table in [`CLAUDE.md`](../CLAUDE.md)).
   v2 profile). A build of the iOS app from before 7.10 hands the embedded web
   a session it no longer reads: the web waits for one and shows nothing.
   **Reinstall the app from Xcode after deploying 7.10** (the usual weekly
-  renewal does it too).
+  renewal does it too). The same goes for the bridge's names, `cocoSession`
+  and `cocoEvents` since 7.2-r2: an older build answers on the old ones.
 - **`VITE_API_ORIGIN` holds only the origin** (`http://localhost:3000`): the
   generated client adds the versioned path. Empty means the same origin, which
   is what production uses.
@@ -109,11 +110,14 @@ scripts/deploy-migrations.sh              # production: status, confirm, deploy,
   later than every existing one. One came out with a local time earlier than
   the previous migration and had to be renamed (and its local
   `_prisma_migrations` row fixed) before it was applied anywhere else.
-- The script ends with `scripts/close-data-api.sql`; its three counts
-  (tables without RLS, policies, open grants) must print `0`
-  ([ADR 0007](adr/0007-close-supabase-data-api-by-script.md)). Never apply a
-  migration to production any other way: a new table is born open to the
-  public `anon` key until that script runs.
+- The script ends with `scripts/close-data-api.sql`; of its three counts,
+  `tables_without_rls` and `open_grants` must print `0` and `policies` must
+  print `14`, all of them `TO coco_app`
+  ([ADR 0007](adr/0007-close-supabase-data-api-by-script.md),
+  [ADR 0024](adr/0024-rls-active-in-production.md)). `policies = 0` was right
+  before RLS went live (7.11-b); today it means the policies are gone. Never
+  apply a migration to production any other way: a new table is born open to
+  the public `anon` key until that script runs.
 - Prove the old code survives: generate the Prisma client from the deployed
   commit and run it against a local database that already has the migration.
 - Structure changes only by migration. `npm run sql` / `npm run sql:supabase`

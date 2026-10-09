@@ -2,13 +2,13 @@
 
 Libro de caja personal: los movimientos son el centro, y saldos, presupuestos, deudas y metas se derivan de ellos, nunca se guardan. Monolito modular: un proceso NestJS sirve la API y la web, con Postgres, Auth y el bucket de soportes en Supabase. Despliega Hostinger con cada avance de `Dev`.
 
-| Carpeta            | Qué es                                                                                  |
-| ------------------ | --------------------------------------------------------------------------------------- |
-| `api/`             | NestJS + Prisma; `/api/v2` es el contrato, `/api/v1` está en retirada                   |
-| `frontend/`        | React + Vite: `app/` → `features/` → `shared/` (`shared/ui` en diseño atómico)          |
-| `packages/`        | `lectura` (leer un documento) y `flags`                                                 |
-| `ios/`             | App híbrida SwiftUI + la web; captura desde Wallet, SMS y Atajos                        |
-| `e2e/`, `scripts/` | Recorridos de Playwright; operación (`merge.sh`, `respaldar.sh`, `nueva-migracion.sh`…) |
+| Carpeta            | Qué es                                                                             |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| `api/`             | NestJS + Prisma; `/api/v2` es el único contrato (la v1 se retiró en 7.10: da 404)  |
+| `frontend/`        | React + Vite: `app/` → `features/` → `shared/` (`shared/ui` en diseño atómico)     |
+| `packages/`        | `receipt-parser` (leer un soporte) y `flags`                                       |
+| `ios/`             | App híbrida SwiftUI + la web; captura desde Wallet, SMS y Atajos                   |
+| `e2e/`, `scripts/` | Recorridos de Playwright; operación (`merge.sh`, `backup.sh`, `new-migration.sh`…) |
 
 ## Comandos
 
@@ -17,7 +17,7 @@ npm ci && npm run dev                      # instalar y correr api + web (dev:ap
 npm run typecheck && npm run lint && npx prettier --check . && npx knip && npm run depcruise
 npm test && npm run test:e2e --workspace api && npm run e2e   # unitarias, e2e de la API (Postgres local), recorridos
 npm run openapi --workspace api && npm run generate:api --workspace frontend   # contrato y cliente
-scripts/nueva-migracion.sh <verb>_<object>  # migración local; producción: scripts/desplegar-migraciones.sh
+scripts/new-migration.sh <verb>_<object>    # migración local; producción: scripts/deploy-migrations.sh
 bash scripts/merge.sh [rama]                # la única forma de integrar en Dev (por defecto, la rama actual)
 ```
 
@@ -35,7 +35,7 @@ bash scripts/merge.sh [rama]                # la única forma de integrar en Dev
 ## Reglas que nunca se rompen
 
 - **Nada entra en `Dev` sin PR, CI en verde y `scripts/merge.sh`; nunca `git push` a `Dev` ni a `main`.** `gh` daba por bueno un PR con checks pendientes; `merge.sh` exige todos en verde.
-- **Nunca se desarrolla contra producción.** La API se niega a arrancar contra una base remota; los datos reales solo llegan con `scripts/traer-datos-a-local.sh`.
+- **Nunca se desarrolla contra producción.** La API se niega a arrancar contra una base remota salvo con `ALLOW_REMOTE_DATABASE`; los datos reales solo llegan con `scripts/pull-data-to-local.sh`.
 - **Migraciones aditivas y en producción antes que el código; lo que rompe va por expandir y contraer.** El código viejo sigue corriendo minutos sobre el esquema nuevo.
 - **Ni secretos, ni datos personales, ni importes** en código, logs, pruebas, commits o traspasos. Son datos financieros reales de personas reales.
 - **Código y documentación técnica en inglés; lo que ve el usuario, en español.**
@@ -51,13 +51,13 @@ bash scripts/merge.sh [rama]                # la única forma de integrar en Dev
 
 ## Paradas y borrados (la única tabla; el plan, el runbook y el agente remiten aquí)
 
-| Regla                                                                                                                                                                                                             | Por qué                                                                                                                                                                       |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **La fase 7 (y los pasos R) va sin paradas**, por mandato del dueño (5 oct 2026): se sigue y se anota en `docs/registro-autonomo.md`.                                                                             | Las paradas estaban en cuatro sitios que se contradecían, y cada ejecutor obedecía la versión que le tocaba leer.                                                             |
-| **Todo borrado en la base o en el servidor** lleva antes, SIEMPRE, el respaldo completo (`scripts/respaldar.sh`: `public` + `auth` + bucket, cifrado, fuera del portátil) y una restauración probada justo antes. | El plan gratuito de Supabase no recupera a un punto en el tiempo; sin `auth` ni el bucket no vuelven ni usuarios ni soportes; un respaldo nunca restaurado no es un respaldo. |
-| **`import_batches`, `import_rows` y `transactions.import_batch_id` no se borran en esta fase.**                                                                                                                   | Falta que el dueño decida si los extractos bancarios siguen en el producto; son la red que más gastos cubriría.                                                               |
-| **La v1 se retira tras 1 hora sin usos** (`scripts/ops/v1-usage.mjs`), con la web y iOS ya en la v2.                                                                                                              | Sin clientes propios en la v1, una hora basta; los siete días solo se cumplían si el iPhone pasaba una semana con la firma caducada.                                          |
-| **Se para el paso y se avisa** si faltan credenciales o cuentas, si `migrate status` trae pendientes inesperadas, o si producción se rompe sin vuelta atrás (restaurar en producción lo hace el dueño).           | Son bloqueos, no paradas de fase: seguir a ciegas ahí convierte un error en uno irreparable.                                                                                  |
+| Regla                                                                                                                                                                                                                                 | Por qué                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **La fase 7 (y los pasos R) va sin paradas**, por mandato del dueño (5 oct 2026): se sigue y se anota en `docs/registro-autonomo.md`.                                                                                                 | Las paradas estaban en cuatro sitios que se contradecían, y cada ejecutor obedecía la versión que le tocaba leer.                                                             |
+| **Todo borrado en la base o en el servidor** lleva antes, SIEMPRE, el respaldo completo (`scripts/backup.sh`: `public` + `auth` + bucket, cifrado, fuera del portátil) y una restauración probada justo antes (`scripts/restore.sh`). | El plan gratuito de Supabase no recupera a un punto en el tiempo; sin `auth` ni el bucket no vuelven ni usuarios ni soportes; un respaldo nunca restaurado no es un respaldo. |
+| **`import_batches`, `import_rows` y `transactions.import_batch_id` no se borran en esta fase.**                                                                                                                                       | Falta que el dueño decida si los extractos bancarios siguen en el producto; son la red que más gastos cubriría.                                                               |
+| **Una versión de la API se retira tras 1 hora sin usos**, con todos los clientes ya en la nueva (la v1, el 6 oct 2026).                                                                                                               | Sin clientes propios en la v1, una hora basta; los siete días solo se cumplían si el iPhone pasaba una semana con la firma caducada.                                          |
+| **Se para el paso y se avisa** si faltan credenciales o cuentas, si `migrate status` trae pendientes inesperadas, o si producción se rompe sin vuelta atrás (restaurar en producción lo hace el dueño).                               | Son bloqueos, no paradas de fase: seguir a ciegas ahí convierte un error en uno irreparable.                                                                                  |
 
 ## Dónde está todo
 

@@ -26,6 +26,13 @@ Cada feature tiene `pages/`, `components/`, `api/` (hooks de React Query),
 Hoy son `admin`, `auth`, `bank-accounts`, `cost-centers`, `profile` y
 `transactions`.
 
+**Las rutas van en inglés, y una dirección vieja redirige, nunca da 404.**
+
+Son `/accounts`, `/cost-centers`, `/account`, `/admin` (con
+`/admin/audit-log`) y `/sign-up`. Las de antes —`/centros-de-costos`,
+`/mi-cuenta`…— siguen vivas en `app/legacy-routes.tsx` y llevan a la nueva:
+hay marcadores y enlaces guardados apuntando ahí, y no romperlos es gratis.
+
 **Las features no se importan entre sí: lo común sube a `shared/`.**
 
 Un enlace escondido entre dos dominios es el que nadie recuerda al cambiar
@@ -64,15 +71,16 @@ llamando a esas funciones (`useAccounts` → `accountsList`).
   soportes (`apiUpload`: necesita el progreso).
 - Toda lista de la v2 viene paginada: lo que necesita el conjunto entero usa
   `allPages` (`shared/api/pages.ts`).
-- Lo que habla otro dialecto se traduce en el borde, una vez: la sesión que da
-  el puente sigue en v1 (`desdeElPuente`, en `session.ts`); `@coco/lectura` lee
-  `palabras_clave` (`shared/lib/searchable-tree.ts`); el nivel y la
-  granularidad del resumen pasan a las palabras que ve la persona
-  (`dashboard-charts.tsx`).
-- Lo que no está en el documento —el puente, la marca del User-Agent de la
-  app, el contrato v1 que aún habla el teléfono— vive en
-  `shared/lib/native-contract.ts`. Dos pruebas de la API y `ContratosTests`
-  de iOS lo leen por su ruta. Reemplazó a `packages/types`, que ya no existe.
+- Lo que habla otro dialecto se traduce en el borde, una vez: el árbol pasa a
+  la forma que busca `@coco/receipt-parser` (`shared/lib/searchable-tree.ts`);
+  el nivel y la granularidad del resumen pasan a las palabras que ve la
+  persona (`dashboard-charts.tsx`). La sesión del puente ya es la de la v2
+  (`BridgeSession`): no se traduce.
+- Lo que no está en el documento —el puente (`cocoSession` y `cocoEvents`), la
+  marca del User-Agent de la app y los límites de los soportes— vive en
+  `shared/lib/native-contract.ts`. `receipts.contract.spec.ts` de la API y
+  `ContractsTests` de iOS lo leen por su ruta. Reemplazó a `packages/types`,
+  que ya no existe.
 - `shared/ui` no importa ni el cliente generado ni el contrato nativo, ni
   siquiera sus tipos (`web-ui-knows-no-contract`).
 

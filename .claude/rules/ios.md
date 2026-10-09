@@ -40,9 +40,10 @@ UserDefaults y Keychain: la cola guarda capturas que aún no llegaron a la API.
 
 Así un cambio de contrato no obliga a migrar la cola. `APIKeysTests` las fija.
 
-**La app habla con `/api/v2`.**
+**La app habla solo con `/api/v2`, y con la web embebida por `cocoSession` (pide la sesión) y `cocoEvents` (avisos sin respuesta).**
 
-Mientras quede algo en la v1 (paso R-2-v2, en curso), la v1 no se retira: ver
-la tabla de paradas de [CLAUDE.md](../../CLAUDE.md).
+La v1 se retiró en 7.10. Un cambio de nombre en el puente rompe la web dentro
+de una app instalada antes: se reinstala desde Xcode tras desplegarlo.
+`WebBridgeTests` y `bridge.contract.test.ts` fijan los dos lados.
 
 **Estructura por feature: `Coco/Features/<X>`, `Coco/Core` (infraestructura) y `Coco/Shared` (interfaz común); `CocoTests` refleja el mismo árbol.**
