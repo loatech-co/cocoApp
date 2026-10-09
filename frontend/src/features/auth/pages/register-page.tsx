@@ -105,9 +105,12 @@ function RequestReceived({ status }: { status: 'pendiente' | 'lista' }) {
           </AlertDescription>
         </Alert>
 
+        {/* Underlined always, not on hover: a loose link with only its color
+            to tell it apart from the text is not seen as one (and on a
+            phone there is no hover to discover it). */}
         <Link
           to="/"
-          className="mt-6 inline-block text-sm text-primary underline-offset-4 hover:underline"
+          className="mt-6 inline-block text-sm text-primary underline underline-offset-4"
         >
           {isReady ? t('auth.signIn') : t('auth.register.backToSignIn')}
         </Link>
