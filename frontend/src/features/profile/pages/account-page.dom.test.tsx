@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fakeNativeApp, leaveNativeApp } from '@/test-support/fake-app';
 
-import { CuentaPage } from './cuenta-page';
+import { AccountPage } from './account-page';
 
 const auth = {
   user: { email: 'g@coco.app', displayName: 'Gerardo' },
@@ -22,12 +22,12 @@ vi.mock('@/shared/api/auth-context', () => ({
 }));
 
 // Los ajustes traen sus propias consultas; no son lo que se mira aquí.
-vi.mock('@/features/profile/components/ajustes', () => ({ Ajustes: () => <p>ajustes</p> }));
+vi.mock('@/features/profile/components/settings', () => ({ Settings: () => <p>ajustes</p> }));
 
-function pintar() {
+function renderShell() {
   return render(
     <MemoryRouter initialEntries={['/mi-cuenta']}>
-      <CuentaPage />
+      <AccountPage />
     </MemoryRouter>,
   );
 }
@@ -46,10 +46,10 @@ describe('Mi cuenta dentro de la app', () => {
   beforeEach(() => fakeNativeApp());
 
   it('ofrece cerrar sesión en este dispositivo, y llama a salir()', () => {
-    pintar();
+    renderShell();
 
-    const boton = screen.getByRole('button', { name: 'Cerrar sesión' });
-    fireEvent.click(boton);
+    const button = screen.getByRole('button', { name: 'Cerrar sesión' });
+    fireEvent.click(button);
     expect(auth.signOut).toHaveBeenCalledTimes(1);
 
     // La de siempre sigue estando: son dos cosas distintas.
@@ -57,20 +57,20 @@ describe('Mi cuenta dentro de la app', () => {
   });
 
   it('sin rol de administrador no hay bloque de administración', () => {
-    pintar();
+    renderShell();
     expect(screen.queryByRole('navigation', { name: 'Administración' })).toBeNull();
   });
 
   it('con rol de administrador, las secciones de administración como enlaces', () => {
     auth.isAdmin = true;
-    pintar();
+    renderShell();
 
-    const bloque = screen.getByRole('navigation', { name: 'Administración' });
-    const enlaces = Array.from(bloque.querySelectorAll('a')).map((a) => [
+    const block = screen.getByRole('navigation', { name: 'Administración' });
+    const links = Array.from(block.querySelectorAll('a')).map((a) => [
       a.textContent,
       a.getAttribute('href'),
     ]);
-    expect(enlaces).toEqual([
+    expect(links).toEqual([
       ['Usuarios', '/administracion'],
       ['Bitácora', '/administracion/bitacora'],
     ]);
@@ -81,7 +81,7 @@ describe('Mi cuenta fuera de la app', () => {
   it('nada cambia: ni cerrar sesión aquí ni bloque de administración', () => {
     leaveNativeApp();
     auth.isAdmin = true;
-    pintar();
+    renderShell();
 
     expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).toBeNull();
     expect(screen.queryByRole('navigation', { name: 'Administración' })).toBeNull();

@@ -26,26 +26,26 @@ import type {
  */
 
 const adminKeys = {
-  usuarios: (status?: ProfileStatus) => ['admin', 'users', status ?? 'todos'] as const,
-  bitacora: (page: number) => ['admin', 'audit-log', page] as const,
+  users: (status?: ProfileStatus) => ['admin', 'users', status ?? 'todos'] as const,
+  auditLog: (page: number) => ['admin', 'audit-log', page] as const,
 };
 
-export function useUsuarios(status?: ProfileStatus): UseQueryResult<{
+export function useUsers(status?: ProfileStatus): UseQueryResult<{
   data: Profile[];
   meta: PageMetaV2;
 }> {
   return useQuery({
-    queryKey: adminKeys.usuarios(status),
+    queryKey: adminKeys.users(status),
     queryFn: () => adminListUsers(status ? { status } : {}),
   });
 }
 
-export function useBitacora(page = 1): UseQueryResult<{
+export function useAuditLog(page = 1): UseQueryResult<{
   data: AuditEntry[];
   meta: PageMetaV2;
 }> {
   return useQuery({
-    queryKey: adminKeys.bitacora(page),
+    queryKey: adminKeys.auditLog(page),
     queryFn: () => adminAuditLog({ page }),
   });
 }
@@ -55,49 +55,49 @@ export function useBitacora(page = 1): UseQueryResult<{
  * acción acaba de generar un evento, y verlo aparecer es parte de confiar en
  * que quedó registrada.
  */
-function useInvalidarAdmin() {
+function useInvalidateAdmin() {
   const queryClient = useQueryClient();
   return () => {
     void queryClient.invalidateQueries({ queryKey: ['admin'] });
   };
 }
 
-type AccionSimple = 'approve' | 'suspend' | 'reactivate';
+type SimpleAction = 'approve' | 'suspend' | 'reactivate';
 
-export function useAccionSobreUsuario() {
-  const invalidar = useInvalidarAdmin();
+export function useUserAction() {
+  const invalidate = useInvalidateAdmin();
 
   return useMutation({
-    mutationFn: async ({ id, accion }: { id: number; accion: AccionSimple }) => {
-      const accionDe = {
+    mutationFn: async ({ id, action }: { id: number; action: SimpleAction }) => {
+      const actionOf = {
         approve: adminApprove,
         suspend: adminSuspend,
         reactivate: adminReactivate,
       };
-      return (await accionDe[accion](id)).data;
+      return (await actionOf[action](id)).data;
     },
-    onSuccess: invalidar,
+    onSuccess: invalidate,
   });
 }
 
-export function useCambiarRol() {
-  const invalidar = useInvalidarAdmin();
+export function useChangeRole() {
+  const invalidate = useInvalidateAdmin();
 
   return useMutation({
     mutationFn: async ({ id, role }: { id: number; role: ProfileRole }) => {
       return (await adminChangeRole(id, { role })).data;
     },
-    onSuccess: invalidar,
+    onSuccess: invalidate,
   });
 }
 
-export function useRestablecerContrasena() {
-  const invalidar = useInvalidarAdmin();
+export function useResetPassword() {
+  const invalidate = useInvalidateAdmin();
 
   return useMutation({
     mutationFn: async ({ id, newPassword }: { id: number; newPassword: string }) => {
       await adminResetPassword(id, { newPassword });
     },
-    onSuccess: invalidar,
+    onSuccess: invalidate,
   });
 }

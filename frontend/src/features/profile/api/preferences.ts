@@ -13,7 +13,7 @@ import {
  * persona lleva cuentas. Apagada —lo normal— la navegación no muestra Cuentas,
  * la captura rápida no la pide, y los saldos simplemente no aparecen.
  */
-export type Preferencias = Preferences;
+export type UserPreferences = Preferences;
 
 /**
  * Lo que se asume mientras el servidor responde.
@@ -22,13 +22,13 @@ export type Preferencias = Preferences;
  * importa: si aquí se asumiera `true`, durante el primer parpadeo se vería un
  * menú de Cuentas que después desaparece.
  */
-const POR_DEFECTO: Preferencias = { accountsEnabled: false };
+const DEFAULTS: UserPreferences = { accountsEnabled: false };
 
-const preferenciasKey = ['preferences'] as const;
+const preferencesKey = ['preferences'] as const;
 
-export function usePreferencias(): UseQueryResult<Preferencias> {
+export function usePreferences(): UseQueryResult<UserPreferences> {
   return useQuery({
-    queryKey: preferenciasKey,
+    queryKey: preferencesKey,
     queryFn: async () => (await preferencesGet()).data,
     // Cambian poquísimo y las consulta media aplicación: no tiene sentido
     // volver a pedirlas en cada montaje.
@@ -42,20 +42,20 @@ export function usePreferencias(): UseQueryResult<Preferencias> {
  * Devuelve el valor por defecto mientras carga, en vez de `undefined`: así
  * ningún componente tiene que manejar un tercer estado solo para esto.
  */
-export function useLlevaCuentas(): boolean {
-  return usePreferencias().data?.accountsEnabled ?? POR_DEFECTO.accountsEnabled;
+export function useHasAccounts(): boolean {
+  return usePreferences().data?.accountsEnabled ?? DEFAULTS.accountsEnabled;
 }
 
-export function useActualizarPreferencias() {
+export function useUpdatePreferences() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (cambios: UpdatePreferencesInput) => (await preferencesUpdate(cambios)).data,
-    onSuccess: (preferencias) => {
+    mutationFn: async (changes: UpdatePreferencesInput) => (await preferencesUpdate(changes)).data,
+    onSuccess: (preferences) => {
       // Se escribe la respuesta directamente en la caché en vez de invalidar:
       // apagar el interruptor tiene que reordenar la navegación al instante,
       // sin un viaje de red de por medio.
-      queryClient.setQueryData(preferenciasKey, preferencias);
+      queryClient.setQueryData(preferencesKey, preferences);
     },
   });
 }

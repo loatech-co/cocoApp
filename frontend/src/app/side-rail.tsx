@@ -4,7 +4,7 @@ import { cn } from '@/shared/lib/utils';
 import { Logo, CompactLogo } from '@/shared/ui/atoms/logo';
 import { RailToggle } from '@/shared/ui/atoms/rail-toggle';
 
-import { EnlaceDeSeccion, MenuDeLaCuenta, useSecciones } from './navegacion';
+import { SectionLink, AccountMenu, useSections } from './navigation';
 
 /**
  * El riel del escritorio.
@@ -14,35 +14,41 @@ import { EnlaceDeSeccion, MenuDeLaCuenta, useSecciones } from './navegacion';
  * del contenido en vez de como el marco que lo envuelve. El riel no lleva fondo
  * propio —es la página— y lo que lo delimita es el canto del pozo.
  */
-export function SideRail({ plegada, onAlternar }: { plegada: boolean; onAlternar: () => void }) {
-  const { diaADia, administracion } = useSecciones();
+export function SideRail({
+  isCollapsed,
+  onToggle,
+}: {
+  isCollapsed: boolean;
+  onToggle: () => void;
+}) {
+  const { daily, admin } = useSections();
 
   return (
     <aside
       className={cn(
         'fixed inset-y-0 left-0 flex flex-col p-3 transition-[width]',
-        plegada ? 'w-16' : 'w-56',
+        isCollapsed ? 'w-16' : 'w-56',
       )}
     >
-      <RailHeader plegada={plegada} onAlternar={onAlternar} />
+      <RailHeader isCollapsed={isCollapsed} onToggle={onToggle} />
 
-      {plegada && <RailToggle isCollapsed onToggle={onAlternar} />}
+      {isCollapsed && <RailToggle isCollapsed onToggle={onToggle} />}
 
       <nav className="flex flex-1 flex-col gap-1" aria-label={t('shell.rail.label')}>
-        <SectionLinks secciones={diaADia} plegada={plegada} />
+        <SectionLinks sections={daily} isCollapsed={isCollapsed} />
 
-        {administracion.length > 0 && (
+        {admin.length > 0 && (
           <>
             {/* Plegada, el rótulo no cabe: se queda la raya, que es lo que
                 de verdad hace falta —decir que lo de abajo es otra cosa—. */}
-            {plegada ? (
+            {isCollapsed ? (
               <hr className="my-3 border-sidebar-border" />
             ) : (
               <p className="mt-6 mb-1 px-3 text-xs font-semibold text-sidebar-muted">
                 {t('shell.rail.admin')}
               </p>
             )}
-            <SectionLinks secciones={administracion} plegada={plegada} />
+            <SectionLinks sections={admin} isCollapsed={isCollapsed} />
           </>
         )}
       </nav>
@@ -51,13 +57,13 @@ export function SideRail({ plegada, onAlternar }: { plegada: boolean; onAlternar
           la pantalla solo para decir con qué cuenta se está dentro es mucha
           franja. Aquí abajo ocupa un sitio que ya estaba vacío. */}
       <div className="mt-4 border-t border-sidebar-border pt-3">
-        <MenuDeLaCuenta plegada={plegada} />
+        <AccountMenu isCollapsed={isCollapsed} />
       </div>
     </aside>
   );
 }
 
-function RailHeader({ plegada, onAlternar }: { plegada: boolean; onAlternar: () => void }) {
+function RailHeader({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: () => void }) {
   return (
     <div
       className={cn(
@@ -67,10 +73,10 @@ function RailHeader({ plegada, onAlternar }: { plegada: boolean; onAlternar: () 
         // extremo, que es donde uno lo busca.
         // Y la fila no lleva relleno por la DERECHA: el botón de plegar
         // se alinea solo, con su propio margen negativo. Ver abajo.
-        plegada ? 'justify-center px-0' : 'justify-between pl-2 pr-0',
+        isCollapsed ? 'justify-center px-0' : 'justify-between pl-2 pr-0',
       )}
     >
-      {plegada ? (
+      {isCollapsed ? (
         <CompactLogo className="size-7 text-sidebar-active" />
       ) : (
         <>
@@ -79,24 +85,30 @@ function RailHeader({ plegada, onAlternar }: { plegada: boolean; onAlternar: () 
               que es el color con el que cada tema dice "aquí": verde
               británico sobre el riel claro, lima sobre el oscuro. */}
           <Logo className="h-7 w-auto text-sidebar-active" />
-          <RailToggle isCollapsed={false} onToggle={onAlternar} />
+          <RailToggle isCollapsed={false} onToggle={onToggle} />
         </>
       )}
     </div>
   );
 }
 
-function SectionLinks({ secciones, plegada }: { secciones: readonly Section[]; plegada: boolean }) {
-  return secciones.map(({ to, label, Icon: Icono, exact }) => (
-    <EnlaceDeSeccion key={to} to={to} exact={exact} plegada={plegada} titulo={label}>
-      <Icono
+function SectionLinks({
+  sections,
+  isCollapsed,
+}: {
+  sections: readonly Section[];
+  isCollapsed: boolean;
+}) {
+  return sections.map(({ to, label, Icon, exact: isExact }) => (
+    <SectionLink key={to} to={to} isExact={isExact} isCollapsed={isCollapsed} title={label}>
+      <Icon
         className="size-4.5 shrink-0"
         fill="currentColor"
         fillOpacity={0.18}
         strokeWidth={1.75}
         aria-hidden={true}
       />
-      {!plegada && label}
-    </EnlaceDeSeccion>
+      {!isCollapsed && label}
+    </SectionLink>
   ));
 }

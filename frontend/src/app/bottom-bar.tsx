@@ -5,21 +5,21 @@ import { DASHBOARD } from '@/shared/lib/sections';
 import { cn } from '@/shared/lib/utils';
 import { BarFab, BarIcon, BarSlotButton, BarSlotLink } from '@/shared/ui/atoms/bar-slot';
 
-import { Avatar } from './navegacion';
+import { Avatar } from './navigation';
 
 interface BottomBarProps {
-  nombre: string;
-  busquedaAbierta: boolean;
-  onBuscar: () => void;
-  onNuevoGasto: () => void;
-  atajosAbiertos: boolean;
-  onAtajos: () => void;
-  cuentaAbierta: boolean;
-  onCuenta: () => void;
+  name: string;
+  isSearchOpen: boolean;
+  onSearch: () => void;
+  onNewExpense: () => void;
+  isShortcutsOpen: boolean;
+  onShortcuts: () => void;
+  isAccountOpen: boolean;
+  onAccount: () => void;
 }
 
 /** The bar itself: fixed to the bottom edge, over the page and under the top bar. */
-const CLASES_DE_LA_BARRA = cn(
+const BAR_CLASSES = cn(
   'fixed inset-x-0 bottom-0 flex items-stretch',
   // Por DEBAJO del techo, que va a 20, y a propósito: un desplegable
   // anclado al techo es hijo suyo, así que ningún z-index de dentro
@@ -67,22 +67,18 @@ const CLASES_DE_LA_BARRA = cn(
  * compitiendo con la página, y aplanarían la única jerarquía que la barra
  * tiene. Cada hueco lleva su nombre accesible.
  */
-export function BarraInferior({
-  nombre,
-  busquedaAbierta,
-  onBuscar,
-  onNuevoGasto,
-  atajosAbiertos,
-  onAtajos,
-  cuentaAbierta,
-  onCuenta,
+export function BottomBar({
+  name,
+  isSearchOpen,
+  onSearch,
+  onNewExpense,
+  isShortcutsOpen,
+  onShortcuts,
+  isAccountOpen,
+  onAccount,
 }: BottomBarProps) {
   return (
-    <nav
-      data-armazon="barra"
-      aria-label={t('shell.bottomBar.label')}
-      className={CLASES_DE_LA_BARRA}
-    >
+    <nav data-armazon="barra" aria-label={t('shell.bottomBar.label')} className={BAR_CLASSES}>
       <div className="flex flex-1">
         <BarSlotLink
           to={DASHBOARD.to}
@@ -90,11 +86,7 @@ export function BarraInferior({
           label={DASHBOARD.label}
           Icon={DASHBOARD.Icon}
         />
-        <BarSlotButton
-          label={t('shell.bottomBar.search')}
-          isOn={busquedaAbierta}
-          onClick={onBuscar}
-        >
+        <BarSlotButton label={t('shell.bottomBar.search')} isOn={isSearchOpen} onClick={onSearch}>
           <BarIcon Icon={Search} />
         </BarSlotButton>
       </div>
@@ -102,40 +94,44 @@ export function BarraInferior({
       {/* Ancho fijo: es lo que mantiene el botón en el centro exacto cuando
           los grupos no tienen el mismo número de huecos. */}
       <div className="flex w-18 shrink-0 items-start justify-center">
-        <BarFab label={t('shell.bottomBar.newExpense')} onClick={onNuevoGasto} />
+        <BarFab label={t('shell.bottomBar.newExpense')} onClick={onNewExpense} />
       </div>
 
       <div className="flex flex-1">
-        <BarSlotButton label={t('shell.shortcuts.title')} isOn={atajosAbiertos} onClick={onAtajos}>
+        <BarSlotButton
+          label={t('shell.shortcuts.title')}
+          isOn={isShortcutsOpen}
+          onClick={onShortcuts}
+        >
           <BarIcon Icon={LayoutGrid} />
         </BarSlotButton>
 
-        <AccountSlot nombre={nombre} abierta={cuentaAbierta} onClick={onCuenta} />
+        <AccountSlot name={name} isOpen={isAccountOpen} onClick={onAccount} />
       </div>
     </nav>
   );
 }
 
 function AccountSlot({
-  nombre,
-  abierta,
+  name,
+  isOpen,
   onClick,
 }: {
-  nombre: string;
-  abierta: boolean;
+  name: string;
+  isOpen: boolean;
   onClick: () => void;
 }) {
   return (
-    <BarSlotButton label={t('shell.account.myAccount')} isOn={abierta} onClick={onClick}>
+    <BarSlotButton label={t('shell.account.myAccount')} isOn={isOpen} onClick={onClick}>
       {/* Apagado va de la superficie tenue de la barra y encendido del
           color de la marca con su tinta. Nunca al revés: cuando el avatar
           llevaba el color de la barra, el círculo desaparecía y quedaban
           unas iniciales sueltas que se leían como el hueco activo. */}
       <Avatar
-        nombre={nombre}
+        name={name}
         className={cn(
           'size-8',
-          abierta
+          isOpen
             ? 'bg-sidebar-active text-sidebar-active-foreground'
             : 'bg-sidebar-hover text-sidebar-foreground',
         )}

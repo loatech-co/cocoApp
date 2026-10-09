@@ -5,31 +5,31 @@ import { useLocation } from 'react-router-dom';
 import { type Transaction } from '@/shared/api/generated/model';
 import { useOnChange } from '@/shared/lib/on-change';
 
-import { useSuperficieDeAtajos } from './atajos';
-import { useSecciones } from './navegacion';
+import { useSections } from './navigation';
+import { useShortcutsSurface } from './shortcuts';
 
-type Setter<T> = (valor: T) => void;
+type Setter<T> = (value: T) => void;
 
 /** Lo que el armazón tiene abierto, y cómo se abre y se cierra. */
 export interface ShellState {
-  plegada: boolean;
-  alternarBarra: () => void;
-  atajosAbiertos: boolean;
-  setAtajosAbiertos: Setter<boolean>;
-  busquedaAbierta: boolean;
-  setBusquedaAbierta: Setter<boolean>;
-  cuentaAbierta: boolean;
-  setCuentaAbierta: Setter<boolean>;
-  ficha: Transaction | null | undefined;
-  setFicha: Setter<Transaction | null | undefined>;
-  abrirBusqueda: () => void;
-  cabeza: ReactNode;
-  cuerpo: ReactNode;
+  isCollapsed: boolean;
+  toggleBar: () => void;
+  isShortcutsOpen: boolean;
+  setIsShortcutsOpen: Setter<boolean>;
+  isSearchOpen: boolean;
+  setIsSearchOpen: Setter<boolean>;
+  isAccountOpen: boolean;
+  setIsAccountOpen: Setter<boolean>;
+  sheet: Transaction | null | undefined;
+  setSheet: Setter<Transaction | null | undefined>;
+  openSearch: () => void;
+  header: ReactNode;
+  body: ReactNode;
 }
 
 export function useShellState(): ShellState {
-  const { diaADia, biblioteca } = useSecciones();
-  const ubicacion = useLocation();
+  const { daily, library } = useSections();
+  const location = useLocation();
 
   /**
    * La barra plegada.
@@ -38,11 +38,13 @@ export function useShellState(): ShellState {
    * preferencia de ESTA pantalla, de este momento. Pegarle un enlace a alguien
    * no debería plegarle la barra, y cambiarla no tiene por qué viajar a la red.
    */
-  const [plegada, setPlegada] = useState(() => localStorage.getItem('sidenav-plegada') === 'si');
+  const [isCollapsed, setIsCollapsed] = useState(
+    () => localStorage.getItem('sidenav-plegada') === 'si',
+  );
 
-  const [atajosAbiertos, setAtajosAbiertos] = useState(false);
-  const [busquedaAbierta, setBusquedaAbierta] = useState(false);
-  const [cuentaAbierta, setCuentaAbierta] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   /**
    * La ficha que el armazón tiene abierta.
@@ -52,54 +54,54 @@ export function useShellState(): ShellState {
    * el (+) de la barra o desde un resultado de la búsqueda no puede ser otra
    * ficha ni otro formulario que abrirlo desde la tabla.
    */
-  const [ficha, setFicha] = useState<Transaction | null | undefined>(undefined);
+  const [sheet, setSheet] = useState<Transaction | null | undefined>(undefined);
 
   // Cambiar de página cierra lo que esté tapándola. Una hoja que sobrevive a
   // su propio enlace deja a la persona mirando los atajos de una pantalla que
   // ya no está debajo.
-  useOnChange([ubicacion.pathname], () => {
-    setAtajosAbiertos(false);
-    setBusquedaAbierta(false);
-    setCuentaAbierta(false);
+  useOnChange([location.pathname], () => {
+    setIsShortcutsOpen(false);
+    setIsSearchOpen(false);
+    setIsAccountOpen(false);
   });
 
   // Estable entre renders: es lo que el puente publica, y un `useEffect` que
   // dependa de ella no tiene por qué volver a registrarse en cada pintado.
-  const [abrirBusqueda] = useState(() => () => setBusquedaAbierta(true));
+  const [openSearch] = useState(() => () => setIsSearchOpen(true));
 
-  function alternarBarra(): void {
-    setPlegada((antes) => {
-      localStorage.setItem('sidenav-plegada', antes ? 'no' : 'si');
-      return !antes;
+  function toggleBar(): void {
+    setIsCollapsed((wasCollapsed) => {
+      localStorage.setItem('sidenav-plegada', wasCollapsed ? 'no' : 'si');
+      return !wasCollapsed;
     });
   }
 
-  const { cabeza, cuerpo } = useSuperficieDeAtajos({
-    abierto: atajosAbiertos,
-    biblioteca: biblioteca.map(({ to, label, Icon: Icono }) => ({
-      ruta: to,
-      etiqueta: label,
-      Icono,
+  const { header, body } = useShortcutsSurface({
+    isOpen: isShortcutsOpen,
+    library: library.map(({ to, label, Icon }) => ({
+      route: to,
+      label,
+      Icon,
     })),
     // Lo de fábrica es lo del día a día. Lo de administración se configura una
     // vez y casi no se toca: está en el menú, y se añade desde ahí quien lo use.
-    porDefecto: diaADia.map((s) => s.to),
-    onIr: () => setAtajosAbiertos(false),
+    defaults: daily.map((s) => s.to),
+    onGo: () => setIsShortcutsOpen(false),
   });
 
   return {
-    plegada,
-    alternarBarra,
-    atajosAbiertos,
-    setAtajosAbiertos,
-    busquedaAbierta,
-    setBusquedaAbierta,
-    cuentaAbierta,
-    setCuentaAbierta,
-    ficha,
-    setFicha,
-    abrirBusqueda,
-    cabeza,
-    cuerpo,
+    isCollapsed,
+    toggleBar,
+    isShortcutsOpen,
+    setIsShortcutsOpen,
+    isSearchOpen,
+    setIsSearchOpen,
+    isAccountOpen,
+    setIsAccountOpen,
+    sheet,
+    setSheet,
+    openSearch,
+    header,
+    body,
   };
 }

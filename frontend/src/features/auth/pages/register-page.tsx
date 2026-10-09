@@ -28,8 +28,8 @@ export function RegisterPage() {
     return <Navigate to="/" replace />;
   }
 
-  if (form.enviado) {
-    return <SolicitudRecibida estado={form.enviado} />;
+  if (form.submitted) {
+    return <RequestReceived status={form.submitted} />;
   }
 
   return (
@@ -58,7 +58,7 @@ export function RegisterPage() {
           </CardHeader>
 
           <CardContent className="flex flex-col gap-4">
-            <RegisterErrors error={form.error} problemas={form.problemas} />
+            <RegisterErrors error={form.error} problems={form.problems} />
 
             <RegisterForm form={form} />
 
@@ -80,8 +80,8 @@ export function RegisterPage() {
  * para averiguar quién tiene cuenta— y la interfaz respeta esa decisión. Para
  * alguien legítimo no cambia nada: en los dos casos espera aprobación.
  */
-function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
-  const lista = estado === 'lista';
+function RequestReceived({ status }: { status: 'pendiente' | 'lista' }) {
+  const isReady = status === 'lista';
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
@@ -95,10 +95,10 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
 
         <Alert variant="info" className="text-left">
           <AlertTitle>
-            {lista ? t('auth.register.readyTitle') : t('auth.register.receivedTitle')}
+            {isReady ? t('auth.register.readyTitle') : t('auth.register.receivedTitle')}
           </AlertTitle>
           <AlertDescription>
-            {lista ? t('auth.register.readyHelp') : t('auth.register.receivedHelp')}
+            {isReady ? t('auth.register.readyHelp') : t('auth.register.receivedHelp')}
           </AlertDescription>
         </Alert>
 
@@ -106,7 +106,7 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
           to="/"
           className="mt-6 inline-block text-sm text-primary underline-offset-4 hover:underline"
         >
-          {lista ? t('auth.signIn') : t('auth.register.backToSignIn')}
+          {isReady ? t('auth.signIn') : t('auth.register.backToSignIn')}
         </Link>
       </div>
     </main>
@@ -115,10 +115,10 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
 
 function PasswordField({
   password,
-  onCambiar,
+  onChange,
 }: {
   password: string;
-  onCambiar: (password: string) => void;
+  onChange: (password: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -129,7 +129,7 @@ function PasswordField({
           autoComplete="new-password"
           required
           value={password}
-          onChange={(evento) => onCambiar(evento.target.value)}
+          onChange={(event) => onChange(event.target.value)}
           aria-describedby="requisitos-password"
         />
       </Field>
@@ -142,8 +142,8 @@ function PasswordField({
 }
 
 function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
-  const { nombre, setNombre, email, setEmail, password, setPassword, enviando, onSubmit } = form;
-  const politicaOk = meetsPolicy(password);
+  const { name, setName, email, setEmail, password, setPassword, isSending, onSubmit } = form;
+  const isPolicyOk = meetsPolicy(password);
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <Field label={t('auth.fields.name')} id="nombre">
@@ -152,8 +152,8 @@ function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
           autoComplete="name"
           required
           minLength={2}
-          value={nombre}
-          onChange={(evento) => setNombre(evento.target.value)}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
         />
       </Field>
 
@@ -164,67 +164,67 @@ function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
           autoComplete="email"
           required
           value={email}
-          onChange={(evento) => setEmail(evento.target.value)}
+          onChange={(event) => setEmail(event.target.value)}
         />
       </Field>
 
-      <PasswordField password={password} onCambiar={setPassword} />
+      <PasswordField password={password} onChange={setPassword} />
 
-      <Button type="submit" className="w-full" disabled={enviando || !politicaOk}>
-        {enviando ? (
+      <Button type="submit" className="w-full" disabled={isSending || !isPolicyOk}>
+        {isSending ? (
           <Loader2 className="animate-spin" aria-hidden="true" />
         ) : (
           <UserPlus aria-hidden="true" />
         )}
-        {enviando ? t('auth.wait') : t('auth.requestAccess')}
+        {isSending ? t('auth.wait') : t('auth.requestAccess')}
       </Button>
     </form>
   );
 }
 
-function RegisterErrors({ error, problemas }: { error: string | null; problemas: string[] }) {
+function RegisterErrors({ error, problems }: { error: string | null; problems: string[] }) {
   if (!error) return null;
-  return <ErrorAlert message={error} details={problemas} />;
+  return <ErrorAlert message={error} details={problems} />;
 }
 
 /** Los campos de la solicitud, sus errores y el envío. */
-function useRegisterForm(registrarse: ReturnType<typeof useAuth>['signUp']) {
-  const [nombre, setNombre] = useState('');
+function useRegisterForm(signUp: ReturnType<typeof useAuth>['signUp']) {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [problemas, setProblemas] = useState<string[]>([]);
-  const [enviando, setEnviando] = useState(false);
-  const [enviado, setEnviado] = useState<'pendiente' | 'lista' | null>(null);
+  const [problems, setProblems] = useState<string[]>([]);
+  const [isSending, setIsSending] = useState(false);
+  const [submitted, setSubmitted] = useState<'pendiente' | 'lista' | null>(null);
 
-  function onSubmit(evento: SubmitEvent<HTMLFormElement>): void {
-    evento.preventDefault();
+  function onSubmit(event: SubmitEvent<HTMLFormElement>): void {
+    event.preventDefault();
     setError(null);
-    setProblemas([]);
-    setEnviando(true);
+    setProblems([]);
+    setIsSending(true);
 
-    void registrarse(email, password, nombre)
-      .then((respuesta) => setEnviado(respuesta.pendingApproval ? 'pendiente' : 'lista'))
-      .catch((causa: unknown) => {
-        setError(authErrorMessage(causa));
+    void signUp(email, password, name)
+      .then((response) => setSubmitted(response.pendingApproval ? 'pendiente' : 'lista'))
+      .catch((cause: unknown) => {
+        setError(authErrorMessage(cause));
         // La API dice exactamente qué le falta a la contraseña; ocultarlo
         // obligaría a adivinar y empujaría a elegir lo más flojo que pase.
-        setProblemas(errorDetails(causa));
+        setProblems(errorDetails(cause));
       })
-      .finally(() => setEnviando(false));
+      .finally(() => setIsSending(false));
   }
 
   return {
-    nombre,
-    setNombre,
+    name,
+    setName,
     email,
     setEmail,
     password,
     setPassword,
     error,
-    problemas,
-    enviando,
-    enviado,
+    problems,
+    isSending,
+    submitted,
     onSubmit,
   };
 }

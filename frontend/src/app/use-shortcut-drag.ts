@@ -1,11 +1,11 @@
-import { useRef, useState, type PointerEvent as PointerEventoDeReact } from 'react';
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
 import { moveShortcut } from '@/shared/lib/shortcuts';
 
-import type { Estado } from './shortcut-types';
+import type { Mode } from './shortcut-types';
 
-interface Arrastre {
-  indice: number;
+interface Drag {
+  index: number;
   /** Desde dónde se mide el desplazamiento actual. Se reancla en cada salto. */
   x: number;
   y: number;
@@ -14,48 +14,48 @@ interface Arrastre {
 }
 
 /** Sobre qué baldosa está el dedo, midiendo la rejilla de verdad. */
-function indiceBajo(rejilla: HTMLDivElement | null, x: number, y: number): number | null {
-  const celdas = rejilla?.querySelectorAll('[data-baldosa]');
-  if (!celdas) return null;
+function indexUnder(grid: HTMLDivElement | null, x: number, y: number): number | null {
+  const cells = grid?.querySelectorAll('[data-baldosa]');
+  if (!cells) return null;
 
-  for (let i = 0; i < celdas.length; i += 1) {
-    const celda = celdas[i];
-    if (celda === undefined) continue;
-    const r = celda.getBoundingClientRect();
+  for (let i = 0; i < cells.length; i += 1) {
+    const cell = cells[i];
+    if (cell === undefined) continue;
+    const r = cell.getBoundingClientRect();
     if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return i;
   }
   return null;
 }
 
 /** Arrastrar una baldosa sobre otra mientras se arregla la rejilla. */
-export function useShortcutDrag(estado: Estado) {
-  const [arrastre, setArrastre] = useState<Arrastre | null>(null);
-  const rejilla = useRef<HTMLDivElement>(null);
+export function useShortcutDrag(mode: Mode) {
+  const [drag, setDrag] = useState<Drag | null>(null);
+  const grid = useRef<HTMLDivElement>(null);
 
-  function alBajar(e: PointerEventoDeReact<HTMLElement>, indice: number): void {
-    if (estado !== 'arreglando') return;
+  function handleDown(e: ReactPointerEvent<HTMLElement>, index: number): void {
+    if (mode !== 'arreglando') return;
     e.preventDefault();
     // jsdom no lo trae, aunque el tipo diga que todo elemento lo tiene.
     if ('setPointerCapture' in e.currentTarget) e.currentTarget.setPointerCapture(e.pointerId);
-    setArrastre({ indice, x: e.clientX, y: e.clientY, dx: 0, dy: 0 });
+    setDrag({ index, x: e.clientX, y: e.clientY, dx: 0, dy: 0 });
   }
 
-  function alMover(e: PointerEventoDeReact<HTMLElement>): void {
-    if (!arrastre) return;
+  function handleMove(e: ReactPointerEvent<HTMLElement>): void {
+    if (!drag) return;
 
-    const destino = indiceBajo(rejilla.current, e.clientX, e.clientY);
-    if (destino !== null && destino !== arrastre.indice) {
+    const target = indexUnder(grid.current, e.clientX, e.clientY);
+    if (target !== null && target !== drag.index) {
       // Se escribe en el almacén y el render vuelve a dibujar desde él. El DOM
       // nunca es el registro.
-      moveShortcut(arrastre.indice, destino);
+      moveShortcut(drag.index, target);
       // Reanclado en el dedo: la baldosa acaba de saltar de hueco, así que su
       // desplazamiento vuelve a cero y se queda justo debajo.
-      setArrastre({ indice: destino, x: e.clientX, y: e.clientY, dx: 0, dy: 0 });
+      setDrag({ index: target, x: e.clientX, y: e.clientY, dx: 0, dy: 0 });
       return;
     }
 
-    setArrastre({ ...arrastre, dx: e.clientX - arrastre.x, dy: e.clientY - arrastre.y });
+    setDrag({ ...drag, dx: e.clientX - drag.x, dy: e.clientY - drag.y });
   }
 
-  return { arrastre, setArrastre, rejilla, alBajar, alMover };
+  return { drag, setDrag, grid, handleDown, handleMove };
 }

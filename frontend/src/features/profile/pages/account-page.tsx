@@ -2,7 +2,7 @@ import { LogOut, ShieldCheck } from 'lucide-react';
 import { useEffect, useState, type SubmitEvent } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { Ajustes } from '@/features/profile/components/ajustes';
+import { Settings } from '@/features/profile/components/settings';
 import { errorDetails, authErrorMessage, useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
 import { useIsInNativeApp } from '@/shared/lib/mobile';
@@ -23,7 +23,7 @@ import { LinkRow } from '@/shared/ui/molecules/link-row';
  * Las dos acciones que tiene que poder hacer alguien que sospecha que su cuenta
  * está comprometida, sin depender de nadie.
  */
-export function CuentaPage() {
+export function AccountPage() {
   const { user, isAdmin } = useAuth();
   /*
     Dentro de la app del teléfono esta página es la pestaña «Más», y hace lo
@@ -31,7 +31,7 @@ export function CuentaPage() {
     administración y cerrar sesión en ESTE dispositivo. Fuera de la app nada
     de eso aparece, porque ya está en la hoja o en el menú del riel.
   */
-  const embebida = useIsInNativeApp();
+  const isEmbedded = useIsInNativeApp();
 
   useScrollToHash();
 
@@ -50,27 +50,27 @@ export function CuentaPage() {
           poco: sin él, la sección a la que se acaba de llegar queda justo
           DEBAJO de la franja de la marca, que está pegada arriba. */}
       <section id="ajustes" className="scroll-mt-20">
-        <Ajustes />
+        <Settings />
       </section>
 
-      {embebida && isAdmin && <AdminLinks />}
+      {isEmbedded && isAdmin && <AdminLinks />}
 
       {/* Las dos cosas que hace alguien que sospecha que su cuenta está
           comprometida, juntas y con un nombre: cambiar la contraseña y echar
           a todo el mundo. Separadas no había a dónde apuntar desde fuera. */}
       <section id="seguridad" className="flex scroll-mt-20 flex-col gap-6">
-        <CambiarContrasena />
+        <ChangePassword />
 
-        <SessionCards embebida={embebida} />
+        <SessionCards isEmbedded={isEmbedded} />
       </section>
     </div>
   );
 }
 
-function CambiarContrasena() {
+function ChangePassword() {
   const form = usePasswordChange();
 
-  if (form.hecho) {
+  if (form.isDone) {
     return (
       <Alert variant="info">
         <AlertTitle>{t('profile.account.passwordChangedTitle')}</AlertTitle>
@@ -87,7 +87,7 @@ function CambiarContrasena() {
       </CardHeader>
 
       <CardContent>
-        {form.error && <PasswordErrors error={form.error} problemas={form.problemas} />}
+        {form.error && <PasswordErrors error={form.error} problems={form.problems} />}
 
         <PasswordForm form={form} />
       </CardContent>
@@ -96,7 +96,7 @@ function CambiarContrasena() {
 }
 
 function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) {
-  const { actual, setActual, nueva, setNueva, enviando, onSubmit } = form;
+  const { actual, setActual, newPassword, setNewPassword, isSending, onSubmit } = form;
   return (
     <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-4">
       <Field label={t('profile.account.currentPassword')} id="actual">
@@ -106,7 +106,7 @@ function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) 
           autoComplete="current-password"
           required
           value={actual}
-          onChange={(evento) => setActual(evento.target.value)}
+          onChange={(event) => setActual(event.target.value)}
         />
       </Field>
 
@@ -117,27 +117,27 @@ function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) 
             type="password"
             autoComplete="new-password"
             required
-            value={nueva}
-            onChange={(evento) => setNueva(evento.target.value)}
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
             aria-describedby="requisitos-nueva"
           />
         </Field>
         <div id="requisitos-nueva">
-          <PasswordPolicy password={nueva} />
+          <PasswordPolicy password={newPassword} />
         </div>
       </div>
 
-      <Button type="submit" disabled={enviando || !meetsPolicy(nueva) || !actual}>
+      <Button type="submit" disabled={isSending || !meetsPolicy(newPassword) || !actual}>
         {t('profile.account.changePassword')}
       </Button>
     </form>
   );
 }
 
-function PasswordErrors({ error, problemas }: { error: string; problemas: string[] }) {
+function PasswordErrors({ error, problems }: { error: string; problems: string[] }) {
   return (
     <div className="mb-4">
-      <ErrorAlert message={error} details={problemas} />
+      <ErrorAlert message={error} details={problems} />
     </div>
   );
 }
@@ -147,36 +147,46 @@ function usePasswordChange() {
   const { changePassword } = useAuth();
 
   const [actual, setActual] = useState('');
-  const [nueva, setNueva] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [problemas, setProblemas] = useState<string[]>([]);
-  const [enviando, setEnviando] = useState(false);
-  const [hecho, setHecho] = useState(false);
+  const [problems, setProblems] = useState<string[]>([]);
+  const [isSending, setIsSending] = useState(false);
+  const [isDone, setIsDone] = useState(false);
 
-  function onSubmit(evento: SubmitEvent<HTMLFormElement>): void {
-    evento.preventDefault();
+  function onSubmit(event: SubmitEvent<HTMLFormElement>): void {
+    event.preventDefault();
     setError(null);
-    setProblemas([]);
-    setEnviando(true);
+    setProblems([]);
+    setIsSending(true);
 
-    void changePassword(actual, nueva)
-      .then(() => setHecho(true))
-      .catch((causa: unknown) => {
-        setError(authErrorMessage(causa));
-        setProblemas(errorDetails(causa));
+    void changePassword(actual, newPassword)
+      .then(() => setIsDone(true))
+      .catch((cause: unknown) => {
+        setError(authErrorMessage(cause));
+        setProblems(errorDetails(cause));
       })
-      .finally(() => setEnviando(false));
+      .finally(() => setIsSending(false));
   }
 
-  return { actual, setActual, nueva, setNueva, error, problemas, enviando, hecho, onSubmit };
+  return {
+    actual,
+    setActual,
+    newPassword,
+    setNewPassword,
+    error,
+    problems,
+    isSending,
+    isDone,
+    onSubmit,
+  };
 }
 
 /** Cerrar sesión: aquí, dentro de la app, y en todos los dispositivos. */
-function SessionCards({ embebida }: { embebida: boolean }) {
+function SessionCards({ isEmbedded }: { isEmbedded: boolean }) {
   const { signOut, signOutEverywhere } = useAuth();
   return (
     <>
-      {embebida && (
+      {isEmbedded && (
         <Card>
           <CardHeader>
             <CardTitle>{t('shell.account.signOut')}</CardTitle>
@@ -218,9 +228,9 @@ function AdminLinks() {
             del avatar: una segunda lista se separaría de esta la primera
             vez que se añada una pantalla. */}
         <nav aria-label={t('shell.rail.admin')} className="-mx-3 flex flex-col">
-          {ADMIN_SECTIONS.map((seccion) => (
-            <LinkRow key={seccion.to} Icon={seccion.Icon} to={seccion.to}>
-              {seccion.label}
+          {ADMIN_SECTIONS.map((section) => (
+            <LinkRow key={section.to} Icon={section.Icon} to={section.to}>
+              {section.label}
             </LinkRow>
           ))}
         </nav>

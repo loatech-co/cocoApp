@@ -10,19 +10,19 @@ import { showToast } from '@/shared/ui/molecules/toast';
 
 import { ShortcutGrid } from './shortcut-grid';
 import { ShortcutPicker } from './shortcut-picker';
-import type { Estado, PaginaDeAtajo } from './shortcut-types';
+import type { Mode, ShortcutPage } from './shortcut-types';
 import { useShortcutDrag } from './use-shortcut-drag';
 
-export type { PaginaDeAtajo } from './shortcut-types';
+export type { ShortcutPage as PaginaDeAtajo } from './shortcut-types';
 
-interface OpcionesDeAtajos {
-  abierto: boolean;
+interface ShortcutsOptions {
+  isOpen: boolean;
   /** Las hojas de la navegación, tal cual, en su orden. */
-  biblioteca: readonly PaginaDeAtajo[];
+  library: readonly ShortcutPage[];
   /** Lo que hay antes de que nadie toque nada. */
-  porDefecto: readonly string[];
+  defaults: readonly string[];
   /** Se ha elegido una baldosa: el anfitrión cierra el panel. */
-  onIr: () => void;
+  onGo: () => void;
 }
 
 /**
@@ -55,60 +55,47 @@ interface OpcionesDeAtajos {
  * Elegir página es un paso DENTRO del arreglo: el galón vuelve a él y «Listo»
  * sale de la edición entera.
  */
-export function useSuperficieDeAtajos({
-  abierto,
-  biblioteca,
-  porDefecto,
-  onIr,
-}: OpcionesDeAtajos): { cabeza: ReactNode; cuerpo: ReactNode } {
-  const rutas = useShortcuts(porDefecto);
-  const [estado, setEstado] = useState<Estado>('galeria');
-  const [busqueda, setBusqueda] = useState('');
-  const drag = useShortcutDrag(estado);
+export function useShortcutsSurface({ isOpen, library, defaults, onGo }: ShortcutsOptions): {
+  header: ReactNode;
+  body: ReactNode;
+} {
+  const routes = useShortcuts(defaults);
+  const [mode, setMode] = useState<Mode>('galeria');
+  const [search, setSearch] = useState('');
+  const drag = useShortcutDrag(mode);
 
   // Los tres estados son efímeros, como el almacén: una pantalla que se reabre
   // en mitad de una edición es una pantalla que se reabre mal.
-  useOnChange([abierto], () => {
-    if (!abierto) {
-      setEstado('galeria');
-      setBusqueda('');
-      drag.setArrastre(null);
+  useOnChange([isOpen], () => {
+    if (!isOpen) {
+      setMode('galeria');
+      setSearch('');
+      drag.setDrag(null);
     }
   });
 
   // Una ruta guardada cuya página ya no existe se cae aquí, al dibujar: quien
   // sabe qué páginas hay es quien pinta, no el almacén.
-  const baldosas = rutas
-    .map((ruta) => biblioteca.find((p) => p.ruta === ruta))
-    .filter((p): p is PaginaDeAtajo => p !== undefined);
+  const tiles = routes
+    .map((route) => library.find((p) => p.route === route))
+    .filter((p): p is ShortcutPage => p !== undefined);
 
-  const cabeza = (
-    <CabezaDeAtajos
-      estado={estado}
-      setEstado={setEstado}
-      busqueda={busqueda}
-      setBusqueda={setBusqueda}
-    />
+  const header = (
+    <ShortcutsHeader mode={mode} setMode={setMode} search={search} setSearch={setSearch} />
   );
 
-  const cuerpo =
-    estado === 'eligiendo' ? (
+  const body =
+    mode === 'eligiendo' ? (
       <ShortcutPicker
-        disponibles={disponiblesPara(biblioteca, rutas, busqueda)}
-        busqueda={busqueda}
-        onAnadir={anadir}
+        available={availableFor(library, routes, search)}
+        search={search}
+        onAdd={add}
       />
     ) : (
-      <ShortcutGrid
-        baldosas={baldosas}
-        estado={estado}
-        drag={drag}
-        setEstado={setEstado}
-        onIr={onIr}
-      />
+      <ShortcutGrid tiles={tiles} mode={mode} drag={drag} setMode={setMode} onGo={onGo} />
     );
 
-  return { cabeza, cuerpo };
+  return { header, body };
 }
 
 const normal = (t: string): string => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -117,18 +104,18 @@ const normal = (t: string): string => t.toLowerCase().normalize('NFD').replace(/
  * Solo lo que NO es ya una baldosa: una fila para una página que ya se tiene
  * solo podría significar "quitar", y quitar es para lo que está el menos.
  */
-function disponiblesPara(
-  biblioteca: readonly PaginaDeAtajo[],
-  rutas: readonly string[],
-  busqueda: string,
-): PaginaDeAtajo[] {
-  return biblioteca
-    .filter((p) => !rutas.includes(p.ruta))
-    .filter((p) => busqueda.trim() === '' || normal(p.etiqueta).includes(normal(busqueda.trim())));
+function availableFor(
+  library: readonly ShortcutPage[],
+  routes: readonly string[],
+  search: string,
+): ShortcutPage[] {
+  return library
+    .filter((p) => !routes.includes(p.route))
+    .filter((p) => search.trim() === '' || normal(p.label).includes(normal(search.trim())));
 }
 
-function anadir(ruta: string): void {
-  if (!addShortcut(ruta)) {
+function add(route: string): void {
+  if (!addShortcut(route)) {
     // La respuesta llega cuando se hace la pregunta: ni un contador
     // permanente ni un control apagado, que no contesta nada al pulsarlo.
     showToast(t('shell.shortcuts.fullTitle'), {
@@ -138,26 +125,26 @@ function anadir(ruta: string): void {
   }
 }
 
-function CabezaDeAtajos({
-  estado,
-  setEstado,
-  busqueda,
-  setBusqueda,
+function ShortcutsHeader({
+  mode,
+  setMode,
+  search,
+  setSearch,
 }: {
-  estado: Estado;
-  setEstado: (estado: Estado) => void;
-  busqueda: string;
-  setBusqueda: (busqueda: string) => void;
+  mode: Mode;
+  setMode: (mode: Mode) => void;
+  search: string;
+  setSearch: (search: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex min-h-10.5 items-center gap-2">
-        {estado === 'eligiendo' && (
+        {mode === 'eligiendo' && (
           <Button
             type="button"
             variant="ghost"
             size="sm-icon"
-            onClick={() => setEstado('arreglando')}
+            onClick={() => setMode('arreglando')}
             aria-label={t('shell.shortcuts.back')}
           >
             <ChevronLeft className="size-4" aria-hidden="true" />
@@ -165,15 +152,15 @@ function CabezaDeAtajos({
         )}
 
         <h2 className="min-w-0 flex-1 truncate font-display text-lg font-semibold">
-          {estado === 'eligiendo' ? t('shell.shortcuts.add') : t('shell.shortcuts.title')}
+          {mode === 'eligiendo' ? t('shell.shortcuts.add') : t('shell.shortcuts.title')}
         </h2>
 
-        {estado === 'galeria' ? (
-          <Button type="button" variant="tool" size="sm" onClick={() => setEstado('arreglando')}>
+        {mode === 'galeria' ? (
+          <Button type="button" variant="tool" size="sm" onClick={() => setMode('arreglando')}>
             {t('common.edit')}
           </Button>
         ) : (
-          <Button type="button" variant="accent" size="sm" onClick={() => setEstado('galeria')}>
+          <Button type="button" variant="accent" size="sm" onClick={() => setMode('galeria')}>
             {t('shell.shortcuts.done')}
           </Button>
         )}
@@ -181,18 +168,12 @@ function CabezaDeAtajos({
 
       {/* La cabeza se pasa del suelo de 78 solo porque su CONTENIDO es más
           alto, que es la única razón por la que debería pasarse. */}
-      {estado === 'eligiendo' && <BuscarPagina busqueda={busqueda} setBusqueda={setBusqueda} />}
+      {mode === 'eligiendo' && <FindPage search={search} setSearch={setSearch} />}
     </div>
   );
 }
 
-function BuscarPagina({
-  busqueda,
-  setBusqueda,
-}: {
-  busqueda: string;
-  setBusqueda: (busqueda: string) => void;
-}) {
+function FindPage({ search, setSearch }: { search: string; setSearch: (search: string) => void }) {
   return (
     <div className="relative">
       <Search
@@ -200,8 +181,8 @@ function BuscarPagina({
         aria-hidden="true"
       />
       <Input
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
         placeholder={t('shell.shortcuts.searchPlaceholder')}
         aria-label={t('shell.shortcuts.searchPlaceholder')}
         className="pl-9"

@@ -10,11 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import {
-  useAccionSobreUsuario,
-  useCambiarRol,
-  useRestablecerContrasena,
-} from '@/features/admin/api/admin-queries';
+import { useUserAction, useChangeRole, useResetPassword } from '@/features/admin/api/admin-queries';
 import { ApiClientError } from '@/shared/api/api-client';
 import { type Profile, type ProfileStatus } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
@@ -30,24 +26,24 @@ import { PasswordPolicy, meetsPolicy } from '@/shared/ui/atoms/password-policy';
 
 /** La fila de una cuenta en Usuarios: quién es, en qué estado está y qué se le puede hacer. */
 
-export function FilaDeUsuario({ usuario, soyYo }: { usuario: Profile; soyYo: boolean }) {
-  const accion = useAccionSobreUsuario();
-  const cambiarRol = useCambiarRol();
-  const [restableciendo, setRestableciendo] = useState(false);
+export function UserRow({ user, isMe }: { user: Profile; isMe: boolean }) {
+  const action = useUserAction();
+  const changeRole = useChangeRole();
+  const [isResetting, setIsResetting] = useState(false);
 
   const error =
-    accion.error instanceof ApiClientError
-      ? accion.error.message
-      : cambiarRol.error instanceof ApiClientError
-        ? cambiarRol.error.message
+    action.error instanceof ApiClientError
+      ? action.error.message
+      : changeRole.error instanceof ApiClientError
+        ? changeRole.error.message
         : null;
 
-  const ocupado = accion.isPending || cambiarRol.isPending;
+  const isBusy = action.isPending || changeRole.isPending;
 
   return (
     <Card>
       <CardContent className="flex flex-col gap-4 py-4">
-        <UserHeader usuario={usuario} soyYo={soyYo} />
+        <UserHeader user={user} isMe={isMe} />
 
         {error && (
           <Alert variant="destructive">
@@ -57,14 +53,14 @@ export function FilaDeUsuario({ usuario, soyYo }: { usuario: Profile; soyYo: boo
 
         <div className="flex flex-wrap gap-2">
           <UserStatusActions
-            usuario={usuario}
-            soyYo={soyYo}
-            ocupado={ocupado}
-            onAccion={(tipo) => accion.mutate({ id: usuario.id, accion: tipo })}
-            onCambiarRol={() =>
-              cambiarRol.mutate({
-                id: usuario.id,
-                role: usuario.role === 'admin' ? 'user' : 'admin',
+            user={user}
+            isMe={isMe}
+            isBusy={isBusy}
+            onAction={(type) => action.mutate({ id: user.id, action: type })}
+            onChangeRole={() =>
+              changeRole.mutate({
+                id: user.id,
+                role: user.role === 'admin' ? 'user' : 'admin',
               })
             }
           />
@@ -72,17 +68,15 @@ export function FilaDeUsuario({ usuario, soyYo }: { usuario: Profile; soyYo: boo
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => setRestableciendo((abierto) => !abierto)}
-            aria-expanded={restableciendo}
+            onClick={() => setIsResetting((isOpen) => !isOpen)}
+            aria-expanded={isResetting}
           >
             <KeyRound aria-hidden="true" />
             {t('admin.userRow.resetPassword')}
           </Button>
         </div>
 
-        {restableciendo && (
-          <RestablecerContrasena usuario={usuario} onListo={() => setRestableciendo(false)} />
-        )}
+        {isResetting && <ResetPassword user={user} onDone={() => setIsResetting(false)} />}
       </CardContent>
     </Card>
   );
@@ -96,26 +90,26 @@ export function FilaDeUsuario({ usuario, soyYo }: { usuario: Profile; soyYo: boo
  * nueva se muestra una sola vez, aquí, para que puedas comunicarla por el
  * canal que quieras — no se guarda ni se envía a ninguna parte.
  */
-function RestablecerContrasena({ usuario, onListo }: { usuario: Profile; onListo: () => void }) {
+function ResetPassword({ user, onDone }: { user: Profile; onDone: () => void }) {
   const [password, setPassword] = useState('');
-  const [hecho, setHecho] = useState(false);
-  const restablecer = useRestablecerContrasena();
+  const [isDone, setIsDone] = useState(false);
+  const reset = useResetPassword();
 
-  const error = restablecer.error instanceof ApiClientError ? restablecer.error : null;
+  const error = reset.error instanceof ApiClientError ? reset.error : null;
 
-  if (hecho) {
-    return <ResetDone usuario={usuario} />;
+  if (isDone) {
+    return <ResetDone user={user} />;
   }
 
   return (
     <Block className="p-4">
-      <Field label={t('admin.userRow.newPassword')} id={`nueva-${usuario.id}`}>
+      <Field label={t('admin.userRow.newPassword')} id={`nueva-${user.id}`}>
         <Input
-          id={`nueva-${usuario.id}`}
+          id={`nueva-${user.id}`}
           type="text"
           autoComplete="off"
           value={password}
-          onChange={(evento) => setPassword(evento.target.value)}
+          onChange={(event) => setPassword(event.target.value)}
         />
       </Field>
       <PasswordPolicy password={password} />
@@ -125,18 +119,18 @@ function RestablecerContrasena({ usuario, onListo }: { usuario: Profile; onListo
       <div className="mt-3 flex gap-2">
         <Button
           size="sm"
-          disabled={!meetsPolicy(password) || restablecer.isPending}
+          disabled={!meetsPolicy(password) || reset.isPending}
           onClick={() =>
-            restablecer.mutate(
-              { id: usuario.id, newPassword: password },
-              { onSuccess: () => setHecho(true) },
+            reset.mutate(
+              { id: user.id, newPassword: password },
+              { onSuccess: () => setIsDone(true) },
             )
           }
         >
-          {restablecer.isPending && <Loader2 className="animate-spin" aria-hidden="true" />}
+          {reset.isPending && <Loader2 className="animate-spin" aria-hidden="true" />}
           {t('admin.userRow.reset')}
         </Button>
-        <Button size="sm" variant="ghost" onClick={onListo}>
+        <Button size="sm" variant="ghost" onClick={onDone}>
           {t('common.cancel')}
         </Button>
       </div>
@@ -144,7 +138,7 @@ function RestablecerContrasena({ usuario, onListo }: { usuario: Profile; onListo
   );
 }
 
-function EstadoBadge({ status }: { status: ProfileStatus }) {
+function StatusBadge({ status }: { status: ProfileStatus }) {
   // Icono además del color: el estado debe leerse sin distinguir colores.
   if (status === 'pending') {
     return (
@@ -170,14 +164,14 @@ function EstadoBadge({ status }: { status: ProfileStatus }) {
   );
 }
 
-function RolBadge({ esAdmin }: { esAdmin: boolean }) {
+function RoleBadge({ isAdmin }: { isAdmin: boolean }) {
   return (
     <Badge
-      variant={esAdmin ? 'info' : 'outline'}
-      className={cn(!esAdmin && 'text-muted-foreground')}
+      variant={isAdmin ? 'info' : 'outline'}
+      className={cn(!isAdmin && 'text-muted-foreground')}
     >
-      {esAdmin ? <ShieldCheck aria-hidden="true" /> : <UserIcon aria-hidden="true" />}
-      {esAdmin ? t('admin.userRow.roleAdmin') : t('admin.userRow.roleUser')}
+      {isAdmin ? <ShieldCheck aria-hidden="true" /> : <UserIcon aria-hidden="true" />}
+      {isAdmin ? t('admin.userRow.roleAdmin') : t('admin.userRow.roleUser')}
     </Badge>
   );
 }
@@ -190,37 +184,31 @@ function ResetError({ error }: { error: ApiClientError }) {
   );
 }
 
-function ResetDone({ usuario }: { usuario: Profile }) {
+function ResetDone({ user }: { user: Profile }) {
   return (
     <Alert variant="info">
       <AlertDescription>
-        {t('admin.userRow.passwordReset', { name: usuario.displayName ?? usuario.email })}
+        {t('admin.userRow.passwordReset', { name: user.displayName ?? user.email })}
       </AlertDescription>
     </Alert>
   );
 }
 
 interface UserStatusActionsProps {
-  usuario: Profile;
-  soyYo: boolean;
-  ocupado: boolean;
-  onAccion: (accion: 'approve' | 'suspend' | 'reactivate') => void;
-  onCambiarRol: () => void;
+  user: Profile;
+  isMe: boolean;
+  isBusy: boolean;
+  onAction: (action: 'approve' | 'suspend' | 'reactivate') => void;
+  onChangeRole: () => void;
 }
 
 /** Aprobar, reactivar, suspender y cambiar el rol: lo que se puede hacer según el estado. */
-function UserStatusActions({
-  usuario,
-  soyYo,
-  ocupado,
-  onAccion,
-  onCambiarRol,
-}: UserStatusActionsProps) {
+function UserStatusActions({ user, isMe, isBusy, onAction, onChangeRole }: UserStatusActionsProps) {
   return (
     <>
-      {usuario.status === 'pending' && (
-        <Button size="sm" disabled={ocupado} onClick={() => onAccion('approve')}>
-          {ocupado ? (
+      {user.status === 'pending' && (
+        <Button size="sm" disabled={isBusy} onClick={() => onAction('approve')}>
+          {isBusy ? (
             <Loader2 className="animate-spin" aria-hidden="true" />
           ) : (
             <Check aria-hidden="true" />
@@ -229,56 +217,56 @@ function UserStatusActions({
         </Button>
       )}
 
-      {usuario.status === 'suspended' && (
+      {user.status === 'suspended' && (
         <Button
           size="sm"
           variant="outline"
-          disabled={ocupado}
-          onClick={() => onAccion('reactivate')}
+          disabled={isBusy}
+          onClick={() => onAction('reactivate')}
         >
           <Play aria-hidden="true" />
           {t('admin.userRow.reactivate')}
         </Button>
       )}
 
-      {usuario.status === 'active' && !soyYo && (
+      {user.status === 'active' && !isMe && (
         // Rojo solo aquí: suspender corta el acceso al instante y expulsa
         // a la persona aunque estuviera dentro.
         <Button
           size="sm"
           variant="destructive"
-          disabled={ocupado}
-          onClick={() => onAccion('suspend')}
+          disabled={isBusy}
+          onClick={() => onAction('suspend')}
         >
           <Slash aria-hidden="true" />
           {t('admin.userRow.suspend')}
         </Button>
       )}
 
-      {!soyYo && (
-        <Button size="sm" variant="outline" disabled={ocupado} onClick={onCambiarRol}>
+      {!isMe && (
+        <Button size="sm" variant="outline" disabled={isBusy} onClick={onChangeRole}>
           <ShieldCheck aria-hidden="true" />
-          {usuario.role === 'admin' ? t('admin.userRow.removeAdmin') : t('admin.userRow.makeAdmin')}
+          {user.role === 'admin' ? t('admin.userRow.removeAdmin') : t('admin.userRow.makeAdmin')}
         </Button>
       )}
     </>
   );
 }
 
-function UserHeader({ usuario, soyYo }: { usuario: Profile; soyYo: boolean }) {
+function UserHeader({ user, isMe }: { user: Profile; isMe: boolean }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0">
         <p className="flex items-center gap-2 font-medium">
-          <span className="truncate">{usuario.displayName ?? usuario.email}</span>
-          {soyYo && <span className="text-xs text-muted-foreground">{t('admin.userRow.you')}</span>}
+          <span className="truncate">{user.displayName ?? user.email}</span>
+          {isMe && <span className="text-xs text-muted-foreground">{t('admin.userRow.you')}</span>}
         </p>
-        <p className="truncate text-sm text-muted-foreground">{usuario.email}</p>
+        <p className="truncate text-sm text-muted-foreground">{user.email}</p>
       </div>
 
       <div className="flex shrink-0 gap-2">
-        <EstadoBadge status={usuario.status} />
-        <RolBadge esAdmin={usuario.role === 'admin'} />
+        <StatusBadge status={user.status} />
+        <RoleBadge isAdmin={user.role === 'admin'} />
       </div>
     </div>
   );

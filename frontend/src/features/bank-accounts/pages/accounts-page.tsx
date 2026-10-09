@@ -3,8 +3,8 @@ import { useState, type SubmitEvent } from 'react';
 
 import {
   useAccounts,
-  useArchivarCuenta,
-  useCrearCuenta,
+  useArchiveAccount,
+  useCreateAccount,
 } from '@/features/bank-accounts/api/accounts';
 import { ApiClientError } from '@/shared/api/api-client';
 import { type Account } from '@/shared/api/generated/model';
@@ -22,24 +22,24 @@ import { PageHeader } from '@/shared/ui/atoms/page-header';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 import { Select } from '@/shared/ui/organisms/select';
 
-const TIPOS: { valor: Account['type']; etiqueta: string }[] = [
-  { valor: 'cash', etiqueta: t('accounts.types.cash') },
-  { valor: 'debit', etiqueta: t('accounts.types.debit') },
-  { valor: 'credit', etiqueta: t('accounts.types.credit') },
-  { valor: 'bank', etiqueta: t('accounts.types.bank') },
-  { valor: 'savings', etiqueta: t('accounts.types.savings') },
-  { valor: 'other', etiqueta: t('accounts.types.other') },
+const TYPES: { value: Account['type']; label: string }[] = [
+  { value: 'cash', label: t('accounts.types.cash') },
+  { value: 'debit', label: t('accounts.types.debit') },
+  { value: 'credit', label: t('accounts.types.credit') },
+  { value: 'bank', label: t('accounts.types.bank') },
+  { value: 'savings', label: t('accounts.types.savings') },
+  { value: 'other', label: t('accounts.types.other') },
 ];
 
-const ETIQUETA_DE_TIPO = Object.fromEntries(TIPOS.map((t) => [t.valor, t.etiqueta]));
+const TYPE_LABEL = Object.fromEntries(TYPES.map((t) => [t.value, t.label]));
 
 /** M3 — Cuentas. El saldo nunca se escribe: se deriva de los movimientos. */
 export function AccountsPage() {
-  const cuentas = useAccounts(true);
-  const [formularioAbierto, setFormularioAbierto] = useState(false);
+  const accounts = useAccounts(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const activas = (cuentas.data ?? []).filter((cuenta) => !cuenta.isArchived);
-  const archivadas = (cuentas.data ?? []).filter((cuenta) => cuenta.isArchived);
+  const active = (accounts.data ?? []).filter((account) => !account.isArchived);
+  const archived = (accounts.data ?? []).filter((account) => account.isArchived);
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,66 +47,66 @@ export function AccountsPage() {
         title={t('shell.sections.accounts')}
         description={t('accounts.help')}
         actions={
-          <Button size="sm" onClick={() => setFormularioAbierto((abierto) => !abierto)}>
+          <Button size="sm" onClick={() => setIsFormOpen((isOpen) => !isOpen)}>
             <Plus aria-hidden="true" />
             {t('accounts.new')}
           </Button>
         }
       />
 
-      {formularioAbierto && <FormularioDeCuenta onListo={() => setFormularioAbierto(false)} />}
+      {isFormOpen && <AccountForm onDone={() => setIsFormOpen(false)} />}
 
-      {cuentas.isPending && (
+      {accounts.isPending && (
         <div className="grid gap-4 sm:grid-cols-2">
           <Skeleton className="h-28" />
           <Skeleton className="h-28" />
         </div>
       )}
 
-      {cuentas.isError && <ErrorAlert message={t('accounts.loadFailed')} />}
+      {accounts.isError && <ErrorAlert message={t('accounts.loadFailed')} />}
 
-      {cuentas.isSuccess && activas.length === 0 && !formularioAbierto && (
-        <NoAccounts onCrear={() => setFormularioAbierto(true)} />
+      {accounts.isSuccess && active.length === 0 && !isFormOpen && (
+        <NoAccounts onCreate={() => setIsFormOpen(true)} />
       )}
 
-      {activas.length > 0 && (
+      {active.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
-          {activas.map((cuenta) => (
-            <TarjetaDeCuenta key={cuenta.id} cuenta={cuenta} />
+          {active.map((account) => (
+            <AccountCard key={account.id} account={account} />
           ))}
         </div>
       )}
 
-      {archivadas.length > 0 && <ArchivedAccounts cuentas={archivadas} />}
+      {archived.length > 0 && <ArchivedAccounts accounts={archived} />}
     </div>
   );
 }
 
-function TarjetaDeCuenta({ cuenta }: { cuenta: Account }) {
-  const archivar = useArchivarCuenta();
-  const esTarjeta = cuenta.type === 'credit';
-  const Icono = esTarjeta ? CreditCard : Wallet;
+function AccountCard({ account }: { account: Account }) {
+  const isArchived = useArchiveAccount();
+  const isCard = account.type === 'credit';
+  const Icon = isCard ? CreditCard : Wallet;
 
   return (
-    <Card className={cn(cuenta.isArchived && 'opacity-60')}>
+    <Card className={cn(account.isArchived && 'opacity-60')}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <Icono className="size-4 text-muted-foreground" aria-hidden="true" />
-              <p className="truncate font-medium">{cuenta.name}</p>
+              <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+              <p className="truncate font-medium">{account.name}</p>
             </div>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {ETIQUETA_DE_TIPO[cuenta.type]}
-              {cuenta.last4 && ` ····${cuenta.last4}`}
+              {TYPE_LABEL[account.type]}
+              {account.last4 && ` ····${account.last4}`}
             </p>
           </div>
 
           <Button
             variant="ghost"
             size="sm"
-            aria-label={cuenta.isArchived ? t('accounts.unarchive') : t('accounts.archive')}
-            onClick={() => archivar.mutate({ id: cuenta.id, archivar: !cuenta.isArchived })}
+            aria-label={account.isArchived ? t('accounts.unarchive') : t('accounts.archive')}
+            onClick={() => isArchived.mutate({ id: account.id, isArchived: !account.isArchived })}
           >
             <Archive aria-hidden="true" />
           </Button>
@@ -114,22 +114,22 @@ function TarjetaDeCuenta({ cuenta }: { cuenta: Account }) {
 
         <div className="mt-4">
           <p className="text-xs text-muted-foreground">
-            {esTarjeta ? t('accounts.owed') : t('accounts.available')}
+            {isCard ? t('accounts.owed') : t('accounts.available')}
           </p>
-          <Balance amount={cuenta.balance} className="text-2xl" />
+          <Balance amount={account.balance} className="text-2xl" />
         </div>
 
-        {esTarjeta && cuenta.availableCredit !== null && (
+        {isCard && account.availableCredit !== null && (
           <div className="mt-3">
-            <Badge variant={Number.parseFloat(cuenta.availableCredit) < 0 ? 'warning' : 'info'}>
-              {t('accounts.creditAvailable', { amount: formatCOP(cuenta.availableCredit) })}
+            <Badge variant={Number.parseFloat(account.availableCredit) < 0 ? 'warning' : 'info'}>
+              {t('accounts.creditAvailable', { amount: formatCOP(account.availableCredit) })}
             </Badge>
           </div>
         )}
 
-        {cuenta.balance !== cuenta.balanceProjected && (
+        {account.balance !== account.balanceProjected && (
           <p className="mt-2 text-xs text-muted-foreground">
-            {t('accounts.withPending', { amount: formatCOP(cuenta.balanceProjected) })}
+            {t('accounts.withPending', { amount: formatCOP(account.balanceProjected) })}
           </p>
         )}
       </CardContent>
@@ -137,16 +137,16 @@ function TarjetaDeCuenta({ cuenta }: { cuenta: Account }) {
   );
 }
 
-function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
-  const form = useAccountForm(onListo);
-  const { error, guardando, onSubmit } = form;
+function AccountForm({ onDone }: { onDone: () => void }) {
+  const form = useAccountForm(onDone);
+  const { error, isSaving, onSubmit } = form;
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t('accounts.new')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={(evento) => void onSubmit(evento)} className="flex flex-col gap-4">
+        <form onSubmit={(event) => void onSubmit(event)} className="flex flex-col gap-4">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -156,11 +156,11 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
           <AccountFields form={form} />
 
           <div className="flex gap-2">
-            <Button type="submit" disabled={guardando}>
-              {guardando && <Loader2 className="animate-spin" aria-hidden="true" />}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="animate-spin" aria-hidden="true" />}
               {t('common.save')}
             </Button>
-            <Button type="button" variant="ghost" onClick={onListo}>
+            <Button type="button" variant="ghost" onClick={onDone}>
               {t('common.cancel')}
             </Button>
           </div>
@@ -172,7 +172,7 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
 
 function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
   const { name, setName, type, setType, openingBalance, setOpeningBalance } = form;
-  const { creditLimit, setCreditLimit, esTarjeta } = form;
+  const { creditLimit, setCreditLimit, isCard } = form;
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Field label={t('common.name')} id="name">
@@ -180,7 +180,7 @@ function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
           id="name"
           required
           value={name}
-          onChange={(evento) => setName(evento.target.value)}
+          onChange={(event) => setName(event.target.value)}
           placeholder={t('accounts.namePlaceholder')}
         />
       </Field>
@@ -190,31 +190,31 @@ function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
           id="type"
           label={t('accounts.form.accountType')}
           value={type}
-          options={TIPOS.map((o) => ({ value: o.valor, label: o.etiqueta }))}
+          options={TYPES.map((o) => ({ value: o.value, label: o.label }))}
           onChange={(v) => setType(v as Account['type'])}
         />
       </Field>
 
       <Field
-        label={esTarjeta ? t('accounts.form.currentDebt') : t('accounts.form.openingBalance')}
+        label={isCard ? t('accounts.form.currentDebt') : t('accounts.form.openingBalance')}
         id="opening"
       >
         <Input
           id="opening"
           inputMode="decimal"
           value={openingBalance}
-          onChange={(evento) => setOpeningBalance(evento.target.value)}
+          onChange={(event) => setOpeningBalance(event.target.value)}
           className="tabular"
         />
       </Field>
 
-      {esTarjeta && (
+      {isCard && (
         <Field label={t('accounts.form.creditLimit')} id="limit">
           <Input
             id="limit"
             inputMode="decimal"
             value={creditLimit}
-            onChange={(evento) => setCreditLimit(evento.target.value)}
+            onChange={(event) => setCreditLimit(event.target.value)}
             className="tabular"
             placeholder="5000000"
           />
@@ -225,8 +225,8 @@ function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
 }
 
 /** Los campos de una cuenta nueva y cómo se crea. */
-function useAccountForm(onListo: () => void) {
-  const crear = useCrearCuenta();
+function useAccountForm(onDone: () => void) {
+  const create = useCreateAccount();
 
   const [name, setName] = useState('');
   const [type, setType] = useState<Account['type']>('debit');
@@ -234,22 +234,22 @@ function useAccountForm(onListo: () => void) {
   const [creditLimit, setCreditLimit] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const esTarjeta = type === 'credit';
+  const isCard = type === 'credit';
 
-  async function onSubmit(evento: SubmitEvent<HTMLFormElement>): Promise<void> {
-    evento.preventDefault();
+  async function onSubmit(event: SubmitEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
     setError(null);
 
     try {
-      await crear.mutateAsync({
+      await create.mutateAsync({
         name,
         type,
         openingBalance: openingBalance.replace(/[^\d.-]/g, '') || '0',
-        ...(esTarjeta && creditLimit ? { creditLimit: creditLimit.replace(/[^\d.]/g, '') } : {}),
+        ...(isCard && creditLimit ? { creditLimit: creditLimit.replace(/[^\d.]/g, '') } : {}),
       });
-      onListo();
-    } catch (causa) {
-      setError(causa instanceof ApiClientError ? causa.message : t('accounts.createFailed'));
+      onDone();
+    } catch (cause) {
+      setError(cause instanceof ApiClientError ? cause.message : t('accounts.createFailed'));
     }
   }
 
@@ -263,32 +263,32 @@ function useAccountForm(onListo: () => void) {
     creditLimit,
     setCreditLimit,
     error,
-    esTarjeta,
-    guardando: crear.isPending,
+    isCard,
+    isSaving: create.isPending,
     onSubmit,
   };
 }
 
-function ArchivedAccounts({ cuentas }: { cuentas: Account[] }) {
+function ArchivedAccounts({ accounts }: { accounts: Account[] }) {
   return (
     <section>
       <h2 className="mb-3 text-sm font-medium text-muted-foreground">{t('accounts.archived')}</h2>
       <div className="grid gap-4 sm:grid-cols-2">
-        {cuentas.map((cuenta) => (
-          <TarjetaDeCuenta key={cuenta.id} cuenta={cuenta} />
+        {accounts.map((account) => (
+          <AccountCard key={account.id} account={account} />
         ))}
       </div>
     </section>
   );
 }
 
-function NoAccounts({ onCrear }: { onCrear: () => void }) {
+function NoAccounts({ onCreate }: { onCreate: () => void }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
         <Wallet className="size-8 text-primary" aria-hidden="true" />
         <p className="max-w-sm text-sm text-muted-foreground">{t('accounts.empty')}</p>
-        <Button onClick={onCrear}>{t('accounts.create')}</Button>
+        <Button onClick={onCreate}>{t('accounts.create')}</Button>
       </CardContent>
     </Card>
   );

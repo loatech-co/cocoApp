@@ -17,34 +17,34 @@
  * Without `sessionStorage` (blocked, private mode) there is no way to tell the
  * second failure from the first, so it does not reload at all.
  */
-const CLAVE = 'coco:recarga-por-version';
-const VENTANA_MS = 60_000;
+const STORAGE_KEY = 'coco:recarga-por-version';
+const WINDOW_MS = 60_000;
 
-interface Entorno {
-  ventana?: Window;
-  recargar?: () => void;
-  ahora?: () => number;
+interface Environment {
+  win?: Window;
+  reload?: () => void;
+  now?: () => number;
 }
 
-export function instalarRecargaPorVersion({
-  ventana = window,
-  recargar = () => ventana.location.reload(),
-  ahora = Date.now,
-}: Entorno = {}): () => void {
-  const alFallar = (evento: Event) => {
+export function installVersionReload({
+  win = window,
+  reload = () => win.location.reload(),
+  now = Date.now,
+}: Environment = {}): () => void {
+  const onFail = (event: Event) => {
     try {
-      const ultima = Number(ventana.sessionStorage.getItem(CLAVE));
-      if (ultima && ahora() - ultima < VENTANA_MS) return;
-      ventana.sessionStorage.setItem(CLAVE, String(ahora()));
+      const last = Number(win.sessionStorage.getItem(STORAGE_KEY));
+      if (last && now() - last < WINDOW_MS) return;
+      win.sessionStorage.setItem(STORAGE_KEY, String(now()));
     } catch {
       return;
     }
     // Vite throws the error after the event unless it is cancelled; the page
     // is about to be replaced, so there is nothing to throw it at.
-    evento.preventDefault();
-    recargar();
+    event.preventDefault();
+    reload();
   };
 
-  ventana.addEventListener('vite:preloadError', alFallar);
-  return () => ventana.removeEventListener('vite:preloadError', alFallar);
+  win.addEventListener('vite:preloadError', onFail);
+  return () => win.removeEventListener('vite:preloadError', onFail);
 }

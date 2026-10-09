@@ -2,7 +2,7 @@ import { Eye, LogOut, ScrollText, ShieldCheck, Tags, UserCog } from 'lucide-reac
 import { type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 
-import { useLlevaCuentas } from '@/features/profile/api/preferences';
+import { useHasAccounts } from '@/features/profile/api/preferences';
 import { useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
 import { MY_ACCOUNT, SECTIONS, ADMIN_SECTIONS, type Section } from '@/shared/lib/sections';
@@ -26,40 +26,40 @@ import { Menu, MenuOption, MenuSeparator } from '@/shared/ui/molecules/menu';
  * atajos: una segunda lista de las páginas del producto se separaría de esta
  * la primera vez que se añada una pantalla, y la separación no se vería.
  */
-export function useSecciones(): {
-  diaADia: readonly Section[];
-  administracion: readonly Section[];
-  biblioteca: readonly Section[];
+export function useSections(): {
+  daily: readonly Section[];
+  admin: readonly Section[];
+  library: readonly Section[];
 } {
   const { isAdmin } = useAuth();
-  const llevaCuentas = useLlevaCuentas();
+  const hasAccounts = useHasAccounts();
 
-  const diaADia = SECTIONS.filter((s) => s.requires !== 'cuentas' || llevaCuentas);
-  const administracion = isAdmin ? ADMIN_SECTIONS : [];
+  const daily = SECTIONS.filter((s) => s.requires !== 'cuentas' || hasAccounts);
+  const admin = isAdmin ? ADMIN_SECTIONS : [];
 
-  return { diaADia, administracion, biblioteca: [...diaADia, ...administracion, MY_ACCOUNT] };
+  return { daily, admin, library: [...daily, ...admin, MY_ACCOUNT] };
 }
 
-export function EnlaceDeSeccion({
+export function SectionLink({
   to,
-  exact,
-  plegada = false,
-  titulo,
+  isExact,
+  isCollapsed = false,
+  title,
   children,
 }: {
   to: string;
-  exact: boolean;
-  plegada?: boolean;
+  isExact: boolean;
+  isCollapsed?: boolean;
   /** El nombre de la sección. Plegada, es lo único que queda para saberlo. */
-  titulo?: string;
+  title?: string;
   children: ReactNode;
 }) {
   return (
     <NavLink
       to={to}
-      end={exact}
-      title={plegada ? titulo : undefined}
-      aria-label={plegada ? titulo : undefined}
+      end={isExact}
+      title={isCollapsed ? title : undefined}
+      aria-label={isCollapsed ? title : undefined}
       className={({ isActive }) =>
         cn(
           // Esquinas suaves, no pastilla: en una barra estrecha la pastilla se
@@ -69,7 +69,7 @@ export function EnlaceDeSeccion({
           // toca, por encima del suelo de 42 porque aquí sobra alto y una
           // lista de nueve se recorre con el pulgar.
           'movil:min-h-[48px]',
-          plegada ? 'justify-center px-0' : 'px-3',
+          isCollapsed ? 'justify-center px-0' : 'px-3',
           // ── Solo lo ELEGIDO lleva fondo ─────────────────────────────────
           // El paso del cursor no pinta ninguno. Llevaba `sidebar-hover`, que
           // en oscuro es un verde #1e3b30, y en una columna de cuatro filas
@@ -130,7 +130,7 @@ export function EnlaceDeSeccion({
  * El correo va debajo del nombre porque dos personas pueden llamarse igual y
  * no tener el mismo correo.
  */
-export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
+export function AccountMenu({ isCollapsed = false }: { isCollapsed?: boolean }) {
   return (
     <Menu
       label={t('shell.account.yours')}
@@ -144,22 +144,22 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
         // de otra familia.
         'flex w-full min-w-0 items-center gap-2.5 rounded-lg py-2 text-left outline-none',
         'movil:min-h-[42px]',
-        plegada ? 'justify-center px-0' : 'px-2',
+        isCollapsed ? 'justify-center px-0' : 'px-2',
       )}
-      trigger={() => <AccountTrigger plegada={plegada} />}
+      trigger={() => <AccountTrigger isCollapsed={isCollapsed} />}
     >
-      {(cerrar) => <AccountOptions cerrar={cerrar} />}
+      {(close) => <AccountOptions close={close} />}
     </Menu>
   );
 }
 
-function AccountTrigger({ plegada }: { plegada: boolean }) {
+function AccountTrigger({ isCollapsed }: { isCollapsed: boolean }) {
   const { user } = useAuth();
-  const nombre = user?.displayName ?? user?.email ?? '?';
+  const name = user?.displayName ?? user?.email ?? '?';
   return (
     <>
-      <Avatar nombre={nombre} />
-      {!plegada && (
+      <Avatar name={name} />
+      {!isCollapsed && (
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-sidebar-foreground">
             {user?.displayName ?? '—'}
@@ -173,36 +173,36 @@ function AccountTrigger({ plegada }: { plegada: boolean }) {
   );
 }
 
-function AccountOptions({ cerrar }: { cerrar: () => void }) {
+function AccountOptions({ close }: { close: () => void }) {
   const { isAdmin, isRealAdmin, isViewingAsUser, setViewAsUser, signOut } = useAuth();
-  const navegar = useNavigate();
+  const navigate = useNavigate();
 
   // `void` delante de `navegar` no es adorno: en react-router 7 `navigate`
   // devuelve una promesa, y aquí se llama desde un `onClick` que no puede
   // esperarla. El `void` dice que es a propósito —navegar es de ida sin
   // vuelta— y es lo que distingue esto de la promesa que alguien se olvidó de
   // atender.
-  function ir(ruta: string): void {
-    cerrar();
-    void navegar(ruta);
+  function goTo(route: string): void {
+    close();
+    void navigate(route);
   }
 
   return (
     <>
-      <MenuOption Icon={UserCog} onClick={() => ir('/mi-cuenta')}>
+      <MenuOption Icon={UserCog} onClick={() => goTo('/mi-cuenta')}>
         {t('shell.account.myAccount')}
       </MenuOption>
 
-      <MenuOption Icon={Tags} onClick={() => ir('/centros-de-costos')}>
+      <MenuOption Icon={Tags} onClick={() => goTo('/centros-de-costos')}>
         {t('shell.sections.costCenters')}
       </MenuOption>
 
       {isAdmin && (
         <>
-          <MenuOption Icon={ShieldCheck} onClick={() => ir('/administracion')}>
+          <MenuOption Icon={ShieldCheck} onClick={() => goTo('/administracion')}>
             {t('shell.sections.users')}
           </MenuOption>
-          <MenuOption Icon={ScrollText} onClick={() => ir('/administracion/bitacora')}>
+          <MenuOption Icon={ScrollText} onClick={() => goTo('/administracion/bitacora')}>
             {t('shell.sections.auditLog')}
           </MenuOption>
         </>
@@ -223,12 +223,12 @@ function AccountOptions({ cerrar }: { cerrar: () => void }) {
         <MenuOption
           Icon={isViewingAsUser ? ShieldCheck : Eye}
           onClick={() => {
-            cerrar();
+            close();
             setViewAsUser(!isViewingAsUser);
             // Encendiéndola desde una pantalla de administración, quedarse
             // sería quedarse mirando un «no tienes acceso». Se sale al
             // resumen, que es de donde parte quien no administra nada.
-            if (!isViewingAsUser) void navegar('/');
+            if (!isViewingAsUser) void navigate('/');
           }}
         >
           {isViewingAsUser ? t('common.backToAdmin') : t('shell.account.viewAsUser')}
@@ -250,24 +250,24 @@ function AccountOptions({ cerrar }: { cerrar: () => void }) {
  * qué cuenta se está dentro, que es la pregunta que uno se hace al ver un
  * avatar.
  */
-export function Avatar({ nombre, className }: { nombre: string; className?: string }) {
-  const iniciales = nombre
+export function Avatar({ name, className }: { name: string; className?: string }) {
+  const initials = name
     .trim()
     .split(/[\s@._-]+/)
     .filter(Boolean)
     .slice(0, 2)
-    .map((parte) => parte[0]?.toUpperCase() ?? '')
+    .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
 
   return (
     <span
-      title={nombre}
+      title={name}
       className={cn(
         'flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground',
         className,
       )}
     >
-      {iniciales || '?'}
+      {initials || '?'}
     </span>
   );
 }

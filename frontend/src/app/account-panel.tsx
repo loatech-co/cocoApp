@@ -8,7 +8,7 @@ import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
 import { PANEL_ROW_CLASS, PanelRow } from '@/shared/ui/atoms/panel-row';
 import { LinkRow } from '@/shared/ui/molecules/link-row';
 
-import { Avatar } from './navegacion';
+import { Avatar } from './navigation';
 
 /**
  * La hoja del avatar.
@@ -35,16 +35,16 @@ import { Avatar } from './navegacion';
  * Usuarios y Bitácora son de administración: quien no lo es no las tiene ni
  * apagadas ni escondidas con CSS. Ausentes, como en el riel.
  */
-export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
+export function AccountPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { user, isAdmin, isRealAdmin, signOut } = useAuth();
-  const nombre = user?.displayName ?? user?.email ?? '?';
+  const name = user?.displayName ?? user?.email ?? '?';
 
   return (
     <BottomSheet
-      isOpen={abierto}
+      isOpen={isOpen}
       title={t('shell.account.myAccount')}
-      head={<Perfil nombre={nombre} />}
-      onClose={onCerrar}
+      head={<ProfileSummary name={name} />}
+      onClose={onClose}
     >
       <div className="flex flex-col">
         {/*
@@ -54,22 +54,22 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
           justificara el viaje. El ancla lleva al sitio exacto y la página sigue
           siendo una.
         */}
-        <LinkRow Icon={SlidersHorizontal} to="/mi-cuenta#ajustes" onNavigate={onCerrar}>
+        <LinkRow Icon={SlidersHorizontal} to="/mi-cuenta#ajustes" onNavigate={onClose}>
           {t('shell.account.settings')}
         </LinkRow>
 
         {isAdmin && (
-          <LinkRow Icon={ShieldCheck} to="/administracion" onNavigate={onCerrar}>
+          <LinkRow Icon={ShieldCheck} to="/administracion" onNavigate={onClose}>
             {t('shell.sections.users')}
           </LinkRow>
         )}
 
-        <LinkRow Icon={KeyRound} to="/mi-cuenta#seguridad" onNavigate={onCerrar}>
+        <LinkRow Icon={KeyRound} to="/mi-cuenta#seguridad" onNavigate={onClose}>
           {t('shell.account.security')}
         </LinkRow>
 
         {isAdmin && (
-          <LinkRow Icon={ScrollText} to="/administracion/bitacora" onNavigate={onCerrar}>
+          <LinkRow Icon={ScrollText} to="/administracion/bitacora" onNavigate={onClose}>
             {t('shell.sections.auditLog')}
           </LinkRow>
         )}
@@ -84,7 +84,7 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
           vista, `esAdmin` es falso —para eso está— y con esa condición el
           interruptor desaparecería justo cuando hace falta para apagarlo.
         */}
-        {isRealAdmin && <ViewAsUserRow onCerrar={onCerrar} />}
+        {isRealAdmin && <ViewAsUserRow onClose={onClose} />}
 
         <PanelRow tone="danger" onClick={() => void signOut()}>
           <LogOut className="size-4 shrink-0" aria-hidden="true" />
@@ -102,16 +102,16 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
  * rótulo: la página entera está detrás, y las dos filas de abajo solo llevan a
  * trozos suyos.
  */
-function Perfil({ nombre }: { nombre: string }) {
+function ProfileSummary({ name }: { name: string }) {
   const { user } = useAuth();
 
   return (
     <Link
       to="/mi-cuenta"
       className={cn(PANEL_ROW_CLASS, '-mx-1.5 gap-3')}
-      aria-label={t('shell.account.myAccountOf', { name: nombre })}
+      aria-label={t('shell.account.myAccountOf', { name })}
     >
-      <Avatar nombre={nombre} className="size-10" />
+      <Avatar name={name} className="size-10" />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-display text-base font-semibold">
           {user?.displayName ?? '—'}
@@ -125,17 +125,17 @@ function Perfil({ nombre }: { nombre: string }) {
 }
 
 /** El interruptor de la vista de usuario, en forma de fila. */
-function ViewAsUserRow({ onCerrar }: { onCerrar: () => void }) {
+function ViewAsUserRow({ onClose }: { onClose: () => void }) {
   const { isViewingAsUser, setViewAsUser } = useAuth();
-  const navegar = useNavigate();
+  const navigate = useNavigate();
   return (
     <PanelRow
       onClick={() => {
-        onCerrar();
+        onClose();
         setViewAsUser(!isViewingAsUser);
         // Encendiéndola desde una pantalla de administración, quedarse
         // sería quedarse mirando un «no tienes acceso».
-        if (!isViewingAsUser) void navegar('/');
+        if (!isViewingAsUser) void navigate('/');
       }}
     >
       {isViewingAsUser ? (

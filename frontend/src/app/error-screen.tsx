@@ -9,11 +9,11 @@ import { PAGE_TITLE } from '@/shared/ui/atoms/page-header';
  * gone from the server. Browsers word it differently, and all three say the
  * same thing.
  */
-const CODIGO_OBSOLETO =
+const STALE_CODE =
   /dynamically imported module|Importing a module script failed|error loading dynamically imported module/i;
 
-export function esCodigoObsoleto(error: unknown): boolean {
-  return error instanceof Error && CODIGO_OBSOLETO.test(error.message);
+export function isStaleCode(error: unknown): boolean {
+  return error instanceof Error && STALE_CODE.test(error.message);
 }
 
 /**
@@ -25,23 +25,23 @@ export function esCodigoObsoleto(error: unknown): boolean {
  * and no page header (CLAUDE.md, rule 10). It never shows the error itself:
  * a stack trace says nothing to whoever is looking at it and may carry data.
  */
-export function PantallaDeError() {
+export function ErrorScreen() {
   const error = useRouteError();
-  const obsoleto = esCodigoObsoleto(error);
+  const isStale = isStaleCode(error);
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 text-center">
       <div className="flex flex-col gap-2">
         <h1 className={PAGE_TITLE}>
-          {obsoleto ? t('shell.error.newVersionTitle') : t('shell.error.title')}
+          {isStale ? t('shell.error.newVersionTitle') : t('shell.error.title')}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {obsoleto ? t('shell.error.newVersionHelp') : t('shell.error.help')}
+          {isStale ? t('shell.error.newVersionHelp') : t('shell.error.help')}
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
         <Button onClick={() => window.location.reload()}>{t('shell.error.reload')}</Button>
-        {!obsoleto && (
+        {!isStale && (
           <Button variant="outline" asChild>
             <a href="/">{t('common.goHome')}</a>
           </Button>

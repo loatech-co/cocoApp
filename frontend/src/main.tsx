@@ -2,8 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { Providers } from '@/app/providers';
-import { instalarRecargaPorVersion } from '@/app/recarga-por-version';
 import { AppRouter } from '@/app/router';
+import { installVersionReload } from '@/app/version-reload';
 import { isInNativeApp } from '@/shared/lib/bridge';
 import './index.css';
 
@@ -22,7 +22,7 @@ if (isInNativeApp()) {
 
 // A new deploy makes the hashed chunks of an open tab stale: it reloads once
 // to bring the new ones (see the file).
-instalarRecargaPorVersion();
+installVersionReload();
 
 const container = document.getElementById('root');
 if (!container) {

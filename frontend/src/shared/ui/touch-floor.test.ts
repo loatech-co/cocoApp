@@ -31,7 +31,7 @@ const CONTROLS: [filePath: string, what: string][] = [
   ['shared/ui/atoms/input.tsx', 'every text field'],
   ['shared/ui/organisms/select.tsx', 'the field that drops down a list, enabled and disabled'],
   ['shared/ui/molecules/menu.tsx', 'a menu option'],
-  ['app/navegacion.tsx', 'a section row and the account trigger'],
+  ['app/navigation.tsx', 'a section row and the account trigger'],
   [
     'features/transactions/components/classification-filter.tsx',
     'the row with a checkbox: the row is the control',

@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { forgetShortcuts } from '@/shared/lib/shortcuts';
 import { ToastStack, clearToasts } from '@/shared/ui/molecules/toast';
 
-import { useSuperficieDeAtajos, type PaginaDeAtajo } from './atajos';
+import { useShortcutsSurface, type PaginaDeAtajo } from './shortcuts';
 
 afterEach(() => {
   cleanup();
@@ -15,43 +15,43 @@ afterEach(() => {
   clearToasts();
 });
 
-const BIBLIOTECA: PaginaDeAtajo[] = [
-  { ruta: '/', etiqueta: 'Resumen', Icono: LayoutDashboard },
-  { ruta: '/cuentas', etiqueta: 'Cuentas', Icono: Wallet },
-  { ruta: '/administracion/bitacora', etiqueta: 'Bitácora', Icono: ScrollText },
-  { ruta: '/centros-de-costos', etiqueta: 'Centros de costos', Icono: Tags },
-  { ruta: '/administracion', etiqueta: 'Usuarios', Icono: ShieldCheck },
-  { ruta: '/mi-cuenta', etiqueta: 'Mi cuenta', Icono: UserCog },
+const LIBRARY: PaginaDeAtajo[] = [
+  { route: '/', label: 'Resumen', Icon: LayoutDashboard },
+  { route: '/cuentas', label: 'Cuentas', Icon: Wallet },
+  { route: '/administracion/bitacora', label: 'Bitácora', Icon: ScrollText },
+  { route: '/centros-de-costos', label: 'Centros de costos', Icon: Tags },
+  { route: '/administracion', label: 'Usuarios', Icon: ShieldCheck },
+  { route: '/mi-cuenta', label: 'Mi cuenta', Icon: UserCog },
 ];
 
 /** Doce páginas, para poder llegar al tope de nueve. */
-const BIBLIOTECA_LARGA: PaginaDeAtajo[] = Array.from({ length: 12 }, (_, i) => ({
-  ruta: `/p${i}`,
-  etiqueta: `Página ${i}`,
-  Icono: LayoutDashboard,
+const LONG_LIBRARY: PaginaDeAtajo[] = Array.from({ length: 12 }, (_, i) => ({
+  route: `/p${i}`,
+  label: `Página ${i}`,
+  Icon: LayoutDashboard,
 }));
 
-function Superficie({
-  abierto = true,
-  porDefecto = ['/', '/administracion/bitacora'],
-  biblioteca = BIBLIOTECA,
-  onIr = vi.fn(),
+function Surface({
+  isOpen = true,
+  defaults = ['/', '/administracion/bitacora'],
+  library = LIBRARY,
+  onGo = vi.fn(),
 }: {
-  abierto?: boolean;
-  porDefecto?: string[];
-  biblioteca?: PaginaDeAtajo[];
-  onIr?: () => void;
+  isOpen?: boolean;
+  defaults?: string[];
+  library?: PaginaDeAtajo[];
+  onGo?: () => void;
 }) {
-  const { cabeza, cuerpo } = useSuperficieDeAtajos({
-    abierto,
-    biblioteca,
-    porDefecto,
-    onIr,
+  const { header, body } = useShortcutsSurface({
+    isOpen,
+    library,
+    defaults,
+    onGo,
   });
   return (
     <MemoryRouter>
-      {cabeza}
-      {cuerpo}
+      {header}
+      {body}
       <ToastStack />
     </MemoryRouter>
   );
@@ -59,17 +59,17 @@ function Superficie({
 
 describe('Los atajos', () => {
   it('empiezan en lo de fábrica, y son enlaces de verdad', () => {
-    render(<Superficie />);
+    render(<Surface />);
 
-    const resumen = screen.getByText('Resumen').closest('a');
-    expect(resumen?.getAttribute('href')).toBe('/');
+    const summary = screen.getByText('Resumen').closest('a');
+    expect(summary?.getAttribute('href')).toBe('/');
     expect(screen.getByText('Bitácora').closest('a')).toBeTruthy();
     // Lo que no es baldosa no se pinta.
     expect(screen.queryByText('Usuarios')).toBeNull();
   });
 
   it('«Editar» saca los menos y el hueco de agregar', () => {
-    render(<Superficie />);
+    render(<Surface />);
     expect(screen.queryByLabelText('Quitar Resumen')).toBeNull();
 
     fireEvent.click(screen.getByText('Editar'));
@@ -83,10 +83,10 @@ describe('Los atajos', () => {
   it('mantener pulsada una baldosa entra a lo mismo', () => {
     vi.useFakeTimers();
     try {
-      render(<Superficie />);
-      const baldosa = screen.getByText('Resumen').closest('a')!;
+      render(<Surface />);
+      const tile = screen.getByText('Resumen').closest('a')!;
 
-      fireEvent.pointerDown(baldosa);
+      fireEvent.pointerDown(tile);
       // El reloj corre fuera de React: sin `act` el cambio de estado no llega
       // al DOM y la prueba mira una pantalla vieja.
       // Las llaves importan: sin ellas la flecha DEVUELVE lo que da
@@ -103,7 +103,7 @@ describe('Los atajos', () => {
   });
 
   it('quitar escribe en el almacén, y el dibujo sale de ahí', () => {
-    render(<Superficie />);
+    render(<Surface />);
     fireEvent.click(screen.getByText('Editar'));
 
     fireEvent.click(screen.getByLabelText('Quitar Resumen'));
@@ -113,7 +113,7 @@ describe('Los atajos', () => {
   });
 
   it('la lista de páginas enseña solo lo que NO se tiene', () => {
-    render(<Superficie />);
+    render(<Surface />);
     fireEvent.click(screen.getByText('Editar'));
     fireEvent.click(screen.getByText('Agregar atajo'));
 
@@ -125,7 +125,7 @@ describe('Los atajos', () => {
   });
 
   it('el buscador filtra sin acentos', () => {
-    render(<Superficie />);
+    render(<Surface />);
     fireEvent.click(screen.getByText('Editar'));
     fireEvent.click(screen.getByText('Agregar atajo'));
 
@@ -137,7 +137,7 @@ describe('Los atajos', () => {
   });
 
   it('elegir una página la añade y la saca de la lista', () => {
-    render(<Superficie />);
+    render(<Surface />);
     fireEvent.click(screen.getByText('Editar'));
     fireEvent.click(screen.getByText('Agregar atajo'));
 
@@ -151,7 +151,7 @@ describe('Los atajos', () => {
   });
 
   it('sin nada por agregar, la lista lo dice', () => {
-    render(<Superficie porDefecto={BIBLIOTECA.map((p) => p.ruta)} />);
+    render(<Surface defaults={LIBRARY.map((p) => p.route)} />);
     fireEvent.click(screen.getByText('Editar'));
     fireEvent.click(screen.getByText('Agregar atajo'));
 
@@ -160,10 +160,7 @@ describe('Los atajos', () => {
 
   it('el décimo se contesta con un aviso, uno solo por muchas veces que se pida', () => {
     render(
-      <Superficie
-        biblioteca={BIBLIOTECA_LARGA}
-        porDefecto={BIBLIOTECA_LARGA.slice(0, 9).map((p) => p.ruta)}
-      />,
+      <Surface library={LONG_LIBRARY} defaults={LONG_LIBRARY.slice(0, 9).map((p) => p.route)} />,
     );
     fireEvent.click(screen.getByText('Editar'));
     fireEvent.click(screen.getByText('Agregar atajo'));
@@ -186,12 +183,12 @@ describe('Los atajos', () => {
   });
 
   it('cerrar olvida en qué estado quedó', () => {
-    const { rerender } = render(<Superficie />);
+    const { rerender } = render(<Surface />);
     fireEvent.click(screen.getByText('Editar'));
     expect(screen.getByText('Listo')).toBeTruthy();
 
-    rerender(<Superficie abierto={false} />);
-    rerender(<Superficie abierto={true} />);
+    rerender(<Surface isOpen={false} />);
+    rerender(<Surface isOpen={true} />);
 
     // Una pantalla que se reabre en mitad de una edición se reabre mal.
     expect(screen.getByText('Editar')).toBeTruthy();

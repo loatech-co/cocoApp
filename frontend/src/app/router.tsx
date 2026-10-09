@@ -6,7 +6,7 @@ import { t } from '@/shared/lib/i18n';
 import { PAGE_TITLE } from '@/shared/ui/atoms/page-header';
 
 import { AppShell } from './app-shell';
-import { PantallaDeError } from './pantalla-de-error';
+import { ErrorScreen } from './error-screen';
 
 /*
   Every screen but the first one loads on demand (ADR 0018). The index is the
@@ -22,28 +22,28 @@ const lazily = {
   costCenters: async () => ({
     Component: (await import('@/features/cost-centers/pages/cost-centers-page')).CostCentersPage,
   }),
-  cuenta: async () => ({
-    Component: (await import('@/features/profile/pages/cuenta-page')).CuentaPage,
+  account: async () => ({
+    Component: (await import('@/features/profile/pages/account-page')).AccountPage,
   }),
   register: async () => ({
     Component: (await import('@/features/auth/pages/register-page')).RegisterPage,
   }),
-  usuarios: async () => {
-    const { UsuariosPage } = await import('@/features/admin/pages/usuarios-page');
+  users: async () => {
+    const { UsersPage } = await import('@/features/admin/pages/users-page');
     return {
       element: (
         <RequireAdmin>
-          <UsuariosPage />
+          <UsersPage />
         </RequireAdmin>
       ),
     };
   },
-  bitacora: async () => {
-    const { BitacoraPage } = await import('@/features/admin/pages/bitacora-page');
+  auditLog: async () => {
+    const { AuditLogPage } = await import('@/features/admin/pages/audit-log-page');
     return {
       element: (
         <RequireAdmin>
-          <BitacoraPage />
+          <AuditLogPage />
         </RequireAdmin>
       ),
     };
@@ -63,7 +63,7 @@ const lazily = {
  * nunca pasó por ahí: vive en `features/transactions/api/read-receipt.ts` y sigue
  * intacto.
  */
-export const rutas: RouteObject[] = [
+export const routes: RouteObject[] = [
   {
     /*
       Every route hangs from this one, which has no path and no element: it is
@@ -71,7 +71,7 @@ export const rutas: RouteObject[] = [
       throws, a chunk a deploy has removed— draws Coco's error screen, in
       Spanish, instead of React Router's default page.
     */
-    errorElement: <PantallaDeError />,
+    errorElement: <ErrorScreen />,
     children: [
       /*
     La dirección vieja de entrar. Sigue viva y redirige: hay marcadores y
@@ -101,12 +101,12 @@ export const rutas: RouteObject[] = [
           // apuntando a /categorias, y romperlos por un cambio de nombre es gratis
           // de evitar.
           { path: 'categorias', element: <Navigate to="/centros-de-costos" replace /> },
-          { path: 'mi-cuenta', lazy: lazily.cuenta },
+          { path: 'mi-cuenta', lazy: lazily.account },
 
           // Administración. El RequireAdmin es comodidad de navegación; quien
           // decide de verdad es el RolesGuard del backend.
-          { path: 'administracion', lazy: lazily.usuarios },
-          { path: 'administracion/bitacora', lazy: lazily.bitacora },
+          { path: 'administracion', lazy: lazily.users },
+          { path: 'administracion/bitacora', lazy: lazily.auditLog },
         ],
       },
       {
@@ -125,7 +125,7 @@ export const rutas: RouteObject[] = [
   },
 ];
 
-const router = createBrowserRouter(rutas);
+const router = createBrowserRouter(routes);
 
 export function AppRouter() {
   return <RouterProvider router={router} />;

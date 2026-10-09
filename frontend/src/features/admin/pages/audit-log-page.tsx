@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 
-import { useBitacora } from '@/features/admin/api/admin-queries';
+import { useAuditLog } from '@/features/admin/api/admin-queries';
 import type { AuditEntry } from '@/shared/api/generated/model';
 import { dateTime } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
@@ -32,10 +32,10 @@ type AuditAction =
   | 'admin.password_reset'
   | 'admin.role_changed';
 
-const esConocida = (accion: string): accion is AuditAction => Object.hasOwn(ETIQUETAS, accion);
+const isKnown = (action: string): action is AuditAction => Object.hasOwn(LABELS, action);
 
 /** Cada acción auditada, en español y sin jerga. */
-const ETIQUETAS: Record<AuditAction, string> = {
+const LABELS: Record<AuditAction, string> = {
   'auth.register': t('admin.auditLog.actions.register'),
   'auth.login': t('admin.auditLog.actions.login'),
   'auth.login_failed': t('admin.auditLog.actions.loginFailed'),
@@ -52,7 +52,7 @@ const ETIQUETAS: Record<AuditAction, string> = {
 };
 
 /** Las que merecen destacarse a simple vista. */
-const PREOCUPANTES = new Set<AuditAction>(['auth.login_failed', 'auth.token_reuse_detected']);
+const WORRYING = new Set<AuditAction>(['auth.login_failed', 'auth.token_reuse_detected']);
 
 /**
  * Bitácora de seguridad.
@@ -61,19 +61,19 @@ const PREOCUPANTES = new Set<AuditAction>(['auth.login_failed', 'auth.token_reus
  * descripciones de movimientos. La bitácora responde "quién hizo qué y cuándo",
  * no "cuánto dinero". Si guardara lo segundo, filtrarla sería mucho más caro.
  */
-export function BitacoraPage() {
-  const [pagina, setPagina] = useState(1);
-  const consulta = useBitacora(pagina);
+export function AuditLogPage() {
+  const [page, setPage] = useState(1);
+  const query = useAuditLog(page);
 
-  const total = consulta.data?.meta.total ?? 0;
-  const porPagina = consulta.data?.meta.perPage ?? 50;
-  const ultimaPagina = Math.max(Math.ceil(total / porPagina), 1);
+  const total = query.data?.meta.total ?? 0;
+  const perPage = query.data?.meta.perPage ?? 50;
+  const lastPage = Math.max(Math.ceil(total / perPage), 1);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title={t('shell.sections.auditLog')} description={t('admin.auditLog.help')} />
 
-      {consulta.isPending && (
+      {query.isPending && (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-14 w-full" />
           <Skeleton className="h-14 w-full" />
@@ -81,13 +81,13 @@ export function BitacoraPage() {
         </div>
       )}
 
-      {consulta.isError && (
+      {query.isError && (
         <Alert variant="destructive">
           <AlertDescription>{t('admin.auditLog.loadFailed')}</AlertDescription>
         </Alert>
       )}
 
-      {consulta.data?.data.length === 0 && (
+      {query.data?.data.length === 0 && (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             {t('admin.auditLog.empty')}
@@ -95,23 +95,23 @@ export function BitacoraPage() {
         </Card>
       )}
 
-      {consulta.data && consulta.data.data.length > 0 && (
+      {query.data && query.data.data.length > 0 && (
         <>
           <ul className="flex flex-col gap-2">
-            {consulta.data.data.map((evento) => (
-              <Evento key={evento.id} evento={evento} />
+            {query.data.data.map((event) => (
+              <AuditEvent key={event.id} event={event} />
             ))}
           </ul>
 
-          <LogPager pagina={pagina} ultimaPagina={ultimaPagina} setPagina={setPagina} />
+          <LogPager page={page} lastPage={lastPage} setPage={setPage} />
         </>
       )}
     </div>
   );
 }
 
-function Evento({ evento }: { evento: AuditEntry }) {
-  const preocupante = esConocida(evento.action) && PREOCUPANTES.has(evento.action);
+function AuditEvent({ event }: { event: AuditEntry }) {
+  const isWorrying = isKnown(event.action) && WORRYING.has(event.action);
 
   return (
     <li>
@@ -120,25 +120,25 @@ function Evento({ evento }: { evento: AuditEntry }) {
           <div className="min-w-0">
             <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
               {/* Una API más nueva puede traer una acción que esta lista aún no conoce. */}
-              {esConocida(evento.action) ? ETIQUETAS[evento.action] : evento.action}
-              {preocupante && (
+              {isKnown(event.action) ? LABELS[event.action] : event.action}
+              {isWorrying && (
                 <Badge variant="warning" className="font-normal">
                   {t('admin.auditLog.review')}
                 </Badge>
               )}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {evento.user
-                ? (evento.user.name ?? evento.user.email)
+              {event.user
+                ? (event.user.name ?? event.user.email)
                 : t('admin.auditLog.unknownAccount')}
-              {evento.ip && ` · ${evento.ip}`}
+              {event.ip && ` · ${event.ip}`}
             </p>
           </div>
           <time
-            dateTime={evento.createdAt}
+            dateTime={event.createdAt}
             className="shrink-0 text-xs tabular-nums text-muted-foreground"
           >
-            {dateTime.format(new Date(evento.createdAt))}
+            {dateTime.format(new Date(event.createdAt))}
           </time>
         </CardContent>
       </Card>
@@ -147,33 +147,33 @@ function Evento({ evento }: { evento: AuditEntry }) {
 }
 
 function LogPager({
-  pagina,
-  ultimaPagina,
-  setPagina,
+  page,
+  lastPage,
+  setPage,
 }: {
-  pagina: number;
-  ultimaPagina: number;
-  setPagina: Dispatch<SetStateAction<number>>;
+  page: number;
+  lastPage: number;
+  setPage: Dispatch<SetStateAction<number>>;
 }) {
   return (
     <nav className="flex items-center justify-between" aria-label={t('common.pagination')}>
       <Button
         variant="outline"
         size="sm"
-        disabled={pagina <= 1}
-        onClick={() => setPagina((p) => p - 1)}
+        disabled={page <= 1}
+        onClick={() => setPage((p) => p - 1)}
       >
         <ChevronLeft aria-hidden="true" />
         {t('common.previous')}
       </Button>
       <span className="text-sm text-muted-foreground">
-        {t('admin.auditLog.page', { page: pagina, pages: ultimaPagina })}
+        {t('admin.auditLog.page', { page, pages: lastPage })}
       </span>
       <Button
         variant="outline"
         size="sm"
-        disabled={pagina >= ultimaPagina}
-        onClick={() => setPagina((p) => p + 1)}
+        disabled={page >= lastPage}
+        onClick={() => setPage((p) => p + 1)}
       >
         {t('common.next')}
         <ChevronRight aria-hidden="true" />

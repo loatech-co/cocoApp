@@ -146,7 +146,7 @@ function LoginBrand() {
 }
 
 function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
-  const { email, setEmail, password, setPassword, error, enviando, onSubmit } = form;
+  const { email, setEmail, password, setPassword, error, isSending, onSubmit } = form;
   return (
     <Card>
       <CardHeader>
@@ -169,7 +169,7 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
               autoComplete="email"
               required
               value={email}
-              onChange={(evento) => setEmail(evento.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               aria-invalid={error !== null}
             />
           </Field>
@@ -181,12 +181,12 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
               autoComplete="current-password"
               required
               value={password}
-              onChange={(evento) => setPassword(evento.target.value)}
+              onChange={(event) => setPassword(event.target.value)}
               aria-invalid={error !== null}
             />
           </Field>
 
-          <LoginSubmit enviando={enviando} />
+          <LoginSubmit isSending={isSending} />
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
@@ -199,33 +199,33 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
 }
 
 /** El correo, la contraseña y el envío del formulario de entrada. */
-function useLoginForm(entrar: ReturnType<typeof useAuth>['signIn']) {
+function useLoginForm(signIn: ReturnType<typeof useAuth>['signIn']) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-  function onSubmit(evento: SubmitEvent<HTMLFormElement>): void {
-    evento.preventDefault();
+  const [isSending, setIsSending] = useState(false);
+  function onSubmit(event: SubmitEvent<HTMLFormElement>): void {
+    event.preventDefault();
     setError(null);
-    setEnviando(true);
+    setIsSending(true);
 
-    void entrar(email, password)
-      .catch((causa: unknown) => setError(authErrorMessage(causa)))
-      .finally(() => setEnviando(false));
+    void signIn(email, password)
+      .catch((cause: unknown) => setError(authErrorMessage(cause)))
+      .finally(() => setIsSending(false));
   }
 
-  return { email, setEmail, password, setPassword, error, enviando, onSubmit };
+  return { email, setEmail, password, setPassword, error, isSending, onSubmit };
 }
 
-function LoginSubmit({ enviando }: { enviando: boolean }) {
+function LoginSubmit({ isSending }: { isSending: boolean }) {
   return (
-    <Button type="submit" className="w-full" disabled={enviando}>
-      {enviando ? (
+    <Button type="submit" className="w-full" disabled={isSending}>
+      {isSending ? (
         <Loader2 className="animate-spin" aria-hidden="true" />
       ) : (
         <LogIn aria-hidden="true" />
       )}
-      {enviando ? t('auth.wait') : t('auth.signIn')}
+      {isSending ? t('auth.wait') : t('auth.signIn')}
     </Button>
   );
 }

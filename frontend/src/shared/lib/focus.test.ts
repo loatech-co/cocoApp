@@ -48,7 +48,8 @@ const relative = (path: string): string => path.split('/src/')[1]!;
  * person came to change.
  */
 const BORN_FOCUSED: Record<string, string> = {
-  'app/atajos.tsx': 'The page palette: it opens to type the name of one, and has no other control.',
+  'app/shortcuts.tsx':
+    'The page palette: it opens to type the name of one, and has no other control.',
   'features/transactions/components/toolbar-filters.tsx':
     'The search box appears on pressing the magnifier. It is the same gesture.',
   'features/transactions/components/search-panel.tsx':

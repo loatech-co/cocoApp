@@ -17,8 +17,8 @@ import { Button } from '@/shared/ui/atoms/button';
 import { Logo } from '@/shared/ui/atoms/logo';
 import { ToastStack } from '@/shared/ui/molecules/toast';
 
-import { BarraInferior } from './barra-inferior';
-import { PanelDeLaCuenta } from './panel-de-la-cuenta';
+import { AccountPanel } from './account-panel';
+import { BottomBar } from './bottom-bar';
 import { SideRail } from './side-rail';
 import { type ShellState, useShellState } from './use-shell-state';
 
@@ -66,7 +66,7 @@ import { type ShellState, useShellState } from './use-shell-state';
  * Porque no falló nada. Es un estado deliberado y reversible, que es
  * exactamente lo que dice el tono de aviso del tema.
  */
-function VistaDeUsuario() {
+function UserView() {
   const { isViewingAsUser, setViewAsUser } = useAuth();
 
   if (!isViewingAsUser) return null;
@@ -108,25 +108,25 @@ function VistaDeUsuario() {
  *
  * Fuera de la app no instala nada: `registrarPuente` lo pregunta.
  */
-function PuenteDeNavegacion({ abrirBusqueda }: { abrirBusqueda: () => void }) {
+function NavigationBridge({ openSearch }: { openSearch: () => void }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   useEffect(
     () =>
       registerBridge({
-        ir: (ruta) => void navigate(ruta),
-        abrirBusqueda,
+        ir: (route) => void navigate(route),
+        abrirBusqueda: openSearch,
         capturado: () => invalidateDerived(queryClient),
       }),
-    [navigate, abrirBusqueda, queryClient],
+    [navigate, openSearch, queryClient],
   );
 
   return null;
 }
 
 export function AppShell() {
-  const esMovil = useIsMobile();
+  const isMobile = useIsMobile();
   /**
    * Dentro de la app del teléfono.
    *
@@ -136,7 +136,7 @@ export function AppShell() {
    * tabulación y una barra fija debajo de otra. La búsqueda y la ficha sí,
    * porque la pestaña nativa «Buscar» abre la de aquí.
    */
-  const embebida = useIsInNativeApp();
+  const isEmbedded = useIsInNativeApp();
   const shell = useShellState();
 
   return (
@@ -148,15 +148,15 @@ export function AppShell() {
           Se MONTA o no se monta, no se esconde con CSS: un riel escondido
           sigue siendo nueve enlaces en el orden de tabulación de un teléfono,
           y sus nombres siguen estando dos veces en la página. */}
-      {!esMovil && !embebida && (
-        <SideRail plegada={shell.plegada} onAlternar={shell.alternarBarra} />
+      {!isMobile && !isEmbedded && (
+        <SideRail isCollapsed={shell.isCollapsed} onToggle={shell.toggleBar} />
       )}
 
       {/* ── Techo — teléfono ─────────────────────────────────────────────────
           Pegado arriba, que es el momento en el que hace falta que se entienda
           qué capa va encima: por eso la sombra va en el elemento PEGADO y no
           en uno cualquiera. */}
-      {esMovil && !embebida && <PhoneTop />}
+      {isMobile && !isEmbedded && <PhoneTop />}
 
       {/* ── EL HUECO DONDE SE ABRE EL POZO ──────────────────────────────────
           En escritorio esta caja mide EXACTAMENTE la ventana y no se
@@ -180,7 +180,11 @@ export function AppShell() {
           'escritorio:h-dvh escritorio:py-5 escritorio:pr-5',
           // Sin riel —una tableta dentro de la app— el hueco de la izquierda
           // es el mismo que el de los otros tres lados.
-          embebida ? 'escritorio:pl-5' : shell.plegada ? 'escritorio:pl-16' : 'escritorio:pl-56',
+          isEmbedded
+            ? 'escritorio:pl-5'
+            : shell.isCollapsed
+              ? 'escritorio:pl-16'
+              : 'escritorio:pl-56',
         )}
       >
         <main
@@ -241,18 +245,18 @@ export function AppShell() {
             'movil:overflow-x-clip movil:pb-[var(--hueco-de-la-barra)]',
           )}
         >
-          <VistaDeUsuario />
+          <UserView />
           <Outlet />
         </main>
       </div>
 
-      {esMovil && !embebida && <PhoneSheets shell={shell} />}
+      {isMobile && !isEmbedded && <PhoneSheets shell={shell} />}
 
       {/* La búsqueda y la ficha, en el teléfono Y dentro de la app: allí las
           abre la barra nativa a través de `PuenteDeNavegacion`. */}
-      {(esMovil || embebida) && <SearchAndSheet shell={shell} />}
+      {(isMobile || isEmbedded) && <SearchAndSheet shell={shell} />}
 
-      {embebida && <PuenteDeNavegacion abrirBusqueda={shell.abrirBusqueda} />}
+      {isEmbedded && <NavigationBridge openSearch={shell.openSearch} />}
 
       <ToastStack />
     </div>
@@ -264,35 +268,32 @@ function PhoneSheets({ shell }: { shell: ShellState }) {
   const { user } = useAuth();
   return (
     <>
-      <BarraInferior
-        nombre={user?.displayName ?? user?.email ?? '?'}
-        busquedaAbierta={shell.busquedaAbierta}
-        onBuscar={() => shell.setBusquedaAbierta(true)}
+      <BottomBar
+        name={user?.displayName ?? user?.email ?? '?'}
+        isSearchOpen={shell.isSearchOpen}
+        onSearch={() => shell.setIsSearchOpen(true)}
         // Directo al gasto, sin menú de por medio: es la única opción viva
         // de las dos que ofrece el menú de la pantalla ancha.
-        onNuevoGasto={() => shell.setFicha(null)}
-        atajosAbiertos={shell.atajosAbiertos}
-        onAtajos={() => shell.setAtajosAbiertos(true)}
-        cuentaAbierta={shell.cuentaAbierta}
-        onCuenta={() => shell.setCuentaAbierta(true)}
+        onNewExpense={() => shell.setSheet(null)}
+        isShortcutsOpen={shell.isShortcutsOpen}
+        onShortcuts={() => shell.setIsShortcutsOpen(true)}
+        isAccountOpen={shell.isAccountOpen}
+        onAccount={() => shell.setIsAccountOpen(true)}
       />
 
       {/* Las tres hojas van montadas siempre, abiertas o cerradas: lo que
           se desliza no se puede reconstruir en cada render, o aparece en
           vez de llegar. */}
       <BottomSheet
-        isOpen={shell.atajosAbiertos}
+        isOpen={shell.isShortcutsOpen}
         title={t('shell.shortcuts.title')}
-        head={shell.cabeza}
-        onClose={() => shell.setAtajosAbiertos(false)}
+        head={shell.header}
+        onClose={() => shell.setIsShortcutsOpen(false)}
       >
-        {shell.cuerpo}
+        {shell.body}
       </BottomSheet>
 
-      <PanelDeLaCuenta
-        abierto={shell.cuentaAbierta}
-        onCerrar={() => shell.setCuentaAbierta(false)}
-      />
+      <AccountPanel isOpen={shell.isAccountOpen} onClose={() => shell.setIsAccountOpen(false)} />
     </>
   );
 }
@@ -302,26 +303,26 @@ function SearchAndSheet({ shell }: { shell: ShellState }) {
   return (
     <>
       <SearchPanel
-        isOpen={shell.busquedaAbierta}
-        onClose={() => shell.setBusquedaAbierta(false)}
+        isOpen={shell.isSearchOpen}
+        onClose={() => shell.setIsSearchOpen(false)}
         // Encontrado el movimiento, la búsqueda se acabó: la hoja se cierra
         // y en su sitio se abre la ficha. Dejarla debajo obligaría a
         // cerrarla después, y con la ficha encima ya no se ve.
-        onSelect={(movimiento) => {
-          shell.setBusquedaAbierta(false);
-          shell.setFicha(movimiento);
+        onSelect={(transaction) => {
+          shell.setIsSearchOpen(false);
+          shell.setSheet(transaction);
         }}
       />
 
       {/* Esta sí se monta al abrirse. No se desliza —entra con la animación
           de su propio velo, que corre por existir—, y montada siempre
           tendría sus consultas en pie en todas las pantallas del teléfono. */}
-      {shell.ficha !== undefined && (
+      {shell.sheet !== undefined && (
         <TransactionModal
           isOpen
-          transaction={shell.ficha}
+          transaction={shell.sheet}
           defaultType="expense"
-          onClose={() => shell.setFicha(undefined)}
+          onClose={() => shell.setSheet(undefined)}
         />
       )}
     </>

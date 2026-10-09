@@ -11,39 +11,39 @@ import { keys, useInvalidateDerived } from '@/shared/api/query-keys';
 
 // ── Cuentas ──────────────────────────────────────────────────────────────────
 
-export function useAccounts(incluirArchivadas = false): UseQueryResult<Account[]> {
+export function useAccounts(shouldIncludeArchived = false): UseQueryResult<Account[]> {
   return useQuery({
-    queryKey: [...keys.accounts, incluirArchivadas],
+    queryKey: [...keys.accounts, shouldIncludeArchived],
     queryFn: () =>
       allPages(async (page) =>
-        accountsList({ ...page, ...(incluirArchivadas ? { includeArchived: true } : {}) }),
+        accountsList({ ...page, ...(shouldIncludeArchived ? { includeArchived: true } : {}) }),
       ),
   });
 }
 
-export type NuevaCuenta = CreateAccountInput;
+export type NewAccount = CreateAccountInput;
 
-export function useCrearCuenta() {
+export function useCreateAccount() {
   const queryClient = useQueryClient();
-  const invalidarDerivados = useInvalidateDerived();
+  const invalidateDerived = useInvalidateDerived();
 
   return useMutation({
-    mutationFn: async (cuenta: NuevaCuenta) => {
-      return (await accountsCreate(cuenta)).data;
+    mutationFn: async (account: NewAccount) => {
+      return (await accountsCreate(account)).data;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.accounts });
-      invalidarDerivados();
+      invalidateDerived();
     },
   });
 }
 
-export function useArchivarCuenta() {
+export function useArchiveAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, archivar }: { id: number; archivar: boolean }) => {
-      return (await accountsUpdate(id, { isArchived: archivar })).data;
+    mutationFn: async ({ id, isArchived }: { id: number; isArchived: boolean }) => {
+      return (await accountsUpdate(id, { isArchived })).data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.accounts }),
   });

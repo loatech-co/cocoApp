@@ -31,17 +31,17 @@ import { Button } from '@/shared/ui/atoms/button';
  * A cambio, quien entra aterriza siempre en el resumen, que es de donde se
  * parte para todo lo demás.
  */
-function SinSesion({ enElIndice }: { enElIndice: boolean }) {
+function NoSession({ isInIndex }: { isInIndex: boolean }) {
   // Dentro de la app no existe el login web: la sesión la tiene la app y es
   // ella quien la empuja. Nada de `LoginPage`, y nada de `Navigate`: la ruta
   // se queda donde la app la puso, para que al llegar la sesión se pinte esa
   // página y no el resumen.
-  if (isInNativeApp()) return <SesionDesdeLaApp />;
+  if (isInNativeApp()) return <SessionFromApp />;
 
   // En cualquier otra ruta se vuelve al índice primero: si no, la barra de
   // direcciones se queda en una página que ya no se está viendo —el login
   // encima de `/administracion`—, que es exactamente lo que se venía a quitar.
-  return enElIndice ? <LoginPage /> : <Navigate to="/" replace />;
+  return isInIndex ? <LoginPage /> : <Navigate to="/" replace />;
 }
 
 /**
@@ -52,12 +52,12 @@ function SinSesion({ enElIndice }: { enElIndice: boolean }) {
  * app hace con el aviso es cosa suya —si no tiene sesión, muestra su propio
  * login nativo por encima—; esta pantalla solo espera.
  */
-function SesionDesdeLaApp() {
+function SessionFromApp() {
   useEffect(() => {
     notifyApp({ tipo: 'sinSesion' });
   }, []);
 
-  return <Esperando texto={t('auth.guard.openingFromApp')} />;
+  return <Waiting text={t('auth.guard.openingFromApp')} />;
 }
 
 /**
@@ -72,11 +72,11 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   if (isLoading) {
-    return <Esperando />;
+    return <Waiting />;
   }
 
   if (!user) {
-    return <SinSesion enElIndice={location.pathname === '/'} />;
+    return <NoSession isInIndex={location.pathname === '/'} />;
   }
 
   return <>{children}</>;
@@ -94,11 +94,11 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   if (isLoading) {
-    return <Esperando />;
+    return <Waiting />;
   }
 
   if (!user) {
-    return <SinSesion enElIndice={location.pathname === '/'} />;
+    return <NoSession isInIndex={location.pathname === '/'} />;
   }
 
   if (!isAdmin) {
@@ -118,11 +118,11 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-function Esperando({ texto = t('auth.guard.verifying') }: { texto?: string }) {
+function Waiting({ text = t('auth.guard.verifying') }: { text?: string }) {
   return (
     <div className="flex min-h-dvh items-center justify-center" role="status" aria-live="polite">
       <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
-      <span className="sr-only">{texto}</span>
+      <span className="sr-only">{text}</span>
     </div>
   );
 }

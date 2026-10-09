@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { useUsuarios } from '@/features/admin/api/admin-queries';
-import { FilaDeUsuario } from '@/features/admin/components/user-row';
+import { useUsers } from '@/features/admin/api/admin-queries';
+import { UserRow } from '@/features/admin/components/user-row';
 import { useAuth } from '@/shared/api/auth-context';
 import { type ProfileStatus } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
@@ -11,11 +11,11 @@ import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { PageHeader } from '@/shared/ui/atoms/page-header';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
-const FILTROS: { valor: ProfileStatus | undefined; etiqueta: string }[] = [
-  { valor: 'pending', etiqueta: t('admin.users.filters.pending') },
-  { valor: 'active', etiqueta: t('admin.users.filters.active') },
-  { valor: 'suspended', etiqueta: t('admin.users.filters.suspended') },
-  { valor: undefined, etiqueta: t('admin.users.filters.all') },
+const FILTERS: { value: ProfileStatus | undefined; label: string }[] = [
+  { value: 'pending', label: t('admin.users.filters.pending') },
+  { value: 'active', label: t('admin.users.filters.active') },
+  { value: 'suspended', label: t('admin.users.filters.suspended') },
+  { value: undefined, label: t('admin.users.filters.all') },
 ];
 
 /**
@@ -24,10 +24,10 @@ const FILTROS: { valor: ProfileStatus | undefined; etiqueta: string }[] = [
  * El filtro arranca en "Pendientes" porque son las que exigen una decisión:
  * el trabajo del administrador es responderlas, no navegar hasta encontrarlas.
  */
-export function UsuariosPage() {
-  const { user: yo } = useAuth();
-  const [filtro, setFiltro] = useState<ProfileStatus | undefined>('pending');
-  const consulta = useUsuarios(filtro);
+export function UsersPage() {
+  const { user: me } = useAuth();
+  const [filter, setFilter] = useState<ProfileStatus | undefined>('pending');
+  const query = useUsers(filter);
 
   return (
     <div className="flex flex-col gap-6">
@@ -38,43 +38,43 @@ export function UsuariosPage() {
         role="group"
         aria-label={t('admin.users.filterByStatus')}
       >
-        {FILTROS.map(({ valor, etiqueta }) => (
+        {FILTERS.map(({ value, label }) => (
           <Button
-            key={etiqueta}
+            key={label}
             size="sm"
-            variant={filtro === valor ? 'default' : 'outline'}
-            onClick={() => setFiltro(valor)}
-            aria-pressed={filtro === valor}
+            variant={filter === value ? 'default' : 'outline'}
+            onClick={() => setFilter(value)}
+            aria-pressed={filter === value}
           >
-            {etiqueta}
+            {label}
           </Button>
         ))}
       </div>
 
-      {consulta.isPending && (
+      {query.isPending && (
         <div className="flex flex-col gap-3">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
         </div>
       )}
 
-      {consulta.isError && (
+      {query.isError && (
         <Alert variant="destructive">
           <AlertDescription>{t('admin.users.loadFailed')}</AlertDescription>
         </Alert>
       )}
 
-      {consulta.data?.data.length === 0 && (
+      {query.data?.data.length === 0 && (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            {filtro === 'pending' ? t('admin.users.emptyPending') : t('admin.users.emptyFiltered')}
+            {filter === 'pending' ? t('admin.users.emptyPending') : t('admin.users.emptyFiltered')}
           </CardContent>
         </Card>
       )}
 
       <div className="flex flex-col gap-3">
-        {consulta.data?.data.map((usuario) => (
-          <FilaDeUsuario key={usuario.id} usuario={usuario} soyYo={usuario.id === yo?.id} />
+        {query.data?.data.map((user) => (
+          <UserRow key={user.id} user={user} isMe={user.id === me?.id} />
         ))}
       </div>
     </div>

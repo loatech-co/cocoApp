@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  type PointerEvent as PointerEventoDeReact,
-  type ReactNode,
-} from 'react';
+import { useEffect, useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import { t } from '@/shared/lib/i18n';
@@ -11,58 +6,58 @@ import { removeShortcut } from '@/shared/lib/shortcuts';
 import { AddSurface } from '@/shared/ui/atoms/add-surface';
 import { MovableTile, TileRemove, tileClass } from '@/shared/ui/atoms/tile';
 
-import type { Estado, PaginaDeAtajo } from './shortcut-types';
+import type { Mode, ShortcutPage } from './shortcut-types';
 import type { useShortcutDrag } from './use-shortcut-drag';
 
 /** Lo que hay que mantener pulsado para entrar a editar. */
-const MANTENER = 500;
+const HOLD_MS = 500;
 
 type Drag = ReturnType<typeof useShortcutDrag>;
 
 /** La rejilla de baldosas y, mientras se arregla, el hueco de «Agregar atajo». */
 export function ShortcutGrid({
-  baldosas,
-  estado,
+  tiles,
+  mode,
   drag,
-  setEstado,
-  onIr,
+  setMode,
+  onGo,
 }: {
-  baldosas: readonly PaginaDeAtajo[];
-  estado: Estado;
+  tiles: readonly ShortcutPage[];
+  mode: Mode;
   drag: Drag;
-  setEstado: (estado: Estado) => void;
-  onIr: () => void;
+  setMode: (mode: Mode) => void;
+  onGo: () => void;
 }) {
-  const { arrastre, setArrastre, rejilla, alBajar, alMover } = drag;
+  const { drag: activeDrag, setDrag, grid, handleDown, handleMove } = drag;
 
   return (
     <div
-      ref={rejilla}
+      ref={grid}
       // Mientras se arregla, la rejilla se queda con el puntero: sin esto, un
       // arrastre hacia abajo para mover una baldosa cerraría el panel.
-      data-no-swipe={estado === 'arreglando' ? '' : undefined}
+      data-no-swipe={mode === 'arreglando' ? '' : undefined}
       className="grid grid-cols-3 gap-3"
     >
-      {baldosas.map((pagina, indice) => (
-        <Baldosa
-          key={pagina.ruta}
-          pagina={pagina}
-          indice={indice}
-          arreglando={estado === 'arreglando'}
-          arrastrada={arrastre?.indice === indice}
-          desplazamiento={arrastre?.indice === indice ? arrastre : null}
-          onMantener={() => setEstado('arreglando')}
-          onQuitar={() => removeShortcut(pagina.ruta)}
-          onIr={onIr}
-          onBajar={alBajar}
-          onMover={alMover}
-          onSoltar={() => setArrastre(null)}
+      {tiles.map((page, index) => (
+        <Tile
+          key={page.route}
+          page={page}
+          index={index}
+          isArranging={mode === 'arreglando'}
+          isDragged={activeDrag?.index === index}
+          offset={activeDrag?.index === index ? activeDrag : null}
+          onHold={() => setMode('arreglando')}
+          onRemove={() => removeShortcut(page.route)}
+          onGo={onGo}
+          onDown={handleDown}
+          onMove={handleMove}
+          onRelease={() => setDrag(null)}
         />
       ))}
 
-      {(estado === 'arreglando' || baldosas.length === 0) && (
+      {(mode === 'arreglando' || tiles.length === 0) && (
         <div className="col-span-3">
-          <AddSurface shape="row" onClick={() => setEstado('eligiendo')}>
+          <AddSurface shape="row" onClick={() => setMode('eligiendo')}>
             {t('shell.shortcuts.add')}
           </AddSurface>
         </div>
@@ -72,130 +67,128 @@ export function ShortcutGrid({
 }
 
 /** Mantener pulsada una baldosa entra a editar; soltarla antes, no. */
-function useLongPress(onMantener: () => void) {
-  const reloj = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mantuvo = useRef(false);
+function useLongPress(onHold: () => void) {
+  const clock = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wasHeld = useRef(false);
 
-  function empezar(): void {
-    mantuvo.current = false;
-    reloj.current = setTimeout(() => {
-      mantuvo.current = true;
-      onMantener();
-    }, MANTENER);
+  function start(): void {
+    wasHeld.current = false;
+    clock.current = setTimeout(() => {
+      wasHeld.current = true;
+      onHold();
+    }, HOLD_MS);
   }
 
-  function dejarDeContar(): void {
-    if (reloj.current) clearTimeout(reloj.current);
-    reloj.current = null;
+  function stopCounting(): void {
+    if (clock.current) clearTimeout(clock.current);
+    clock.current = null;
   }
 
-  useEffect(() => dejarDeContar, []);
+  useEffect(() => stopCounting, []);
 
-  return { empezar, dejarDeContar, mantuvo };
+  return { start, stopCounting, wasHeld };
 }
 
-interface PropsDeBaldosa {
-  pagina: PaginaDeAtajo;
-  indice: number;
-  arreglando: boolean;
-  arrastrada: boolean;
-  desplazamiento: { dx: number; dy: number } | null;
-  onMantener: () => void;
-  onQuitar: () => void;
-  onIr: () => void;
-  onBajar: (e: PointerEventoDeReact<HTMLElement>, indice: number) => void;
-  onMover: (e: PointerEventoDeReact<HTMLElement>) => void;
-  onSoltar: () => void;
+interface TileProps {
+  page: ShortcutPage;
+  index: number;
+  isArranging: boolean;
+  isDragged: boolean;
+  offset: { dx: number; dy: number } | null;
+  onHold: () => void;
+  onRemove: () => void;
+  onGo: () => void;
+  onDown: (e: ReactPointerEvent<HTMLElement>, index: number) => void;
+  onMove: (e: ReactPointerEvent<HTMLElement>) => void;
+  onRelease: () => void;
 }
 
-function Baldosa(props: PropsDeBaldosa) {
-  const { pagina, indice, arreglando, arrastrada, desplazamiento, onQuitar } = props;
-  const { empezar, dejarDeContar, mantuvo } = useLongPress(props.onMantener);
-  const { Icono, etiqueta, ruta } = pagina;
+function Tile(props: TileProps) {
+  const { page, index, isArranging, isDragged, offset, onRemove } = props;
+  const { start, stopCounting, wasHeld } = useLongPress(props.onHold);
+  const { Icon, label, route } = page;
 
-  function empezarAContar(e: PointerEventoDeReact<HTMLElement>): void {
-    if (arreglando) {
-      props.onBajar(e, indice);
+  function startCounting(e: ReactPointerEvent<HTMLElement>): void {
+    if (isArranging) {
+      props.onDown(e, index);
       return;
     }
-    empezar();
+    start();
   }
 
-  const estilo = desplazamiento
-    ? { transform: `translate(${desplazamiento.dx}px, ${desplazamiento.dy}px)` }
-    : undefined;
-  const caja = tileClass(arreglando, arrastrada);
+  const style = offset ? { transform: `translate(${offset.dx}px, ${offset.dy}px)` } : undefined;
+  const box = tileClass(isArranging, isDragged);
 
-  const contenido = (
+  const content = (
     <>
-      <Icono className="size-6 shrink-0" aria-hidden={true} />
-      <span className="line-clamp-2 text-2xs font-medium leading-tight">{etiqueta}</span>
+      <Icon className="size-6 shrink-0" aria-hidden={true} />
+      <span className="line-clamp-2 text-2xs font-medium leading-tight">{label}</span>
     </>
   );
 
   return (
     <div className="relative" data-baldosa>
-      {arreglando ? (
+      {isArranging ? (
         <MovableTile
-          isDragging={arrastrada}
-          label={etiqueta}
-          style={estilo}
-          onGrab={empezarAContar}
-          onMove={props.onMover}
-          onRelease={props.onSoltar}
+          isDragging={isDragged}
+          label={label}
+          style={style}
+          onGrab={startCounting}
+          onMove={props.onMove}
+          onRelease={props.onRelease}
         >
-          {contenido}
+          {content}
         </MovableTile>
       ) : (
-        <EnlaceDeBaldosa
-          ruta={ruta}
-          className={caja}
-          largaPulsacion={{ empezarAContar, dejarDeContar, mantuvo }}
-          onIr={props.onIr}
+        <TileLink
+          route={route}
+          className={box}
+          longPress={{ startCounting, stopCounting, wasHeld }}
+          onGo={props.onGo}
         >
-          {contenido}
-        </EnlaceDeBaldosa>
+          {content}
+        </TileLink>
       )}
 
-      {arreglando && <TileRemove label={etiqueta} onRemove={onQuitar} />}
+      {isArranging && <TileRemove label={label} onRemove={onRemove} />}
     </div>
   );
 }
 
 /** Fuera de la edición, la baldosa lleva a su página; mantenida, entra a editar. */
-function EnlaceDeBaldosa({
-  ruta,
+function TileLink({
+  route,
   className,
-  largaPulsacion,
-  onIr,
+  longPress,
+  onGo,
   children,
 }: {
-  ruta: string;
+  route: string;
   className: string;
-  largaPulsacion: {
-    empezarAContar: (e: PointerEventoDeReact<HTMLElement>) => void;
-    dejarDeContar: () => void;
-    mantuvo: { current: boolean };
+  longPress: {
+    startCounting: (e: ReactPointerEvent<HTMLElement>) => void;
+    stopCounting: () => void;
+    wasHeld: { current: boolean };
   };
-  onIr: () => void;
+  onGo: () => void;
   children: ReactNode;
 }) {
-  const { empezarAContar, dejarDeContar, mantuvo } = largaPulsacion;
+  const { startCounting, stopCounting, wasHeld } = longPress;
   return (
     <Link
-      to={ruta}
+      to={route}
       className={className}
-      onPointerDown={empezarAContar}
-      onPointerUp={dejarDeContar}
-      onPointerCancel={dejarDeContar}
-      onPointerMove={dejarDeContar}
+      onPointerDown={startCounting}
+      onPointerUp={stopCounting}
+      onPointerCancel={stopCounting}
+      onPointerMove={stopCounting}
       onClick={(e) => {
         // Se mantuvo pulsada: la intención era editar, no ir.
-        if (mantuvo.current) {
+        if (wasHeld.current) {
           e.preventDefault();
           return;
         }
-        onIr();
+        onGo();
       }}
     >
       {children}
