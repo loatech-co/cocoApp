@@ -4,11 +4,11 @@ import { startApp, type TestEnvironment } from './helpers/app';
 import { HealthRepository } from '../src/modules/health/health.repository';
 
 /**
- * Fase 0 — la cadena completa contra MariaDB real (base `coco_test`).
+ * Phase 0 — the whole chain against a real Postgres (a `_test` database).
  *
- * Aquí no se simula nada del camino de autenticación: los access token son JWT
- * firmados por el mismo TokenService que usa el login, y el guard global los
- * verifica y consulta la base igual que en producción.
+ * Nothing on the authentication path is faked here: the access tokens are
+ * JWTs signed by the same TokenService the login uses, and the global guard
+ * verifies them and queries the database just as in production.
  */
 describe('Fase 0 — the auth guard on a protected route, and the public probes (e2e)', () => {
   let env: TestEnvironment;
@@ -25,7 +25,7 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
     await env.clean();
   });
 
-  it('sin header Authorization responde 401 con el envelope canónico', async () => {
+  it('without an Authorization header it answers 401 with the canonical envelope', async () => {
     const response = await request(env.app.getHttpServer()).get('/api/v2/auth/me').expect(401);
 
     expect(response.body).toMatchObject({
@@ -33,26 +33,26 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
       code: 'unauthenticated',
       detail: expect.any(String),
     });
-    // Y jamás filtra detalle interno.
+    // And it never leaks an internal detail.
     expect(JSON.stringify(response.body)).not.toMatch(/stack|at Object|\.ts:/i);
   });
 
-  it('con un token que no es un JWT responde 401', async () => {
+  it('with a token that is not a JWT it answers 401', async () => {
     await request(env.app.getHttpServer())
       .get('/api/v2/auth/me')
       .set('Authorization', 'Bearer esto-no-es-un-token')
       .expect(401);
   });
 
-  // La VERIFICACIÓN DE LA FIRMA es de Supabase: la API comprueba el token
-  // contra el JWKS del proyecto con `jose`, y aquí Supabase está sustituido por
-  // un doble. Probar la firma en este arnés sería probar el doble, no el
-  // sistema. Lo que sí se prueba es lo que decide esta aplicación: a quién
-  // reconoce ese token y hasta cuándo lo acepta.
+  // SIGNATURE VERIFICATION belongs to Supabase: the API checks the token
+  // against the project's JWKS with `jose`, and here Supabase is replaced by a
+  // double. Testing the signature in this harness would be testing the double,
+  // not the system. What is tested is what this application decides: whom
+  // that token identifies and until when it is accepted.
 
-  it('un token de una cuenta que no tiene perfil aquí responde 401', async () => {
-    // Existe en Supabase pero nadie la registró en la app: sin perfil no hay
-    // rol ni estado, así que no hay nada que autorizar.
+  it('a token for an account with no profile here answers 401', async () => {
+    // It exists in Supabase but nobody registered it in the app: without a
+    // profile there is no role or status, so there is nothing to authorise.
     const orphan = env.supabase.seed('sin-perfil@pruebas.coco', 'Loquesea-123!');
     const token = env.supabase.issueToken(orphan);
 
@@ -62,11 +62,11 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
       .expect(401);
   });
 
-  it('un token emitido ANTES de revocar la sesión responde 401', async () => {
+  it('a token issued BEFORE the session was revoked answers 401', async () => {
     const user = await env.createUser();
 
-    // Un token de hace una hora, con firma impecable. Lo que lo mata es la
-    // marca de revocación, que el guard compara en cada petición.
+    // A token from an hour ago, with a flawless signature. What kills it is the
+    // revocation mark, which the guard compares on every request.
     const old = env.supabase.issueToken(user.authId!, new Date(Date.now() - 60 * 60 * 1000));
     await env.prisma.user.update({
       where: { id: user.id },
@@ -79,7 +79,7 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
       .expect(401);
   });
 
-  it('con un token de un usuario que ya no existe responde 401', async () => {
+  it('with a token of a user that no longer exists it answers 401', async () => {
     const user = await env.createUser();
     const header = env.as(user);
 

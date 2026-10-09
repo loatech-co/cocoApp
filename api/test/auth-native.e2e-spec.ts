@@ -3,15 +3,16 @@ import request from 'supertest';
 import { VALID_PASSWORD, testEmail, startApp, type TestEnvironment } from './helpers/app';
 
 /**
- * Fase 4 — sesión para un cliente nativo (e2e).
+ * Phase 4 — a session for a native client (e2e).
  *
- * La web guarda el refresh en una cookie httpOnly; una app del teléfono no
- * puede, así que, identificándose con `X-Coco-Cliente: nativo`, lo recibe y lo
- * manda en el cuerpo. Lo que no puede fallar: que la cookie no aparezca para
- * el nativo, que el token rote, que el logout lo mate, que la revocación por
- * `sessions_valid_from` también lo alcance, y que la web siga EXACTAMENTE igual.
+ * The web keeps the refresh token in an httpOnly cookie; a phone app cannot,
+ * so, identifying itself with `X-Coco-Client: native`, it receives it and
+ * sends it in the body. What cannot fail: that the cookie does not show up for
+ * the native client, that the token rotates, that logout kills it, that
+ * revocation through `sessions_valid_from` reaches it too, and that the web
+ * stays EXACTLY the same.
  */
-describe('Fase 4 — Cliente nativo (e2e)', () => {
+describe('Phase 4 — Native client (e2e)', () => {
   let env: TestEnvironment;
   let http: ReturnType<typeof request>;
 
@@ -45,7 +46,7 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
   }
 
   describe('Login', () => {
-    it('devuelve el refresh token EN EL CUERPO y no pone ninguna cookie', async () => {
+    it('returns the refresh token IN THE BODY and sets no cookie', async () => {
       const { r } = await nativeLogin();
 
       expect(r.status).toBe(200);
@@ -55,7 +56,7 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       expect(cookiesOf(r)).toEqual([]);
     });
 
-    it('la web sigue igual: cookie httpOnly y NADA de refresh en el cuerpo', async () => {
+    it('the web stays the same: httpOnly cookie and NO refresh token in the body', async () => {
       const user = await env.createUser();
       const r = await http
         .post('/api/v2/auth/login')
@@ -69,7 +70,7 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       expect(cookie).toMatch(/SameSite=Strict/i);
     });
 
-    it('con contraseña incorrecta, el nativo recibe lo mismo que la web: 401 sin pistas', async () => {
+    it('with a wrong password, the native client gets the same as the web: 401 with no hints', async () => {
       const user = await env.createUser();
       const r = await http
         .post('/api/v2/auth/login')
@@ -81,7 +82,7 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
   });
 
   describe('Refresh', () => {
-    it('renueva con el token del cuerpo, ROTA el refresh y no pone cookie', async () => {
+    it('renews with the token in the body, ROTATES the refresh token and sets no cookie', async () => {
       const { r: login } = await nativeLogin();
       const oldToken = login.body.data.refreshToken as string;
 
@@ -95,13 +96,13 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       expect(r.body.data.refreshToken).not.toBe(oldToken);
       expect(cookiesOf(r)).toEqual([]);
 
-      // El token usado murió: es lo que impide que uno robado sirva dos veces.
+      // The used token died: that is what stops a stolen one from working twice.
       await http
         .post('/api/v2/auth/refresh')
         .set(NATIVE)
         .send({ refreshToken: oldToken })
         .expect(401);
-      // Y el nuevo sirve.
+      // And the new one works.
       await http
         .post('/api/v2/auth/refresh')
         .set(NATIVE)
@@ -109,13 +110,14 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
         .expect(200);
     });
 
-    it('reusar el refresh ANTERIOR tras rotar es 401, y el que nació de él sigue vivo', async () => {
+    it('reusing the PREVIOUS refresh token after rotating is 401, and the one born from it stays alive', async () => {
       /*
-        Por esto la app tiene que renovar con UN solo vuelo a la vez: si dos
-        peticiones renuevan en paralelo con el mismo token, la segunda llega
-        con uno que ya murió y recibe 401 aunque la sesión esté bien. Supabase
-        de verdad va más lejos —detecta el reuso y mata la familia entera—; el
-        doble solo rota, así que aquí se prueba el 401 y que el nuevo sirve.
+        This is why the app has to renew with ONE flight at a time: if two
+        requests renew in parallel with the same token, the second arrives
+        with one that already died and gets 401 even though the session is
+        fine. The real Supabase goes further —it detects the reuse and kills
+        the whole family—; the double only rotates, so here the 401 is tested
+        and that the new one works.
       */
       const { r: login } = await nativeLogin();
       const oldToken = login.body.data.refreshToken as string;
@@ -141,25 +143,25 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
         .expect(200);
     });
 
-    it('sin token en el cuerpo, 401 —y no mira la cookie aunque viniera—', async () => {
+    it('without a token in the body, 401 —and it ignores the cookie even if one came—', async () => {
       const user = await env.createUser();
       const web = await http
         .post('/api/v2/auth/login')
         .send({ email: user.email, password: VALID_PASSWORD });
       const cookie = cookiesOf(web)[0]!.split(';')[0]!;
 
-      // Un cliente que dice ser nativo se juzga por su mundo: el cuerpo.
+      // A client that says it is native is judged by its own world: the body.
       await http
         .post('/api/v2/auth/refresh')
         .set(NATIVE)
         .set('Cookie', cookie)
         .send({})
         .expect(401);
-      // Mientras que la web, con esa misma cookie, renueva.
+      // Whereas the web, with that same cookie, renews.
       await http.post('/api/v2/auth/refresh').set('Cookie', cookie).expect(200);
     });
 
-    it('un refresh nativo con token inválido es 401 y no toca cookies', async () => {
+    it('a native refresh with an invalid token is 401 and touches no cookies', async () => {
       const r = await http
         .post('/api/v2/auth/refresh')
         .set(NATIVE)
@@ -170,7 +172,7 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
   });
 
   describe('Logout', () => {
-    it('cierra con el token del cuerpo: ese token deja de servir', async () => {
+    it('logs out with the token in the body: that token stops working', async () => {
       const { r: login } = await nativeLogin();
       const refresh = login.body.data.refreshToken as string;
 
@@ -186,13 +188,13 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
         .expect(401);
     });
 
-    it('logout-all desde el nativo revoca los access token ya emitidos, al instante', async () => {
+    it('logout-all from the native client revokes access tokens already issued, instantly', async () => {
       const { r: login } = await nativeLogin();
       const header = `Bearer ${login.body.data.accessToken as string}`;
 
       await http.get('/api/v2/auth/me').set('Authorization', header).expect(200);
-      // La revocación tarda un segundo en poder distinguirse del token emitido
-      // en el mismo segundo: ver el comentario del guard.
+      // Revocation takes a second to be told apart from a token issued in the
+      // same second: see the guard's comment.
       await new Promise((stillValid) => setTimeout(stillValid, 1100));
       await http
         .post('/api/v2/auth/logout-all')
@@ -203,8 +205,8 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
     });
   });
 
-  describe('Lo que no cambia para nadie', () => {
-    it('el access token nativo entra por el mismo guard que el de la web', async () => {
+  describe('What changes for nobody', () => {
+    it('the native access token goes through the same guard as the web one', async () => {
       const { r } = await nativeLogin();
       const me = await http
         .get('/api/v2/auth/me')
@@ -213,7 +215,7 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       expect(me.body.data.email).toBe(r.body.data.user.email);
     });
 
-    it('un correo inexistente con cabecera nativa tampoco se distingue', async () => {
+    it('an unknown email with the native header cannot be told apart either', async () => {
       const r = await http
         .post('/api/v2/auth/login')
         .set(NATIVE)

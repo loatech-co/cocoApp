@@ -3,18 +3,19 @@ import request from 'supertest';
 import { VALID_PASSWORD, testEmail, startApp, type TestEnvironment } from './helpers/app';
 
 /**
- * El limitador de tasa, encendido de verdad.
+ * The rate limiter, really switched on.
  *
- * Vive en su propio archivo porque el resto de la suite lo desactiva: cuenta
- * intentos por minuto y haría fallar pruebas por motivos ajenos a lo que
- * verifican. Aquí se comprueba que sigue vivo, que es lo que importa — sin esta
- * prueba, alguien podría desactivarlo sin querer y nadie se enteraría.
+ * It lives in its own file because the rest of the suite switches it off: it
+ * counts attempts per minute and would fail tests for reasons unrelated to
+ * what they check. Here it is checked that it is still alive, which is what
+ * matters — without this test, someone could switch it off by accident and
+ * nobody would notice.
  *
- * Por qué importa: el registro y el login consumen un hash argon2 de 19 MiB por
- * intento. Sin tope, unas pocas peticiones por segundo bastan para dejar la
- * API sin memoria.
+ * Why it matters: sign-up and login spend a 19 MiB argon2 hash per attempt.
+ * With no cap, a few requests per second are enough to leave the API out of
+ * memory.
  */
-describe('Limitador de tasa (e2e)', () => {
+describe('Rate limiter (e2e)', () => {
   let env: TestEnvironment;
   let http: ReturnType<typeof request>;
 
@@ -30,7 +31,7 @@ describe('Limitador de tasa (e2e)', () => {
     await env.close();
   });
 
-  it('corta el login al undécimo intento en un minuto', async () => {
+  it('cuts login off at the eleventh attempt in a minute', async () => {
     const user = await env.createUser();
 
     const statuses: number[] = [];
@@ -41,13 +42,13 @@ describe('Limitador de tasa (e2e)', () => {
       statuses.push(response.status);
     }
 
-    // Los diez primeros llegan al servicio (401: credenciales incorrectas).
+    // The first ten reach the service (401: wrong credentials).
     expect(statuses.slice(0, 10)).toEqual(Array(10).fill(401));
-    // El undécimo ni siquiera lo intenta.
+    // The eleventh does not even try.
     expect(statuses[10]).toBe(429);
   });
 
-  it('detrás del proxy cada cliente tiene su cupo, y cada correo el suyo', async () => {
+  it('behind the proxy each client has its quota, and each email its own', async () => {
     // LiteSpeed appends the address it saw; documentation-range IPs stand in.
     const user = await env.createUser();
     const other = await env.createUser();
@@ -75,7 +76,7 @@ describe('Limitador de tasa (e2e)', () => {
       .expect(429);
   });
 
-  it('el cliente no elige su IP: solo cuenta la que añade el proxy', async () => {
+  it('the client does not choose its IP: only the one the proxy adds counts', async () => {
     const user = await env.createUser();
     for (let attempt = 0; attempt < 10; attempt += 1) {
       await http
@@ -91,9 +92,9 @@ describe('Limitador de tasa (e2e)', () => {
       .expect(429);
   });
 
-  it('corta la renovación de sesión al intento 31 en un minuto', async () => {
-    // Sin cookie ni token: cada intento llega al controlador y responde 401.
-    // Lo que se mide es que el tope de la ruta existe, no la renovación.
+  it('cuts session renewal off at the 31st attempt in a minute', async () => {
+    // No cookie and no token: every attempt reaches the controller and answers
+    // 401. What is measured is that the route's cap exists, not the renewal.
     const statuses: number[] = [];
     for (let attempt = 0; attempt < 31; attempt += 1) {
       const response = await http.post('/api/v2/auth/refresh').send({});
@@ -104,7 +105,7 @@ describe('Limitador de tasa (e2e)', () => {
     expect(statuses[30]).toBe(429);
   });
 
-  it('corta el registro al sexto intento en un minuto', async () => {
+  it('cuts sign-up off at the sixth attempt in a minute', async () => {
     const statuses: number[] = [];
     for (let attempt = 0; attempt < 6; attempt += 1) {
       const response = await http.post('/api/v2/auth/register').send({
@@ -119,7 +120,7 @@ describe('Limitador de tasa (e2e)', () => {
     expect(statuses[5]).toBe(429);
   });
 
-  it('el 429 sale con el envelope canónico de errores', async () => {
+  it('the 429 comes out with the canonical error envelope', async () => {
     const register = () =>
       http
         .post('/api/v2/auth/register')
