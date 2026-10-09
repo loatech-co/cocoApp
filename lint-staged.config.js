@@ -11,9 +11,8 @@ const TYPESCRIPT_IN_A_WORKSPACE = /^(api|frontend|packages\/[^/]+)\/.+\.tsx?$/;
 const quoted = (files) => files.map((file) => JSON.stringify(file)).join(' ');
 
 /**
- * ESLint runs from each workspace, as `npm run lint` does: the bulk
- * suppressions of step 7.2-a (`<workspace>/eslint-suppressions.json`) are keyed
- * by paths relative to where ESLint runs, so from the root none would match.
+ * ESLint runs from each workspace, as `npm run lint` does, so each file is
+ * linted with the same configuration and paths as in CI.
  */
 function eslintByWorkspace(files) {
   const byWorkspace = new Map();

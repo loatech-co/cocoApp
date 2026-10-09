@@ -31,11 +31,14 @@ class ActiveFlagsProvider implements Provider {
     this.events.emit(ProviderEvents.ConfigurationChanged);
   }
 
-  resolveBooleanEvaluation(flagKey: string, isOnByDefault: boolean): ResolutionDetails<boolean> {
+  resolveBooleanEvaluation(
+    flagKey: string,
+    isEnabledByDefault: boolean,
+  ): ResolutionDetails<boolean> {
     if (this.active.has(flagKey)) {
       return { value: true, reason: StandardResolutionReasons.TARGETING_MATCH };
     }
-    return { value: isOnByDefault, reason: StandardResolutionReasons.DEFAULT };
+    return { value: isEnabledByDefault, reason: StandardResolutionReasons.DEFAULT };
   }
 
   resolveStringEvaluation(_: string, defaultValue: string): ResolutionDetails<string> {
@@ -62,6 +65,6 @@ export function setActive(names: readonly string[]): void {
 }
 
 /** Evaluates a boolean flag through OpenFeature. */
-export function isEnabled(name: string, isOnByDefault: boolean): boolean {
-  return client.getBooleanValue(name, isOnByDefault);
+export function isEnabled(name: string, isEnabledByDefault: boolean): boolean {
+  return client.getBooleanValue(name, isEnabledByDefault);
 }

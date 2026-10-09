@@ -166,12 +166,9 @@ is recorded, and only that passes:
   with a count. One more in a folder fails; one fewer fails too until the
   baseline is shrunk with `npm run lint:spanish -- --update`. CI also fails if
   the baseline holds more of any name than on the PR's base.
-- `<workspace>/eslint-suppressions.json`: ESLint's bulk suppressions for
-  `naming-convention` (booleans without a prefix, mostly). After a rename,
-  `npx eslint . --prune-suppressions` from the workspace (in `api/`,
-  `eslint "{src,test}/**/*.ts" --prune-suppressions`). Never
-  `--suppress-rule` again: a new name is fixed, not suppressed. The web's
-  emptied and was deleted in 7.2-p.
+- ESLint's bulk suppressions for `naming-convention`: emptied and deleted,
+  the web's in 7.2-p and the api's in J-1. Never `--suppress-rule` again: a
+  new name is fixed, not suppressed.
 
 Each 7.2 slice empties its folder in both, and they are deleted when they are
 empty.
@@ -232,8 +229,7 @@ export function totalDeOtraForma(…) { … }
 and `|| true` covers a copy without git.
 
 - **pre-commit**: `lint-staged` (`lint-staged.config.js`) runs `eslint --fix`
-  on staged TypeScript files of the workspaces, from each workspace (where its
-  `eslint-suppressions.json` is), and `prettier --write` on every
+  on staged TypeScript files of the workspaces, from each workspace (as `npm run lint` does), and `prettier --write` on every
   staged file; then `tsc --noEmit` runs for each workspace that has a staged
   TypeScript file.
 - **commit-msg**: `commitlint` (next section).

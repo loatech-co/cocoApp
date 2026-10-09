@@ -40,22 +40,26 @@ export class CocoFlagProvider implements Provider {
 
   async resolveBooleanEvaluation(
     flagKey: string,
-    defaultValue: boolean,
+    isEnabledByDefault: boolean,
     context: EvaluationContext,
   ): Promise<ResolutionDetails<boolean>> {
     if (!isFlagName(flagKey)) throw new FlagNotFoundError(`"${flagKey}" is not in packages/flags`);
 
     const userId = userIdOf(context);
     if (userId !== null) {
-      const own = (await this.userOverrides(userId)).get(flagKey);
-      if (own !== undefined) {
-        return { value: own, reason: StandardResolutionReasons.TARGETING_MATCH, variant: 'user' };
+      const isUserEnabled = (await this.userOverrides(userId)).get(flagKey);
+      if (isUserEnabled !== undefined) {
+        return {
+          value: isUserEnabled,
+          reason: StandardResolutionReasons.TARGETING_MATCH,
+          variant: 'user',
+        };
       }
     }
     if (this.serverFlags.has(flagKey)) {
       return { value: true, reason: StandardResolutionReasons.STATIC, variant: 'server' };
     }
-    return { value: defaultValue, reason: StandardResolutionReasons.DEFAULT };
+    return { value: isEnabledByDefault, reason: StandardResolutionReasons.DEFAULT };
   }
 
   resolveStringEvaluation(): Promise<ResolutionDetails<string>> {
