@@ -130,6 +130,12 @@ targets:
         buildPhase: resources
     dependencies:
       - target: Coco
+    # La mitad web del puente, por el mismo motivo: ContractsTests y
+    # WebBridgeSmokeTests la leen desde el paquete.
+    postCompileScripts:
+      - name: Copiar la web para las pruebas del puente
+        script: bash "$SRCROOT/scripts/copy-web-for-tests.sh"
+        basedOnDependencyAnalysis: false
     info:
       path: CocoTests/Info.plist
       properties:
@@ -139,6 +145,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco.tests
+        # El script de arriba lee `frontend/`, fuera de lo que declara.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
 schemes:
   Coco:
     build:

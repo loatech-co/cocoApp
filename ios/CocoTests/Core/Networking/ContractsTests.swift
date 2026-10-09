@@ -117,17 +117,15 @@ final class ContractsTests: XCTestCase {
     }
 
     /// Las dos mitades del puente con la web se llaman igual. Lee
-    /// `native-contract.ts` y `bridge.ts` y falla si un nombre de un lado no
+    /// `native-contract.ts` y `bridge.ts` —copiados en el paquete de pruebas
+    /// por `scripts/copy-web-for-tests.sh`— y falla si un nombre de un lado no
     /// está en el otro: los dos manejadores, los avisos (`AppNotices`), lo
     /// que la app llama en `window.__coco` y los eventos de `BridgeEvent`, en
-    /// los dos sentidos.
+    /// los dos sentidos. Sin la copia falla: no se salta.
     func testBridgeNamesMatchTheWeb() throws {
-        let root = (0..<5).reduce(URL(fileURLWithPath: #filePath)) { url, _ in url.deletingLastPathComponent() }
-        let lib = root.appending(path: "frontend/src/shared/lib")
-        guard
-            let contract = try? String(contentsOf: lib.appending(path: "native-contract.ts"), encoding: .utf8),
-            let bridge = try? String(contentsOf: lib.appending(path: "bridge.ts"), encoding: .utf8)
-        else { throw XCTSkip("No está el repo al lado: \(lib.path)") }
+        let web = try XCTUnwrap(Bundle(for: Self.self).resourceURL).appending(path: "Web")
+        let contract = try String(contentsOf: web.appending(path: "native-contract.ts"), encoding: .utf8)
+        let bridge = try String(contentsOf: web.appending(path: "bridge.ts"), encoding: .utf8)
 
         XCTAssertTrue(bridge.contains("        \(WebBridge.sessionHandler)?: {"), WebBridge.sessionHandler)
         XCTAssertTrue(bridge.contains("        \(WebBridge.eventsHandler)?: {"), WebBridge.eventsHandler)

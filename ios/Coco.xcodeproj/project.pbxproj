@@ -72,6 +72,7 @@
 		8C6CB06BDA1DE65C579CF713 /* CaptureBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F83D6C19654DCD07B9D25C /* CaptureBody.swift */; };
 		8D9A4F4F4F93FEDD4DF645D0 /* TreeIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238939DA2AF6340EC2F6C48B /* TreeIndex.swift */; };
 		9059295174EAFBD072B50ABE /* ContractsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 489506EC410585871B539295 /* ContractsTests.swift */; };
+		9097412CFA1B31754B1FBD60 /* StaticWebServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A30E0B3D1EF8A968B2B56A /* StaticWebServer.swift */; };
 		923B3C0D5FE50DA9F53B6E1E /* RecordWalletExpenseIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2EAC81398DCD5D25C65475 /* RecordWalletExpenseIntent.swift */; };
 		95AAD6A3C4244CE1F7C45534 /* APIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09250FF22D88BA4D5D0F2CFE /* APIRequest.swift */; };
 		97E028329399CE97AE9688B3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9468E87006C29AED16D769EE /* Assets.xcassets */; };
@@ -85,6 +86,7 @@
 		A124B53A28AA262B4005BC3F /* RecordManualExpenseIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6774C507B6041317CE6EC6BF /* RecordManualExpenseIntent.swift */; };
 		A3CC12982F4F25C6941650BB /* AutomationStepsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF95E60329279E90349F8408 /* AutomationStepsTests.swift */; };
 		AAEC61E5BD23FC37E0F6CA89 /* OfflineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE34F1C20582837A22FE67FB /* OfflineView.swift */; };
+		ABBB3F747F48CE11177F8C1B /* WebBridgeSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5451565A63405A8B33747A5 /* WebBridgeSmokeTests.swift */; };
 		AE00FC97E3691E7D0AEA6969 /* APIContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CB49D061F15944E6E368882 /* APIContracts.swift */; };
 		AEF0FBB1F219A8B2A206B2A0 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E21F953E9125CE1FAF0DAA4 /* KeychainStore.swift */; };
 		B0403727CF32CA584B3D58F7 /* DiskTreeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29228ACE802B129A82FA741B /* DiskTreeStore.swift */; };
@@ -176,6 +178,7 @@
 		264BC8DABB35A978568CC557 /* ActionParametersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionParametersTests.swift; sourceTree = "<group>"; };
 		264EF24D021A7523F1BAA85D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		28054FC61CE3988B8459BD59 /* InMemoryKeychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryKeychain.swift; sourceTree = "<group>"; };
+		28A30E0B3D1EF8A968B2B56A /* StaticWebServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticWebServer.swift; sourceTree = "<group>"; };
 		2906F1B8212FF0E07DE9092F /* AmountParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmountParser.swift; sourceTree = "<group>"; };
 		29228ACE802B129A82FA741B /* DiskTreeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskTreeStore.swift; sourceTree = "<group>"; };
 		29922A13072CEF1A51806DAE /* NativeSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSession.swift; sourceTree = "<group>"; };
@@ -280,6 +283,7 @@
 		EE34F1C20582837A22FE67FB /* OfflineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineView.swift; sourceTree = "<group>"; };
 		EEFA1C21AE7912DB07C6E679 /* ProvisioningProfileReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProvisioningProfileReaderTests.swift; sourceTree = "<group>"; };
 		F0ACD17846C706817941AA82 /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .swiftlint.yml; sourceTree = "<group>"; };
+		F5451565A63405A8B33747A5 /* WebBridgeSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebBridgeSmokeTests.swift; sourceTree = "<group>"; };
 		FEE6BC15F79C0454FD2820FD /* CapturesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturesView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -371,6 +375,7 @@
 				28054FC61CE3988B8459BD59 /* InMemoryKeychain.swift */,
 				420D6CBE72F157677A6135A7 /* localization-baseline.json */,
 				B806B5DA8157C161C78060F2 /* QueueAndBridgeDoubles.swift */,
+				28A30E0B3D1EF8A968B2B56A /* StaticWebServer.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -391,6 +396,7 @@
 		1DE1257146A8A1B86127860B /* Web */ = {
 			isa = PBXGroup;
 			children = (
+				F5451565A63405A8B33747A5 /* WebBridgeSmokeTests.swift */,
 				4721E0E6A5267CFC6E8D2BD2 /* WebBridgeTests.swift */,
 			);
 			path = Web;
@@ -768,6 +774,7 @@
 			buildConfigurationList = 4EF1F111FB2E0F2B390D928F /* Build configuration list for PBXNativeTarget "CocoTests" */;
 			buildPhases = (
 				C2A224BB7D7C183981AFC0B8 /* Sources */,
+				2DB3C5A927AFDE6D1ECCEA3F /* Copiar la web para las pruebas del puente */,
 				973F0212950A226621D9B6C9 /* Resources */,
 			);
 			buildRules = (
@@ -874,6 +881,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		2DB3C5A927AFDE6D1ECCEA3F /* Copiar la web para las pruebas del puente */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copiar la web para las pruebas del puente";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "bash \"$SRCROOT/scripts/copy-web-for-tests.sh\"";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		A3BEC4C6E4CB781AE805E611 /* Sources */ = {
@@ -997,10 +1026,12 @@
 				7F0CD868919829CDD5C1B2E9 /* RequestBuilderTests.swift in Sources */,
 				2D126B68C0A54E49EFD41411 /* RetryTests.swift in Sources */,
 				27E571D6DC197F5B1580E4F3 /* RouterTests.swift in Sources */,
+				9097412CFA1B31754B1FBD60 /* StaticWebServer.swift in Sources */,
 				D20DABA25F2C473B11259EF8 /* StoredFormatTests.swift in Sources */,
 				5044526D44CA1519A93F5B8F /* TreeIndexTests.swift in Sources */,
 				E0A9C25B8291CAE954D740D4 /* TreeSynchronizerTests.swift in Sources */,
 				704BB8CB8B5207741A6C17F8 /* VisibleTextTests.swift in Sources */,
+				ABBB3F747F48CE11177F8C1B /* WebBridgeSmokeTests.swift in Sources */,
 				3C462C8FA714A285B5B08C8C /* WebBridgeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1025,6 +1056,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = CocoTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1206,6 +1238,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = CocoTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

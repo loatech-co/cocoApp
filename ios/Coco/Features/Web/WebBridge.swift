@@ -43,8 +43,8 @@ enum WebFunction: String, CaseIterable {
 final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessageHandler, WKNavigationDelegate,
     WKUIDelegate
 {
-    static let sessionHandler = "cocoSession"
-    static let eventsHandler = "cocoEvents"
+    nonisolated static let sessionHandler = "cocoSession"
+    nonisolated static let eventsHandler = "cocoEvents"
     nonisolated static let deliveryWindow: TimeInterval = 30
     nonisolated static let maxConsecutiveDeliveries = 2
 
