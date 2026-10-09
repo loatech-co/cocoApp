@@ -29,7 +29,6 @@ struct WebSession: Sendable {
 enum SessionError: Error, Equatable {
     case signedOut
     case offline
-    case originNotAllowed
 }
 
 protocol Session: AnyObject, Sendable {

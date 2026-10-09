@@ -75,8 +75,6 @@ final class FormModel {
         normalizedAmount != nil && (concept != nil || !(readText ?? "").isEmpty)
     }
 
-    var visibleRecentConcepts: [IndexEntry] { recentConcepts() }
-
     // MARK: Concepto
 
     func search(_ query: String) {

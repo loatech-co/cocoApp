@@ -30,12 +30,6 @@ final class Connectivity {
         monitor.start(queue: DispatchQueue(label: "co.loatech.coco.network"))
     }
 
-    func stop() {
-        guard started else { return }
-        started = false
-        monitor.cancel()
-    }
-
     /// Solo publica cuando cambia: la cola no debe despertarse por repeticiones.
     func update(_ online: Bool) {
         guard online != isOnline else { return }
