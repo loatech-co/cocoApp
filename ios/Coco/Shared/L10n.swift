@@ -28,6 +28,7 @@ enum L10n {
         static var formReceipt: String { text("capture.form.receipt") }
         static var formRemoveConcept: String { text("capture.form.removeConcept") }
         static var formSave: String { text("capture.form.save") }
+        static var formSuggested: String { text("capture.form.suggested") }
         static var formTitle: String { text("capture.form.title") }
         static var photoChange: String { text("capture.photo.change") }
         static var photoChoose: String { text("capture.photo.choose") }

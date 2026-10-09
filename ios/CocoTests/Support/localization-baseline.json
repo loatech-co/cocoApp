@@ -267,6 +267,11 @@
       "value": "Guardar"
     },
     {
+      "key": "capture.form.suggested",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:113",
+      "value": "sugerido"
+    },
+    {
       "key": "capture.form.chooseConcept",
       "source": "ios/Coco/Features/Capture/QuickFormView.swift:125",
       "value": "Elegir concepto"

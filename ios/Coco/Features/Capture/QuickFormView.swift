@@ -110,7 +110,7 @@ struct QuickFormView: View {
                         HStack(spacing: 6) {
                             Text(concept.name)
                             if model.isConceptSuggested {
-                                Text("sugerido")
+                                Text(L10n.Capture.formSuggested)
                                     .font(.caption)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)

@@ -210,6 +210,17 @@
         }
       }
     },
+    "capture.form.suggested" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sugerido"
+          }
+        }
+      }
+    },
     "capture.form.title" : {
       "extractionState" : "manual",
       "localizations" : {

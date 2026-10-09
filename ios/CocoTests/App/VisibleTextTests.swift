@@ -7,7 +7,9 @@ import XCTest
 /// paquete de pruebas, porque el simulador no puede leer el repo—, saca cada
 /// literal de cadena y falla si alguno PARECE texto —lleva una letra con tilde o una
 /// eñe, dos palabras seguidas, o es una palabra con mayúscula inicial— y no
-/// está en las excepciones. Los mensajes del registro (`.info(`, `.error(`…)
+/// está en las excepciones. En un sitio que se ve —`Text(`, `Button(`,
+/// `.accessibilityLabel(`, `prompt:`…— basta con que lleve una letra: ahí
+/// una palabra suelta en minúsculas («sugerido») también es texto. Los mensajes del registro (`.info(`, `.error(`…)
 /// no cuentan: no los ve el usuario.
 ///
 /// Toda excepción va con su motivo, y una excepción que ya no se usa también
@@ -62,6 +64,20 @@ final class VisibleTextTests: XCTestCase {
     // Calculada: un `Regex` no es `Sendable` y no puede ser una constante global.
     private static var logCall: Regex<(Substring, Substring)> { #/\.(debug|info|notice|warning|error|fault)\($/# }
 
+    /// Los sitios donde lo que se escribe lo ve (o lo oye) el usuario: las
+    /// vistas que reciben un título, los modificadores de accesibilidad y los
+    /// argumentos que son texto. `label:` no está: en SwiftUI es un cierre, y
+    /// fuera de él nombra colas.
+    private static var visibleSlot: Regex<Substring> {
+        #/(?:^|[^A-Za-z0-9_.])(?:Text|Button|Label|Toggle|TextField|SecureField|LabeledContent|Section|DatePicker|Picker|Link|Menu|ProgressView|ContentUnavailableView)\($|\.(?:navigationTitle|accessibilityLabel|accessibilityHint|accessibilityValue|help|badge|alert|confirmationDialog)\($|(?:^|[^A-Za-z0-9_])(?:prompt|placeholder|title|message):$/#
+    }
+
+    static func isVisible(_ literal: SwiftLiterals.Literal) -> Bool {
+        guard literal.preceding.firstMatch(of: logCall) == nil else { return false }
+        return looksLikeText(literal.value)
+            || (literal.value.contains(where: \.isLetter) && literal.preceding.firstMatch(of: visibleSlot) != nil)
+    }
+
     func testNoVisibleTextOutsideTheCatalog() throws {
         // Las carpetas van copiadas en el paquete de pruebas (project.yml).
         let ios = try XCTUnwrap(Bundle(for: Self.self).resourceURL)
@@ -75,8 +91,7 @@ final class VisibleTextTests: XCTestCase {
                 let file = folder + url.path.dropFirst(root.path.count)
                 scanned += 1
                 for literal in SwiftLiterals.scan(try String(contentsOf: url, encoding: .utf8)) {
-                    guard Self.looksLikeText(literal.value), literal.preceding.firstMatch(of: Self.logCall) == nil
-                    else { continue }
+                    guard Self.isVisible(literal) else { continue }
                     if let index = Self.exceptions.firstIndex(where: {
                         $0.file == file && ($0.text == nil || $0.text == literal.value)
                     }) {
@@ -108,12 +123,17 @@ final class VisibleTextTests: XCTestCase {
             log.info("Arranca contra \\(url)")
             let path = "Photos/\\(id).jpg"
             // Text("comentado")
+            Text("sugerido")
+            Image(systemName: "trash").accessibilityLabel("borrar")
+            List {}.searchable(text: $query, prompt: "buscar")
+            Text("$")
+            Image("logo")
+            let queue = DispatchQueue(label: "co.loatech.coco.network")
+            let total = contextText("neto")
             """
-        let found = SwiftLiterals.scan(source).filter {
-            Self.looksLikeText($0.value) && $0.preceding.firstMatch(of: Self.logCall) == nil
-        }
-        XCTAssertEqual(found.map(\.value), ["Guardar", "Nuevo gasto"])
-        XCTAssertEqual(found.map(\.line), [1, 2])
+        let found = SwiftLiterals.scan(source).filter(Self.isVisible)
+        XCTAssertEqual(found.map(\.value), ["Guardar", "Nuevo gasto", "sugerido", "borrar", "buscar"])
+        XCTAssertEqual(found.map(\.line), [1, 2, 6, 7, 8])
     }
 }
 
