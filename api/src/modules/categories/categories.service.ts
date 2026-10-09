@@ -150,27 +150,6 @@ export class CategoriesService {
   }
 
   /**
-   * The default operation is to ARCHIVE, not delete: the reports of past
-   * periods would stop adding up if a category in use disappeared.
-   * Physical deletion is only allowed when it was never used.
-   */
-  async archive(userId: bigint, id: bigint, shouldCascade: boolean): Promise<void> {
-    await this.requireCategory(userId, id);
-
-    const skeleton = await this.repo.treeSkeleton(userId);
-    const childIds = skeleton.filter((node) => node.parentId === id).map((node) => node.id);
-
-    if (childIds.length > 0 && !shouldCascade) {
-      throw new ConflictError(
-        `Esta categoría tiene ${childIds.length} subcategoría(s). Archívala en cascada o reasigna sus hijas primero.`,
-        { code: 'category_has_children' },
-      );
-    }
-
-    await this.repo.archiveMany(userId, shouldCascade ? [id, ...childIds] : [id]);
-  }
-
-  /**
    * What a deletion would take with it, before doing it.
    *
    * The interface asks when it opens the confirmation: without this it would

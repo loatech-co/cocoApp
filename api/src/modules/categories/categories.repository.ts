@@ -68,17 +68,6 @@ export class CategoriesRepository {
     return count;
   }
 
-  async archiveMany(userId: bigint, ids: readonly bigint[]): Promise<number> {
-    if (ids.length === 0) return 0;
-    const { count } = await this.db.forUser(userId, (tx) =>
-      tx.category.updateMany({
-        where: { userId, id: { in: [...ids] } },
-        data: { isArchived: true },
-      }),
-    );
-    return count;
-  }
-
   /**
    * How many transactions hang from these categories.
    *

@@ -37,17 +37,6 @@ export class PreferencesService {
   }
 
   /**
-   * A shortcut for the rest of the app.
-   *
-   * The dashboard and the transactions module ask it whether talking about
-   * balances makes sense. It lives here so the answer to "does this user keep
-   * accounts?" has a single source.
-   */
-  async tracksAccounts(userId: bigint): Promise<boolean> {
-    return (await this.saved(userId))[ACCOUNTS_ENABLED];
-  }
-
-  /**
    * This user's own feature flag values: rows `feature:<name>` holding a
    * boolean (step 7.8). The flags module reads them through here because this
    * module owns `user_preferences`. They are not part of `StoredPreferences` and the
