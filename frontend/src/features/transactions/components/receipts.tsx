@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useReceiptFiles, useReceiptUpload } from '@/features/transactions/hooks/use-receipt-files';
 import { type Receipt } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
+import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
+import { Button } from '@/shared/ui/atoms/button';
 import { OverlayButton } from '@/shared/ui/molecules/overlay-control';
 
 import { ConfirmReceiptDeletion } from './confirm-receipt-deletion';
@@ -84,6 +86,22 @@ export function Receipts({ transactionId }: { transactionId: number }) {
         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
         {t('transactions.supports.searching')}
       </p>
+    );
+  }
+
+  if (g.files.isError) {
+    // Same reserved height as the loading line, so the retry does not make the sheet jump.
+    return (
+      <div className="flex min-h-62 flex-1 items-center">
+        <Alert variant="destructive">
+          <AlertDescription className="flex flex-col items-start gap-2">
+            {t('transactions.supports.listFailed')}
+            <Button type="button" variant="outline" size="sm" onClick={g.files.retry}>
+              {t('transactions.supports.retry')}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 

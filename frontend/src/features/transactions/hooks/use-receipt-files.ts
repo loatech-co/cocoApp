@@ -92,10 +92,20 @@ export function useReceiptFiles(transactionId: number) {
 
   return {
     isLoading: receipts.isPending,
+    /**
+     * The LIST could not be requested. It is not «no receipts»: shown as the
+     * empty drop zone, a 500 or a dropped network read as a transaction
+     * without its paper, and someone would upload it again.
+     */
+    isError: receipts.isError,
     list,
     urls,
     failures,
-    retry: () => setAttempt((n) => n + 1),
+    retry: () => {
+      // A failed list is requested again; a failed download, only its file.
+      if (receipts.isError) void receipts.refetch();
+      setAttempt((n) => n + 1);
+    },
   };
 }
 

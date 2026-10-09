@@ -444,6 +444,7 @@
       "missingFile": "Este soporte no está en el servidor. Su ficha sí: el archivo es lo que falta.",
       "loadFailed": "No se pudo cargar este soporte. El archivo puede estar bien.",
       "retry": "Reintentar",
+      "listFailed": "No se pudieron cargar los soportes de este movimiento. Revisa tu conexión e inténtalo de nuevo.",
       "kilobytes": "{{size}} KB",
       "download": "Descargar",
       "downloadNamed": "Descargar {{fileName}}",
