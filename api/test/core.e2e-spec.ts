@@ -3,18 +3,18 @@ import request from 'supertest';
 import { startApp, type TestEnvironment } from './helpers/app';
 
 /**
- * Fase 1 — el núcleo, contra MariaDB real.
+ * Phase 1 — the core, against a real Postgres.
  *
- * Lo que se protege aquí es lo que el PRD exige antes de avanzar de fase: que
- * los saldos se deriven bien, que los splits no cuadrados se rechacen, y que
- * ningún usuario pueda ver ni tocar los datos de otro.
+ * What is protected here is what the PRD requires before moving on a phase:
+ * that balances are derived correctly, that unbalanced splits are rejected,
+ * and that no user can see or touch another's data.
  */
-describe('Fase 1 — Núcleo (e2e)', () => {
+describe('Phase 1 — Core (e2e)', () => {
   let env: TestEnvironment;
   let http: ReturnType<typeof request>;
 
-  // Dos personas distintas: todo lo que verifica el aislamiento se apoya en
-  // que Beto no pueda ver ni un byte de lo de Ana.
+  // Two different people: everything that checks isolation rests on Beto not
+  // being able to see a single byte of Ana's.
   let ana: string;
   let beto: string;
 
@@ -56,10 +56,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     return response.body.data;
   };
 
-  // ── Saldos derivados ───────────────────────────────────────────────────────
+  // ── Derived balances ───────────────────────────────────────────────────────
 
-  describe('Saldos derivados', () => {
-    it('el saldo cuadra al centavo con la suma de los movimientos', async () => {
+  describe('Derived balances', () => {
+    it('the balance matches the sum of the transactions to the cent', async () => {
       const account = await createAccount(asAna(), { openingBalance: '500000' });
 
       for (const transaction of [
@@ -81,7 +81,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(response.body.data.balance).toBe('1200000.00');
     });
 
-    it('un movimiento pending no altera el saldo confirmado, pero sí el proyectado', async () => {
+    it('a pending transaction does not change the confirmed balance, but does change the projected one', async () => {
       const account = await createAccount(asAna(), { openingBalance: '100000' });
 
       await http
@@ -105,7 +105,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(response.body.data.balanceProjected).toBe('50000.00');
     });
 
-    it('en una tarjeta de crédito el consumo aumenta la deuda y baja el cupo', async () => {
+    it('on a credit card a purchase raises the debt and lowers the available credit', async () => {
       const card = await createAccount(asAna(), {
         name: 'Visa',
         type: 'credit',
@@ -137,7 +137,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
   // ── Splits ─────────────────────────────────────────────────────────────────
 
   describe('Splits', () => {
-    it('acepta un movimiento cuyos splits cuadran exactamente', async () => {
+    it('accepts a transaction whose splits add up exactly', async () => {
       const account = await createAccount(asAna());
       const groceries = await createCategory(asAna(), { name: 'Mercado' });
       const cleaning = await createCategory(asAna(), { name: 'Aseo' });
@@ -160,7 +160,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(response.body.data.splits).toHaveLength(2);
     });
 
-    it('rechaza con 422 si los splits no suman el monto, y no persiste nada', async () => {
+    it('rejects with 422 if the splits do not add up to the amount, and persists nothing', async () => {
       const account = await createAccount(asAna());
 
       const response = await http
@@ -177,16 +177,16 @@ describe('Fase 1 — Núcleo (e2e)', () => {
 
       expect(response.body.detail).toMatch(/no coincide/i);
 
-      // El ROLLBACK debe haber dejado la base intacta.
+      // The ROLLBACK must have left the database untouched.
       const list = await http.get('/api/v2/transactions').set('Authorization', asAna()).expect(200);
       expect(list.body.meta.total).toBe(0);
     });
   });
 
-  // ── Transferencias ─────────────────────────────────────────────────────────
+  // ── Transfers ──────────────────────────────────────────────────────────────
 
-  describe('Transferencias', () => {
-    it('crea dos patas emparejadas y no altera el patrimonio total', async () => {
+  describe('Transfers', () => {
+    it('creates two paired legs and does not change the total net worth', async () => {
       const source = await createAccount(asAna(), { name: 'Ahorros', openingBalance: '1000000' });
       const target = await createAccount(asAna(), { name: 'Efectivo', type: 'cash' });
 
@@ -216,7 +216,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(balances.Efectivo).toBe('300000.00');
     });
 
-    it('rechaza una transferencia a la misma cuenta', async () => {
+    it('rejects a transfer to the same account', async () => {
       const account = await createAccount(asAna());
 
       await http
@@ -231,7 +231,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(422);
     });
 
-    it('borrar una pata borra la otra: nunca queda una transferencia coja', async () => {
+    it('deleting one leg deletes the other: a transfer is never left one-legged', async () => {
       const source = await createAccount(asAna(), { name: 'A', openingBalance: '500000' });
       const target = await createAccount(asAna(), { name: 'B', type: 'cash' });
 
@@ -259,10 +259,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
-  // ── No-rigidez ─────────────────────────────────────────────────────────────
+  // ── Non-rigidity ───────────────────────────────────────────────────────────
 
   describe('No-rigidez', () => {
-    it('guarda un movimiento SIN categoría sin protestar', async () => {
+    it('saves a transaction WITHOUT a category without complaining', async () => {
       const account = await createAccount(asAna());
 
       const response = await http
@@ -279,7 +279,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(response.body.data.categoryId).toBeNull();
     });
 
-    it('permite exceder el cupo de la tarjeta: informa, no bloquea', async () => {
+    it('allows going over the card limit: it informs, it does not block', async () => {
       const card = await createAccount(asAna(), {
         name: 'Visa',
         type: 'credit',
@@ -306,10 +306,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
-  // ── Autorización por propiedad ─────────────────────────────────────────────
+  // ── Authorisation by ownership ─────────────────────────────────────────────
 
-  describe('Scoping por usuario', () => {
-    it('Beto no ve los movimientos de Ana', async () => {
+  describe('Scoping by user', () => {
+    it("Beto does not see Ana's transactions", async () => {
       const account = await createAccount(asAna());
       await http
         .post('/api/v2/transactions')
@@ -330,13 +330,13 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(list.body.meta.total).toBe(0);
     });
 
-    it('pedir una cuenta ajena por id responde 404, no 403: no confirma que exista', async () => {
+    it("asking for someone else's account by id answers 404, not 403: it does not confirm it exists", async () => {
       const account = await createAccount(asAna());
 
       await http.get(`/api/v2/accounts/${account.id}`).set('Authorization', asBeto()).expect(404);
     });
 
-    it('Beto no puede editar una cuenta de Ana', async () => {
+    it("Beto cannot edit an account of Ana's", async () => {
       const account = await createAccount(asAna());
 
       await http
@@ -346,7 +346,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(404);
     });
 
-    it('Beto no puede crear un movimiento contra la cuenta de Ana', async () => {
+    it("Beto cannot create a transaction against Ana's account", async () => {
       const account = await createAccount(asAna());
 
       await http
@@ -361,7 +361,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(422);
     });
 
-    it('enviar user_id en el body no cambia el propietario: lo rechaza el pipe', async () => {
+    it('sending user_id in the body does not change the owner: the pipe rejects it', async () => {
       const account = await createAccount(asAna());
 
       await http
@@ -378,17 +378,17 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
-  // ── Categorías ─────────────────────────────────────────────────────────────
+  // ── Categories ─────────────────────────────────────────────────────────────
 
-  describe('Categorías', () => {
-    it('un centro estático se guarda al crearlo y se puede cambiar después', async () => {
-      // La forma pública se arma campo por campo, así que un dato nuevo se
-      // pierde en silencio con la API devolviendo 201: ya pasó con la
-      // recurrencia. Esta prueba existe para que no vuelva a pasar.
+  describe('Categories', () => {
+    it('a static center is saved on create and can be changed later', async () => {
+      // The public shape is built field by field, so a new field gets lost
+      // silently with the API returning 201: it already happened with
+      // recurrence. This test exists so it does not happen again.
       const costCenter = await createCategory(asAna(), { name: 'Costos fijos', isStatic: true });
       expect(costCenter.isStatic).toBe(true);
 
-      // Y llega al árbol, que es de donde lo lee la tabla de movimientos.
+      // And it reaches the tree, which is where the transactions table reads it from.
       const tree = await http.get('/api/v2/categories').set('Authorization', asAna()).expect(200);
       expect(
         tree.body.data.find((c: { id: number | string }) => Number(c.id) === Number(costCenter.id))
@@ -403,12 +403,12 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(loose.body.data.isStatic).toBe(false);
     });
 
-    it('un centro nace dinámico si nadie dice lo contrario', async () => {
+    it('a center is born dynamic unless someone says otherwise', async () => {
       const costCenter = await createCategory(asAna(), { name: 'Costos variables' });
       expect(costCenter.isStatic).toBe(false);
     });
 
-    it('rechaza con 422 un ciclo en el árbol', async () => {
+    it('rejects a cycle in the tree with 422', async () => {
       const parent = await createCategory(asAna(), { name: 'Hogar' });
       const child = await createCategory(asAna(), {
         name: 'Servicios',
@@ -422,7 +422,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(422);
     });
 
-    it('devuelve el árbol anidado, no una lista plana', async () => {
+    it('returns the nested tree, not a flat list', async () => {
       const parent = await createCategory(asAna(), { name: 'Hogar' });
       await createCategory(asAna(), { name: 'Servicios', parentId: Number(parent.id) });
 
@@ -436,25 +436,25 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(response.body.data[0].children[0].name).toBe('Servicios');
     });
 
-    it('siembra el diccionario inicial y luego se niega a repetirlo', async () => {
+    it('seeds the initial dictionary and then refuses to repeat it', async () => {
       const first = await http
         .post('/api/v2/categories/seed')
         .set('Authorization', asAna())
         .expect(201);
 
-      // La plantilla es un SNAPSHOT de dos centros y siete categorías desde el
-      // 17 de septiembre de 2026 (ver `categories.template.ts`): nueve filas.
-      // Antes sembraba un diccionario de cuarenta y pico conceptos.
+      // The template is a SNAPSHOT of two centers and seven categories since
+      // 17 September 2026 (see `categories.template.ts`): nine rows. It used to
+      // seed a dictionary of forty-odd concepts.
       expect(first.body.data.created).toBe(9);
 
       await http.post('/api/v2/categories/seed').set('Authorization', asAna()).expect(409);
     });
   });
 
-  // ── Mover un concepto de grupo ─────────────────────────────────────────────
+  // ── Moving a concept to another group ──────────────────────────────────────
 
-  describe('Mover un concepto de grupo', () => {
-    it('lo acepta dentro del mismo centro', async () => {
+  describe('Moving a concept to another group', () => {
+    it('accepts it within the same center', async () => {
       const costCenter = await createCategory(asAna(), { name: 'Costos fijos' });
       const housing = await createCategory(asAna(), {
         name: 'Vivienda',
@@ -478,9 +478,9 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(Number(moved.body.data.parentId)).toBe(Number(utilities.id));
     });
 
-    it('lo acepta junto con el resto de los campos de la ficha', async () => {
-      // Como lo manda la interfaz: el nombre, la recurrencia y el grupo en la
-      // misma petición.
+    it("accepts it together with the rest of the sheet's fields", async () => {
+      // As the interface sends it: the name, the recurrence and the group in the
+      // same request.
       const costCenter = await createCategory(asAna(), { name: 'Costos fijos' });
       const a = await createCategory(asAna(), { name: 'A', parentId: Number(costCenter.id) });
       const b = await createCategory(asAna(), { name: 'B', parentId: Number(costCenter.id) });
@@ -507,20 +507,20 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
-  // ── El icono de una categoría ──────────────────────────────────────────────
+  // ── A category's icon ──────────────────────────────────────────────────────
 
-  describe('El icono de un grupo', () => {
-    it('se guarda al crear, se cambia al editar y se puede quitar', async () => {
+  describe("A group's icon", () => {
+    it('is saved on create, changed on edit and can be removed', async () => {
       /*
-        Quitarlo es el caso que hay que probar, y no por capricho: el DTO
-        declara `icon?: string`, así que a simple vista un `null` no cabe. Lo
-        deja pasar `@IsOptional()`, que en class-validator salta la validación
-        tanto con `undefined` como con `null`, y el servicio lo aplica porque
-        distingue «no vino» de «vino vacío» con un `!== undefined`.
+        Removing it is the case that needs testing, and not on a whim: the DTO
+        declares `icon?: string`, so at first sight a `null` does not fit. It
+        gets through thanks to `@IsOptional()`, which in class-validator skips
+        validation for both `undefined` and `null`, and the service applies it
+        because it tells "did not come" from "came empty" with `!== undefined`.
 
-        Son dos comportamientos de dos bibliotecas que podrían cambiar sin que
-        nadie lo note, y el síntoma sería silencioso: el icono se queda puesto
-        y nadie sabe por qué.
+        Those are two behaviours of two libraries that could change without
+        anyone noticing, and the symptom would be silent: the icon stays on
+        and nobody knows why.
       */
       const group = await createCategory(asAna(), { name: 'Servicios', icon: 'house' });
       expect(group.icon).toBe('house');
@@ -542,7 +542,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(withoutIcon.body.data.icon).toBeNull();
     });
 
-    it('no se traga un nombre de más de 64 caracteres', async () => {
+    it('does not swallow a name longer than 64 characters', async () => {
       const group = await createCategory(asAna(), { name: 'Servicios' });
 
       await http
@@ -553,20 +553,20 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
-  // ── Eliminar una categoría ─────────────────────────────────────────────────
+  // ── Deleting a category ────────────────────────────────────────────────────
 
   /**
-   * Borrar una categoría es la única operación destructiva del árbol, y hasta
-   * ahora no tenía ni una prueba: se limitaba a negarse en cuanto había un
-   * movimiento, así que no había mucho que comprobar.
+   * Deleting a category is the only destructive operation on the tree, and
+   * until now it had not a single test: it just refused as soon as there was
+   * a transaction, so there was not much to check.
    *
-   * Ahora borra de verdad, y hay tres cosas que no pueden fallar en silencio:
-   * que los movimientos acaben donde se dijo, que no se queden sin clasificar
-   * por el `ON DELETE SET NULL`, y que los conceptos de un grupo borrado se
-   * vayan con él en vez de ascender a centros de costos.
+   * Now it really deletes, and three things cannot fail silently: that the
+   * transactions end up where they were told, that they are not left
+   * unclassified by the `ON DELETE SET NULL`, and that the concepts of a
+   * deleted group go with it instead of rising to cost centers.
    */
-  describe('Eliminar una categoría', () => {
-    /** Un árbol de tres niveles con un movimiento colgando del concepto. */
+  describe('Deleting a category', () => {
+    /** A three-level tree with a transaction hanging from the concept. */
     const withOneTransaction = async () => {
       const account = await createAccount(asAna());
       const costCenter = await createCategory(asAna(), { name: 'Costos fijos' });
@@ -595,9 +595,9 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       return { costCenter, group, concept, other, transaction: transaction.body.data };
     };
 
-    it('cuenta los movimientos del SUBÁRBOL, no solo los de la fila', async () => {
-      // El movimiento cuelga del concepto, tres niveles por debajo del centro.
-      // Contando solo el id del centro, un centro con cuarenta daba cero.
+    it('counts the transactions of the SUBTREE, not only those of the row', async () => {
+      // The transaction hangs from the concept, three levels below the center.
+      // Counting only the center's id, a center with forty gave zero.
       const { costCenter, group, concept } = await withOneTransaction();
 
       for (const [category, subcategories] of [
@@ -614,7 +614,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       }
     });
 
-    it('se niega si hay movimientos y no se dice a dónde pasan', async () => {
+    it('refuses if there are transactions and it is not told where they go', async () => {
       const { concept } = await withOneTransaction();
 
       await http
@@ -623,7 +623,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(409);
     });
 
-    it('reasigna los movimientos y borra', async () => {
+    it('reassigns the transactions and deletes', async () => {
       const { concept, other, transaction } = await withOneTransaction();
 
       await http
@@ -631,9 +631,9 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .set('Authorization', asAna())
         .expect(204);
 
-      // El movimiento sigue ahí, con su categoría nueva. Lo que NO puede pasar
-      // es que quede en null: `category_id` es `ON DELETE SET NULL`, así que un
-      // borrado sin reasignar lo deja sin clasificar en silencio.
+      // The transaction is still there, with its new category. What must NOT
+      // happen is that it ends up null: `category_id` is `ON DELETE SET NULL`, so
+      // a delete without reassigning leaves it unclassified silently.
       const after = await http
         .get(`/api/v2/transactions/${Number(transaction.id)}`)
         .set('Authorization', asAna())
@@ -642,10 +642,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(Number(after.body.data.categoryId)).toBe(Number(other.id));
     });
 
-    it('se lleva el subárbol entero: los conceptos no ascienden a centros', async () => {
-      // `parent_id` es `ON DELETE SET NULL`. Borrando solo el grupo, sus
-      // conceptos se quedaban con el padre en nulo y aparecían como centros de
-      // costos nuevos en la raíz del árbol.
+    it('takes the whole subtree: the concepts do not rise to centers', async () => {
+      // `parent_id` is `ON DELETE SET NULL`. Deleting only the group, its
+      // concepts were left with a null parent and showed up as new cost centers
+      // at the root of the tree.
       const { group, concept, other } = await withOneTransaction();
 
       await http
@@ -660,9 +660,9 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(ids).not.toContain(Number(group.id));
     });
 
-    it('no acepta un destino que también se va a borrar', async () => {
-      // Reasignar al concepto que cuelga del grupo que se está borrando deja
-      // los movimientos sin clasificar, que es justo lo que se quiere evitar.
+    it('does not accept a target that is also being deleted', async () => {
+      // Reassigning to the concept that hangs from the group being deleted leaves
+      // the transactions unclassified, which is exactly what is to be avoided.
       const { group, concept } = await withOneTransaction();
 
       await http
@@ -671,7 +671,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(409);
     });
 
-    it('sin movimientos no hace falta destino', async () => {
+    it('without transactions no target is needed', async () => {
       const empty = await createCategory(asAna(), { name: 'Sin usar' });
 
       await http
@@ -680,7 +680,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(204);
     });
 
-    it('Beto no puede borrar una categoría de Ana', async () => {
+    it("Beto cannot delete a category of Ana's", async () => {
       const anas = await createCategory(asAna(), { name: 'Privada' });
 
       await http
@@ -690,10 +690,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
-  // ── Etiquetas ──────────────────────────────────────────────────────────────
+  // ── Tags ───────────────────────────────────────────────────────────────────
 
-  describe('Etiquetas', () => {
-    it('crear una etiqueta repetida devuelve la existente en vez de fallar', async () => {
+  describe('Tags', () => {
+    it('creating a duplicate tag returns the existing one instead of failing', async () => {
       const first = await http
         .post('/api/v2/tags')
         .set('Authorization', asAna())
@@ -709,7 +709,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(second.body.data.id).toBe(first.body.data.id);
     });
 
-    it('se crean al vuelo al etiquetar un movimiento', async () => {
+    it('are created on the fly when tagging a transaction', async () => {
       const account = await createAccount(asAna());
 
       const response = await http
@@ -728,10 +728,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
-  // ── Cuentas ────────────────────────────────────────────────────────────────
+  // ── Accounts ───────────────────────────────────────────────────────────────
 
-  describe('Cuentas', () => {
-    it('no deja borrar una cuenta con transactions: obliga a archivar', async () => {
+  describe('Accounts', () => {
+    it('does not allow deleting an account with transactions: it forces archiving', async () => {
       const account = await createAccount(asAna());
       await http
         .post('/api/v2/transactions')
@@ -752,7 +752,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(response.body.detail).toMatch(/archív/i);
     });
 
-    it('rechaza campos de tarjeta en una cuenta que no es de crédito', async () => {
+    it('rejects card fields on an account that is not a credit one', async () => {
       await http
         .post('/api/v2/accounts')
         .set('Authorization', asAna())
@@ -764,7 +764,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
   // ── Dashboard ──────────────────────────────────────────────────────────────
 
   describe('Dashboard', () => {
-    it('el flujo del mes excluye transferencias y el gasto por categoría cuadra', async () => {
+    it("the month's cash flow excludes transfers and the spending by category adds up", async () => {
       const account = await createAccount(asAna(), { openingBalance: '0' });
       const other = await createAccount(asAna(), { name: 'Ahorros', type: 'savings' });
       const category = await createCategory(asAna(), { name: 'Mercado' });
@@ -792,7 +792,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         })
         .expect(201);
 
-      // Una transferencia que NO debe aparecer en el flujo.
+      // A transfer that must NOT show up in the cash flow.
       await http
         .post('/api/v2/transactions/transfer')
         .set('Authorization', asAna())
@@ -804,8 +804,8 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         })
         .expect(201);
 
-      // El resumen se pide por RANGO, no por mes: es el mismo recorte que usa
-      // la lista de movimientos, para que las cifras de una expliquen la otra.
+      // The summary is requested by RANGE, not by month: it is the same slice the
+      // transactions list uses, so the figures of one explain the other.
       const response = await http
         .get('/api/v2/dashboard?from=2026-08-01&to=2026-08-31')
         .set('Authorization', asAna())
@@ -817,8 +817,9 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(range.expense).toBe('89900.00');
       expect(range.net).toBe('5110100.00');
 
-      // Un mes entero se agrupa por día, y los días sin gasto vienen en cero:
-      // omitirlos haría que la línea uniera el 3 con el 20 en línea recta.
+      // A whole month is grouped by day, and the days with no spending come as
+      // zero: leaving them out would make the line join the 3rd and the 20th
+      // in a straight line.
       expect(breakdownLevel).toBe('cost_center');
       expect(trend).toHaveLength(31);
       expect(trend.every((p: { bucket: string }) => p.bucket.startsWith('2026-08'))).toBe(true);
@@ -831,10 +832,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
-  // ── Centros de costos, grupos y conceptos ──────────────────────────────────
+  // ── Cost centers, groups and concepts ──────────────────────────────────────
 
-  describe('Jerarquía de tres niveles', () => {
-    it('filtrar por un CENTRO trae los movimientos de todos sus conceptos', async () => {
+  describe('Three-level hierarchy', () => {
+    it('filtering by a CENTER brings the transactions of all its concepts', async () => {
       // Costos fijos → Servicios públicos → Celsia
       const costCenter = await createCategory(asAna(), { name: 'Costos fijos' });
       const group = await createCategory(asAna(), {
@@ -858,8 +859,9 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         })
         .expect(201);
 
-      // El movimiento cuelga del CONCEPTO. Filtrar por el centro tiene que
-      // encontrarlo igual, o un desglose por centro saldría siempre vacío.
+      // The transaction hangs from the CONCEPT. Filtering by the center has to
+      // find it all the same, or a breakdown by center would always come out
+      // empty.
       for (const id of [costCenter.id, group.id, concept.id]) {
         const r = await http
           .get(`/api/v2/transactions?categoryId=${Number(id)}`)
@@ -869,7 +871,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       }
     });
 
-    it('la búsqueda NO distingue mayúsculas', async () => {
+    it('the search is NOT case-sensitive', async () => {
       await http
         .post('/api/v2/transactions')
         .set('Authorization', asAna())
@@ -881,8 +883,8 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         })
         .expect(201);
 
-      // Postgres compara distinguiendo mayúsculas, a diferencia de MariaDB.
-      // Quien busca escribe en minúscula y espera encontrarlo.
+      // Postgres compares case-sensitively, unlike MariaDB. Whoever searches
+      // types in lower case and expects to find it.
       const r = await http
         .get('/api/v2/transactions?q=celsia')
         .set('Authorization', asAna())
@@ -892,10 +894,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(r.body.data[0].description).toBe('Celsia (Energia)');
     });
 
-    it('el desglose del resumen BAJA un nivel al filtrar', async () => {
-      // DOS centros con gasto. Con uno solo, el nivel de los centros no
-      // desglosa nada —"el 100 % está en el único sitio donde puede estar"— y
-      // el resumen se lo salta, que es lo que comprueba la prueba de abajo.
+    it('the summary breakdown GOES DOWN a level when filtering', async () => {
+      // TWO centers with spending. With only one, the centers level breaks
+      // nothing down —"100 % is in the only place it can be"— and the summary
+      // skips it, which is what the test below checks.
       const costCenter = await createCategory(asAna(), { name: 'Costos fijos' });
       const utilities = await createCategory(asAna(), {
         name: 'Servicios públicos',
@@ -934,7 +936,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(unfiltered.body.data.breakdownLevel).toBe('cost_center');
       expect(unfiltered.body.data.byCategory[0].name).toBe('Costos fijos');
 
-      // Fijos contra variables, con los nombres de los centros.
+      // Fixed against variable, with the names of the centers.
       expect(
         unfiltered.body.data.expenseByCostCenter.map((f: { name: string; total: string }) => [
           f.name,
@@ -960,7 +962,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(withinGroup.body.data.byCategory[0].name).toBe('Celsia');
     });
 
-    it('con un solo centro con gasto, el desglose se salta ese nivel', async () => {
+    it('with a single center with spending, the breakdown skips that level', async () => {
       const costCenter = await createCategory(asAna(), { name: 'Costos fijos' });
       const utilities = await createCategory(asAna(), {
         name: 'Servicios públicos',
@@ -970,7 +972,8 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         name: 'Vivienda',
         parentId: Number(costCenter.id),
       });
-      // Un centro más, SIN gasto: existir no basta para salir en el desglose.
+      // One more center, WITHOUT spending: existing is not enough to show up in
+      // the breakdown.
       await createCategory(asAna(), { name: 'Costos variables' });
 
       for (const [id, amount] of [
@@ -989,9 +992,9 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .set('Authorization', asAna())
         .expect(200);
 
-      // Se muestran los GRUPOS del único centro con gasto, y el nombre del
-      // centro pasa a ser el subtítulo. Enseñar "Costos fijos, 100 %" no
-      // responde nada: eso ya se sabía antes de mirar.
+      // The GROUPS of the only center with spending are shown, and the center's
+      // name becomes the subtitle. Showing "Costos fijos, 100 %" answers
+      // nothing: that was known before looking.
       expect(r.body.data.breakdownLevel).toBe('category');
       expect(r.body.data.breakdownParent.name).toBe('Costos fijos');
       expect(r.body.data.byCategory.map((f: { name: string }) => f.name)).toEqual([
@@ -999,16 +1002,16 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         'Servicios públicos',
       ]);
 
-      // El reparto fijos/variables NO baja con el desglose: aunque la dona
-      // esté enseñando grupos, esta pregunta se responde en los centros.
+      // The fixed/variable split does NOT go down with the breakdown: even when
+      // the donut shows groups, this question is answered at the centers.
       expect(r.body.data.expenseByCostCenter).toHaveLength(1);
       expect(r.body.data.expenseByCostCenter[0].name).toBe('Costos fijos');
       expect(r.body.data.expenseByCostCenter[0].total).toBe('1200000.00');
     });
 
-    it('el presupuesto del mes suma los recurrentes, pagados o no', async () => {
-      // El mes EN CURSO, calculado igual que la API. Una fecha fija dejaría de
-      // valer el mes que viene: el presupuesto mira siempre hoy.
+    it("the month's budget adds up the recurring ones, paid or not", async () => {
+      // The CURRENT month, computed the same way as the API. A fixed date would
+      // stop working next month: the budget always looks at today.
       const today = new Date(Date.now() - 5 * 60 * 60 * 1000);
       const month = today.toISOString().slice(0, 7);
       const dayOf = (monthsAgo: number) =>
@@ -1031,7 +1034,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         periodicity: 'monthly',
         paymentDay: 10,
       });
-      // Sin marcar: un gasto que no vuelve no es presupuesto.
+      // Not marked: an expense that does not come back is not budget.
       const groceries = await createCategory(asAna(), {
         name: 'Mercado',
         parentId: Number(costCenter.id),
@@ -1045,12 +1048,12 @@ describe('Fase 1 — Núcleo (e2e)', () => {
           .expect(201);
       };
 
-      // La historia es de donde sale lo que se ESPERA pagar: el promedio de
-      // los meses con pago dentro de los tres anteriores.
+      // The history is where what is EXPECTED to be paid comes from: the average
+      // of the months with a payment within the previous three.
       await expense(rent.id, dayOf(1), '1000000');
       await expense(water.id, dayOf(2), '100000');
       await expense(water.id, dayOf(1), '140000');
-      // Este mes: el alquiler ya se pagó, y más caro que la última vez.
+      // This month: the rent is already paid, and dearer than last time.
       await expense(rent.id, `${month}-01`, '1100000');
       await expense(groceries.id, `${month}-01`, '80000');
 
@@ -1059,20 +1062,21 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .set('Authorization', asAna())
         .expect(200);
 
-      // 1.100.000 del alquiler PAGADO —por lo que costó de verdad, no por lo
-      // que costaba— más 120.000 del agua, que falta y se estima promediando
-      // sus dos meses: (100.000 + 140.000) / 2. El mercado no entra: no es
-      // recurrente.
+      // 1.100.000 of PAID rent —for what it really cost, not what it used to
+      // cost— plus 120.000 of water, which is missing and estimated by averaging
+      // its two months: (100.000 + 140.000) / 2. Groceries do not count: they are
+      // not recurring.
       expect(r.body.data.requiredBudget).toBe('1220000.00');
 
-      // Y lo que falta es solo el agua. El presupuesto no se encoge al pagar
-      // —esa es la diferencia entre las dos cifras—, la lista de pendientes sí.
+      // And what is missing is only the water. The budget does not shrink on
+      // payment —that is the difference between the two figures—, the pending
+      // list does.
       expect(r.body.data.pending).toHaveLength(1);
       expect(r.body.data.pending[0].name).toBe('Agua');
       expect(r.body.data.pending[0].expectedAmount).toBe('120000.00');
     });
 
-    it('un movimiento SIN confirmar no saca al concepto de los pendientes', async () => {
+    it('an UNCONFIRMED transaction does not take the concept off the pending list', async () => {
       const today = new Date(Date.now() - 5 * 60 * 60 * 1000);
       const month = today.toISOString().slice(0, 7);
 
@@ -1085,8 +1089,8 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         paymentDay: 10,
       });
 
-      // Un pago anunciado pero no confirmado: una transferencia programada, un
-      // débito que todavía no aparece en el extracto.
+      // A payment announced but not confirmed: a scheduled transfer, a debit
+      // that does not show on the statement yet.
       await http
         .post('/api/v2/transactions')
         .set('Authorization', asAna())
@@ -1104,24 +1108,25 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .set('Authorization', asAna())
         .expect(200);
 
-      // Sigue pendiente: un pago pendiente es lo que está en el presupuesto y
-      // NO tiene todavía un movimiento confirmado que lo respalde. Sacarlo de
-      // la lista prometería que algo está resuelto cuando no lo está.
+      // Still pending: a pending payment is what is in the budget and does NOT
+      // yet have a confirmed transaction behind it. Taking it off the list would
+      // promise that something is settled when it is not.
       expect(r.body.data.pending).toHaveLength(1);
       expect(r.body.data.pending[0].name).toBe('Agua');
     });
 
-    it('un concepto ARCHIVADO sale de los pendientes pero sigue contando en los históricos', async () => {
+    it('an ARCHIVED concept leaves the pending list but still counts in the history', async () => {
       /*
-        Archivar mira hacia adelante: el gimnasio que se dio de baja no se
-        vuelve a pedir cada mes. Pero no reescribe lo que ya pasó: lo que
-        costó mientras estuvo vivo sigue en el total gastado y en la dona.
+        Archiving looks forward: the gym that was cancelled is not asked for
+        again every month. But it does not rewrite what already happened:
+        what it cost while it was alive stays in the total spent and in the
+        donut.
 
-        Las dos mitades se miran en UNA sola respuesta —el rango abarca el mes
-        pasado y el actual— porque los pendientes salen siempre del mes en
-        curso, mientras que los totales salen del rango pedido. Si el filtro
-        de archivados se moviera a la consulta de la que beben los dos, esta
-        prueba lo diría: el total perdería los 90.000.
+        Both halves are checked in ONE response —the range covers last month
+        and this one— because the pending ones always come from the current
+        month, while the totals come from the requested range. If the
+        archived filter moved to the query both of them drink from, this
+        test would say so: the total would lose the 90.000.
       */
       const today = new Date(Date.now() - 5 * 60 * 60 * 1000);
       const month = today.toISOString().slice(0, 7);
@@ -1130,7 +1135,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .slice(0, 7);
 
       const costCenter = await createCategory(asAna(), { name: 'Costos fijos' });
-      // El agua no se toca: es el testigo de que la lista sigue viva.
+      // The water is left alone: it is the witness that the list is still alive.
       await createCategory(asAna(), {
         name: 'Agua',
         parentId: Number(costCenter.id),
@@ -1146,7 +1151,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         paymentDay: 5,
       });
 
-      // El gimnasio se pagó el mes pasado; este mes ninguno de los dos.
+      // The gym was paid last month; this month neither of them.
       await http
         .post('/api/v2/transactions')
         .set('Authorization', asAna())
@@ -1158,7 +1163,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         })
         .expect(201);
 
-      // Y después se da de baja: se archiva, no se borra.
+      // And then it is cancelled: archived, not deleted.
       await http
         .patch(`/api/v2/categories/${gym.id}`)
         .set('Authorization', asAna())
@@ -1170,22 +1175,22 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .set('Authorization', asAna())
         .expect(200);
 
-      // Sin pagar este mes los dos, pero solo el agua se pide: el gimnasio
-      // archivado ya no es algo que falte pagar, ni entra en el presupuesto.
+      // Both unpaid this month, but only the water is asked for: the archived
+      // gym is no longer something left to pay, nor does it enter the budget.
       expect(r.body.data.pending.map((p: { name: string }) => p.name)).toEqual(['Agua']);
       expect(r.body.data.requiredBudget).toBe('0.00');
 
-      // Lo que costó mientras estuvo vivo sigue ahí: en el total y en la dona.
+      // What it cost while it was alive is still there: in the total and in the donut.
       expect(r.body.data.range.expense).toBe('90000.00');
       const byCategoryRows = r.body.data.byCategory as { categoryId: unknown; total: string }[];
       expect(byCategoryRows.map((row) => Number(row.total)).reduce((a, b) => a + b, 0)).toBe(90000);
     });
   });
 
-  // ── Paginación ─────────────────────────────────────────────────────────────
+  // ── Pagination ─────────────────────────────────────────────────────────────
 
-  describe('Paginación', () => {
-    it('devuelve meta.total y no solapa filas entre páginas', async () => {
+  describe('Pagination', () => {
+    it('returns meta.total and does not overlap rows between pages', async () => {
       const account = await createAccount(asAna());
 
       for (let i = 1; i <= 5; i += 1) {
