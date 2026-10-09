@@ -33,18 +33,18 @@ afterEach(() => vi.useRealTimers());
 
 describe('rangeOf', () => {
   it('runs "everything" from the first to the last transaction', () => {
-    expect(rangeOf('todo', { first: '2022-04-04', last: '2026-05-01' })).toEqual({
+    expect(rangeOf('all', { first: '2022-04-04', last: '2026-05-01' })).toEqual({
       from: '2022-04-04',
       to: '2026-05-01',
     });
   });
 
   it('falls back to a wide range while the history has not arrived', () => {
-    expect(rangeOf('todo')).toEqual({ from: '1970-01-01', to: '2031-12-31' });
+    expect(rangeOf('all')).toEqual({ from: '1970-01-01', to: '2031-12-31' });
   });
 
   it('starts a custom range on the current month up to today', () => {
-    expect(rangeOf('personalizado')).toEqual({ from: '2026-05-01', to: '2026-05-20' });
+    expect(rangeOf('custom')).toEqual({ from: '2026-05-01', to: '2026-05-20' });
   });
 });
 
@@ -57,7 +57,7 @@ describe('reachesToday', () => {
 
 describe('toApiParams', () => {
   const base: Filters = {
-    preset: 'mes-actual',
+    preset: 'this-month',
     from: '2026-05-01',
     to: '2026-05-20',
     categoryIds: [],
@@ -82,7 +82,7 @@ describe('useFilters', () => {
     const { result } = renderFilters();
 
     expect(result.current.filters).toEqual({
-      preset: 'mes-actual',
+      preset: 'this-month',
       from: '2026-05-01',
       to: '2026-05-20',
       categoryIds: [],
@@ -92,10 +92,10 @@ describe('useFilters', () => {
   });
 
   it('reads the preset, categories and search from the URL', () => {
-    const { result } = renderFilters('/?rango=anio-pasado&categorias=3,x,-1,7&busca=luz');
+    const { result } = renderFilters('/?range=last-year&categories=3,x,-1,7&q=luz');
 
     expect(result.current.filters).toEqual({
-      preset: 'anio-pasado',
+      preset: 'last-year',
       from: '2025-01-01',
       to: '2025-12-31',
       categoryIds: [3, 7],
@@ -105,55 +105,55 @@ describe('useFilters', () => {
   });
 
   it('reads the hand-written dates of a custom range', () => {
-    const { result } = renderFilters('/?rango=personalizado&desde=2026-01-10&hasta=2026-02-10');
+    const { result } = renderFilters('/?range=custom&from=2026-01-10&to=2026-02-10');
 
     expect(result.current.filters).toMatchObject({ from: '2026-01-10', to: '2026-02-10' });
   });
 
   it('ignores hand-written dates when the preset is not custom', () => {
-    const { result } = renderFilters('/?rango=mes-pasado&desde=2026-01-10');
+    const { result } = renderFilters('/?range=last-month&from=2026-01-10');
 
     expect(result.current.filters).toMatchObject({ from: '2026-04-01', to: '2026-04-30' });
   });
 
   it('uses the transaction history for "everything"', () => {
     history.data = { first: '2023-02-01', last: '2026-05-18' };
-    const { result } = renderFilters('/', 'todo');
+    const { result } = renderFilters('/', 'all');
 
     expect(result.current.filters).toMatchObject({ from: '2023-02-01', to: '2026-05-18' });
     expect(result.current.hasActiveFilters).toBe(false);
   });
 
   it('a search counts as an active filter', () => {
-    const { result } = renderFilters('/?busca=x');
+    const { result } = renderFilters('/?q=x');
 
     expect(result.current.hasActiveFilters).toBe(true);
   });
 
   it('switching preset drops the hand-written dates', () => {
-    const { result } = renderFilters('/?rango=personalizado&desde=2026-01-10&hasta=2026-02-10');
+    const { result } = renderFilters('/?range=custom&from=2026-01-10&to=2026-02-10');
 
-    act(() => result.current.apply({ preset: 'trimestre' }));
+    act(() => result.current.apply({ preset: 'last-3-months' }));
 
-    expect(result.current.search.toString()).toBe('rango=trimestre');
+    expect(result.current.search.toString()).toBe('range=last-3-months');
     expect(result.current.filters).toMatchObject({ from: '2026-03-01', to: '2026-05-20' });
   });
 
   it('going back to the default preset removes it from the URL', () => {
-    const { result } = renderFilters('/?rango=trimestre');
+    const { result } = renderFilters('/?range=last-3-months');
 
-    act(() => result.current.apply({ preset: 'mes-actual' }));
+    act(() => result.current.apply({ preset: 'this-month' }));
 
-    expect(result.current.search.has('rango')).toBe(false);
+    expect(result.current.search.has('range')).toBe(false);
   });
 
   it('choosing custom keeps the dates already written', () => {
-    const { result } = renderFilters('/?desde=2026-01-10&hasta=2026-02-10');
+    const { result } = renderFilters('/?from=2026-01-10&to=2026-02-10');
 
-    act(() => result.current.apply({ preset: 'personalizado' }));
+    act(() => result.current.apply({ preset: 'custom' }));
 
     expect(result.current.filters).toMatchObject({
-      preset: 'personalizado',
+      preset: 'custom',
       from: '2026-01-10',
       to: '2026-02-10',
     });
@@ -164,7 +164,7 @@ describe('useFilters', () => {
 
     act(() => result.current.apply({ from: '2026-02-01' }));
     expect(result.current.filters).toMatchObject({
-      preset: 'personalizado',
+      preset: 'custom',
       from: '2026-02-01',
       to: '2026-05-20',
     });
@@ -177,10 +177,10 @@ describe('useFilters', () => {
     const { result } = renderFilters();
 
     act(() => result.current.apply({ categoryIds: [4, 9] }));
-    expect(result.current.search.get('categorias')).toBe('4,9');
+    expect(result.current.search.get('categories')).toBe('4,9');
 
     act(() => result.current.apply({ categoryIds: [] }));
-    expect(result.current.search.has('categorias')).toBe(false);
+    expect(result.current.search.has('categories')).toBe(false);
   });
 
   it('writes the search and drops a blank one', () => {
@@ -190,15 +190,61 @@ describe('useFilters', () => {
     expect(result.current.filters.q).toBe('agua');
 
     act(() => result.current.apply({ q: '   ' }));
-    expect(result.current.search.has('busca')).toBe(false);
+    expect(result.current.search.has('q')).toBe(false);
   });
 
   it('clearing empties the URL', () => {
-    const { result } = renderFilters('/?rango=trimestre&categorias=3&busca=x');
+    const { result } = renderFilters('/?range=last-3-months&categories=3&q=x');
 
     act(() => result.current.clear());
 
     expect(result.current.search.toString()).toBe('');
     expect(result.current.hasActiveFilters).toBe(false);
+  });
+});
+
+describe('useFilters with a URL from before the English names', () => {
+  it('reads the Spanish parameters and range values', () => {
+    const { result } = renderFilters('/?rango=anio-pasado&categorias=3,7&busca=luz');
+
+    expect(result.current.filters).toEqual({
+      preset: 'last-year',
+      from: '2025-01-01',
+      to: '2025-12-31',
+      categoryIds: [3, 7],
+      q: 'luz',
+    });
+  });
+
+  it('reads the hand-written dates of a Spanish custom range', () => {
+    const { result } = renderFilters('/?rango=personalizado&desde=2026-01-10&hasta=2026-02-10');
+
+    expect(result.current.filters).toMatchObject({
+      preset: 'custom',
+      from: '2026-01-10',
+      to: '2026-02-10',
+    });
+  });
+
+  it('writes only the English names on the first change', () => {
+    const { result } = renderFilters('/?rango=trimestre&categorias=3&busca=x&sheet=9');
+
+    act(() => result.current.apply({ q: 'agua' }));
+
+    expect(result.current.search.toString()).toBe(
+      'sheet=9&range=last-3-months&categories=3&q=agua',
+    );
+  });
+
+  it('prefers the English parameter when both are present', () => {
+    const { result } = renderFilters('/?range=this-year&rango=mes-pasado');
+
+    expect(result.current.filters.preset).toBe('this-year');
+  });
+
+  it('falls back to the default preset on an unknown range value', () => {
+    const { result } = renderFilters('/?range=whenever');
+
+    expect(result.current.filters.preset).toBe('this-month');
   });
 });

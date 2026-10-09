@@ -160,9 +160,9 @@ function DayPicker({ id, value, onSelect, required: isRequired, disabled: isDisa
 function RangePicker({ filters, apply, hasShortcuts = false, boxClassName }: RangeProps) {
   const activeIndex = PRESETS.find((p) => p.value === filters.preset);
   const label =
-    filters.preset === 'todo'
+    filters.preset === 'all'
       ? t('transactions.range.allTime')
-      : filters.preset === 'personalizado'
+      : filters.preset === 'custom'
         ? longRange(filters.from, filters.to)
         : (activeIndex?.label ?? t('transactions.range.range'));
 

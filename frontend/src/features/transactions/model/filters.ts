@@ -15,47 +15,41 @@ import { t } from '@/shared/lib/i18n';
  */
 
 export type Preset =
-  | 'todo'
-  | 'mes-actual'
-  | 'mes-pasado'
-  | 'trimestre'
-  | 'anio-actual'
-  | 'anio-pasado'
-  | 'personalizado';
+  'all' | 'this-month' | 'last-month' | 'last-3-months' | 'this-year' | 'last-year' | 'custom';
 
 export const PRESETS: { value: Preset; label: string; help: string }[] = [
   {
-    value: 'todo',
+    value: 'all',
     label: t('transactions.range.presets.all'),
     help: t('transactions.range.presets.allHelp'),
   },
   {
-    value: 'mes-actual',
+    value: 'this-month',
     label: t('transactions.range.presets.thisMonth'),
     help: t('transactions.range.presets.thisMonthHelp'),
   },
   {
-    value: 'mes-pasado',
+    value: 'last-month',
     label: t('transactions.range.presets.lastMonth'),
     help: t('transactions.range.presets.lastMonthHelp'),
   },
   {
-    value: 'trimestre',
+    value: 'last-3-months',
     label: t('transactions.range.presets.last3Months'),
     help: t('transactions.range.presets.last3MonthsHelp'),
   },
   {
-    value: 'anio-actual',
+    value: 'this-year',
     label: t('transactions.range.presets.thisYear'),
     help: t('transactions.range.presets.thisYearHelp'),
   },
   {
-    value: 'anio-pasado',
+    value: 'last-year',
     label: t('transactions.range.presets.lastYear'),
     help: t('transactions.range.presets.lastYearHelp'),
   },
   {
-    value: 'personalizado',
+    value: 'custom',
     label: t('transactions.range.presets.custom'),
     help: t('transactions.range.presets.customHelp'),
   },
@@ -112,7 +106,7 @@ export function rangeOf(
   const d = today.getUTCDate();
 
   switch (preset) {
-    case 'todo':
+    case 'all':
       // It starts at the FIRST transaction, not in 1970: with 1970 the chart
       // stretched its axis over half an empty century to draw four years of
       // data, and the date button promised a period that never existed.
@@ -121,26 +115,26 @@ export function rangeOf(
         to: history?.last ?? aISO(utc(a + 5, 11, 31)),
       };
 
-    case 'mes-actual':
+    case 'this-month':
       // UP TO TODAY, not to the end of the month: including days that have not happened
       // would flatten any average and make it look like less was spent.
       return { from: aISO(utc(a, m, 1)), to: aISO(utc(a, m, d)) };
 
-    case 'mes-pasado':
+    case 'last-month':
       return { from: aISO(utc(a, m - 1, 1)), to: aISO(utc(a, m, 0)) };
 
-    case 'trimestre':
+    case 'last-3-months':
       // Three months back from today, not "the calendar quarter": on April
       // 2 you want to see January–April, not just the two days of April.
       return { from: aISO(utc(a, m - 2, 1)), to: aISO(utc(a, m, d)) };
 
-    case 'anio-actual':
+    case 'this-year':
       return { from: aISO(utc(a, 0, 1)), to: aISO(utc(a, m, d)) };
 
-    case 'anio-pasado':
+    case 'last-year':
       return { from: aISO(utc(a - 1, 0, 1)), to: aISO(utc(a - 1, 11, 31)) };
 
-    case 'personalizado':
+    case 'custom':
     default:
       return { from: aISO(utc(a, m, 1)), to: aISO(utc(a, m, d)) };
   }
@@ -168,7 +162,7 @@ export interface Filters {
  * can be both "mes en curso" and a range typed by hand: they are different
  * states, because the first one moves by itself the next day.
  */
-export function useFilters(defaultPreset: Preset = 'mes-actual'): {
+export function useFilters(defaultPreset: Preset = 'this-month'): {
   filters: Filters;
   apply: (changes: Partial<Filters>) => void;
   clear: () => void;
@@ -178,18 +172,19 @@ export function useFilters(defaultPreset: Preset = 'mes-actual'): {
   const history = useHistory();
 
   const filters = useMemo<Filters>(() => {
-    const preset = (params.get('rango') as Preset | null) ?? defaultPreset;
+    const current = withCurrentNames(params);
+    const preset = presetOf(current.get('range')) ?? defaultPreset;
     const range = rangeOf(preset, history.data);
 
     return {
       preset,
-      from: preset === 'personalizado' ? (params.get('desde') ?? range.from) : range.from,
-      to: preset === 'personalizado' ? (params.get('hasta') ?? range.to) : range.to,
-      categoryIds: (params.get('categorias') ?? '')
+      from: preset === 'custom' ? (current.get('from') ?? range.from) : range.from,
+      to: preset === 'custom' ? (current.get('to') ?? range.to) : range.to,
+      categoryIds: (current.get('categories') ?? '')
         .split(',')
         .map((n) => Number(n))
         .filter((n) => Number.isInteger(n) && n > 0),
-      q: params.get('busca') ?? undefined,
+      q: current.get('q') ?? undefined,
     };
   }, [params, defaultPreset, history.data]);
 
@@ -231,38 +226,100 @@ function writeFilters(
   changes: Partial<Filters>,
   defaultPreset: Preset,
 ): URLSearchParams {
-  const next = new URLSearchParams(params);
+  // Writing starts from the current names, so a bookmarked Spanish URL comes
+  // out of its first change with only the English parameters.
+  const next = withCurrentNames(params);
 
   if (changes.preset !== undefined) {
-    if (changes.preset === defaultPreset) next.delete('rango');
-    else next.set('rango', changes.preset);
+    if (changes.preset === defaultPreset) next.delete('range');
+    else next.set('range', changes.preset);
 
     // Switching presets discards the dates typed by hand: keeping them would make
     // the range shown not be the one of the button that is on.
-    if (changes.preset !== 'personalizado') {
-      next.delete('desde');
-      next.delete('hasta');
+    if (changes.preset !== 'custom') {
+      next.delete('from');
+      next.delete('to');
     }
   }
 
   // Typing a date by hand implies switching to custom, or the range would be
   // recomputed from the preset and the change would be lost instantly.
   if (changes.from !== undefined) {
-    next.set('desde', changes.from);
-    next.set('rango', 'personalizado');
+    next.set('from', changes.from);
+    next.set('range', 'custom');
   }
   if (changes.to !== undefined) {
-    next.set('hasta', changes.to);
-    next.set('rango', 'personalizado');
+    next.set('to', changes.to);
+    next.set('range', 'custom');
   }
 
   if (changes.categoryIds !== undefined) {
-    if (changes.categoryIds.length === 0) next.delete('categorias');
-    else next.set('categorias', changes.categoryIds.join(','));
+    if (changes.categoryIds.length === 0) next.delete('categories');
+    else next.set('categories', changes.categoryIds.join(','));
   }
   if (changes.q !== undefined) {
-    if (changes.q.trim() === '') next.delete('busca');
-    else next.set('busca', changes.q);
+    if (changes.q.trim() === '') next.delete('q');
+    else next.set('q', changes.q);
+  }
+
+  return next;
+}
+
+/*
+  The Spanish names the filters had in the URL until 7.2-r1, and what each one
+  is called now. They are still READ because there are bookmarks and pasted
+  links with them; they are never written. They go in the 7.10 contract.
+
+  Pairs and not an object on purpose: as keys they would be new Spanish
+  declarations for `lint:spanish`, and they are data, not names.
+*/
+const LEGACY_PARAMS: readonly (readonly [string, string])[] = [
+  ['rango', 'range'],
+  ['desde', 'from'],
+  ['hasta', 'to'],
+  ['categorias', 'categories'],
+  ['busca', 'q'],
+];
+
+const LEGACY_PRESETS: ReadonlyMap<string, Preset> = new Map<string, Preset>([
+  ['todo', 'all'],
+  ['mes-actual', 'this-month'],
+  ['mes-pasado', 'last-month'],
+  ['trimestre', 'last-3-months'],
+  ['anio-actual', 'this-year'],
+  ['anio-pasado', 'last-year'],
+  ['personalizado', 'custom'],
+]);
+
+const KNOWN_PRESETS = new Set<string>(PRESETS.map((p) => p.value));
+
+/** A `range` value as a preset: the current one, the legacy one translated, or nothing. */
+function presetOf(value: string | null): Preset | undefined {
+  if (value === null) return undefined;
+  if (KNOWN_PRESETS.has(value)) return value as Preset;
+  return LEGACY_PRESETS.get(value);
+}
+
+/**
+ * The parameters with every legacy filter name moved to its current one.
+ *
+ * When both are present the current one wins: it is the one this app wrote.
+ * Parameters that are not filters are left as they are.
+ */
+function withCurrentNames(params: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(params);
+
+  for (const [legacy, current] of LEGACY_PARAMS) {
+    const value = next.get(legacy);
+    if (value === null) continue;
+    next.delete(legacy);
+    if (!next.has(current)) next.set(current, value);
+  }
+
+  const range = next.get('range');
+  if (range !== null) {
+    const preset = presetOf(range);
+    if (preset !== undefined) next.set('range', preset);
   }
 
   return next;

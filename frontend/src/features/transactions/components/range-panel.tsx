@@ -40,8 +40,8 @@ export function RangePanel({
   const { choosePreset, chooseDay } = rangeDraft;
 
   function confirm(): void {
-    if (draft.preset === 'personalizado') {
-      apply({ preset: 'personalizado', from: draft.from, to: draft.to });
+    if (draft.preset === 'custom') {
+      apply({ preset: 'custom', from: draft.from, to: draft.to });
     } else {
       apply({ preset: draft.preset });
     }
@@ -98,7 +98,7 @@ function RangeFooter({
       <span className="text-xs text-muted-foreground">
         {anchor !== null
           ? t('transactions.range.chooseEnd')
-          : draft.preset === 'todo'
+          : draft.preset === 'all'
             ? first
               ? t('transactions.range.fromDay', { day: longDay(first) })
               : t('transactions.range.allTime')
@@ -124,7 +124,7 @@ function RangePresets({ draft, onSelect }: { draft: Draft; onSelect: (preset: Pr
         'sm:w-44 sm:shrink-0 sm:flex-col sm:flex-nowrap sm:border-b-0 sm:border-r',
       )}
     >
-      {PRESETS.filter((p) => p.value !== 'personalizado').map((p) => (
+      {PRESETS.filter((p) => p.value !== 'custom').map((p) => (
         <li key={p.value} className="sm:w-full">
           <ToggleOption
             isOn={draft.preset === p.value}

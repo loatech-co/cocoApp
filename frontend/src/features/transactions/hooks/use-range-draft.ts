@@ -18,7 +18,7 @@ export interface Draft {
 /** The month worth showing on opening: where the range ends. */
 function draftMonth(b: Draft): VisibleMonth {
   // In "Todo" the range can reach far; opening over there helps nobody.
-  return monthOfIso(b.preset === 'todo' ? new Date().toISOString().slice(0, 10) : b.to);
+  return monthOfIso(b.preset === 'all' ? new Date().toISOString().slice(0, 10) : b.to);
 }
 
 /** The half-picked range: the draft, the first click and the month in view. */
@@ -45,7 +45,7 @@ export function useRangeDraft(filters: Filters) {
       setHovered(iso);
       return;
     }
-    setDraft({ preset: 'personalizado', ...sorted(anchor, iso) });
+    setDraft({ preset: 'custom', ...sorted(anchor, iso) });
     setAnchor(null);
     setHovered(null);
   }
@@ -55,7 +55,7 @@ export function useRangeDraft(filters: Filters) {
   const painted = anchor !== null ? sorted(anchor, hovered ?? anchor) : draft;
   // In "Todo" the range goes from 1970 to five years from now: painting it would leave the
   // whole calendar colored, which tells nothing.
-  const isPainted = draft.preset !== 'todo' || anchor !== null;
+  const isPainted = draft.preset !== 'all' || anchor !== null;
 
   return {
     draft,
