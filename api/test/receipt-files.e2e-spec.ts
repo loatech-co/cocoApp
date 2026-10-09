@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import request from 'supertest';
 
-import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/receipts/receipt-store';
 
 /**
@@ -14,15 +14,15 @@ import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/receipts/receip
  * deploying the move to Storage).
  */
 describe('Receipt files follow their rows (e2e)', () => {
-  let env: EntornoDePruebas;
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
   let store: ReceiptStore;
-  let ana: UsuarioDePrueba;
+  let ana: TestUser;
   let asAna: string;
   let image: Buffer;
 
   beforeAll(async () => {
-    env = await levantarApp();
+    env = await startApp();
     http = request(env.app.getHttpServer());
     store = env.app.get(RECEIPT_STORE);
     image = await sharp({ create: { width: 64, height: 64, channels: 3, background: '#ffffff' } })
@@ -31,16 +31,16 @@ describe('Receipt files follow their rows (e2e)', () => {
   });
 
   afterAll(async () => {
-    await env.cerrar();
+    await env.close();
   });
 
   beforeEach(async () => {
-    await env.limpiar();
-    ana = await env.crearUsuario({ displayName: 'Ana' });
-    asAna = env.como(ana);
+    await env.clean();
+    ana = await env.createUser({ displayName: 'Ana' });
+    asAna = env.as(ana);
   });
 
-  async function movementWithReceipt(): Promise<{ id: string; key: string; soporteId: string }> {
+  async function movementWithReceipt(): Promise<{ id: string; key: string; receiptId: string }> {
     const created = await http
       .post('/api/v2/transactions')
       .set('Authorization', asAna)
@@ -55,11 +55,11 @@ describe('Receipt files follow their rows (e2e)', () => {
       .expect(201);
 
     const row = await env.prisma.receipt.findFirstOrThrow({ where: { transactionId: BigInt(id) } });
-    return { id, key: row.storageKey, soporteId: String(row.id) };
+    return { id, key: row.storageKey, receiptId: String(row.id) };
   }
 
   it('an uploaded receipt is in the store and can be downloaded', async () => {
-    const { id, key, soporteId } = await movementWithReceipt();
+    const { id, key, receiptId } = await movementWithReceipt();
 
     expect(await store.exists(key)).toBe(true);
     const list = await http
@@ -68,16 +68,16 @@ describe('Receipt files follow their rows (e2e)', () => {
       .expect(200);
     expect(list.body.data[0].isAvailable).toBe(true);
     await http
-      .get(`/api/v2/transactions/${id}/receipts/${soporteId}`)
+      .get(`/api/v2/transactions/${id}/receipts/${receiptId}`)
       .set('Authorization', asAna)
       .expect(200);
   });
 
   it('deleting a receipt deletes its file', async () => {
-    const { id, key, soporteId } = await movementWithReceipt();
+    const { id, key, receiptId } = await movementWithReceipt();
 
     await http
-      .delete(`/api/v2/transactions/${id}/receipts/${soporteId}`)
+      .delete(`/api/v2/transactions/${id}/receipts/${receiptId}`)
       .set('Authorization', asAna)
       .expect(204);
 
@@ -95,12 +95,9 @@ describe('Receipt files follow their rows (e2e)', () => {
 
   it('a failed delete of someone else’s movement touches no file', async () => {
     const { id, key } = await movementWithReceipt();
-    const bruno = await env.crearUsuario({ displayName: 'Bruno' });
+    const bruno = await env.createUser({ displayName: 'Bruno' });
 
-    await http
-      .delete(`/api/v2/transactions/${id}`)
-      .set('Authorization', env.como(bruno))
-      .expect(404);
+    await http.delete(`/api/v2/transactions/${id}`).set('Authorization', env.as(bruno)).expect(404);
 
     expect(await store.exists(key)).toBe(true);
   });

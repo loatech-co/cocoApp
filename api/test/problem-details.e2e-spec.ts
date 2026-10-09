@@ -1,7 +1,7 @@
 import request from 'supertest';
 
 import { makeAccount, makeConcept, makeTransaction } from './factories';
-import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 
 /**
  * v2 errors are `application/problem+json` (RFC 9457) with a stable `code`
@@ -12,26 +12,26 @@ import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './help
  * a rule that loses its code — or gets another one — is a contract break.
  */
 describe('v2 errors: problem+json with a code per rule (e2e)', () => {
-  let env: EntornoDePruebas;
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
-  let user: UsuarioDePrueba;
+  let user: TestUser;
   let auth: string;
   let conceptId: bigint;
   let categoryId: bigint;
 
   beforeAll(async () => {
-    env = await levantarApp();
+    env = await startApp();
     http = request(env.app.getHttpServer());
   });
 
   afterAll(async () => {
-    await env.cerrar();
+    await env.close();
   });
 
   beforeEach(async () => {
-    await env.limpiar();
-    user = await env.crearUsuario();
-    auth = env.como(user);
+    await env.clean();
+    user = await env.createUser();
+    auth = env.as(user);
     const tree = await makeConcept(env.prisma, user.id);
     conceptId = tree.concept.id;
     categoryId = tree.category.id;
@@ -88,7 +88,7 @@ describe('v2 errors: problem+json with a code per rule (e2e)', () => {
   });
 
   it("someone else's category: category_not_owned", async () => {
-    const other = await env.crearUsuario();
+    const other = await env.createUser();
     const theirs = await makeConcept(env.prisma, other.id);
     const response = await post('/transactions', {
       date: '2026-09-10',

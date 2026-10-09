@@ -1,5 +1,5 @@
 import { makeAccount, makeConcept, makeTransaction } from './factories';
-import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 import type { PrismaClient } from '../src/generated/prisma/client';
 import { UsersRepository } from '../src/modules/auth/users.repository';
 import { AutoChargeTask } from '../src/modules/dashboard/auto-charge.task';
@@ -110,26 +110,26 @@ async function countAll(
 }
 
 describe('Row-level security (e2e)', () => {
-  let env: EntornoDePruebas;
+  let env: TestEnvironment;
   let db: Database;
   let appClient: PrismaService;
-  let ana: UsuarioDePrueba;
-  let bruno: UsuarioDePrueba;
+  let ana: TestUser;
+  let bruno: TestUser;
 
   beforeAll(async () => {
-    env = await levantarApp();
+    env = await startApp();
     db = env.app.get(Database);
     appClient = env.app.get(PrismaService);
   });
 
   afterAll(async () => {
-    await env.cerrar();
+    await env.close();
   });
 
   beforeEach(async () => {
-    await env.limpiar();
-    ana = await env.crearUsuario({ displayName: 'Ana' });
-    bruno = await env.crearUsuario({ displayName: 'Bruno' });
+    await env.clean();
+    ana = await env.createUser({ displayName: 'Ana' });
+    bruno = await env.createUser({ displayName: 'Bruno' });
     await seedEverything(env.prisma, ana.id, 'ANA');
     await seedEverything(env.prisma, bruno.id, 'BRUNO');
   });
@@ -251,7 +251,7 @@ describe('Row-level security (e2e)', () => {
 
     expect(await db.forUser(ana.id, (tx) => tx.auditLog.count())).toBe(0);
 
-    const admin = await env.crearUsuario({ role: 'admin' });
+    const admin = await env.createUser({ role: 'admin' });
     expect(await db.forUser(admin.id, (tx) => tx.auditLog.count())).toBe(2);
 
     await expect(db.forUser(admin.id, (tx) => tx.auditLog.deleteMany({}))).rejects.toThrow(
@@ -462,7 +462,7 @@ describe('Row-level security (e2e)', () => {
       appClient.$executeRaw`SELECT app_private.set_user_access(${ana.id}, NULL, 'admin', false)`,
     ).rejects.toThrow(/not an active admin/);
 
-    const admin = await env.crearUsuario({ role: 'admin' });
+    const admin = await env.createUser({ role: 'admin' });
     await env.prisma.user.update({ where: { id: bruno.id }, data: { status: 'pending' } });
     const approved = await users.setAccess(admin.id, bruno.id, { status: 'active', approve: true });
     expect(approved).toMatchObject({ status: 'active', role: 'user', approvedById: admin.id });

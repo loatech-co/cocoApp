@@ -1,6 +1,6 @@
 import request from 'supertest';
 
-import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 
 /**
  * Phase 6.3: the CHECK constraints on a concept's recurrence.
@@ -11,24 +11,24 @@ import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './help
  * fires behind an endpoint the client gets a 422 with the rule in words.
  */
 describe('Recurrence CHECK constraints (e2e)', () => {
-  let env: EntornoDePruebas;
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
-  let ana: UsuarioDePrueba;
+  let ana: TestUser;
   let asAna: string;
 
   beforeAll(async () => {
-    env = await levantarApp();
+    env = await startApp();
     http = request(env.app.getHttpServer());
   });
 
   afterAll(async () => {
-    await env.cerrar();
+    await env.close();
   });
 
   beforeEach(async () => {
-    await env.limpiar();
-    ana = await env.crearUsuario({ displayName: 'Ana' });
-    asAna = env.como(ana);
+    await env.clean();
+    ana = await env.createUser({ displayName: 'Ana' });
+    asAna = env.as(ana);
   });
 
   /** A recurring monthly concept that satisfies every constraint. */

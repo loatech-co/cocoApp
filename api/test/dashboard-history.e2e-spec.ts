@@ -1,4 +1,4 @@
-import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 import { ZERO, toMoney, type Money } from '../src/common/money/money';
 import { DashboardService } from '../src/modules/dashboard/dashboard.service';
 import { expectedForMonth, historyWindow } from '../src/modules/dashboard/pending';
@@ -12,23 +12,23 @@ import { LedgerService, type MonthlyHistory } from '../src/modules/transactions/
  * repository used to load.
  */
 describe('Dashboard: bounded recurring history (e2e)', () => {
-  let env: EntornoDePruebas;
-  let user: UsuarioDePrueba;
+  let env: TestEnvironment;
+  let user: TestUser;
 
   /** Mid-October 2026 in Bogotá: the month being estimated is 2026-10. */
   const NOW = new Date('2026-10-15T15:00:00Z');
   const CURRENT_MONTH = '2026-10-01';
 
   beforeAll(async () => {
-    env = await levantarApp();
-    await env.limpiar();
-    user = await env.crearUsuario();
+    env = await startApp();
+    await env.clean();
+    user = await env.createUser();
     await seedLongHistory(user.id);
   });
 
   afterAll(async () => {
     jest.restoreAllMocks();
-    await env.cerrar();
+    await env.close();
   });
 
   /** What the repository returned before ADR 0017: every month, no lower bound. */

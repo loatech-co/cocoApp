@@ -2,7 +2,7 @@ import { rmSync } from 'node:fs';
 import sharp from 'sharp';
 import request from 'supertest';
 
-import { levantarApp, type EntornoDePruebas } from './helpers/app';
+import { startApp, type TestEnvironment } from './helpers/app';
 import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/receipts/receipt-store';
 import { newStorageKey, storeFolder, hashOf } from '../src/modules/receipts/receipts.storage';
 
@@ -15,7 +15,7 @@ import { newStorageKey, storeFolder, hashOf } from '../src/modules/receipts/rece
  * mitad de estas pruebas comprueban puertas cerradas.
  */
 describe('Soportes (e2e)', () => {
-  let entorno: EntornoDePruebas;
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
 
   let ana: string;
@@ -24,12 +24,12 @@ describe('Soportes (e2e)', () => {
   let betoId: bigint;
 
   beforeAll(async () => {
-    entorno = await levantarApp();
-    http = request(entorno.app.getHttpServer());
+    env = await startApp();
+    http = request(env.app.getHttpServer());
   });
 
   afterAll(async () => {
-    await entorno.cerrar();
+    await env.close();
     // El almacén de pruebas se va entero: son bytes de mentira, pero acumular
     // basura entre corridas acaba escondiendo un fallo real detrás de un
     // archivo que quedó de la vez pasada.
@@ -37,36 +37,36 @@ describe('Soportes (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await entorno.limpiar();
-    const a = await entorno.crearUsuario({ displayName: 'Ana' });
-    const b = await entorno.crearUsuario({ displayName: 'Beto' });
-    ana = entorno.como(a);
-    beto = entorno.como(b);
+    await env.clean();
+    const a = await env.createUser({ displayName: 'Ana' });
+    const b = await env.createUser({ displayName: 'Beto' });
+    ana = env.as(a);
+    beto = env.as(b);
     anaId = a.id;
     betoId = b.id;
   });
 
   /** Un movimiento con sus soportes, escritos como los escribe el importador. */
-  const conSoportes = async (
+  const withReceipts = async (
     auth: string,
     userId: bigint,
-    contenidos: { name: string; mime: string; ext: string; bytes: Buffer }[],
+    contents: { name: string; mime: string; ext: string; bytes: Buffer }[],
   ) => {
-    const movimiento = await http
+    const transaction = await http
       .post('/api/v2/transactions')
       .set('Authorization', auth)
       .send({ date: '2026-08-12', amount: '120000', type: 'expense' })
       .expect(201);
 
-    const transactionId = BigInt(movimiento.body.data.id);
-    const soportes = [];
+    const transactionId = BigInt(transaction.body.data.id);
+    const receipts = [];
 
-    for (const [i, c] of contenidos.entries()) {
+    for (const [i, c] of contents.entries()) {
       const storageKey = newStorageKey(userId, c.ext);
       // Through the app's store, so the suite runs against disk or the Storage bucket (6.9).
-      await entorno.app.get<ReceiptStore>(RECEIPT_STORE).save(storageKey, c.bytes, c.mime);
-      soportes.push(
-        await entorno.prisma.receipt.create({
+      await env.app.get<ReceiptStore>(RECEIPT_STORE).save(storageKey, c.bytes, c.mime);
+      receipts.push(
+        await env.prisma.receipt.create({
           data: {
             userId,
             transactionId,
@@ -81,32 +81,32 @@ describe('Soportes (e2e)', () => {
       );
     }
 
-    return { transactionId, soportes };
+    return { transactionId, receipts };
   };
 
-  const pdf = (texto: string) => ({
-    name: `${texto}.pdf`,
+  const pdf = (text: string) => ({
+    name: `${text}.pdf`,
     mime: 'application/pdf',
     ext: 'pdf',
     // Un PDF de verdad empieza por %PDF-: así el content-type no es una
     // promesa que nadie comprueba.
-    bytes: Buffer.from(`%PDF-1.4\n${texto}\n%%EOF\n`),
+    bytes: Buffer.from(`%PDF-1.4\n${text}\n%%EOF\n`),
   });
 
   // ── Puertas cerradas ──────────────────────────────────────────────────────
 
   describe('Quién NO puede ver un soporte', () => {
     it('sin sesión, 401 en listar y en descargar', async () => {
-      const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
+      const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       await http.get(`/api/v2/transactions/${transactionId}/receipts`).expect(401);
       await http
-        .get(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
+        .get(`/api/v2/transactions/${transactionId}/receipts/${receipts[0]!.id}`)
         .expect(401);
     });
 
     it('con un token inventado, 401', async () => {
-      const { transactionId } = await conSoportes(ana, anaId, [pdf('recibo')]);
+      const { transactionId } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       await http
         .get(`/api/v2/transactions/${transactionId}/receipts`)
@@ -115,18 +115,18 @@ describe('Soportes (e2e)', () => {
     });
 
     it('Beto no ve los soportes de un movimiento de Ana', async () => {
-      const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
+      const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       // La lista no dice "prohibido": para esa consulta esos soportes no
       // existen. Decir "prohibido" confirmaría que el movimiento es de alguien.
-      const lista = await http
+      const list = await http
         .get(`/api/v2/transactions/${transactionId}/receipts`)
         .set('Authorization', beto)
         .expect(200);
-      expect(lista.body.data).toEqual([]);
+      expect(list.body.data).toEqual([]);
 
       await http
-        .get(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
+        .get(`/api/v2/transactions/${transactionId}/receipts/${receipts[0]!.id}`)
         .set('Authorization', beto)
         .expect(404);
     });
@@ -135,19 +135,19 @@ describe('Soportes (e2e)', () => {
       // El ataque obvio contra una comprobación a medias: el id del movimiento
       // es mío, el del soporte es de otro. Las tres condiciones van en el mismo
       // WHERE justamente por esto.
-      const deAna = await conSoportes(ana, anaId, [pdf('el-de-ana')]);
-      const deBeto = await conSoportes(beto, betoId, [pdf('el-de-beto')]);
+      const anas = await withReceipts(ana, anaId, [pdf('el-de-ana')]);
+      const betos = await withReceipts(beto, betoId, [pdf('el-de-beto')]);
 
       await http
-        .get(`/api/v2/transactions/${deBeto.transactionId}/receipts/${deAna.soportes[0]!.id}`)
+        .get(`/api/v2/transactions/${betos.transactionId}/receipts/${anas.receipts[0]!.id}`)
         .set('Authorization', beto)
         .expect(404);
     });
 
     it('Beto no puede subir un soporte a un movimiento de Ana', async () => {
-      const { transactionId } = await conSoportes(ana, anaId, [pdf('recibo')]);
+      const { transactionId } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
-      const hoja = await sharp({
+      const image = await sharp({
         create: { width: 400, height: 500, channels: 3, background: { r: 10, g: 10, b: 10 } },
       })
         .png()
@@ -158,15 +158,15 @@ describe('Soportes (e2e)', () => {
       await http
         .post(`/api/v2/transactions/${transactionId}/receipts`)
         .set('Authorization', beto)
-        .attach('files', hoja, { filename: 'x.png', contentType: 'image/png' })
+        .attach('files', image, { filename: 'x.png', contentType: 'image/png' })
         .expect(404);
 
       // Y no se creó nada: la propiedad se comprueba ANTES de procesar.
-      expect(await entorno.prisma.receipt.count({ where: { transactionId } })).toBe(1);
+      expect(await env.prisma.receipt.count({ where: { transactionId } })).toBe(1);
     });
 
     it('sin sesión no se sube ni se borra', async () => {
-      const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
+      const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       await http
         .post(`/api/v2/transactions/${transactionId}/receipts`)
@@ -177,34 +177,34 @@ describe('Soportes (e2e)', () => {
         .expect(401);
 
       await http
-        .delete(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
+        .delete(`/api/v2/transactions/${transactionId}/receipts/${receipts[0]!.id}`)
         .expect(401);
     });
 
     it('Beto no puede borrar un soporte de Ana', async () => {
-      const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
+      const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       await http
-        .delete(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
+        .delete(`/api/v2/transactions/${transactionId}/receipts/${receipts[0]!.id}`)
         .set('Authorization', beto)
         .expect(404);
 
-      expect(await entorno.prisma.receipt.count({ where: { transactionId } })).toBe(1);
+      expect(await env.prisma.receipt.count({ where: { transactionId } })).toBe(1);
     });
 
     it('una clave que se sale del almacén no entrega nada', async () => {
-      const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
+      const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       // Nadie puede escribir esto desde fuera —la clave la genera el servidor—
       // pero si algún día una llega torcida, el resolver es lo único que queda
       // entre eso y el sistema de archivos.
-      await entorno.prisma.receipt.update({
-        where: { id: soportes[0]!.id },
+      await env.prisma.receipt.update({
+        where: { id: receipts[0]!.id },
         data: { storageKey: '../../../../../../etc/passwd' },
       });
 
       await http
-        .get(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
+        .get(`/api/v2/transactions/${transactionId}/receipts/${receipts[0]!.id}`)
         .set('Authorization', ana)
         .expect(404);
     });
@@ -214,7 +214,7 @@ describe('Soportes (e2e)', () => {
 
   describe('Lo que ve el dueño', () => {
     it('lista sus soportes en orden', async () => {
-      const { transactionId } = await conSoportes(ana, anaId, [
+      const { transactionId } = await withReceipts(ana, anaId, [
         pdf('uno'),
         pdf('dos'),
         pdf('tres'),
@@ -234,11 +234,11 @@ describe('Soportes (e2e)', () => {
     });
 
     it('descarga el archivo, con su tipo y sus bytes', async () => {
-      const uno = pdf('recibo-de-agosto');
-      const { transactionId, soportes } = await conSoportes(ana, anaId, [uno]);
+      const first = pdf('recibo-de-agosto');
+      const { transactionId, receipts } = await withReceipts(ana, anaId, [first]);
 
       const r = await http
-        .get(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
+        .get(`/api/v2/transactions/${transactionId}/receipts/${receipts[0]!.id}`)
         .set('Authorization', ana)
         .expect(200);
 
@@ -247,18 +247,18 @@ describe('Soportes (e2e)', () => {
       expect(r.headers['cache-control']).toContain('no-store');
       // Los bytes, exactos: el interceptor que envuelve todo en `{data, meta}`
       // tiene que dejar pasar un flujo sin tocarlo.
-      expect(Buffer.from(r.body).equals(uno.bytes)).toBe(true);
+      expect(Buffer.from(r.body).equals(first.bytes)).toBe(true);
     });
 
     it('un movimiento sin soportes devuelve una lista vacía, no un error', async () => {
-      const movimiento = await http
+      const transaction = await http
         .post('/api/v2/transactions')
         .set('Authorization', ana)
         .send({ date: '2026-08-12', amount: '1000', type: 'expense' })
         .expect(201);
 
       const r = await http
-        .get(`/api/v2/transactions/${Number(movimiento.body.data.id)}/receipts`)
+        .get(`/api/v2/transactions/${Number(transaction.body.data.id)}/receipts`)
         .set('Authorization', ana)
         .expect(200);
 
@@ -266,11 +266,11 @@ describe('Soportes (e2e)', () => {
     });
 
     it('la ficha queda sin archivo si el almacén no lo tiene', async () => {
-      const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
+      const { transactionId, receipts } = await withReceipts(ana, anaId, [pdf('recibo')]);
 
       // Un almacén a medio sincronizar: la fila existe, el binario todavía no.
-      await entorno.prisma.receipt.update({
-        where: { id: soportes[0]!.id },
+      await env.prisma.receipt.update({
+        where: { id: receipts[0]!.id },
         data: { storageKey: `${anaId}/no-existe.pdf` },
       });
 
@@ -286,7 +286,7 @@ describe('Soportes (e2e)', () => {
     });
 
     it('sube un soporte y lo deja en gris, liviano y con el nombre del movimiento', async () => {
-      const movimiento = await http
+      const transaction = await http
         .post('/api/v2/transactions')
         .set('Authorization', ana)
         .send({
@@ -297,7 +297,7 @@ describe('Soportes (e2e)', () => {
         })
         .expect(201);
 
-      const id = Number(movimiento.body.data.id);
+      const id = Number(transaction.body.data.id);
 
       // Una imagen A COLOR y grande: es lo que llega de la cámara de un móvil,
       // y es donde se nota si el tratamiento corrió o no.
@@ -314,20 +314,20 @@ describe('Soportes (e2e)', () => {
         .expect(201);
 
       expect(r.body.data).toHaveLength(1);
-      const soporte = r.body.data[0];
+      const receipt = r.body.data[0];
 
       // El nombre sale del MOVIMIENTO, no del archivo, y la barra que no cabe
       // en un nombre de archivo se cambia por un guion —igual que en el lote—.
-      expect(soporte.fileName).toBe('PILA - Seguridad Social - 2026-08-12.jpg');
-      expect(soporte.mimeType).toBe('image/jpeg');
-      expect(soporte.position).toBe(1);
+      expect(receipt.fileName).toBe('PILA - Seguridad Social - 2026-08-12.jpg');
+      expect(receipt.mimeType).toBe('image/jpeg');
+      expect(receipt.position).toBe(1);
 
       // Y el archivo guardado es gris y de 1100 de ancho, no la imagen original.
-      const guardado = await entorno.prisma.receipt.findFirst({
+      const saved = await env.prisma.receipt.findFirst({
         where: { transactionId: BigInt(id) },
       });
-      const flujo = await entorno.app.get<ReceiptStore>(RECEIPT_STORE).open(guardado!.storageKey);
-      const bytes = Buffer.concat(await flujo!.toArray());
+      const stream = await env.app.get<ReceiptStore>(RECEIPT_STORE).open(saved!.storageKey);
+      const bytes = Buffer.concat(await stream!.toArray());
       const meta = await sharp(bytes).metadata();
 
       expect(meta.format).toBe('jpeg');
@@ -337,58 +337,58 @@ describe('Soportes (e2e)', () => {
     });
 
     it('el "i de N" se recalcula al agregar, sin renombrar lo anterior', async () => {
-      const movimiento = await http
+      const transaction = await http
         .post('/api/v2/transactions')
         .set('Authorization', ana)
         .send({ date: '2026-08-12', amount: '90000', type: 'expense', description: 'Claro Movil' })
         .expect(201);
 
-      const id = Number(movimiento.body.data.id);
+      const id = Number(transaction.body.data.id);
 
-      const hoja = (tono: number) =>
+      const image = (shade: number) =>
         sharp({
           create: {
             width: 800,
             height: 1000,
             channels: 3,
-            background: { r: tono, g: tono, b: tono },
+            background: { r: shade, g: shade, b: shade },
           },
         })
           .png()
           .toBuffer();
 
-      const dos = await http
+      const second = await http
         .post(`/api/v2/transactions/${id}/receipts`)
         .set('Authorization', ana)
-        .attach('files', await hoja(10), { filename: 'a.png', contentType: 'image/png' })
-        .attach('files', await hoja(120), { filename: 'b.png', contentType: 'image/png' })
+        .attach('files', await image(10), { filename: 'a.png', contentType: 'image/png' })
+        .attach('files', await image(120), { filename: 'b.png', contentType: 'image/png' })
         .expect(201);
 
-      expect(dos.body.data.map((s: { position: number }) => s.position)).toEqual([1, 2]);
+      expect(second.body.data.map((s: { position: number }) => s.position)).toEqual([1, 2]);
 
-      const tres = await http
+      const third = await http
         .post(`/api/v2/transactions/${id}/receipts`)
         .set('Authorization', ana)
-        .attach('files', await hoja(230), { filename: 'c.png', contentType: 'image/png' })
+        .attach('files', await image(230), { filename: 'c.png', contentType: 'image/png' })
         .expect(201);
 
       // El tercero continúa la cuenta, y los dos primeros NO cambian de name:
       // el total no está horneado en ninguno, se cuenta al mirarlos.
-      expect(tres.body.data.map((s: { position: number }) => s.position)).toEqual([1, 2, 3]);
-      expect(new Set(tres.body.data.map((s: { fileName: string }) => s.fileName))).toEqual(
+      expect(third.body.data.map((s: { position: number }) => s.position)).toEqual([1, 2, 3]);
+      expect(new Set(third.body.data.map((s: { fileName: string }) => s.fileName))).toEqual(
         new Set(['Claro Movil - 2026-08-12.jpg']),
       );
     });
 
     it('subir el mismo archivo dos veces no lo duplica', async () => {
-      const movimiento = await http
+      const transaction = await http
         .post('/api/v2/transactions')
         .set('Authorization', ana)
         .send({ date: '2026-08-12', amount: '90000', type: 'expense', description: 'Agua' })
         .expect(201);
 
-      const id = Number(movimiento.body.data.id);
-      const hoja = await sharp({
+      const id = Number(transaction.body.data.id);
+      const image = await sharp({
         create: { width: 600, height: 800, channels: 3, background: { r: 90, g: 90, b: 90 } },
       })
         .png()
@@ -397,29 +397,29 @@ describe('Soportes (e2e)', () => {
       await http
         .post(`/api/v2/transactions/${id}/receipts`)
         .set('Authorization', ana)
-        .attach('files', hoja, { filename: 'recibo.png', contentType: 'image/png' })
+        .attach('files', image, { filename: 'recibo.png', contentType: 'image/png' })
         .expect(201);
 
-      const segunda = await http
+      const second = await http
         .post(`/api/v2/transactions/${id}/receipts`)
         .set('Authorization', ana)
-        .attach('files', hoja, { filename: 'otro-nombre.png', contentType: 'image/png' })
+        .attach('files', image, { filename: 'otro-nombre.png', contentType: 'image/png' })
         .expect(201);
 
       // La huella es del archivo YA TRATADO: dos originales distintos que
       // acaban en el mismo JPG en gris son el mismo soporte.
-      expect(segunda.body.data).toHaveLength(1);
+      expect(second.body.data).toHaveLength(1);
     });
 
     it('rechaza lo que no es un PDF ni una imagen', async () => {
-      const movimiento = await http
+      const transaction = await http
         .post('/api/v2/transactions')
         .set('Authorization', ana)
         .send({ date: '2026-08-12', amount: '1000', type: 'expense' })
         .expect(201);
 
       await http
-        .post(`/api/v2/transactions/${Number(movimiento.body.data.id)}/receipts`)
+        .post(`/api/v2/transactions/${Number(transaction.body.data.id)}/receipts`)
         .set('Authorization', ana)
         .attach('files', Buffer.from('#!/bin/sh\nrm -rf /'), {
           filename: 'travieso.sh',
@@ -429,7 +429,7 @@ describe('Soportes (e2e)', () => {
 
       // A PostScript program labelled as a PDF never reaches ghostscript.
       await http
-        .post(`/api/v2/transactions/${Number(movimiento.body.data.id)}/receipts`)
+        .post(`/api/v2/transactions/${Number(transaction.body.data.id)}/receipts`)
         .set('Authorization', ana)
         .attach('files', Buffer.from('%!PS-Adobe-3.0\nshowpage\n'), {
           filename: 'recibo.pdf',
@@ -439,14 +439,14 @@ describe('Soportes (e2e)', () => {
     });
 
     it('borrar el movimiento se lleva sus soportes', async () => {
-      const { transactionId } = await conSoportes(ana, anaId, [pdf('uno'), pdf('dos')]);
+      const { transactionId } = await withReceipts(ana, anaId, [pdf('uno'), pdf('dos')]);
 
       await http
         .delete(`/api/v2/transactions/${transactionId}`)
         .set('Authorization', ana)
         .expect(204);
 
-      expect(await entorno.prisma.receipt.count({ where: { transactionId } })).toBe(0);
+      expect(await env.prisma.receipt.count({ where: { transactionId } })).toBe(0);
     });
   });
 });

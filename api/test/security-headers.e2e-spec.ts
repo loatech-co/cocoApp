@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import request from 'supertest';
 
-import { levantarApp, type EntornoDePruebas } from './helpers/app';
+import { startApp, type TestEnvironment } from './helpers/app';
 import { parseOrigins } from '../src/bootstrap';
 
 /**
@@ -12,7 +12,7 @@ import { parseOrigins } from '../src/bootstrap';
  * rest of the suite switches the limiter off.
  */
 describe('Security headers and CORS (e2e)', () => {
-  let entorno: EntornoDePruebas;
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
   let allowed: string;
 
@@ -20,9 +20,9 @@ describe('Security headers and CORS (e2e)', () => {
   const REJECTED = 'https://evil.example';
 
   beforeAll(async () => {
-    entorno = await levantarApp();
-    http = request(entorno.app.getHttpServer());
-    const origins = parseOrigins(entorno.app.get(ConfigService));
+    env = await startApp();
+    http = request(env.app.getHttpServer());
+    const origins = parseOrigins(env.app.get(ConfigService));
     // The test environment must declare at least one origin, or there is
     // nothing to prove: an empty list rejects everyone.
     expect(origins.length).toBeGreaterThan(0);
@@ -30,7 +30,7 @@ describe('Security headers and CORS (e2e)', () => {
   });
 
   afterAll(async () => {
-    await entorno.cerrar();
+    await env.close();
   });
 
   it('sends the helmet headers on every response', async () => {

@@ -24,55 +24,55 @@ import type { SupabaseSession } from '../../src/modules/auth/supabase-auth.servi
  * una prueba pueda fabricar el caso que necesite, como un token emitido antes
  * de una revocación, sin montar un firmador.
  */
-export class SupabaseAuthFalso {
-  private readonly cuentas = new Map<string, { email: string; password: string }>();
-  private readonly refrescos = new Map<string, string>();
+export class SupabaseAuthFake {
+  private readonly accounts = new Map<string, { email: string; password: string }>();
+  private readonly refreshTokens = new Map<string, string>();
 
   // ── Lo que consume el guard ────────────────────────────────────────────────
 
   verifyAccessToken(token: string): Promise<{ authId: string; email: string; iatMs: number }> {
-    const partes = token.split('.');
-    if (partes.length !== 3 || partes[0] !== 'falso') {
+    const parts = token.split('.');
+    if (parts.length !== 3 || parts[0] !== 'falso') {
       return Promise.reject(new UnauthorizedException('Token inválido o expirado.'));
     }
 
-    const [, authId = '', iat] = partes; // ya se comprobó que son tres partes
-    const cuenta = this.cuentas.get(authId);
-    if (!cuenta) return Promise.reject(new UnauthorizedException('Token inválido o expirado.'));
+    const [, authId = '', iat] = parts; // ya se comprobó que son tres partes
+    const account = this.accounts.get(authId);
+    if (!account) return Promise.reject(new UnauthorizedException('Token inválido o expirado.'));
 
     // Segundos, como el `iat` real de un JWT. La pérdida de precisión es parte
     // de lo que se quiere reproducir: el guard tiene que tolerarla.
-    return Promise.resolve({ authId, email: cuenta.email, iatMs: Number(iat) * 1000 });
+    return Promise.resolve({ authId, email: account.email, iatMs: Number(iat) * 1000 });
   }
 
   // ── Sesiones ───────────────────────────────────────────────────────────────
 
   signIn(email: string, password: string): Promise<SupabaseSession | null> {
-    const entrada = [...this.cuentas.entries()].find(([, c]) => c.email === email);
-    if (entrada?.[1].password !== password) return Promise.resolve(null);
-    return Promise.resolve(this.abrirSesion(entrada[0], email));
+    const entry = [...this.accounts.entries()].find(([, c]) => c.email === email);
+    if (entry?.[1].password !== password) return Promise.resolve(null);
+    return Promise.resolve(this.openSession(entry[0], email));
   }
 
   refresh(refreshToken: string): Promise<SupabaseSession | null> {
-    const authId = this.refrescos.get(refreshToken);
+    const authId = this.refreshTokens.get(refreshToken);
     if (!authId) return Promise.resolve(null);
-    const cuenta = this.cuentas.get(authId);
-    if (!cuenta) return Promise.resolve(null);
+    const account = this.accounts.get(authId);
+    if (!account) return Promise.resolve(null);
     // ROTACIÓN, como hace Supabase de verdad: el token que se acaba de usar
     // muere y nace otro. Sin esto, una prueba podría dar por buena una
     // renovación que en producción fallaría al segundo uso del mismo token.
-    this.refrescos.delete(refreshToken);
-    return Promise.resolve(this.abrirSesion(authId, cuenta.email));
+    this.refreshTokens.delete(refreshToken);
+    return Promise.resolve(this.openSession(authId, account.email));
   }
 
   signOut(refreshToken: string): Promise<void> {
-    this.refrescos.delete(refreshToken);
+    this.refreshTokens.delete(refreshToken);
     return Promise.resolve();
   }
 
   signOutEverywhere(authId: string): Promise<void> {
-    for (const [token, id] of this.refrescos) {
-      if (id === authId) this.refrescos.delete(token);
+    for (const [token, id] of this.refreshTokens) {
+      if (id === authId) this.refreshTokens.delete(token);
     }
     return Promise.resolve();
   }
@@ -80,48 +80,48 @@ export class SupabaseAuthFalso {
   // ── Cuentas ────────────────────────────────────────────────────────────────
 
   createUser(email: string, password: string): Promise<string | null> {
-    if ([...this.cuentas.values()].some((c) => c.email === email)) return Promise.resolve(null);
+    if ([...this.accounts.values()].some((c) => c.email === email)) return Promise.resolve(null);
     const authId = randomUUID();
-    this.cuentas.set(authId, { email, password });
+    this.accounts.set(authId, { email, password });
     return Promise.resolve(authId);
   }
 
   changePassword(authId: string, newPassword: string): Promise<void> {
-    const cuenta = this.cuentas.get(authId);
-    if (cuenta) this.cuentas.set(authId, { ...cuenta, password: newPassword });
+    const account = this.accounts.get(authId);
+    if (account) this.accounts.set(authId, { ...account, password: newPassword });
     return Promise.resolve();
   }
 
   isPasswordCorrect(email: string, password: string): Promise<boolean> {
     return Promise.resolve(
-      [...this.cuentas.values()].some((c) => c.email === email && c.password === password),
+      [...this.accounts.values()].some((c) => c.email === email && c.password === password),
     );
   }
 
   deleteUser(authId: string): Promise<void> {
-    this.cuentas.delete(authId);
+    this.accounts.delete(authId);
     return Promise.resolve();
   }
 
   // ── Utilidades para las pruebas ────────────────────────────────────────────
 
   /** Registra una cuenta ya existente y devuelve su id, sin pasar por el registro. */
-  sembrar(email: string, password: string): string {
+  seed(email: string, password: string): string {
     const authId = randomUUID();
-    this.cuentas.set(authId, { email, password });
+    this.accounts.set(authId, { email, password });
     return authId;
   }
 
   /** Emite un token para esa cuenta, opcionalmente fechado en el pasado. */
-  emitirToken(authId: string, emitidoEn: Date = new Date()): string {
-    return `falso.${authId}.${Math.floor(emitidoEn.getTime() / 1000)}`;
+  issueToken(authId: string, issuedAt: Date = new Date()): string {
+    return `falso.${authId}.${Math.floor(issuedAt.getTime() / 1000)}`;
   }
 
-  abrirSesion(authId: string, email: string): SupabaseSession {
+  openSession(authId: string, email: string): SupabaseSession {
     const refreshToken = `refresco-${randomUUID()}`;
-    this.refrescos.set(refreshToken, authId);
+    this.refreshTokens.set(refreshToken, authId);
     return {
-      accessToken: this.emitirToken(authId),
+      accessToken: this.issueToken(authId),
       refreshToken,
       expiresIn: 900,
       authId,
@@ -129,8 +129,8 @@ export class SupabaseAuthFalso {
     };
   }
 
-  limpiar(): void {
-    this.cuentas.clear();
-    this.refrescos.clear();
+  clear(): void {
+    this.accounts.clear();
+    this.refreshTokens.clear();
   }
 }

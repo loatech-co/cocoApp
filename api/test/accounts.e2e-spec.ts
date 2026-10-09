@@ -1,7 +1,7 @@
 import request from 'supertest';
 
 import { makeAccount, makeTransaction } from './factories';
-import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 
 /**
  * The account resource end to end: a credit card with all its fields, the
@@ -9,24 +9,24 @@ import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './help
  * archived, never deleted.
  */
 describe('Accounts (e2e)', () => {
-  let env: EntornoDePruebas;
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
-  let user: UsuarioDePrueba;
+  let user: TestUser;
   let auth: string;
 
   beforeAll(async () => {
-    env = await levantarApp();
+    env = await startApp();
     http = request(env.app.getHttpServer());
   });
 
   afterAll(async () => {
-    await env.cerrar();
+    await env.close();
   });
 
   beforeEach(async () => {
-    await env.limpiar();
-    user = await env.crearUsuario();
-    auth = env.como(user);
+    await env.clean();
+    user = await env.createUser();
+    auth = env.as(user);
   });
 
   const base = '/api/v2/accounts';

@@ -1,7 +1,7 @@
 import request from 'supertest';
 
 import { makeConcept } from './factories';
-import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 import { AutoChargeTask } from '../src/modules/dashboard/auto-charge.task';
 
 /**
@@ -10,29 +10,29 @@ import { AutoChargeTask } from '../src/modules/dashboard/auto-charge.task';
  * and opening the dashboard writes nothing.
  */
 describe('Auto-charge task (e2e)', () => {
-  let env: EntornoDePruebas;
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
   let task: AutoChargeTask;
-  let ana: UsuarioDePrueba;
-  let bruno: UsuarioDePrueba;
+  let ana: TestUser;
+  let bruno: TestUser;
 
   /** Mid-month in Bogotá, so a concept due on the 1st is already due. */
   const NOW = new Date('2026-10-15T15:00:00Z');
 
   beforeAll(async () => {
-    env = await levantarApp();
+    env = await startApp();
     http = request(env.app.getHttpServer());
     task = env.app.get(AutoChargeTask);
   });
 
   afterAll(async () => {
-    await env.cerrar();
+    await env.close();
   });
 
   beforeEach(async () => {
-    await env.limpiar();
-    ana = await env.crearUsuario({ displayName: 'Ana' });
-    bruno = await env.crearUsuario({ displayName: 'Bruno' });
+    await env.clean();
+    ana = await env.createUser({ displayName: 'Ana' });
+    bruno = await env.createUser({ displayName: 'Bruno' });
   });
 
   async function autoPaidConcept(userId: bigint, name: string): Promise<bigint> {
@@ -79,7 +79,7 @@ describe('Auto-charge task (e2e)', () => {
   it('GET /dashboard no longer writes', async () => {
     await autoPaidConcept(ana.id, 'Netflix');
 
-    await http.get('/api/v2/dashboard').set('Authorization', env.como(ana)).expect(200);
+    await http.get('/api/v2/dashboard').set('Authorization', env.as(ana)).expect(200);
 
     expect(await env.prisma.transaction.count({ where: { userId: ana.id } })).toBe(0);
   });

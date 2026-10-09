@@ -5,7 +5,7 @@ import { ThrottlerStorage } from '@nestjs/throttler';
 import type { ThrottlerStorageRecord } from '@nestjs/throttler/dist/throttler-storage-record.interface';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-import { SupabaseAuthFalso } from './supabase-auth-fake';
+import { SupabaseAuthFake } from './supabase-auth-fake';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/bootstrap';
 import { installBigIntSerializer } from '../../src/common/serialization/bigint';
@@ -32,7 +32,7 @@ import { SupabaseAuthService } from '../../src/modules/auth/supabase-auth.servic
  * por motivos que nada tienen que ver con lo que están verificando. Hay una
  * prueba dedicada que lo enciende y comprueba que sigue vivo.
  */
-export interface EntornoDePruebas {
+export interface TestEnvironment {
   app: INestApplication;
   /**
    * The database as its OWNER (`DIRECT_URL`), not as the app: fixtures,
@@ -42,16 +42,16 @@ export interface EntornoDePruebas {
    */
   prisma: PrismaClient;
   /** Crea un usuario ya listo para usar, sin pasar por el endpoint de registro. */
-  crearUsuario: (datos?: DatosDeUsuario) => Promise<UsuarioDePrueba>;
+  createUser: (data?: UserData) => Promise<TestUser>;
   /** El doble de Supabase Auth, para fabricar casos que el flujo normal no da. */
-  supabase: SupabaseAuthFalso;
+  supabase: SupabaseAuthFake;
   /** Cabecera `Authorization` con un access token real para ese usuario. */
-  como: (usuario: UsuarioDePrueba) => string;
-  limpiar: () => Promise<void>;
-  cerrar: () => Promise<void>;
+  as: (user: TestUser) => string;
+  clean: () => Promise<void>;
+  close: () => Promise<void>;
 }
 
-interface DatosDeUsuario {
+interface UserData {
   email?: string;
   password?: string;
   displayName?: string;
@@ -59,9 +59,9 @@ interface DatosDeUsuario {
   status?: UserStatus;
 }
 
-export interface UsuarioDePrueba extends User {
+export interface TestUser extends User {
   /** La contraseña en claro, para poder hacer login en la prueba. */
-  passwordEnClaro: string;
+  plainPassword: string;
   accessToken: string;
   refreshToken: string;
 }
@@ -71,23 +71,23 @@ export interface UsuarioDePrueba extends User {
  * minúscula, dígito y símbolo, sin parecerse al correo ni al nombre de las
  * cuentas de prueba (y sin la palabra "coco", que la política prohíbe).
  */
-export const PASSWORD_VALIDA = 'Xk9$Ronda-Verde!';
+export const VALID_PASSWORD = 'Xk9$Ronda-Verde!';
 /** Otra distinta, para las pruebas de cambio de contraseña. */
-export const PASSWORD_NUEVA = 'Zt4&Nube-Lejana!';
+export const NEW_PASSWORD = 'Zt4&Nube-Lejana!';
 
 /**
  * Todo correo de prueba vive bajo este dominio. `limpiar()` no lo usa —vacía la
  * base entera— pero mantenerlo hace obvio en cualquier volcado qué filas son
  * de pruebas.
  */
-const DOMINIO_DE_PRUEBAS = 'pruebas.coco';
+const TEST_DOMAIN = 'pruebas.coco';
 
-let contador = 0;
+let counter = 0;
 
 /** Correo único por llamada: evita colisiones entre pruebas del mismo archivo. */
-export function correoDePrueba(prefijo = 'usuario'): string {
-  contador += 1;
-  return `${prefijo}-${process.pid}-${contador}@${DOMINIO_DE_PRUEBAS}`;
+export function testEmail(prefix = 'usuario'): string {
+  counter += 1;
+  return `${prefix}-${process.pid}-${counter}@${TEST_DOMAIN}`;
 }
 
 /**
@@ -95,24 +95,24 @@ export function correoDePrueba(prefijo = 'usuario'): string {
  * equivocada sería destructivo. Se comprueba el nombre de la base antes de
  * levantar nada, no se confía en que el `.env` correcto esté cargado.
  */
-function exigirBaseDePruebas(): void {
+function requireTestDatabase(): void {
   for (const variable of ['DATABASE_URL', 'DIRECT_URL']) {
     const url = process.env[variable] ?? '';
-    const nombre = url.split('/').pop()?.split('?')[0] ?? '';
+    const name = url.split('/').pop()?.split('?')[0] ?? '';
 
-    if (!nombre.endsWith('_test')) {
+    if (!name.endsWith('_test')) {
       throw new Error(
-        `Las pruebas e2e vacían la base entera y ${variable} no es de pruebas: "${nombre}". ` +
+        `Las pruebas e2e vacían la base entera y ${variable} no es de pruebas: "${name}". ` +
           'Revisa que .env.test esté cargado (test/setup-env.ts).',
       );
     }
   }
 }
 
-export async function levantarApp(
-  opciones: { conLimitador?: boolean } = {},
-): Promise<EntornoDePruebas> {
-  exigirBaseDePruebas();
+export async function startApp(
+  options: { withRateLimiter?: boolean } = {},
+): Promise<TestEnvironment> {
+  requireTestDatabase();
   installBigIntSerializer();
 
   const constructor = Test.createTestingModule({ imports: [AppModule] });
@@ -120,10 +120,10 @@ export async function levantarApp(
   // Supabase Auth se sustituye por un doble en memoria. Hablar con el proyecto
   // real crearía cuentas de verdad en cada corrida —no hay proyecto de pruebas
   // en el plan gratuito— y ataría las pruebas a la red.
-  const supabase = new SupabaseAuthFalso();
+  const supabase = new SupabaseAuthFake();
   constructor.overrideProvider(SupabaseAuthService).useValue(supabase);
 
-  if (!opciones.conLimitador) {
+  if (!options.withRateLimiter) {
     // Se sustituye el ALMACÉN del limitador, no el guard: `APP_GUARD` con
     // `useClass` instancia la clase directamente y `overrideGuard` no llega a
     // tocarla. Con un almacén que siempre reporta cero golpes, el guard corre
@@ -159,19 +159,19 @@ export async function levantarApp(
     adapter: new PrismaPg({ connectionString: process.env.DIRECT_URL }),
   });
 
-  const crearUsuario = async (datos: DatosDeUsuario = {}): Promise<UsuarioDePrueba> => {
-    const password = datos.password ?? PASSWORD_VALIDA;
+  const createUser = async (data: UserData = {}): Promise<TestUser> => {
+    const password = data.password ?? VALID_PASSWORD;
 
-    const email = datos.email ?? correoDePrueba();
-    const authId = supabase.sembrar(email, password);
+    const email = data.email ?? testEmail();
+    const authId = supabase.seed(email, password);
 
-    const usuario = await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         authId,
         email,
-        displayName: datos.displayName ?? 'Usuario de Pruebas',
-        role: datos.role ?? 'user',
-        status: datos.status ?? 'active',
+        displayName: data.displayName ?? 'Usuario de Pruebas',
+        role: data.role ?? 'user',
+        status: data.status ?? 'active',
         // Al segundo, como hace el registro real: el `iat` del token no tiene
         // más precisión y una marca con milisegundos dejaría fuera al token
         // que se emite justo después.
@@ -182,13 +182,13 @@ export async function levantarApp(
     // La sesión se abre directamente contra el doble, sin pasar por
     // POST /auth/login: la mayoría de las pruebas solo necesitan "estar
     // dentro" y no deben gastar el cupo del limitador para lograrlo.
-    const sesion = supabase.abrirSesion(authId, email);
+    const session = supabase.openSession(authId, email);
 
     return {
-      ...usuario,
-      passwordEnClaro: password,
-      accessToken: sesion.accessToken,
-      refreshToken: sesion.refreshToken,
+      ...user,
+      plainPassword: password,
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
     };
   };
 
@@ -200,7 +200,7 @@ export async function levantarApp(
    * cuenta con historial— y eso bloquea la cascada. Y `audit_log.user_id` es
    * SetNull, así que las filas de bitácora sobrevivirían al usuario.
    */
-  const limpiar = async (): Promise<void> => {
+  const clean = async (): Promise<void> => {
     // splits y transaction_tags caen por CASCADE desde transactions.
     await prisma.transaction.deleteMany({});
     // import_rows cae por CASCADE desde import_batches. Los lotes van ANTES que
@@ -220,20 +220,20 @@ export async function levantarApp(
     // El doble guarda sus cuentas en memoria y sobrevive entre pruebas del
     // mismo archivo: sin esto, un correo reutilizado chocaría con una cuenta
     // fantasma de la prueba anterior.
-    supabase.limpiar();
+    supabase.clear();
   };
 
-  await limpiar();
+  await clean();
 
   return {
     app,
     prisma,
-    crearUsuario,
+    createUser,
     supabase,
-    como: (usuario: UsuarioDePrueba) => `Bearer ${usuario.accessToken}`,
-    limpiar,
-    cerrar: async () => {
-      await limpiar();
+    as: (user: TestUser) => `Bearer ${user.accessToken}`,
+    clean,
+    close: async () => {
+      await clean();
       await prisma.$disconnect();
       await app.close();
     },

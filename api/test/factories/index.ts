@@ -12,11 +12,11 @@ import type {
  *
  *   const tx = await makeTransaction(prisma, user.id, { amount: 100 });
  *
- * Users come from `levantarApp().crearUsuario()`, which also opens a session
+ * Users come from `startApp().createUser()`, which also opens a session
  * against the Supabase double; a bare user row could not log in.
  */
 
-/** The owner's client from `levantarApp()`, not the app's: fixtures cross users. */
+/** The owner's client from `startApp()`, not the app's: fixtures cross users. */
 type Db = PrismaClient;
 
 export async function makeAccount(

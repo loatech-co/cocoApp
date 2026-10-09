@@ -217,7 +217,7 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
       await expect(service.createUser('n@pruebas.coco', 'pw')).rejects.toThrow(
         'No se pudo crear el usuario.',
       );
-      replies['POST /admin/users'] = { status: 200, body: { message: { otro: 1 } } };
+      replies['POST /admin/users'] = { status: 200, body: { message: { other: 1 } } };
       await expect(service.createUser('n@pruebas.coco', 'pw')).rejects.toThrow(
         'No se pudo crear el usuario.',
       );

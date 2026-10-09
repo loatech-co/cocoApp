@@ -1,7 +1,7 @@
 import request from 'supertest';
 
 import { makeConcept, makeTransaction } from './factories';
-import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 import {
   MARK,
   PNG,
@@ -33,29 +33,29 @@ const EXEMPT: Record<string, string> = {
 };
 
 describe('User isolation (e2e)', () => {
-  let env: EntornoDePruebas;
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
-  let ana: UsuarioDePrueba;
-  let bruno: UsuarioDePrueba;
+  let ana: TestUser;
+  let bruno: TestUser;
   let asBruno: string;
   let a: AnaData;
   let brunoConceptId: bigint;
   let brunoTransactionId: bigint;
 
   beforeAll(async () => {
-    env = await levantarApp();
+    env = await startApp();
     http = request(env.app.getHttpServer());
   });
 
   afterAll(async () => {
-    await env.cerrar();
+    await env.close();
   });
 
   beforeEach(async () => {
-    await env.limpiar();
-    ana = await env.crearUsuario({ displayName: 'Ana' });
-    bruno = await env.crearUsuario({ displayName: 'Bruno' });
-    asBruno = env.como(bruno);
+    await env.clean();
+    ana = await env.createUser({ displayName: 'Ana' });
+    bruno = await env.createUser({ displayName: 'Bruno' });
+    asBruno = env.as(bruno);
     a = await seedAna(env, ana.id);
 
     const { concept } = await makeConcept(env.prisma, bruno.id, {
@@ -314,7 +314,7 @@ describe('User isolation (e2e)', () => {
   it('receipts: Bruno cannot list, upload to, download or delete Ana’s receipts', async () => {
     await untouched(async () => {
       const tx = String(a.transactionId);
-      const receipt = String(a.soporteId);
+      const receipt = String(a.receiptId);
       const list = await http
         .get(`/api/v2/transactions/${tx}/receipts`)
         .set('Authorization', asBruno);
@@ -465,7 +465,7 @@ describe('User isolation (e2e)', () => {
       .post('/api/v2/auth/logout-all')
       .set('Authorization', asBruno)
       .expect((r) => expect(r.status).toBeLessThan(300));
-    await http.get('/api/v2/auth/me').set('Authorization', env.como(ana)).expect(200);
+    await http.get('/api/v2/auth/me').set('Authorization', env.as(ana)).expect(200);
   });
 
   const adminRoutes = [

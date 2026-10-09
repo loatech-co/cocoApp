@@ -1,6 +1,6 @@
 import request from 'supertest';
 
-import { levantarApp, type EntornoDePruebas } from './helpers/app';
+import { startApp, type TestEnvironment } from './helpers/app';
 
 /**
  * Feature flags reach clients through `/auth/me` (step 7.8).
@@ -11,32 +11,29 @@ import { levantarApp, type EntornoDePruebas } from './helpers/app';
  * through the preferences endpoint, and that the field is additive.
  */
 describe('Feature flags in /auth/me (e2e)', () => {
-  let entorno: EntornoDePruebas;
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
   const previous = process.env.FEATURES;
 
   beforeAll(async () => {
     process.env.FEATURES = 'flags_canary';
-    entorno = await levantarApp();
-    http = request(entorno.app.getHttpServer());
+    env = await startApp();
+    http = request(env.app.getHttpServer());
   });
 
   afterAll(async () => {
-    await entorno.cerrar();
+    await env.close();
     if (previous === undefined) delete process.env.FEATURES;
     else process.env.FEATURES = previous;
   });
 
   beforeEach(async () => {
-    await entorno.limpiar();
+    await env.clean();
   });
 
   it('lists the flags FEATURES turns on, next to the profile it already had', async () => {
-    const ana = await entorno.crearUsuario();
-    const me = await http
-      .get('/api/v2/auth/me')
-      .set('Authorization', entorno.como(ana))
-      .expect(200);
+    const ana = await env.createUser();
+    const me = await http.get('/api/v2/auth/me').set('Authorization', env.as(ana)).expect(200);
 
     expect(me.body.data.features).toEqual(['flags_canary']);
     expect(me.body.data).toEqual(
@@ -45,16 +42,16 @@ describe('Feature flags in /auth/me (e2e)', () => {
   });
 
   it('the flags sit next to the camelCase profile, per user', async () => {
-    const ana = await entorno.crearUsuario();
-    await entorno.prisma.userPreference.create({
+    const ana = await env.createUser();
+    await env.prisma.userPreference.create({
       data: { userId: ana.id, prefKey: 'feature:flags_canary', prefValue: false },
     });
-    const bruno = await entorno.crearUsuario();
+    const bruno = await env.createUser();
 
-    const asAna = await http.get('/api/v2/auth/me').set('Authorization', entorno.como(ana));
+    const asAna = await http.get('/api/v2/auth/me').set('Authorization', env.as(ana));
     const asBruno = await http
       .get('/api/v2/auth/me')
-      .set('Authorization', entorno.como(bruno))
+      .set('Authorization', env.as(bruno))
       .expect(200);
 
     expect(asAna.body.data.features).toEqual([]);
@@ -65,40 +62,40 @@ describe('Feature flags in /auth/me (e2e)', () => {
   });
 
   it("a user's own feature:<name> = false keeps that user out", async () => {
-    const ana = await entorno.crearUsuario();
-    const bruno = await entorno.crearUsuario();
-    await entorno.prisma.userPreference.create({
+    const ana = await env.createUser();
+    const bruno = await env.createUser();
+    await env.prisma.userPreference.create({
       data: { userId: bruno.id, prefKey: 'feature:flags_canary', prefValue: false },
     });
 
-    const asBruno = await http.get('/api/v2/auth/me').set('Authorization', entorno.como(bruno));
-    const asAna = await http.get('/api/v2/auth/me').set('Authorization', entorno.como(ana));
+    const asBruno = await http.get('/api/v2/auth/me').set('Authorization', env.as(bruno));
+    const asAna = await http.get('/api/v2/auth/me').set('Authorization', env.as(ana));
     expect(asBruno.body.data.features).toEqual([]);
     expect(asAna.body.data.features).toEqual(['flags_canary']);
   });
 
   it('the preferences endpoint cannot write a flag', async () => {
-    const ana = await entorno.crearUsuario();
+    const ana = await env.createUser();
     await http
       .patch('/api/v2/preferences')
-      .set('Authorization', entorno.como(ana))
+      .set('Authorization', env.as(ana))
       .send({ 'feature:flags_canary': false });
 
-    const rows = await entorno.prisma.userPreference.count({
+    const rows = await env.prisma.userPreference.count({
       where: { userId: ana.id, prefKey: { startsWith: 'feature:' } },
     });
     expect(rows).toBe(0);
   });
 
   it('the flags do not change the rest of the preferences', async () => {
-    const ana = await entorno.crearUsuario();
-    await entorno.prisma.userPreference.create({
+    const ana = await env.createUser();
+    await env.prisma.userPreference.create({
       data: { userId: ana.id, prefKey: 'feature:flags_canary', prefValue: true },
     });
 
     const preferences = await http
       .get('/api/v2/preferences')
-      .set('Authorization', entorno.como(ana))
+      .set('Authorization', env.as(ana))
       .expect(200);
     expect(preferences.body.data).toEqual({ accountsEnabled: false });
   });

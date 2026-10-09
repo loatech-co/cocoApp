@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import request from 'supertest';
 
-import { levantarApp, type EntornoDePruebas } from './helpers/app';
+import { startApp, type TestEnvironment } from './helpers/app';
 import { AppModule } from '../src/app.module';
 import { configureRouting } from '../src/bootstrap';
 import { SupabaseAuthService } from '../src/modules/auth/supabase-auth.service';
@@ -85,14 +85,14 @@ function registeredRoutes(app: INestApplication): string[] {
 }
 
 describe('OpenAPI contract (api/openapi.v2.json)', () => {
-  let env: EntornoDePruebas;
+  let env: TestEnvironment;
 
   beforeAll(async () => {
-    env = await levantarApp();
+    env = await startApp();
   });
 
   afterAll(async () => {
-    await env.cerrar();
+    await env.close();
   });
 
   it('documents every registered route, and nothing that is not registered', () => {

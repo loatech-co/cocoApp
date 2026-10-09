@@ -711,7 +711,7 @@ any table. Every table with a user's rows has a policy keyed on
 first statement of each unit of work. A new table ships with its policy in
 the same migration (`row-level-security.e2e-spec.ts` fails on a public table
 without one). Local, CI and the e2e suites run as `coco_app` too; fixtures
-and cleanup use the owner's client (`levantarApp().prisma`).
+and cleanup use the owner's client (`startApp().prisma`).
 
 **Why.** The `user_id` filter in each repository is the first lock, and
 `user-isolation.e2e-spec.ts` checks it route by route. The policy is the
@@ -772,7 +772,7 @@ to and catches none of them.
 (`makeAccount`, `makeConcept`, `makeTransaction`), and objects with the ones
 next to each package's tests (`packages/receipt-parser/src/testing/`). A test writes
 only the fields it is about: `makeTransaction(prisma, user.id, { amount: '100' })`.
-Users come from `levantarApp().crearUsuario()`, which also opens their
+Users come from `startApp().createUser()`, which also opens their
 session.
 
 **Why.** A fixture with every field spelled out hides the one that matters,
@@ -784,7 +784,7 @@ place, so a new required column changes one file.
 **Rule.** Every test sets up what it needs and passes alone (`-t`) or
 shuffled (`--randomize`). Suites with state shared across tests (a rate
 limiter, the list of covered routes) rebuild it per test or declare it outside
-the tests. The e2e app listens once per suite (`levantarApp`): never hand
+the tests. The e2e app listens once per suite (`startApp`): never hand
 `supertest` a server that is not listening.
 
 **Why.** A test that passes only after another one hides a bug in the order,

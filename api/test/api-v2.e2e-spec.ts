@@ -1,12 +1,7 @@
 import request from 'supertest';
 
 import { makeAccount, makeConcept } from './factories';
-import {
-  levantarApp,
-  PASSWORD_VALIDA,
-  type EntornoDePruebas,
-  type UsuarioDePrueba,
-} from './helpers/app';
+import { startApp, VALID_PASSWORD, type TestEnvironment, type TestUser } from './helpers/app';
 import { PNG } from './helpers/isolation';
 
 /**
@@ -15,27 +10,27 @@ import { PNG } from './helpers/isolation';
  * capture idempotent, and both kinds of session.
  */
 describe('API v2 (e2e)', () => {
-  let env: EntornoDePruebas;
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
-  let user: UsuarioDePrueba;
+  let user: TestUser;
   let auth: string;
   let conceptId: bigint;
   let groupId: bigint;
   let accountId: bigint;
 
   beforeAll(async () => {
-    env = await levantarApp();
+    env = await startApp();
     http = request(env.app.getHttpServer());
   });
 
   afterAll(async () => {
-    await env.cerrar();
+    await env.close();
   });
 
   beforeEach(async () => {
-    await env.limpiar();
-    user = await env.crearUsuario({ displayName: 'Vera' });
-    auth = env.como(user);
+    await env.clean();
+    user = await env.createUser({ displayName: 'Vera' });
+    auth = env.as(user);
     const tree = await makeConcept(env.prisma, user.id, {
       center: { name: 'Hogar', isStatic: true },
       category: { name: 'Servicios' },
@@ -429,10 +424,10 @@ describe('API v2 (e2e)', () => {
         .expect(200);
       expect(preferences.body.data).toEqual({ accountsEnabled: false });
 
-      const stranger = await env.crearUsuario();
+      const stranger = await env.createUser();
       const seeded = await http
         .post('/api/v2/categories/seed')
-        .set('Authorization', env.como(stranger))
+        .set('Authorization', env.as(stranger))
         .expect(201);
       expect(seeded.body.data.created).toBeGreaterThan(0);
     });
@@ -555,7 +550,7 @@ describe('API v2 (e2e)', () => {
       const login = await http
         .post('/api/v2/auth/login')
         .set('X-Coco-Client', 'native')
-        .send({ email: user.email, password: PASSWORD_VALIDA })
+        .send({ email: user.email, password: VALID_PASSWORD })
         .expect(200);
       expect(login.headers['set-cookie']).toBeUndefined();
       expect(login.body.data).toMatchObject({
@@ -587,7 +582,7 @@ describe('API v2 (e2e)', () => {
     it('the web gets an httpOnly cookie scoped to the v2 auth routes', async () => {
       const login = await http
         .post('/api/v2/auth/login')
-        .send({ email: user.email, password: PASSWORD_VALIDA })
+        .send({ email: user.email, password: VALID_PASSWORD })
         .expect(200);
       expect(login.body.data.refreshToken).toBeUndefined();
       const cookie = (login.headers['set-cookie'] as unknown as string[] | undefined)?.find((c) =>
@@ -603,7 +598,7 @@ describe('API v2 (e2e)', () => {
     it('registers and changes the password', async () => {
       const registered = await http
         .post('/api/v2/auth/register')
-        .send({ email: 'nueva-v2@pruebas.coco', password: PASSWORD_VALIDA, displayName: 'Nueva' })
+        .send({ email: 'nueva-v2@pruebas.coco', password: VALID_PASSWORD, displayName: 'Nueva' })
         .expect(201);
       expect(registered.body.data).toEqual({
         pendingApproval: expect.any(Boolean),
@@ -620,9 +615,9 @@ describe('API v2 (e2e)', () => {
 
   describe('administration', () => {
     it('lists users and the audit log as pages, and acts on a user', async () => {
-      const admin = await env.crearUsuario({ role: 'admin' });
-      const asAdmin = env.como(admin);
-      const waiting = await env.crearUsuario({ status: 'pending' });
+      const admin = await env.createUser({ role: 'admin' });
+      const asAdmin = env.as(admin);
+      const waiting = await env.createUser({ status: 'pending' });
 
       const users = await http
         .get('/api/v2/admin/users?status=pending&perPage=10')

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 
 import { makeAccount, makeTransaction } from './factories';
-import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 
 /**
  * Integridad del dinero (R-3): lo que una edición o dos capturas a la vez no
@@ -12,7 +12,7 @@ import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './help
  * - Editar una pata de una transferencia edita las dos, o ninguna.
  * - Wallet y el SMS del mismo pago, a la vez: un solo movimiento.
  */
-const VERSIONES = [
+const VERSIONS = [
   {
     v: 'v2',
     transfer: 'transferGroupId',
@@ -29,33 +29,33 @@ const VERSIONES = [
   },
 ] as const;
 
-describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
-  let env: EntornoDePruebas;
+describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
+  let env: TestEnvironment;
   let http: ReturnType<typeof request>;
-  let user: UsuarioDePrueba;
+  let user: TestUser;
   let auth: string;
   const base = `/api/${version.v}/transactions`;
 
   beforeAll(async () => {
-    env = await levantarApp();
+    env = await startApp();
     http = request(env.app.getHttpServer());
   });
 
   afterAll(async () => {
-    await env.cerrar();
+    await env.close();
   });
 
   beforeEach(async () => {
-    await env.limpiar();
-    user = await env.crearUsuario();
-    auth = env.como(user);
+    await env.clean();
+    user = await env.createUser();
+    auth = env.as(user);
   });
 
   const patch = (id: bigint, body: Record<string, unknown>) =>
     http.patch(`${base}/${id.toString()}`).set('Authorization', auth).send(body);
 
   describe('un movimiento con desglose', () => {
-    const conDesglose = async () => {
+    const withSplits = async () => {
       const tx = await makeTransaction(env.prisma, user.id, { amount: '1000' });
       await env.prisma.transactionSplit.createMany({
         data: [
@@ -67,7 +67,7 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
     };
 
     it('cambiar el monto SIN reenviar el desglose es 422, y no se escribe nada', async () => {
-      const tx = await conDesglose();
+      const tx = await withSplits();
 
       const response = await patch(tx.id, { amount: '1200', description: 'otra' }).expect(422);
       expect(JSON.stringify(response.body)).toMatch(/no coincide con la suma del desglose/);
@@ -78,7 +78,7 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
     });
 
     it('con el desglose ajustado, o sin tocar el monto, se guarda', async () => {
-      const tx = await conDesglose();
+      const tx = await withSplits();
 
       await patch(tx.id, { amount: '1200', splits: [{ amount: '700' }, { amount: '500' }] }).expect(
         200,
@@ -94,7 +94,7 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
   });
 
   describe('una transferencia', () => {
-    const transferencia = async () => {
+    const transfer = async () => {
       const from = await makeAccount(env.prisma, user.id);
       const to = await makeAccount(env.prisma, user.id, { name: 'Ahorro', type: 'savings' });
       const group = randomUUID();
@@ -109,20 +109,20 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
       return { out: await leg(from.id, 'out'), in: await leg(to.id, 'in'), group, from };
     };
 
-    const patas = (group: string) =>
+    const legsOf = (group: string) =>
       env.prisma.transaction.findMany({
         where: { transferGroupId: group },
         orderBy: { transferDir: 'asc' },
       });
 
     it('editar el monto y la fecha de una pata edita las dos', async () => {
-      const t = await transferencia();
+      const t = await transfer();
 
       await patch(t.out.id, { amount: '2500', date: '2026-09-12', description: 'Ahorro' }).expect(
         200,
       );
 
-      const legs = await patas(t.group);
+      const legs = await legsOf(t.group);
       expect(legs).toHaveLength(2);
       for (const leg of legs) {
         expect(leg.amount.toFixed(2)).toBe('2500.00');
@@ -134,7 +134,7 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
     });
 
     it('una pata no cambia de tipo, ni se lleva la cuenta de la otra: 422', async () => {
-      const t = await transferencia();
+      const t = await transfer();
 
       await patch(t.in.id, { type: 'expense' }).expect(422);
       await patch(t.in.id, {
@@ -143,7 +143,7 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
     });
 
     it('si la escritura de la segunda pata falla, la primera tampoco queda escrita', async () => {
-      const t = await transferencia();
+      const t = await transfer();
       // Un disparador de prueba que hace fallar SOLO la escritura de la pata
       // `in`. El PATCH entra por la `out`, así que esa ya se escribió cuando
       // revienta la segunda: lo que se comprueba es que se deshace.
@@ -167,7 +167,7 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
         await env.prisma.$executeRawUnsafe('DROP FUNCTION r3_falla_la_pata_in()');
       }
 
-      for (const leg of await patas(t.group)) {
+      for (const leg of await legsOf(t.group)) {
         expect(leg.amount.toFixed(2)).toBe('1000.00');
         expect(leg.description).toBeNull();
       }
@@ -175,7 +175,7 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
   });
 
   describe('Wallet y el SMS del mismo pago, a la vez', () => {
-    const capturar = (body: Record<string, unknown>) =>
+    const capture = (body: Record<string, unknown>) =>
       http.post(`${base}/capture`).set('Authorization', auth).send(body);
 
     it('acaban en UN movimiento enriquecido, todas las veces', async () => {
@@ -183,15 +183,15 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
 
       for (let i = 0; i < 8; i++) {
         // Un monto distinto por vuelta: cada vuelta es un pago aparte.
-        const miles = 120 + i;
+        const thousands = 120 + i;
         const en = new Date(t0 + i * 3_600_000).toISOString();
         const [wallet, sms] = await Promise.all([
-          capturar(version.capture(`w-${i}`, version.wallet(`${miles}000`, en))),
-          capturar(
+          capture(version.capture(`w-${i}`, version.wallet(`${thousands}000`, en))),
+          capture(
             version.capture(
               `s-${i}`,
               version.sms(
-                `Bancolombia: compra por $${miles}.000 en EXITO POBLADO el 02/10/2026`,
+                `Bancolombia: compra por $${thousands}.000 en EXITO POBLADO el 02/10/2026`,
                 en,
               ),
             ),
@@ -199,15 +199,15 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
         ]);
         expect([wallet.status, sms.status]).toEqual([200, 200]);
         // Exactamente una de las dos se fusionó con la otra.
-        const fusiones = [wallet, sms].filter((r) => r.body.data[version.merged] === true);
-        expect(fusiones).toHaveLength(1);
+        const mergedOnes = [wallet, sms].filter((r) => r.body.data[version.merged] === true);
+        expect(mergedOnes).toHaveLength(1);
 
-        const filas = await env.prisma.transaction.findMany({
-          where: { userId: user.id, amount: `${miles}000` },
+        const rows = await env.prisma.transaction.findMany({
+          where: { userId: user.id, amount: `${thousands}000` },
         });
-        expect(filas).toHaveLength(1);
-        expect(filas[0]?.merchant).toMatch(/exito poblado/i);
-        expect(filas[0]?.rawText).toContain('EXITO POBLADO');
+        expect(rows).toHaveLength(1);
+        expect(rows[0]?.merchant).toMatch(/exito poblado/i);
+        expect(rows[0]?.rawText).toContain('EXITO POBLADO');
       }
     });
   });

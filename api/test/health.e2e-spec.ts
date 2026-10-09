@@ -1,6 +1,6 @@
 import request from 'supertest';
 
-import { levantarApp, type EntornoDePruebas } from './helpers/app';
+import { startApp, type TestEnvironment } from './helpers/app';
 import { HealthRepository } from '../src/modules/health/health.repository';
 
 /**
@@ -11,22 +11,22 @@ import { HealthRepository } from '../src/modules/health/health.repository';
  * verifica y consulta la base igual que en producción.
  */
 describe('Fase 0 — the auth guard on a protected route, and the public probes (e2e)', () => {
-  let entorno: EntornoDePruebas;
+  let env: TestEnvironment;
 
   beforeAll(async () => {
-    entorno = await levantarApp();
+    env = await startApp();
   });
 
   afterAll(async () => {
-    await entorno.cerrar();
+    await env.close();
   });
 
   afterEach(async () => {
-    await entorno.limpiar();
+    await env.clean();
   });
 
   it('sin header Authorization responde 401 con el envelope canónico', async () => {
-    const response = await request(entorno.app.getHttpServer()).get('/api/v2/auth/me').expect(401);
+    const response = await request(env.app.getHttpServer()).get('/api/v2/auth/me').expect(401);
 
     expect(response.body).toMatchObject({
       status: 401,
@@ -38,7 +38,7 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
   });
 
   it('con un token que no es un JWT responde 401', async () => {
-    await request(entorno.app.getHttpServer())
+    await request(env.app.getHttpServer())
       .get('/api/v2/auth/me')
       .set('Authorization', 'Bearer esto-no-es-un-token')
       .expect(401);
@@ -53,61 +53,58 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
   it('un token de una cuenta que no tiene perfil aquí responde 401', async () => {
     // Existe en Supabase pero nadie la registró en la app: sin perfil no hay
     // rol ni estado, así que no hay nada que autorizar.
-    const huerfano = entorno.supabase.sembrar('sin-perfil@pruebas.coco', 'Loquesea-123!');
-    const token = entorno.supabase.emitirToken(huerfano);
+    const orphan = env.supabase.seed('sin-perfil@pruebas.coco', 'Loquesea-123!');
+    const token = env.supabase.issueToken(orphan);
 
-    await request(entorno.app.getHttpServer())
+    await request(env.app.getHttpServer())
       .get('/api/v2/auth/me')
       .set('Authorization', `Bearer ${token}`)
       .expect(401);
   });
 
   it('un token emitido ANTES de revocar la sesión responde 401', async () => {
-    const usuario = await entorno.crearUsuario();
+    const user = await env.createUser();
 
     // Un token de hace una hora, con firma impecable. Lo que lo mata es la
     // marca de revocación, que el guard compara en cada petición.
-    const viejo = entorno.supabase.emitirToken(
-      usuario.authId!,
-      new Date(Date.now() - 60 * 60 * 1000),
-    );
-    await entorno.prisma.user.update({
-      where: { id: usuario.id },
+    const old = env.supabase.issueToken(user.authId!, new Date(Date.now() - 60 * 60 * 1000));
+    await env.prisma.user.update({
+      where: { id: user.id },
       data: { sessionsValidFrom: new Date() },
     });
 
-    await request(entorno.app.getHttpServer())
+    await request(env.app.getHttpServer())
       .get('/api/v2/auth/me')
-      .set('Authorization', `Bearer ${viejo}`)
+      .set('Authorization', `Bearer ${old}`)
       .expect(401);
   });
 
   it('con un token de un usuario que ya no existe responde 401', async () => {
-    const usuario = await entorno.crearUsuario();
-    const cabecera = entorno.como(usuario);
+    const user = await env.createUser();
+    const header = env.as(user);
 
-    await entorno.prisma.auditLog.deleteMany({});
-    await entorno.prisma.user.delete({ where: { id: usuario.id } });
+    await env.prisma.auditLog.deleteMany({});
+    await env.prisma.user.delete({ where: { id: user.id } });
 
-    await request(entorno.app.getHttpServer())
+    await request(env.app.getHttpServer())
       .get('/api/v2/auth/me')
-      .set('Authorization', cabecera)
+      .set('Authorization', header)
       .expect(401);
   });
 
   it('a valid token reaches a protected route as THAT user', async () => {
-    const usuario = await entorno.crearUsuario();
+    const user = await env.createUser();
 
-    const response = await request(entorno.app.getHttpServer())
+    const response = await request(env.app.getHttpServer())
       .get('/api/v2/auth/me')
-      .set('Authorization', entorno.como(usuario))
+      .set('Authorization', env.as(user))
       .expect(200);
 
-    expect(JSON.stringify(response.body)).toContain(usuario.email);
+    expect(JSON.stringify(response.body)).toContain(user.email);
   });
 
   it('health is public: 200 without a token, says only that it is alive and which commit', async () => {
-    const response = await request(entorno.app.getHttpServer()).get('/api/v2/health').expect(200);
+    const response = await request(env.app.getHttpServer()).get('/api/v2/health').expect(200);
 
     // Exactly these two keys: the short SHA and nothing more about the deploy.
     expect(response.body).toEqual({
@@ -117,31 +114,31 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
   });
 
   it('ready is public: 200 without a token once the database answers', async () => {
-    const response = await request(entorno.app.getHttpServer()).get('/api/v2/ready').expect(200);
+    const response = await request(env.app.getHttpServer()).get('/api/v2/ready').expect(200);
 
     expect(response.body).toEqual({ data: { status: 'ok', db: 'ok' }, meta: {} });
   });
 
   it('ready answers 503 when the database does not, and health stays 200', async () => {
-    const repository = entorno.app.get(HealthRepository);
+    const repository = env.app.get(HealthRepository);
     const ping = jest.spyOn(repository, 'isDatabaseReachable').mockResolvedValue(false);
 
     try {
-      const response = await request(entorno.app.getHttpServer()).get('/api/v2/ready').expect(503);
+      const response = await request(env.app.getHttpServer()).get('/api/v2/ready').expect(503);
       expect(response.body).toMatchObject({
         status: 503,
         code: 'database_unavailable',
         detail: 'La base de datos no responde.',
       });
       // The process is still alive: an unreachable database is not a crash.
-      await request(entorno.app.getHttpServer()).get('/api/v2/health').expect(200);
+      await request(env.app.getHttpServer()).get('/api/v2/health').expect(200);
     } finally {
       ping.mockRestore();
     }
   });
 
   it('every response carries an X-Request-Id', async () => {
-    const response = await request(entorno.app.getHttpServer()).get('/api/v2/health').expect(200);
+    const response = await request(env.app.getHttpServer()).get('/api/v2/health').expect(200);
 
     expect(response.headers['x-request-id']).toMatch(/^[A-Za-z0-9._-]{8,64}$/);
   });

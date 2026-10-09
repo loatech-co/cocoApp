@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 
-import type { EntornoDePruebas } from './app';
+import type { TestEnvironment } from './app';
 
 /**
  * What `user-isolation.e2e-spec.ts` needs: Ana's data, the snapshot that
@@ -23,14 +23,14 @@ export interface AnaData {
   transactionId: bigint;
   transactionRef: string;
   tagId: bigint;
-  soporteId: bigint;
+  receiptId: bigint;
   ruleId: bigint;
 }
 
 /** Snapshot of every row a user owns, to prove nothing of theirs changed. */
-export async function snapshotOf(env: EntornoDePruebas, userId: bigint): Promise<string> {
+export async function snapshotOf(env: TestEnvironment, userId: bigint): Promise<string> {
   const where = { userId };
-  const [accounts, categories, transactions, tags, soportes, rules, preferences] =
+  const [accounts, categories, transactions, tags, receipts, rules, preferences] =
     await Promise.all([
       env.prisma.account.findMany({ where, orderBy: { id: 'asc' } }),
       env.prisma.category.findMany({ where, orderBy: { id: 'asc' } }),
@@ -45,13 +45,13 @@ export async function snapshotOf(env: EntornoDePruebas, userId: bigint): Promise
       env.prisma.userPreference.findMany({ where, orderBy: { id: 'asc' } }),
     ]);
   return JSON.stringify(
-    { accounts, categories, transactions, tags, soportes, rules, preferences },
+    { accounts, categories, transactions, tags, receipts, rules, preferences },
     (_k, v: unknown) => (typeof v === 'bigint' ? v.toString() : v),
   );
 }
 
 /** Ana owns one of every user-scoped row, each carrying `MARK`. */
-export async function seedAna(env: EntornoDePruebas, userId: bigint): Promise<AnaData> {
+export async function seedAna(env: TestEnvironment, userId: bigint): Promise<AnaData> {
   const p = env.prisma;
   const account = await p.account.create({
     data: { userId, name: `${MARK} cuenta`, type: 'cash' },
@@ -90,7 +90,7 @@ export async function seedAna(env: EntornoDePruebas, userId: bigint): Promise<An
       splits: { create: [{ categoryId: concept.id, amount: '777777', note: `${MARK} split` }] },
     },
   });
-  const soporte = await p.receipt.create({
+  const receipt = await p.receipt.create({
     data: {
       userId,
       transactionId: transaction.id,
@@ -121,7 +121,7 @@ export async function seedAna(env: EntornoDePruebas, userId: bigint): Promise<An
     transactionId: transaction.id,
     transactionRef,
     tagId: tag.id,
-    soporteId: soporte.id,
+    receiptId: receipt.id,
     ruleId: rule.id,
   };
 }
