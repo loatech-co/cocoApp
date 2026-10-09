@@ -5,7 +5,7 @@ import { ThrottlerStorage } from '@nestjs/throttler';
 import type { ThrottlerStorageRecord } from '@nestjs/throttler/dist/throttler-storage-record.interface';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-import { SupabaseAuthFalso } from './supabase-auth-falso';
+import { SupabaseAuthFalso } from './supabase-auth-fake';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/bootstrap';
 import { installBigIntSerializer } from '../../src/common/serialization/bigint';
