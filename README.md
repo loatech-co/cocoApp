@@ -53,7 +53,7 @@ cp frontend/.env.example    frontend/.env
 
 npm install                                   # also prepares Tesseract and builds @coco/receipt-parser
 npm run prisma:migrate:dev --workspace api    # creates the schema
-npm run seed:local                         # idempotent seed: user, template, recurring concepts
+npm run seed:local                            # idempotent seed: user, template, recurring concepts
 ```
 
 Fill the `__CAMBIAR__` values. `api/.env` points at the local database and at

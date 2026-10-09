@@ -84,7 +84,10 @@ async function main() {
   );
 
   for (const variant of ENGINE_VARIANTS) {
-    await cp(join(ROOT, 'node_modules', 'tesseract.js-core', variant), join(TARGET, 'core', variant));
+    await cp(
+      join(ROOT, 'node_modules', 'tesseract.js-core', variant),
+      join(TARGET, 'core', variant),
+    );
   }
   console.log(`✓ worker and ${ENGINE_VARIANTS.length} engine variants, from node_modules`);
 

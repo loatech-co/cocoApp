@@ -159,7 +159,9 @@ const totals = {
   transactions: await prisma.transaction.count(),
 };
 
-console.log(done.length ? `Seeded:\n  · ${done.join('\n  · ')}` : 'Everything was there. Nothing to do.');
+console.log(
+  done.length ? `Seeded:\n  · ${done.join('\n  · ')}` : 'Everything was there. Nothing to do.',
+);
 console.log(`\nThe local database now has:`);
 for (const [label, count] of Object.entries(totals))
   console.log(`  ${String(count).padStart(5)}  ${label}`);
