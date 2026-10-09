@@ -20,7 +20,19 @@
  * follow balances switches it on; for everyone else, accounts simply do not
  * exist. The key is the stored one (`pref_key`).
  */
-export const ACCOUNTS_ENABLED = 'cuentas_habilitadas';
+export const ACCOUNTS_ENABLED = 'accounts_enabled';
+
+/**
+ * The Spanish keys rows were stored under until 7.2-r1, and their current
+ * name. They are READ, never written: a row saved before the rename keeps
+ * working, and the next change saves the current key. When both rows exist
+ * the current one wins, because it is the newer write. The 7.10 contract
+ * rewrites the leftovers and drops this. A map and not an object, so the
+ * legacy key stays a string and not a new Spanish declaration.
+ */
+const LEGACY_KEYS: ReadonlyMap<string, PreferenceKey> = new Map<string, PreferenceKey>([
+  ['cuentas_habilitadas', ACCOUNTS_ENABLED],
+]);
 
 export interface StoredPreferences {
   [ACCOUNTS_ENABLED]: boolean;
@@ -50,8 +62,14 @@ export function withDefaults(
   saved: readonly { prefKey: string; prefValue: unknown }[],
 ): StoredPreferences {
   const result: StoredPreferences = { ...DEFAULT_PREFERENCES };
+  const current = saved.filter((row) => isKnownKey(row.prefKey));
+  const legacy = saved.flatMap((row) => {
+    const key = LEGACY_KEYS.get(row.prefKey);
+    return key === undefined ? [] : [{ prefKey: key, prefValue: row.prefValue }];
+  });
 
-  for (const row of saved) {
+  // Legacy first, so a current row of the same preference overwrites it.
+  for (const row of [...legacy, ...current]) {
     if (!isKnownKey(row.prefKey)) continue;
 
     const value = row.prefValue;

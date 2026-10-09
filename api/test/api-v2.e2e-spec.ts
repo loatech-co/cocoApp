@@ -48,7 +48,7 @@ describe('API v2 (e2e)', () => {
     groupId = tree.category.id;
     accountId = (await makeAccount(env.prisma, user.id, { name: 'Débito', type: 'debit' })).id;
     await env.prisma.userPreference.create({
-      data: { userId: user.id, prefKey: 'cuentas_habilitadas', prefValue: true },
+      data: { userId: user.id, prefKey: 'accounts_enabled', prefValue: true },
     });
   });
 

@@ -85,5 +85,26 @@ describe('User preferences', () => {
       ]);
       expect(result[ACCOUNTS_ENABLED]).toBe(false);
     });
+
+    // ── The Spanish key rows were stored under until 7.2-r1 ──
+    it('stores the accounts switch under its English key', () => {
+      expect(ACCOUNTS_ENABLED).toBe('accounts_enabled');
+    });
+
+    it('reads a row stored under the legacy key', () => {
+      const result = withDefaults([{ prefKey: 'cuentas_habilitadas', prefValue: true }]);
+      expect(result[ACCOUNTS_ENABLED]).toBe(true);
+      expect(result).not.toHaveProperty('cuentas_habilitadas');
+    });
+
+    it.each([
+      ['before', true],
+      ['after', false],
+    ])('prefers the current key when the legacy row comes %s it', (_, isLegacyFirst) => {
+      const legacy = { prefKey: 'cuentas_habilitadas', prefValue: false };
+      const current = { prefKey: ACCOUNTS_ENABLED, prefValue: true };
+      const rows = isLegacyFirst ? [legacy, current] : [current, legacy];
+      expect(withDefaults(rows)[ACCOUNTS_ENABLED]).toBe(true);
+    });
   });
 });

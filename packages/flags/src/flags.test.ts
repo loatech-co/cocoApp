@@ -57,7 +57,7 @@ describe('preference keys', () => {
   });
 
   it('ignores other preferences and unknown flags', () => {
-    expect(flagOfPreferenceKey('cuentas_habilitadas')).toBeNull();
+    expect(flagOfPreferenceKey('accounts_enabled')).toBeNull();
     expect(flagOfPreferenceKey('feature:gone')).toBeNull();
   });
 });

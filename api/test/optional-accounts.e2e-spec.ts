@@ -108,6 +108,62 @@ describe('Optional accounts (e2e)', () => {
         .expect(200);
       expect(response.body.data.accountsEnabled).toBe(false);
     });
+
+    // ── The key: `accounts_enabled` since 7.2-r1, `cuentas_habilitadas` before ──
+
+    const storedKeys = async () =>
+      (
+        await env.prisma.userPreference.findMany({
+          where: { userId: ana.id },
+          select: { prefKey: true, prefValue: true },
+          orderBy: { prefKey: 'asc' },
+        })
+      ).map((row) => [row.prefKey, row.prefValue]);
+
+    it('saves the switch under the English key', async () => {
+      await http
+        .patch('/api/v2/preferences')
+        .set('Authorization', asAna)
+        .send({ accountsEnabled: true })
+        .expect(200);
+
+      expect(await storedKeys()).toEqual([['accounts_enabled', true]]);
+    });
+
+    it('reads a switch saved under the legacy Spanish key', async () => {
+      await env.prisma.userPreference.create({
+        data: { userId: ana.id, prefKey: 'cuentas_habilitadas', prefValue: true },
+      });
+
+      const response = await http
+        .get('/api/v2/preferences')
+        .set('Authorization', asAna)
+        .expect(200);
+      expect(response.body.data).toEqual({ accountsEnabled: true });
+    });
+
+    it('a change over a legacy row writes the English key, and that one wins', async () => {
+      await env.prisma.userPreference.create({
+        data: { userId: ana.id, prefKey: 'cuentas_habilitadas', prefValue: true },
+      });
+
+      await http
+        .patch('/api/v2/preferences')
+        .set('Authorization', asAna)
+        .send({ accountsEnabled: false })
+        .expect(200);
+
+      const response = await http
+        .get('/api/v2/preferences')
+        .set('Authorization', asAna)
+        .expect(200);
+      expect(response.body.data.accountsEnabled).toBe(false);
+      // The legacy row is left as it was: rewriting the leftovers is the 7.10 contract.
+      expect(await storedKeys()).toEqual([
+        ['accounts_enabled', false],
+        ['cuentas_habilitadas', true],
+      ]);
+    });
   });
 
   // ── The case that started it all ───────────────────────────────────────────

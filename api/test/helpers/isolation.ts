@@ -110,7 +110,7 @@ export async function seedAna(env: TestEnvironment, userId: bigint): Promise<Ana
     },
   });
   await p.userPreference.create({
-    data: { userId, prefKey: 'cuentas_habilitadas', prefValue: true },
+    data: { userId, prefKey: 'accounts_enabled', prefValue: true },
   });
 
   return {
