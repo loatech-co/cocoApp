@@ -644,12 +644,12 @@ frontend`), and the CI `verify` job fails under the thresholds in
 
 | Scope                    | Lines | Branches |
 | ------------------------ | ----- | -------- |
-| `frontend/src`           | 60 %  | 57 %     |
+| `frontend/src`           | 70 %  | 66 %     |
 | `frontend/src/shared/ui` | 98 %  | 96 %     |
 
-The plan's target for `frontend/src` is **70 %** of lines and branches. The
-gap is in `features/` (transactions and cost-centers above all), which gets its
-tests once its components are split into reviewable units. **Thresholds only
+The plan's target for `frontend/src` is **70 %** of lines and branches; lines
+reached it in step J-2. The branch gap is in `features/` (transactions and
+cost-centers above all). **Thresholds only
 go up**: a PR that adds coverage raises them to the new floor; lowering one
 needs an ADR with the reason.
 

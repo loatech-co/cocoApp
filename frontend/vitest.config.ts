@@ -38,10 +38,11 @@ export default defineConfig({
       // 49.63 % branches overall; 98.25 / 96.11 in `shared/ui`. Raised in step
       // 7.7-web-c, with every `features/*/model` covered: 60.82 / 57.64. The
       // gap to the plan's 70 % is in the components and hooks of `features/`
-      // (see CONTRIBUTING, "Frontend coverage").
+      // (see CONTRIBUTING, "Frontend coverage"). Raised in step J-2 to the
+      // plan's 70 % lines, measured at 72.05 % lines and 68.24 % branches.
       thresholds: {
-        lines: 60,
-        branches: 57,
+        lines: 70,
+        branches: 66,
         'src/shared/ui/**': { lines: 98, branches: 96 },
       },
     },
