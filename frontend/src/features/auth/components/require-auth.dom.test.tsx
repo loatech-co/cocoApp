@@ -57,7 +57,7 @@ describe('No session, embedded in the app', () => {
 
   it('on another route it stays where it is, without going back to the index', () => {
     fakeNativeApp();
-    renderShell('auth', '/centros-de-costos');
+    renderShell('auth', '/cost-centers');
 
     // If the app asked for a route, when the session arrives THAT one must be drawn.
     expect(screen.getByRole('status')).toBeTruthy();
@@ -66,7 +66,7 @@ describe('No session, embedded in the app', () => {
 
   it('the admin guard does the same', () => {
     const { cocoEvents: events } = fakeNativeApp();
-    renderShell('admin', '/administracion');
+    renderShell('admin', '/admin');
 
     expect(screen.queryByRole('form', { name: 'Entrar' })).toBeNull();
     expect(screen.getByRole('status').textContent).toContain('Abriendo tu sesión desde la app…');

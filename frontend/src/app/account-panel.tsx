@@ -54,22 +54,22 @@ export function AccountPanel({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           nothing to justify the trip. The anchor goes to the exact spot and
           the page stays one.
         */}
-        <LinkRow Icon={SlidersHorizontal} to="/mi-cuenta#ajustes" onNavigate={onClose}>
+        <LinkRow Icon={SlidersHorizontal} to="/account#ajustes" onNavigate={onClose}>
           {t('shell.account.settings')}
         </LinkRow>
 
         {isAdmin && (
-          <LinkRow Icon={ShieldCheck} to="/administracion" onNavigate={onClose}>
+          <LinkRow Icon={ShieldCheck} to="/admin" onNavigate={onClose}>
             {t('shell.sections.users')}
           </LinkRow>
         )}
 
-        <LinkRow Icon={KeyRound} to="/mi-cuenta#seguridad" onNavigate={onClose}>
+        <LinkRow Icon={KeyRound} to="/account#seguridad" onNavigate={onClose}>
           {t('shell.account.security')}
         </LinkRow>
 
         {isAdmin && (
-          <LinkRow Icon={ScrollText} to="/administracion/bitacora" onNavigate={onClose}>
+          <LinkRow Icon={ScrollText} to="/admin/audit-log" onNavigate={onClose}>
             {t('shell.sections.auditLog')}
           </LinkRow>
         )}
@@ -108,7 +108,7 @@ function ProfileSummary({ name }: { name: string }) {
 
   return (
     <Link
-      to="/mi-cuenta"
+      to="/account"
       className={cn(PANEL_ROW_CLASS, '-mx-1.5 gap-3')}
       aria-label={t('shell.account.myAccountOf', { name })}
     >

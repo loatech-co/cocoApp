@@ -46,9 +46,9 @@ final class RouterTests: XCTestCase {
     func testGoToWebLeavesThePathPendingOnHome() {
         let e = Router()
         e.tab = .more
-        e.go(.web(path: "/centros-de-costos"))
+        e.go(.web(path: "/cost-centers"))
         XCTAssertEqual(e.tab, .home)
-        XCTAssertEqual(e.pendingWebPath, "/centros-de-costos")
+        XCTAssertEqual(e.pendingWebPath, "/cost-centers")
     }
 
     func testSearchGoesHomeWithTheSearchPending() {

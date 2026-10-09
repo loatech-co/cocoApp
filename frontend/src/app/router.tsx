@@ -7,6 +7,7 @@ import { PAGE_TITLE } from '@/shared/ui/atoms/page-header';
 
 import { AppShell } from './app-shell';
 import { ErrorScreen } from './error-screen';
+import { legacyRoutes } from './legacy-routes';
 
 /*
   Every screen but the first one loads on demand (ADR 0018). The index is the
@@ -51,7 +52,8 @@ const lazily = {
 };
 
 /**
- * Routes in Spanish, one per catalog module.
+ * Routes in English, one per catalog module. The Spanish ones they had until
+ * 7.2-r1 redirect here (`legacy-routes.tsx`).
  *
  * For now only the Phase 1 ones exist, plus auth and admin. Budgets, Fixed,
  * Debts, Goals and Reports are added in their phase, each as its own
@@ -82,7 +84,8 @@ export const routes: RouteObject[] = [
     `/entrar` after signing out.
   */
       { path: '/entrar', element: <Navigate to="/" replace /> },
-      { path: '/registro', lazy: lazily.register },
+      ...legacyRoutes,
+      { path: '/sign-up', lazy: lazily.register },
       {
         // Inside the phone app, `window.__coco` —go to a route, open the
         // search— is published by `NavigationBridge`, a child of the shell:
@@ -95,18 +98,14 @@ export const routes: RouteObject[] = [
         ),
         children: [
           { index: true, element: <DashboardPage /> },
-          { path: 'cuentas', lazy: lazily.accounts },
-          { path: 'centros-de-costos', lazy: lazily.costCenters },
-          // The old route is still alive and redirects: there are saved links and
-          // bookmarks pointing at /categorias, and not breaking them over a
-          // rename is free.
-          { path: 'categorias', element: <Navigate to="/centros-de-costos" replace /> },
-          { path: 'mi-cuenta', lazy: lazily.account },
+          { path: 'accounts', lazy: lazily.accounts },
+          { path: 'cost-centers', lazy: lazily.costCenters },
+          { path: 'account', lazy: lazily.account },
 
           // Admin. RequireAdmin is a navigation convenience; what really decides
           // is the backend's RolesGuard.
-          { path: 'administracion', lazy: lazily.users },
-          { path: 'administracion/bitacora', lazy: lazily.auditLog },
+          { path: 'admin', lazy: lazily.users },
+          { path: 'admin/audit-log', lazy: lazily.auditLog },
         ],
       },
       {

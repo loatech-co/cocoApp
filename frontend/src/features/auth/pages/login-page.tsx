@@ -192,7 +192,7 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
 
         <p className="text-center text-sm text-muted-foreground">
           {t('auth.login.noAccount')}
-          <TextLink to="/registro">{t('auth.requestAccess')}</TextLink>
+          <TextLink to="/sign-up">{t('auth.requestAccess')}</TextLink>
         </p>
       </CardContent>
     </Card>

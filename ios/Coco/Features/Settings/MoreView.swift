@@ -11,10 +11,10 @@ struct MoreView: View {
         NavigationStack {
             List {
                 Section {
-                    row(L10n.More.costCenters, icon: "folder") { d.router.go(.web(path: "/centros-de-costos")) }
-                    row(L10n.More.account, icon: "person") { d.router.go(.web(path: "/mi-cuenta")) }
+                    row(L10n.More.costCenters, icon: "folder") { d.router.go(.web(path: "/cost-centers")) }
+                    row(L10n.More.account, icon: "person") { d.router.go(.web(path: "/account")) }
                     if d.isAdmin {
-                        row(L10n.More.admin, icon: "person.2") { d.router.go(.web(path: "/administracion")) }
+                        row(L10n.More.admin, icon: "person.2") { d.router.go(.web(path: "/admin")) }
                     }
                 } footer: {
                     if let email = d.profile?.email { Text(email) }

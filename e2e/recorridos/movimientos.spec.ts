@@ -41,7 +41,7 @@ test.describe('a movement', () => {
     await confirm.getByRole('button', { name: 'Eliminar', exact: true }).click();
 
     await expect(movementRow(page, 'Mercado', '50.000')).toHaveCount(0);
-    await page.goto('/centros-de-costos');
+    await page.goto('/cost-centers');
     await expect(page.getByRole('button', { name: /Mercado$/ })).toBeVisible();
   });
 });

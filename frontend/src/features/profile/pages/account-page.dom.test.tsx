@@ -26,7 +26,7 @@ vi.mock('@/features/profile/components/settings', () => ({ Settings: () => <p>aj
 
 function renderShell() {
   return render(
-    <MemoryRouter initialEntries={['/mi-cuenta']}>
+    <MemoryRouter initialEntries={['/account']}>
       <AccountPage />
     </MemoryRouter>,
   );
@@ -71,8 +71,8 @@ describe('My account inside the app', () => {
       a.getAttribute('href'),
     ]);
     expect(links).toEqual([
-      ['Usuarios', '/administracion'],
-      ['Bitácora', '/administracion/bitacora'],
+      ['Usuarios', '/admin'],
+      ['Bitácora', '/admin/audit-log'],
     ]);
   });
 });

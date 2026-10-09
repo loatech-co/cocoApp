@@ -25,7 +25,7 @@ describe('the router error screen', () => {
     expect(routes).toHaveLength(1);
     expect(routes[0]?.errorElement).toBeTruthy();
     const caminos = (routes[0]?.children ?? []).map((r: RouteObject) => r.path);
-    expect(caminos).toEqual(expect.arrayContaining(['/', '/registro', '*']));
+    expect(caminos).toEqual(expect.arrayContaining(['/', '/sign-up', '*']));
   });
 
   it('says in Spanish that something broke, without the error itself', async () => {

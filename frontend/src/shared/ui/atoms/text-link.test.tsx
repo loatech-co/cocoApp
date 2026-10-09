@@ -12,13 +12,13 @@ describe('TextLink', () => {
     render(
       <MemoryRouter>
         <p>
-          ¿No tienes cuenta? <TextLink to="/registro">Solicitar acceso</TextLink>
+          ¿No tienes cuenta? <TextLink to="/sign-up">Solicitar acceso</TextLink>
         </p>
       </MemoryRouter>,
     );
 
     const link = screen.getByRole('link', { name: 'Solicitar acceso' });
-    expect(link.getAttribute('href')).toBe('/registro');
+    expect(link.getAttribute('href')).toBe('/sign-up');
     expect(link.className.split(' ')).toContain('underline');
   });
 });

@@ -46,7 +46,7 @@ function renderShell() {
         <Routes>
           <Route path="/" element={<AppShell />}>
             <Route index element={<p>la página</p>} />
-            <Route path="centros-de-costos" element={<p>los centros</p>} />
+            <Route path="cost-centers" element={<p>los centros</p>} />
           </Route>
         </Routes>
       </MemoryRouter>
@@ -168,7 +168,7 @@ describe('The shell embedded in the app', () => {
     const { container } = renderShell();
     expect(container.textContent).toContain('la página');
 
-    act(() => window.__coco!.navigate('/centros-de-costos'));
+    act(() => window.__coco!.navigate('/cost-centers'));
 
     expect(container.textContent).toContain('los centros');
     expect(container.textContent).not.toContain('la página');

@@ -22,7 +22,7 @@ type Story = StoryObj;
 export const InASentence: Story = {
   render: () => (
     <p className="text-sm text-muted-foreground">
-      ¿No tienes cuenta? <TextLink to="/registro">Solicitar acceso</TextLink>
+      ¿No tienes cuenta? <TextLink to="/sign-up">Solicitar acceso</TextLink>
     </p>
   ),
 };

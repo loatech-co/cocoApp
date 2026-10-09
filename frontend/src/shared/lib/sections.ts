@@ -56,7 +56,7 @@ export const SECTIONS: readonly Section[] = [
   // For someone who does not keep accounts, this link does not exist. Neither
   // hidden with CSS nor disabled: absent.
   {
-    to: '/cuentas',
+    to: '/accounts',
     label: t('shell.sections.accounts'),
     Icon: Wallet,
     exact: false,
@@ -74,14 +74,14 @@ export const SECTIONS: readonly Section[] = [
     it, add its concepts. Hiding it from non-admins left that person with no
     way to reach their own tree from the rail.
 
-    And it was never really protected: `/centros-de-costos` does not go
+    And it was never really protected: `/cost-centers` does not go
     through `RequireAdmin`, so anyone could open it by typing the address.
     All the menu did was not say it existed.
 
     It goes last of the three because it is still the least visited: people
     come in to look at the summary, not to sort the taxonomy.
   */
-  { to: '/centros-de-costos', label: t('shell.sections.costCenters'), Icon: Tags, exact: false },
+  { to: '/cost-centers', label: t('shell.sections.costCenters'), Icon: Tags, exact: false },
 ];
 
 /**
@@ -97,9 +97,9 @@ export const SECTIONS: readonly Section[] = [
 export const ADMIN_SECTIONS: readonly Section[] = [
   // 'Usuarios', not 'Cuentas': in this same bar 'Cuentas' already means cards
   // and savings. Two different things with the same name ten pixels apart.
-  { to: '/administracion', label: t('shell.sections.users'), Icon: ShieldCheck, exact: true },
+  { to: '/admin', label: t('shell.sections.users'), Icon: ShieldCheck, exact: true },
   {
-    to: '/administracion/bitacora',
+    to: '/admin/audit-log',
     label: t('shell.sections.auditLog'),
     Icon: ScrollText,
     exact: false,
@@ -108,7 +108,7 @@ export const ADMIN_SECTIONS: readonly Section[] = [
 
 /** My account is not a section of the rail, but it is a page that exists. */
 export const MY_ACCOUNT: Section = {
-  to: '/mi-cuenta',
+  to: '/account',
   label: t('shell.account.myAccount'),
   Icon: UserCog,
   exact: true,

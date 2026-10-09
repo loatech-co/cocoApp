@@ -17,11 +17,11 @@ afterEach(() => {
 
 const LIBRARY: PaginaDeAtajo[] = [
   { route: '/', label: 'Resumen', Icon: LayoutDashboard },
-  { route: '/cuentas', label: 'Cuentas', Icon: Wallet },
-  { route: '/administracion/bitacora', label: 'Bitácora', Icon: ScrollText },
-  { route: '/centros-de-costos', label: 'Centros de costos', Icon: Tags },
-  { route: '/administracion', label: 'Usuarios', Icon: ShieldCheck },
-  { route: '/mi-cuenta', label: 'Mi cuenta', Icon: UserCog },
+  { route: '/accounts', label: 'Cuentas', Icon: Wallet },
+  { route: '/admin/audit-log', label: 'Bitácora', Icon: ScrollText },
+  { route: '/cost-centers', label: 'Centros de costos', Icon: Tags },
+  { route: '/admin', label: 'Usuarios', Icon: ShieldCheck },
+  { route: '/account', label: 'Mi cuenta', Icon: UserCog },
 ];
 
 /** Twelve pages, to be able to reach the cap of nine. */
@@ -33,7 +33,7 @@ const LONG_LIBRARY: PaginaDeAtajo[] = Array.from({ length: 12 }, (_, i) => ({
 
 function Surface({
   isOpen = true,
-  defaults = ['/', '/administracion/bitacora'],
+  defaults = ['/', '/admin/audit-log'],
   library = LIBRARY,
   onGo = vi.fn(),
 }: {

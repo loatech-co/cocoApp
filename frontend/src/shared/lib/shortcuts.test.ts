@@ -23,20 +23,20 @@ afterEach(forgetShortcuts);
 
 describe('The shortcut store', () => {
   it('is seeded only once', () => {
-    seedShortcuts(['/', '/centros-de-costos']);
+    seedShortcuts(['/', '/cost-centers']);
     seedShortcuts(['/otra-cosa']);
-    expect(readShortcuts()).toEqual(['/', '/centros-de-costos']);
+    expect(readShortcuts()).toEqual(['/', '/cost-centers']);
   });
 
   it('what is added reads back', () => {
     seedShortcuts(['/']);
-    expect(addShortcut('/cuentas')).toBe(true);
-    expect(readShortcuts()).toEqual(['/', '/cuentas']);
+    expect(addShortcut('/accounts')).toBe(true);
+    expect(readShortcuts()).toEqual(['/', '/accounts']);
   });
 
   it('what is removed is gone', () => {
-    seedShortcuts(['/', '/cuentas']);
-    removeShortcut('/cuentas');
+    seedShortcuts(['/', '/accounts']);
+    removeShortcut('/accounts');
     expect(readShortcuts()).toEqual(['/']);
   });
 
@@ -59,9 +59,9 @@ describe('The shortcut store', () => {
 
   it('adding the same path twice does not duplicate it', () => {
     seedShortcuts(['/']);
-    addShortcut('/cuentas');
-    addShortcut('/cuentas');
-    expect(readShortcuts()).toEqual(['/', '/cuentas']);
+    addShortcut('/accounts');
+    addShortcut('/accounts');
+    expect(readShortcuts()).toEqual(['/', '/accounts']);
   });
 
   it('an index that does not exist does not break the order', () => {

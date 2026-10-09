@@ -98,8 +98,8 @@ describe('registerBridge()', () => {
     const captured = vi.fn();
     const remove = registerBridge({ navigate, openSearch: () => {}, captured });
 
-    window.__coco!.navigate('/cuentas');
-    expect(navigate).toHaveBeenCalledWith('/cuentas');
+    window.__coco!.navigate('/accounts');
+    expect(navigate).toHaveBeenCalledWith('/accounts');
     window.__coco!.captured();
     expect(captured).toHaveBeenCalledOnce();
     expect(typeof window.__coco!.foreground).toBe('function');

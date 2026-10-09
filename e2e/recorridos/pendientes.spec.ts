@@ -50,7 +50,7 @@ test.describe('pending payments', () => {
     // Paid in part and NOT marked: one payment is enough to clear it.
     await expect(page.getByRole('heading', { name: 'Pagos pendientes' })).toBeHidden();
 
-    await page.goto('/centros-de-costos');
+    await page.goto('/cost-centers');
     await page.getByRole('button', { name: /Arriendo$/ }).click();
     const card = page.getByRole('dialog', { name: 'Editar concepto' });
     await card.getByRole('switch', { name: /Se paga en varias veces/ }).click();

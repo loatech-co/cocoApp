@@ -59,7 +59,7 @@ final class WebBridgeTests: XCTestCase {
 
     func testIsNavigationAllowed() {
         XCTAssertTrue(
-            WebBridge.isNavigationAllowed(URL(string: "https://dev-cocoapp.viteri.me/mi-cuenta?x=1")!, base: base))
+            WebBridge.isNavigationAllowed(URL(string: "https://dev-cocoapp.viteri.me/account?x=1")!, base: base))
         XCTAssertTrue(WebBridge.isNavigationAllowed(URL(string: "about:blank")!, base: base))
         XCTAssertFalse(WebBridge.isNavigationAllowed(URL(string: "https://otro.example/")!, base: base))
         XCTAssertFalse(WebBridge.isNavigationAllowed(URL(string: "mailto:ana@coco.test")!, base: base))

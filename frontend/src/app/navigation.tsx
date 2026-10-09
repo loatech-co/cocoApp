@@ -188,20 +188,20 @@ function AccountOptions({ close }: { close: () => void }) {
 
   return (
     <>
-      <MenuOption Icon={UserCog} onClick={() => goTo('/mi-cuenta')}>
+      <MenuOption Icon={UserCog} onClick={() => goTo('/account')}>
         {t('shell.account.myAccount')}
       </MenuOption>
 
-      <MenuOption Icon={Tags} onClick={() => goTo('/centros-de-costos')}>
+      <MenuOption Icon={Tags} onClick={() => goTo('/cost-centers')}>
         {t('shell.sections.costCenters')}
       </MenuOption>
 
       {isAdmin && (
         <>
-          <MenuOption Icon={ShieldCheck} onClick={() => goTo('/administracion')}>
+          <MenuOption Icon={ShieldCheck} onClick={() => goTo('/admin')}>
             {t('shell.sections.users')}
           </MenuOption>
-          <MenuOption Icon={ScrollText} onClick={() => goTo('/administracion/bitacora')}>
+          <MenuOption Icon={ScrollText} onClick={() => goTo('/admin/audit-log')}>
             {t('shell.sections.auditLog')}
           </MenuOption>
         </>

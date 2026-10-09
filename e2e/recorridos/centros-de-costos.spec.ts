@@ -6,7 +6,7 @@ import { createConcept, createExpense } from '../support/semilla';
 test.describe('cost centres', () => {
   test('builds a centre, a category and a concept', async ({ page, entrar }) => {
     await entrar();
-    await page.goto('/centros-de-costos');
+    await page.goto('/cost-centers');
     await expect(page.getByRole('heading', { level: 1, name: 'Centros de costos' })).toBeVisible();
     await expectAccessible(page, 'the cost centres');
 
@@ -47,7 +47,7 @@ test.describe('cost centres', () => {
     await entrar();
     await expect(movementRow(page, 'Aseo', '27.000')).toBeVisible();
 
-    await page.goto('/centros-de-costos');
+    await page.goto('/cost-centers');
     await page.getByRole('button', { name: /Aseo$/ }).click();
     const card = page.getByRole('dialog', { name: 'Editar concepto' });
     await card.getByRole('textbox', { name: 'Nombre' }).fill('Aseo y limpieza');
