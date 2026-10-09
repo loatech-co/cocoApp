@@ -2,16 +2,16 @@ import { config } from 'dotenv';
 import { resolve } from 'node:path';
 
 /**
- * Carga `.env.test` ANTES que cualquier otra cosa, pisando lo que ya hubiera.
+ * Loads `.env.test` BEFORE anything else, overriding whatever was there.
  *
- * Por qué existe este archivo: algo puede haber cargado ya `.env` (hasta
- * Prisma 6, `@prisma/client` lo leía al importarse), y
- * `ConfigModule` NO sobrescribe variables que ya estén en `process.env`. El
- * resultado es que, sin esto, las pruebas heredan la DATABASE_URL de
- * DESARROLLO y la suite e2e —que vacía las tablas— corre contra la base
- * equivocada. Pasó de verdad.
+ * Why this file exists: something may already have loaded `.env` (up to
+ * Prisma 6, `@prisma/client` read it on import), and `ConfigModule` does NOT
+ * overwrite variables that are already in `process.env`. The result is that,
+ * without this, the tests inherit the DEVELOPMENT DATABASE_URL and the e2e
+ * suite —which empties the tables— runs against the wrong database. It really
+ * happened.
  *
- * `override: true` es la clave: no basta con cargar el archivo, hay que ganarle
- * al que ya se cargó.
+ * `override: true` is the key: loading the file is not enough, it has to win
+ * over the one already loaded.
  */
 config({ path: resolve(__dirname, '..', '.env.test'), override: true, quiet: true });

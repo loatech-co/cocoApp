@@ -18,19 +18,18 @@ import {
 import { SupabaseAuthService } from '../../src/modules/auth/supabase-auth.service';
 
 /**
- * Entorno de pruebas de extremo a extremo contra MariaDB real (base
- * `coco_test`, nunca la de desarrollo).
+ * End-to-end test environment against a real Postgres (a database ending in
+ * `_test`, never the development one).
  *
- * A diferencia del montaje anterior con Firebase, aquí NO se sustituye nada del
- * camino de autenticación: se firman y verifican JWT de verdad, se hashea con
- * argon2 de verdad y el guard global consulta la base de verdad. La auth es
- * propia, así que no hay razón para simularla — probarla simulada sería probar
- * el simulacro.
+ * Unlike the earlier Firebase setup, NOTHING on the authentication path is
+ * replaced here: real JWTs are signed and verified, argon2 really hashes and
+ * the global guard really queries the database. The auth is our own, so there
+ * is no reason to fake it — testing it faked would be testing the fake.
  *
- * Lo único que se puede desactivar es el limitador de tasa, porque cuenta
- * intentos por minuto y haría fallar suites que hacen muchas llamadas seguidas
- * por motivos que nada tienen que ver con lo que están verificando. Hay una
- * prueba dedicada que lo enciende y comprueba que sigue vivo.
+ * The only thing that can be switched off is the rate limiter, because it
+ * counts attempts per minute and would fail suites that make many calls in a
+ * row, for reasons that have nothing to do with what they are checking. A
+ * dedicated test turns it on and checks that it is still alive.
  */
 export interface TestEnvironment {
   app: INestApplication;
@@ -41,11 +40,11 @@ export interface TestEnvironment {
    * set up its data through the app's own client would see none of it.
    */
   prisma: PrismaClient;
-  /** Crea un usuario ya listo para usar, sin pasar por el endpoint de registro. */
+  /** Creates a user ready to use, without going through the sign-up endpoint. */
   createUser: (data?: UserData) => Promise<TestUser>;
-  /** El doble de Supabase Auth, para fabricar casos que el flujo normal no da. */
+  /** The Supabase Auth double, to build cases the normal flow does not produce. */
   supabase: SupabaseAuthFake;
-  /** Cabecera `Authorization` con un access token real para ese usuario. */
+  /** `Authorization` header with a real access token for that user. */
   as: (user: TestUser) => string;
   clean: () => Promise<void>;
   close: () => Promise<void>;
@@ -60,40 +59,40 @@ interface UserData {
 }
 
 export interface TestUser extends User {
-  /** La contraseña en claro, para poder hacer login en la prueba. */
+  /** The plain-text password, so the test can log in. */
   plainPassword: string;
   accessToken: string;
   refreshToken: string;
 }
 
 /**
- * Contraseña que cumple la política entera: 16 caracteres, mayúscula,
- * minúscula, dígito y símbolo, sin parecerse al correo ni al nombre de las
- * cuentas de prueba (y sin la palabra "coco", que la política prohíbe).
+ * A password that meets the whole policy: 16 characters, upper case, lower
+ * case, digit and symbol, unlike the email or the name of the test accounts
+ * (and without the word "coco", which the policy forbids).
  */
 export const VALID_PASSWORD = 'Xk9$Ronda-Verde!';
-/** Otra distinta, para las pruebas de cambio de contraseña. */
+/** A different one, for the password-change tests. */
 export const NEW_PASSWORD = 'Zt4&Nube-Lejana!';
 
 /**
- * Todo correo de prueba vive bajo este dominio. `limpiar()` no lo usa —vacía la
- * base entera— pero mantenerlo hace obvio en cualquier volcado qué filas son
- * de pruebas.
+ * Every test email lives under this domain. `clean()` does not use it —it
+ * empties the whole database— but keeping it makes it obvious in any dump
+ * which rows come from tests.
  */
 const TEST_DOMAIN = 'pruebas.coco';
 
 let counter = 0;
 
-/** Correo único por llamada: evita colisiones entre pruebas del mismo archivo. */
+/** A unique email per call: avoids collisions between tests in the same file. */
 export function testEmail(prefix = 'usuario'): string {
   counter += 1;
   return `${prefix}-${process.pid}-${counter}@${TEST_DOMAIN}`;
 }
 
 /**
- * Cortafuegos: `limpiar()` vacía TODAS las tablas, así que apuntar a la base
- * equivocada sería destructivo. Se comprueba el nombre de la base antes de
- * levantar nada, no se confía en que el `.env` correcto esté cargado.
+ * Firewall: `clean()` empties EVERY table, so pointing at the wrong database
+ * would be destructive. The database name is checked before anything starts;
+ * nobody trusts that the right `.env` is loaded.
  */
 function requireTestDatabase(): void {
   for (const variable of ['DATABASE_URL', 'DIRECT_URL']) {
@@ -102,8 +101,8 @@ function requireTestDatabase(): void {
 
     if (!name.endsWith('_test')) {
       throw new Error(
-        `Las pruebas e2e vacían la base entera y ${variable} no es de pruebas: "${name}". ` +
-          'Revisa que .env.test esté cargado (test/setup-env.ts).',
+        `The e2e tests empty the whole database and ${variable} is not a test one: "${name}". ` +
+          'Check that .env.test is loaded (test/setup-env.ts).',
       );
     }
   }
@@ -117,17 +116,17 @@ export async function startApp(
 
   const constructor = Test.createTestingModule({ imports: [AppModule] });
 
-  // Supabase Auth se sustituye por un doble en memoria. Hablar con el proyecto
-  // real crearía cuentas de verdad en cada corrida —no hay proyecto de pruebas
-  // en el plan gratuito— y ataría las pruebas a la red.
+  // Supabase Auth is replaced by an in-memory double. Talking to the real
+  // project would create real accounts on every run —there is no test project
+  // on the free plan— and tie the tests to the network.
   const supabase = new SupabaseAuthFake();
   constructor.overrideProvider(SupabaseAuthService).useValue(supabase);
 
   if (!options.withRateLimiter) {
-    // Se sustituye el ALMACÉN del limitador, no el guard: `APP_GUARD` con
-    // `useClass` instancia la clase directamente y `overrideGuard` no llega a
-    // tocarla. Con un almacén que siempre reporta cero golpes, el guard corre
-    // de verdad —decoradores, resolución de la clave, todo— pero nunca frena.
+    // The limiter's STORAGE is replaced, not the guard: `APP_GUARD` with
+    // `useClass` instantiates the class directly and `overrideGuard` never
+    // reaches it. With a storage that always reports zero hits, the guard
+    // really runs —decorators, key resolution, everything— but never blocks.
     constructor.overrideProvider(ThrottlerStorage).useValue({
       increment: (): Promise<ThrottlerStorageRecord> =>
         Promise.resolve({
@@ -142,9 +141,9 @@ export async function startApp(
   const moduleRef = await constructor.compile();
 
   const app = moduleRef.createNestApplication();
-  // Exactamente la misma configuración que corre en producción: prefijo,
-  // cookies, helmet, CORS y ValidationPipe. Si esto se duplicara aquí, la
-  // prueba verificaría una app distinta a la que se despliega.
+  // Exactly the same configuration that runs in production: prefix, cookies,
+  // helmet, CORS and ValidationPipe. If it were duplicated here, the test
+  // would check an app different from the one that is deployed.
   configureApp(app, app.get(ConfigService));
   await app.init();
   // Listen ONCE, for the whole suite. Handed a server that is not listening,
@@ -152,7 +151,7 @@ export async function startApp(
   // Node's global agent keeps sockets alive, so when the OS hands back a port
   // it already used, the next request goes out on a pooled socket the old
   // server closed: `socket hang up`. That was the flaky
-  // `auth.e2e-spec.ts › una cuenta pendiente no puede entrar…`.
+  // `auth.e2e-spec.ts › a pending account cannot sign in…`.
   await app.listen(0, '127.0.0.1');
 
   const prisma = new PrismaClient({
@@ -172,16 +171,16 @@ export async function startApp(
         displayName: data.displayName ?? 'Usuario de Pruebas',
         role: data.role ?? 'user',
         status: data.status ?? 'active',
-        // Al segundo, como hace el registro real: el `iat` del token no tiene
-        // más precisión y una marca con milisegundos dejaría fuera al token
-        // que se emite justo después.
+        // To the second, as the real sign-up does: the token's `iat` has no
+        // more precision, and a timestamp with milliseconds would shut out
+        // the token issued right after.
         sessionsValidFrom: new Date(Math.floor(Date.now() / 1000) * 1000),
       },
     });
 
-    // La sesión se abre directamente contra el doble, sin pasar por
-    // POST /auth/login: la mayoría de las pruebas solo necesitan "estar
-    // dentro" y no deben gastar el cupo del limitador para lograrlo.
+    // The session is opened straight against the double, without going
+    // through POST /auth/login: most tests only need to "be in" and must not
+    // spend the limiter's quota on it.
     const session = supabase.openSession(authId, email);
 
     return {
@@ -193,33 +192,33 @@ export async function startApp(
   };
 
   /**
-   * Vacía la base de pruebas en orden de dependencias.
+   * Empties the test database in dependency order.
    *
-   * No basta con borrar los usuarios y confiar en el CASCADE: la FK
-   * `transactions.account_id` es RESTRICT a propósito —para que nadie borre una
-   * cuenta con historial— y eso bloquea la cascada. Y `audit_log.user_id` es
-   * SetNull, así que las filas de bitácora sobrevivirían al usuario.
+   * Deleting the users and trusting the CASCADE is not enough: the FK
+   * `transactions.account_id` is RESTRICT on purpose —so nobody deletes an
+   * account with history— and that blocks the cascade. And `audit_log.user_id`
+   * is SetNull, so the audit rows would outlive the user.
    */
   const clean = async (): Promise<void> => {
-    // splits y transaction_tags caen por CASCADE desde transactions.
+    // splits and transaction_tags go by CASCADE from transactions.
     await prisma.transaction.deleteMany({});
-    // import_rows cae por CASCADE desde import_batches. Los lotes van ANTES que
-    // las cuentas: `import_batches.account_id` es RESTRICT, igual que el de
-    // transactions, para que borrar una cuenta no se lleve su historial.
+    // import_rows goes by CASCADE from import_batches. The batches go BEFORE
+    // the accounts: `import_batches.account_id` is RESTRICT, like the one on
+    // transactions, so deleting an account does not take its history with it.
     await prisma.importBatch.deleteMany({});
     await prisma.categoryRule.deleteMany({});
     await prisma.tag.deleteMany({});
-    // Las hijas primero: parent_id es SetNull, pero así queda determinista.
+    // Children first: parent_id is SetNull, but this way it is deterministic.
     await prisma.category.deleteMany({ where: { parentId: { not: null } } });
     await prisma.category.deleteMany({});
     await prisma.account.deleteMany({});
     await prisma.auditLog.deleteMany({});
-    // approved_by_id apunta a users: se limpia antes para no chocar con la FK.
+    // approved_by_id points at users: cleared first so the FK does not block.
     await prisma.user.updateMany({ data: { approvedById: null } });
     await prisma.user.deleteMany({});
-    // El doble guarda sus cuentas en memoria y sobrevive entre pruebas del
-    // mismo archivo: sin esto, un correo reutilizado chocaría con una cuenta
-    // fantasma de la prueba anterior.
+    // The double keeps its accounts in memory and survives between tests of
+    // the same file: without this, a reused email would collide with a ghost
+    // account from the previous test.
     supabase.clear();
   };
 
