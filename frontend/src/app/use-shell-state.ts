@@ -7,6 +7,7 @@ import { useOnChange } from '@/shared/lib/on-change';
 
 import { useSections } from './navigation';
 import { useShortcutsSurface } from './shortcuts';
+import { readSidenavCollapsed, writeSidenavCollapsed } from './sidenav-storage';
 
 type Setter<T> = (value: T) => void;
 
@@ -39,9 +40,7 @@ export function useShellState(): ShellState {
    * should not collapse their bar, and changing it has no reason to travel
    * over the network.
    */
-  const [isCollapsed, setIsCollapsed] = useState(
-    () => localStorage.getItem('sidenav-plegada') === 'si',
-  );
+  const [isCollapsed, setIsCollapsed] = useState(readSidenavCollapsed);
 
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -73,7 +72,7 @@ export function useShellState(): ShellState {
 
   function toggleBar(): void {
     setIsCollapsed((wasCollapsed) => {
-      localStorage.setItem('sidenav-plegada', wasCollapsed ? 'no' : 'si');
+      writeSidenavCollapsed(!wasCollapsed);
       return !wasCollapsed;
     });
   }
