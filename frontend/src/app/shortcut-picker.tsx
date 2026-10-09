@@ -5,7 +5,7 @@ import { PanelRow } from '@/shared/ui/atoms/panel-row';
 
 import type { ShortcutPage } from './shortcut-types';
 
-/** La lista de páginas que aún no son una baldosa, para agregar una. */
+/** The list of pages that are not a tile yet, to add one. */
 export function ShortcutPicker({
   available,
   search,
@@ -19,10 +19,10 @@ export function ShortcutPicker({
     <ul className="flex flex-col">
       {available.map(({ route, label, Icon }) => (
         <li key={route}>
-          {/* La fila ENTERA es el control: 48 de alto y todo el ancho del
-              panel. Por eso el más de la derecha puede ser pequeño. Es la
-              misma que usan la hoja de la cuenta y la de buscar, así que la
-              clase vive en un solo sitio. */}
+          {/* The WHOLE row is the control: 48 tall and the full width of the
+              panel. That is why the plus on the right can be small. It is
+              the same one the account sheet and the search sheet use, so the
+              class lives in one place. */}
           <PanelRow onClick={() => onAdd(route)}>
             <Icon className="size-4 shrink-0 opacity-70" aria-hidden={true} />
             <span className="min-w-0 flex-1 truncate">{label}</span>

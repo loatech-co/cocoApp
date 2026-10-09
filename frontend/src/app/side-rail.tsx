@@ -7,12 +7,12 @@ import { RailToggle } from '@/shared/ui/atoms/rail-toggle';
 import { SectionLink, AccountMenu, useSections } from './navigation';
 
 /**
- * El riel del escritorio.
+ * The desktop rail.
  *
- * 14rem. Eran 13, y se quedaba estrecho: "Centros de costos" llegaba casi a
- * tocar el borde del pozo, y el riel se leía como una columna apretada al lado
- * del contenido en vez de como el marco que lo envuelve. El riel no lleva fondo
- * propio —es la página— y lo que lo delimita es el canto del pozo.
+ * 14rem. It was 13, and it was too narrow: "Centros de costos" nearly touched
+ * the well's edge, and the rail read as a column squeezed next to the content
+ * instead of the frame around it. The rail has no background of its own —it
+ * is the page— and what bounds it is the well's edge.
  */
 export function SideRail({
   isCollapsed,
@@ -39,8 +39,9 @@ export function SideRail({
 
         {admin.length > 0 && (
           <>
-            {/* Plegada, el rótulo no cabe: se queda la raya, que es lo que
-                de verdad hace falta —decir que lo de abajo es otra cosa—. */}
+            {/* Collapsed, the label does not fit: the rule stays, which is what
+                is really needed —saying that what is below is something
+                else—. */}
             {isCollapsed ? (
               <hr className="my-3 border-sidebar-border" />
             ) : (
@@ -53,9 +54,9 @@ export function SideRail({
         )}
       </nav>
 
-      {/* Al pie, no en una cabecera aparte: una franja del ancho entero de
-          la pantalla solo para decir con qué cuenta se está dentro es mucha
-          franja. Aquí abajo ocupa un sitio que ya estaba vacío. */}
+      {/* At the foot, not in a separate header: a strip the full width of
+          the screen only to say which account one is signed in with is a
+          lot of strip. Down here it takes a place that was already empty. */}
       <div className="mt-4 border-t border-sidebar-border pt-3">
         <AccountMenu isCollapsed={isCollapsed} />
       </div>
@@ -68,11 +69,11 @@ function RailHeader({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle:
     <div
       className={cn(
         'mb-8 flex items-center pt-3',
-        // Plegada, la marca se centra porque no hay nada más en la fila;
-        // desplegada va a la izquierda y el botón de plegar al otro
-        // extremo, que es donde uno lo busca.
-        // Y la fila no lleva relleno por la DERECHA: el botón de plegar
-        // se alinea solo, con su propio margen negativo. Ver abajo.
+        // Collapsed, the brand is centered because there is nothing else in the
+        // row; expanded it goes to the left and the collapse button to the
+        // other end, which is where one looks for it.
+        // And the row has no RIGHT padding: the collapse button aligns on
+        // its own, with its own negative margin. See below.
         isCollapsed ? 'justify-center px-0' : 'justify-between pl-2 pr-0',
       )}
     >
@@ -80,10 +81,10 @@ function RailHeader({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle:
         <CompactLogo className="size-7 text-sidebar-active" />
       ) : (
         <>
-          {/* Se le da ALTO: el logotipo es 3.82:1 y fijarle el ancho lo
-              dejaría demasiado bajo para leerse. Va en `sidebar-active`,
-              que es el color con el que cada tema dice "aquí": verde
-              británico sobre el riel claro, lima sobre el oscuro. */}
+          {/* It is given HEIGHT: the logo is 3.82:1 and fixing its width would
+              leave it too short to read. It uses `sidebar-active`, the
+              color with which each theme says "here": British green on the
+              light rail, lime on the dark one. */}
           <Logo className="h-7 w-auto text-sidebar-active" />
           <RailToggle isCollapsed={false} onToggle={onToggle} />
         </>

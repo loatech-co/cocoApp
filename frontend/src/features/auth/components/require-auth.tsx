@@ -10,47 +10,47 @@ import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
 
 /**
- * Sin sesión: el login, y la barra de direcciones en el índice.
+ * No session: the login, and the address bar on the index.
  *
- * ── Por qué ya no hay una ruta a la que ir ──────────────────────────────────
- * La había —`/entrar`— y el precio era que cerrar sesión dejaba esa dirección
- * puesta. Quedaba una URL interna a la vista, en la pantalla que más gente
- * distinta ve, diciendo por dónde se entra a una aplicación privada. Y no
- * aporta nada: quien cierra sesión no eligió ir a ninguna parte.
+ * ── Why there is no longer a route to go to ─────────────────────────────────
+ * There was one —`/entrar`— and the price was that signing out left that
+ * address showing. An internal URL stayed in view, on the screen the most
+ * different people see, saying where a private app is entered from. And it
+ * adds nothing: whoever signs out did not choose to go anywhere.
  *
- * Ahora el login se DIBUJA en el sitio donde se estaba pidiendo entrar, y la
- * dirección es siempre `/`. Una sola URL pública, la más corta, y nada que
- * limpiar después de salir.
+ * Now the login is DRAWN where signing in was being asked for, and the address
+ * is always `/`. A single public URL, the shortest, and nothing to clean up
+ * after signing out.
  *
- * ── Lo que se pierde, y se acepta ───────────────────────────────────────────
- * Volver después de entrar a la página que se había pedido. Se llevaba en el
- * estado de la navegación a `/entrar`, y sin esa navegación no hay dónde
- * llevarlo: al dibujarse en el sitio, el login se desmonta en el mismo render
- * en que aparece la sesión, así que nunca llega a navegar a ningún lado.
+ * ── What is lost, and accepted ──────────────────────────────────────────────
+ * Going back, after signing in, to the page that had been asked for. It was
+ * carried in the navigation state to `/entrar`, and without that navigation
+ * there is nowhere to carry it: drawn in place, the login unmounts in the same
+ * render the session appears in, so it never gets to navigate anywhere.
  *
- * A cambio, quien entra aterriza siempre en el resumen, que es de donde se
- * parte para todo lo demás.
+ * In exchange, whoever signs in always lands on the dashboard, which is where
+ * everything else starts from.
  */
 function NoSession({ isInIndex }: { isInIndex: boolean }) {
-  // Dentro de la app no existe el login web: la sesión la tiene la app y es
-  // ella quien la empuja. Nada de `LoginPage`, y nada de `Navigate`: la ruta
-  // se queda donde la app la puso, para que al llegar la sesión se pinte esa
-  // página y no el resumen.
+  // Inside the app there is no web login: the app holds the session and it
+  // is the app that pushes it. No `LoginPage`, and no `Navigate`: the route
+  // stays where the app put it, so that when the session arrives that page
+  // is drawn and not the dashboard.
   if (isInNativeApp()) return <SessionFromApp />;
 
-  // En cualquier otra ruta se vuelve al índice primero: si no, la barra de
-  // direcciones se queda en una página que ya no se está viendo —el login
-  // encima de `/administracion`—, que es exactamente lo que se venía a quitar.
+  // On any other route it goes back to the index first: otherwise the
+  // address bar stays on a page that is no longer being seen —the login on
+  // top of `/administracion`—, which is exactly what this set out to remove.
   return isInIndex ? <LoginPage /> : <Navigate to="/" replace />;
 }
 
 /**
- * La web embebida está sin sesión: se lo dice a la app y espera.
+ * The embedded web has no session: it tells the app and waits.
  *
- * Se avisa UNA vez por montaje, no en cada render: la app responde empujando
- * una sesión si la tiene, y un aviso por render sería un sondeo. Lo que la
- * app hace con el aviso es cosa suya —si no tiene sesión, muestra su propio
- * login nativo por encima—; esta pantalla solo espera.
+ * It notifies ONCE per mount, not on every render: the app answers by pushing
+ * a session if it has one, and one notice per render would be polling. What
+ * the app does with the notice is its business —if it has no session, it
+ * shows its own native login on top—; this screen only waits.
  */
 function SessionFromApp() {
   useEffect(() => {
@@ -61,11 +61,12 @@ function SessionFromApp() {
 }
 
 /**
- * Guardia de rutas del cliente.
+ * Client route guard.
  *
- * Es comodidad de navegación, NO seguridad: quien manda es el JwtAuthGuard del
- * backend, que verifica el token y consulta la base en cada petición. Aunque
- * alguien forzara la ruta, la API no le devolvería un solo dato.
+ * It is a navigation convenience, NOT security: what rules is the backend's
+ * JwtAuthGuard, which verifies the token and queries the database on every
+ * request. Even if someone forced the route, the API would not return a
+ * single piece of data.
  */
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -83,11 +84,11 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 }
 
 /**
- * Guardia de las rutas de administración.
+ * Guard for the admin routes.
  *
- * Igual que arriba: el RolesGuard del backend es el que decide de verdad. Esto
- * solo evita mostrar una pantalla que la API va a rechazar. El rol se lee del
- * perfil que devuelve el servidor, nunca de algo que el cliente pueda alterar.
+ * Same as above: the backend's RolesGuard is what really decides. This only
+ * avoids showing a screen the API is going to reject. The role is read from
+ * the profile the server returns, never from something the client can alter.
  */
 export function RequireAdmin({ children }: { children: ReactNode }) {
   const { user, isLoading, isAdmin } = useAuth();

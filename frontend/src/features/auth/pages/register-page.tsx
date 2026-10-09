@@ -14,11 +14,11 @@ import { PasswordPolicy, meetsPolicy } from '@/shared/ui/atoms/password-policy';
 import { TextLink } from '@/shared/ui/atoms/text-link';
 
 /**
- * Solicitar acceso.
+ * Request access.
  *
- * No es "crear cuenta y entrar": toda cuenta nace pendiente y necesita la
- * aprobación de un administrador. Se dice desde el principio, para que nadie
- * se registre esperando entrar de inmediato.
+ * It is not "create an account and sign in": every account is born pending
+ * and needs an admin's approval. It is said from the start, so nobody signs
+ * up expecting to get in right away.
  */
 export function RegisterPage() {
   const { user, isLoading, signUp } = useAuth();
@@ -35,17 +35,18 @@ export function RegisterPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">
-        {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
-            (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
-            BLOQUE con ancho automático, y centrar texto no lo movería. */}
+        {/* h-11 ≈ 168px wide, which is what the plate that sat behind it measured
+            (24px + logo + 24px). `mx-auto` and not `text-center`: it is a
+            BLOCK SVG with automatic width, and centering text would not move
+            it. */}
         {/*
-          El encabezado de nivel 1 de esta pantalla.
+          This screen's level-1 heading.
 
-          No se pinta porque lo que se ve ya es el logotipo, pero tiene que
-          EXISTIR: sin él, la única jerarquía de la página era el `<h2>` de la
-          tarjeta, así que quien navega con lector de pantalla saltaba de
-          encabezado en encabezado y aquí no encontraba ninguno del que
-          colgaran los demás. El logotipo es un SVG y no puede hacer ese papel.
+          It is not painted because what shows is already the logo, but it
+          has to EXIST: without it, the page's only hierarchy was the card's
+          `<h2>`, so whoever navigates with a screen reader jumped from
+          heading to heading and here found none for the rest to hang from.
+          The logo is an SVG and cannot play that role.
         */}
         <h1 className="sr-only">{t('auth.register.documentTitle')}</h1>
 
@@ -74,11 +75,12 @@ export function RegisterPage() {
 }
 
 /**
- * Confirmación deliberadamente vaga sobre si el correo ya existía.
+ * A deliberately vague confirmation about whether the email already existed.
  *
- * La API responde lo mismo en ambos casos —es lo que impide usar el registro
- * para averiguar quién tiene cuenta— y la interfaz respeta esa decisión. Para
- * alguien legítimo no cambia nada: en los dos casos espera aprobación.
+ * The API answers the same in both cases —that is what stops the sign-up
+ * being used to find out who has an account— and the UI respects that
+ * decision. For a legitimate person nothing changes: in both cases they wait
+ * for approval.
  */
 function RequestReceived({ status }: { status: 'pendiente' | 'lista' }) {
   const isReady = status === 'lista';
@@ -86,9 +88,10 @@ function RequestReceived({ status }: { status: 'pendiente' | 'lista' }) {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm text-center">
-        {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
-            (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
-            BLOQUE con ancho automático, y centrar texto no lo movería. */}
+        {/* h-11 ≈ 168px wide, which is what the plate that sat behind it measured
+            (24px + logo + 24px). `mx-auto` and not `text-center`: it is a
+            BLOCK SVG with automatic width, and centering text would not move
+            it. */}
         <h1 className="sr-only">{t('auth.register.sentDocumentTitle')}</h1>
 
         <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
@@ -187,7 +190,7 @@ function RegisterErrors({ error, problems }: { error: string | null; problems: s
   return <ErrorAlert message={error} details={problems} />;
 }
 
-/** Los campos de la solicitud, sus errores y el envío. */
+/** The request's fields, their errors and the submit. */
 function useRegisterForm(signUp: ReturnType<typeof useAuth>['signUp']) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -207,8 +210,8 @@ function useRegisterForm(signUp: ReturnType<typeof useAuth>['signUp']) {
       .then((response) => setSubmitted(response.pendingApproval ? 'pendiente' : 'lista'))
       .catch((cause: unknown) => {
         setError(authErrorMessage(cause));
-        // La API dice exactamente qué le falta a la contraseña; ocultarlo
-        // obligaría a adivinar y empujaría a elegir lo más flojo que pase.
+        // The API says exactly what the password is missing; hiding it would
+        // force guessing and push toward the weakest thing that passes.
         setProblems(errorDetails(cause));
       })
       .finally(() => setIsSending(false));

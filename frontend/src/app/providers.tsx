@@ -6,9 +6,9 @@ import { FlagsProvider } from '@/shared/api/flags';
 import { clearCacheOnUserChange, createQueryClient } from '@/shared/api/query-client';
 
 /**
- * TanStack Query gestiona el ESTADO SERVIDOR. Como en Coco todo se deriva de
- * los movimientos, invalidar la query de `transactions` refresca dashboard,
- * presupuesto y saldos de una: no hay copias que sincronizar a mano.
+ * TanStack Query handles SERVER STATE. Since in Coco everything derives from
+ * the transactions, invalidating the `transactions` query refreshes the
+ * dashboard, budget and balances at once: there are no copies to sync by hand.
  */
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(createQueryClient);

@@ -31,48 +31,48 @@ function renderShell(extra: Partial<Parameters<typeof BottomBar>[0]> = {}) {
   return { ...vista, ...handlers };
 }
 
-describe('La barra de abajo', () => {
-  it('nunca pasa de cinco huecos', () => {
+describe('The bottom bar', () => {
+  it('never goes past five slots', () => {
     const { container } = renderShell();
 
-    // Uno solo lleva a una página. Los otros cuatro levantan algo encima de
-    // la que ya está debajo, así que son botones.
+    // Only one leads to a page. The other four raise something on top of
+    // the one below, so they are buttons.
     expect(container.querySelectorAll('a')).toHaveLength(1);
     expect(container.querySelectorAll('button')).toHaveLength(4);
   });
 
-  it('cada hueco lleva su nombre, y ninguno lo escribe debajo', () => {
+  it('each slot carries its name, and none writes it underneath', () => {
     renderShell();
 
     for (const name of ['Dashboard', 'Buscar', 'Registrar un gasto', 'Atajos', 'Mi cuenta']) {
       expect(screen.getByLabelText(name)).toBeTruthy();
     }
 
-    // Cinco palabras de 12px bajo cinco dibujos son una segunda fila de texto
-    // compitiendo con la página.
+    // Five 12px words under five drawings are a second row of text
+    // competing with the page.
     expect(screen.queryByText('Dashboard')).toBeNull();
     expect(screen.queryByText('Atajos')).toBeNull();
   });
 
-  it('el armazón la reconoce', () => {
+  it('the shell recognizes it', () => {
     const { container } = renderShell();
-    // La regla de `:has()` de index.css apunta a esto.
+    // The `:has()` rule in index.css points at this.
     expect(container.querySelector('[data-armazon="barra"]')).toBeTruthy();
   });
 
-  it('el (+) registra un gasto sin pasar por ningún menú', () => {
+  it('the (+) records an expense without going through any menu', () => {
     const { onNewExpense } = renderShell();
 
     const button = screen.getByLabelText('Registrar un gasto');
     expect(button.tagName).toBe('BUTTON');
     button.click();
 
-    // Una sola llamada, no un menú que abrir: el ingreso todavía no existe, y
-    // elegir entre una opción no es elegir.
+    // A single call, not a menu to open: income does not exist yet, and
+    // choosing among one option is not choosing.
     expect(onNewExpense).toHaveBeenCalledTimes(1);
   });
 
-  it('buscar, atajos y la cuenta levantan una hoja: no navegan', () => {
+  it('search, shortcuts and the account raise a sheet: they do not navigate', () => {
     const { onSearch, onShortcuts, onAccount } = renderShell();
 
     screen.getByLabelText('Buscar').click();
@@ -84,7 +84,7 @@ describe('La barra de abajo', () => {
     expect(onAccount).toHaveBeenCalled();
   });
 
-  it('el hueco de lo que está abierto se anuncia desplegado', () => {
+  it('the slot of what is open announces itself expanded', () => {
     renderShell({ isShortcutsOpen: true });
 
     expect(screen.getByLabelText('Atajos').getAttribute('aria-expanded')).toBe('true');

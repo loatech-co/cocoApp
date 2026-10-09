@@ -10,21 +10,21 @@ import { cn } from '@/shared/lib/utils';
 import { Menu, MenuOption, MenuSeparator } from '@/shared/ui/molecules/menu';
 
 /**
- * La navegación: las secciones, la fila que las pinta y el menú de la cuenta.
+ * The navigation: the sections, the row that draws them and the account menu.
  *
- * ── Por qué en un módulo propio y no dentro del armazón ─────────────────────
- * Porque las usan TRES sitios: el riel del escritorio, el panel del teléfono y
- * la barra de abajo. Dos copias empiezan iguales y se separan —una aprende que
- * una sección depende de una preferencia y la otra no—, y entonces la misma
- * aplicación ofrece cosas distintas según por dónde se entre.
+ * ── Why in a module of its own and not inside the shell ─────────────────────
+ * Because THREE places use them: the desktop rail, the phone panel and the
+ * bottom bar. Two copies start out equal and drift apart —one learns that a
+ * section depends on a preference and the other does not—, and then the same
+ * app offers different things depending on where one comes in.
  */
 
 /**
- * Qué secciones existen para quien ha entrado.
+ * Which sections exist for whoever is signed in.
  *
- * `biblioteca` son TODAS sus hojas, en el orden del menú. De ahí salen los
- * atajos: una segunda lista de las páginas del producto se separaría de esta
- * la primera vez que se añada una pantalla, y la separación no se vería.
+ * `library` is ALL of its leaves, in menu order. The shortcuts come from it:
+ * a second list of the product's pages would drift from this one the first
+ * time a screen is added, and the drift would not be seen.
  */
 export function useSections(): {
   daily: readonly Section[];
@@ -50,7 +50,7 @@ export function SectionLink({
   to: string;
   isExact: boolean;
   isCollapsed?: boolean;
-  /** El nombre de la sección. Plegada, es lo único que queda para saberlo. */
+  /** The section's name. Collapsed, it is the only thing left to tell it by. */
   title?: string;
   children: ReactNode;
 }) {
@@ -62,53 +62,52 @@ export function SectionLink({
       aria-label={isCollapsed ? title : undefined}
       className={({ isActive }) =>
         cn(
-          // Esquinas suaves, no pastilla: en una barra estrecha la pastilla se
-          // come el ancho por los lados y el texto queda pegado al icono.
+          // Soft corners, not a pill: in a narrow bar the pill eats the width at
+          // the sides and the text ends up stuck to the icon.
           'flex items-center gap-2.5 rounded-lg py-2.5 text-sm font-medium transition-colors',
-          // En el teléfono la fila sube a 48: es la medida de una fila que se
-          // toca, por encima del suelo de 42 porque aquí sobra alto y una
-          // lista de nueve se recorre con el pulgar.
+          // On the phone the row grows to 48: the height of a row that is
+          // tapped, above the 42 floor because here there is height to spare
+          // and a list of nine is run through with the thumb.
           'movil:min-h-[48px]',
           isCollapsed ? 'justify-center px-0' : 'px-3',
-          // ── Solo lo ELEGIDO lleva fondo ─────────────────────────────────
-          // El paso del cursor no pinta ninguno. Llevaba `sidebar-hover`, que
-          // en oscuro es un verde #1e3b30, y en una columna de cuatro filas
-          // eso es un rectángulo verde saltando de una a otra con el ratón:
-          // pesa tanto como el sitio donde uno está y compite con él.
+          // ── Only the SELECTED one gets a background ─────────────────────
+          // Hovering paints none. It used `sidebar-hover`, which in dark is
+          // a #1e3b30 green, and in a four-row column that is a green
+          // rectangle jumping from one to another with the mouse: it weighs
+          // as much as the place one is at and competes with it.
           //
-          // Un fondo es para decir «aquí estás», que es un estado y dura. Un
-          // hover dura lo que el cursor tarda en pasar, y para eso basta lo
-          // más barato que hay: la letra y su icono se ACLARAN, de
-          // `sidebar-muted` a `sidebar-foreground`. No a blanco puro —#e8edeb,
-          // no #fff— porque el blanco a plena tinta sobre una columna oscura
-          // pesa más que el contenido que se ha venido a leer.
+          // A background is for saying «you are here», which is a state and
+          // lasts. A hover lasts as long as the cursor takes to pass, and for
+          // that the cheapest thing there is suffices: the text and its icon
+          // LIGHTEN, from `sidebar-muted` to `sidebar-foreground`. Not to
+          // pure white —#e8edeb, not #fff— because full-ink white on a dark
+          // column weighs more than the content one came to read.
           //
-          // El icono se aclara solo: va en `currentColor`.
+          // The icon lightens on its own: it uses `currentColor`.
           //
-          // Antes los dos compartían fondo y se distinguían por el color de la
-          // letra, así que pasar por encima de la sección en la que uno ya
-          // está no cambiaba nada, y pasar por cualquier otra parecía que se
-          // había navegado.
+          // The two used to share a background and differed by the text
+          // color, so hovering the section one was already in changed
+          // nothing, and hovering any other looked like having navigated.
           //
-          // Lo activo lleva `--sidebar-active`, que es el color con el que
-          // este tema dice "estás aquí".
+          // The active one gets `--sidebar-active`, the color with which this
+          // theme says "you are here".
           //
-          // ── Pero LAVADO, no macizo ────────────────────────────────────────
-          // Era un bloque relleno de ese color con la tinta oscura encima. Con
-          // el acento en lima eso es un rectángulo del color más fuerte de la
-          // app encendido de forma permanente, en la columna que uno mira de
-          // reojo: pesaba más que el contenido, que es lo que se ha venido a
-          // leer. Y un color que está siempre a todo volumen deja de señalar.
+          // ── But WASHED, not solid ───────────────────────────────────────
+          // It was a block filled with that color with dark ink on top. With
+          // the lime accent that is a rectangle of the app's strongest color
+          // lit permanently, in the column one looks at sideways: it weighed
+          // more than the content, which is what one came to read. And a
+          // color always at full volume stops signaling.
           //
-          // Ahora el color lo lleva la LETRA, que es lo que hay que leer, y el
-          // fondo es un lavado PLANO del mismo color.
+          // Now the TEXT carries the color, which is what has to be read,
+          // and the background is a FLAT wash of the same color.
           //
-          // Se probó con degradado y con un filo de dentro, y sobraban los
-          // dos: el degradado le da al fondo una dirección que la fila no
-          // tiene —no pasa nada de izquierda a derecha ahí— y el filo dibuja
-          // una caja alrededor de algo que no es un control, solo el sitio
-          // donde uno está. Lo que hace falta es que se distinga del resto, y
-          // para eso basta el lavado.
+          // A gradient and an inner edge were tried, and both were too much:
+          // the gradient gives the background a direction the row does not
+          // have —nothing goes left to right there— and the edge draws a box
+          // around something that is not a control, only the place one is at.
+          // What is needed is that it stands out from the rest, and the wash
+          // is enough for that.
           isActive
             ? 'bg-sidebar-active/15 font-semibold text-sidebar-active'
             : 'text-sidebar-muted hover:text-sidebar-foreground',
@@ -121,14 +120,14 @@ export function SectionLink({
 }
 
 /**
- * El menú de la cuenta.
+ * The account menu.
  *
- * ── Por qué repite lo que ya está en la navegación ──────────────────────────
- * Porque la pregunta que se contesta aquí no es "a dónde voy" sino "¿con qué
- * cuenta estoy dentro?", y de paso es el único sitio donde se sale.
+ * ── Why it repeats what is already in the navigation ────────────────────────
+ * Because the question answered here is not "where do I go" but "which
+ * account am I signed in with?", and it is also the only place to sign out.
  *
- * El correo va debajo del nombre porque dos personas pueden llamarse igual y
- * no tener el mismo correo.
+ * The email goes under the name because two people can share a name and not
+ * an email.
  */
 export function AccountMenu({ isCollapsed = false }: { isCollapsed?: boolean }) {
   return (
@@ -139,9 +138,9 @@ export function AccountMenu({ isCollapsed = false }: { isCollapsed?: boolean }) 
       direction="up"
       boxClassName="w-full"
       triggerClassName={cn(
-        // Sin fondo al pasar por encima, como las secciones: es la misma
-        // columna, y un verde apareciendo solo aquí se leería como un control
-        // de otra familia.
+        // No background on hover, like the sections: it is the same column,
+        // and a green showing up only here would read as a control from
+        // another family.
         'flex w-full min-w-0 items-center gap-2.5 rounded-lg py-2 text-left outline-none',
         'movil:min-h-[42px]',
         isCollapsed ? 'justify-center px-0' : 'px-2',
@@ -177,11 +176,11 @@ function AccountOptions({ close }: { close: () => void }) {
   const { isAdmin, isRealAdmin, isViewingAsUser, setViewAsUser, signOut } = useAuth();
   const navigate = useNavigate();
 
-  // `void` delante de `navegar` no es adorno: en react-router 7 `navigate`
-  // devuelve una promesa, y aquí se llama desde un `onClick` que no puede
-  // esperarla. El `void` dice que es a propósito —navegar es de ida sin
-  // vuelta— y es lo que distingue esto de la promesa que alguien se olvidó de
-  // atender.
+  // The `void` in front of `navigate` is not decoration: in react-router 7
+  // `navigate` returns a promise, and here it is called from an `onClick`
+  // that cannot await it. The `void` says it is on purpose —navigating is
+  // one way with no return— and it is what tells this apart from a promise
+  // someone forgot to handle.
   function goTo(route: string): void {
     close();
     void navigate(route);
@@ -211,13 +210,13 @@ function AccountOptions({ close }: { close: () => void }) {
       <MenuSeparator />
 
       {/*
-        ── Ver la aplicación como la ve quien no administra nada ────────
-        Se enseña con el rol DE VERDAD, no con el efectivo: encendida la
-        vista, `esAdmin` es falso, y con esa condición el interruptor
-        desaparecería justo cuando hace falta para apagarlo.
+        ── See the app as someone who administers nothing sees it ───────
+        It shows with the REAL role, not the effective one: with the view
+        on, `isAdmin` is false, and with that condition the switch would
+        vanish exactly when it is needed to turn it off.
 
-        Va aquí abajo, con cerrar sesión y no con las páginas: no lleva a
-        ninguna parte, cambia cómo se ve todo lo demás.
+        It goes down here, with sign out and not with the pages: it leads
+        nowhere, it changes how everything else looks.
       */}
       {isRealAdmin && (
         <MenuOption
@@ -225,9 +224,9 @@ function AccountOptions({ close }: { close: () => void }) {
           onClick={() => {
             close();
             setViewAsUser(!isViewingAsUser);
-            // Encendiéndola desde una pantalla de administración, quedarse
-            // sería quedarse mirando un «no tienes acceso». Se sale al
-            // resumen, que es de donde parte quien no administra nada.
+            // Turned on from an admin screen, staying would mean staring at a
+            // «you do not have access». It goes to the dashboard, which is
+            // where someone who administers nothing starts from.
             if (!isViewingAsUser) void navigate('/');
           }}
         >
@@ -243,12 +242,12 @@ function AccountOptions({ close }: { close: () => void }) {
 }
 
 /**
- * Avatar con las iniciales.
+ * Avatar with the initials.
  *
- * No hay fotos de perfil en el producto, así que una imagen genérica de persona
- * sería ruido: no identifica a nadie. Las iniciales sí, y de paso confirman con
- * qué cuenta se está dentro, que es la pregunta que uno se hace al ver un
- * avatar.
+ * There are no profile photos in the product, so a generic person image
+ * would be noise: it identifies nobody. Initials do, and they also confirm
+ * which account one is signed in with, which is the question one asks on
+ * seeing an avatar.
  */
 export function Avatar({ name, className }: { name: string; className?: string }) {
   const initials = name

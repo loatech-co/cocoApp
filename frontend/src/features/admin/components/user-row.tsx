@@ -24,7 +24,7 @@ import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
 import { PasswordPolicy, meetsPolicy } from '@/shared/ui/atoms/password-policy';
 
-/** La fila de una cuenta en Usuarios: quién es, en qué estado está y qué se le puede hacer. */
+/** An account's row in Users: who it is, which state it is in and what can be done to it. */
 
 export function UserRow({ user, isMe }: { user: Profile; isMe: boolean }) {
   const action = useUserAction();
@@ -83,12 +83,12 @@ export function UserRow({ user, isMe }: { user: Profile; isMe: boolean }) {
 }
 
 /**
- * Restablecimiento manual de contraseña.
+ * Manual password reset.
  *
- * Existe porque todavía no se envían correos: sin autoservicio de
- * recuperación, el administrador es el único camino de vuelta. La contraseña
- * nueva se muestra una sola vez, aquí, para que puedas comunicarla por el
- * canal que quieras — no se guarda ni se envía a ninguna parte.
+ * It exists because no emails are sent yet: without self-service recovery,
+ * the admin is the only way back. The new password is shown only once, here,
+ * so you can pass it on through whichever channel you like — it is neither
+ * stored nor sent anywhere.
  */
 function ResetPassword({ user, onDone }: { user: Profile; onDone: () => void }) {
   const [password, setPassword] = useState('');
@@ -139,7 +139,7 @@ function ResetPassword({ user, onDone }: { user: Profile; onDone: () => void }) 
 }
 
 function StatusBadge({ status }: { status: ProfileStatus }) {
-  // Icono además del color: el estado debe leerse sin distinguir colores.
+  // Icon as well as color: the state must read without telling colors apart.
   if (status === 'pending') {
     return (
       <Badge variant="warning">
@@ -202,7 +202,7 @@ interface UserStatusActionsProps {
   onChangeRole: () => void;
 }
 
-/** Aprobar, reactivar, suspender y cambiar el rol: lo que se puede hacer según el estado. */
+/** Approve, reactivate, suspend and change the role: what can be done depending on the state. */
 function UserStatusActions({ user, isMe, isBusy, onAction, onChangeRole }: UserStatusActionsProps) {
   return (
     <>
@@ -230,8 +230,8 @@ function UserStatusActions({ user, isMe, isBusy, onAction, onChangeRole }: UserS
       )}
 
       {user.status === 'active' && !isMe && (
-        // Rojo solo aquí: suspender corta el acceso al instante y expulsa
-        // a la persona aunque estuviera dentro.
+        // Red only here: suspending cuts access at once and kicks the person
+        // out even if they were signed in.
         <Button
           size="sm"
           variant="destructive"

@@ -10,7 +10,7 @@ import { useShortcutsSurface } from './shortcuts';
 
 type Setter<T> = (value: T) => void;
 
-/** Lo que el armazón tiene abierto, y cómo se abre y se cierra. */
+/** What the shell has open, and how it opens and closes. */
 export interface ShellState {
   isCollapsed: boolean;
   toggleBar: () => void;
@@ -32,11 +32,12 @@ export function useShellState(): ShellState {
   const location = useLocation();
 
   /**
-   * La barra plegada.
+   * The collapsed bar.
    *
-   * Se recuerda en `localStorage` y no en la URL ni en el servidor: es una
-   * preferencia de ESTA pantalla, de este momento. Pegarle un enlace a alguien
-   * no debería plegarle la barra, y cambiarla no tiene por qué viajar a la red.
+   * It is remembered in `localStorage` and not in the URL or on the server:
+   * it is a preference of THIS screen, of this moment. Pasting someone a link
+   * should not collapse their bar, and changing it has no reason to travel
+   * over the network.
    */
   const [isCollapsed, setIsCollapsed] = useState(
     () => localStorage.getItem('sidenav-plegada') === 'si',
@@ -47,26 +48,27 @@ export function useShellState(): ShellState {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   /**
-   * La ficha que el armazón tiene abierta.
+   * The sheet the shell has open.
    *
-   * `undefined` es cerrada, `null` es una nueva y un movimiento es ese. Es la
-   * misma convención que usa el resumen, y a propósito: abrir un gasto desde
-   * el (+) de la barra o desde un resultado de la búsqueda no puede ser otra
-   * ficha ni otro formulario que abrirlo desde la tabla.
+   * `undefined` is closed, `null` is a new one and a transaction is that one.
+   * It is the same convention the dashboard uses, on purpose: opening an
+   * expense from the bar's (+) or from a search result cannot be a different
+   * sheet or form than opening it from the table.
    */
   const [sheet, setSheet] = useState<Transaction | null | undefined>(undefined);
 
-  // Cambiar de página cierra lo que esté tapándola. Una hoja que sobrevive a
-  // su propio enlace deja a la persona mirando los atajos de una pantalla que
-  // ya no está debajo.
+  // Changing page closes whatever is covering it. A sheet that outlives its
+  // own link leaves the person looking at the shortcuts of a screen that is
+  // no longer underneath.
   useOnChange([location.pathname], () => {
     setIsShortcutsOpen(false);
     setIsSearchOpen(false);
     setIsAccountOpen(false);
   });
 
-  // Estable entre renders: es lo que el puente publica, y un `useEffect` que
-  // dependa de ella no tiene por qué volver a registrarse en cada pintado.
+  // Stable across renders: it is what the bridge publishes, and a
+  // `useEffect` that depends on it has no reason to register again on every
+  // paint.
   const [openSearch] = useState(() => () => setIsSearchOpen(true));
 
   function toggleBar(): void {
@@ -83,8 +85,8 @@ export function useShellState(): ShellState {
       label,
       Icon,
     })),
-    // Lo de fábrica es lo del día a día. Lo de administración se configura una
-    // vez y casi no se toca: está en el menú, y se añade desde ahí quien lo use.
+    // The defaults are the everyday things. Admin is set up once and hardly
+    // touched: it is in the menu, and whoever uses it adds it from there.
     defaults: daily.map((s) => s.to),
     onGo: () => setIsShortcutsOpen(false),
   });

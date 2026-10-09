@@ -13,12 +13,12 @@ import { Logo } from '@/shared/ui/atoms/logo';
 import { TextLink } from '@/shared/ui/atoms/text-link';
 
 /**
- * Entrar.
+ * Sign in.
  *
- * Sin "¿la olvidaste?": todavía no se envían correos, así que un enlace de
- * recuperación sería una promesa que la app no puede cumplir. Quien olvide su
- * contraseña la recupera pidiéndosela al administrador, que puede restablecerla
- * desde el panel. Cuando exista el envío de correo, aquí va el enlace.
+ * No "forgot it?": no emails are sent yet, so a recovery link would be a
+ * promise the app cannot keep. Whoever forgets their password gets it back by
+ * asking the admin, who can reset it from the panel. When email sending
+ * exists, the link goes here.
  */
 export function LoginPage() {
   const { user, isLoading, signIn } = useAuth();
@@ -26,13 +26,13 @@ export function LoginPage() {
   const form = useLoginForm(signIn);
 
   /*
-    Con sesión, aquí no hay nada que hacer.
+    With a session, there is nothing to do here.
 
-    En la práctica casi nunca se llega: `RequireAuth` deja de dibujar esta
-    página en el mismo render en que aparece la sesión. Se queda por el camino
-    que sí existe —la pestaña que tenía el login abierto mientras se entraba
-    desde otra—, y para que la página valga por sí sola si algún día vuelve a
-    tener ruta propia.
+    In practice it is almost never reached: `RequireAuth` stops drawing this
+    page in the same render the session appears in. It stays for the path that
+    does exist —the tab that had the login open while signing in from
+    another—, and so that the page holds up on its own if it ever gets its own
+    route again.
   */
   if (!isLoading && user) {
     return <Navigate to="/" replace />;
@@ -40,33 +40,34 @@ export function LoginPage() {
 
   return (
     <main className="min-h-dvh lg:grid lg:grid-cols-2">
-      {/* El formulario va PRIMERO en el DOM además de a la izquierda: es lo
-          que la persona viene a hacer, y quien navega con teclado o lector de
-          pantalla lo encuentra sin atravesar antes la decoración. */}
+      {/* The form goes FIRST in the DOM as well as on the left: it is what the
+          person came to do, and whoever navigates by keyboard or screen
+          reader finds it without crossing the decoration first. */}
       <section className="flex min-h-dvh items-center justify-center bg-background px-5 py-10 lg:min-h-0">
         <div className="w-full max-w-sm">
           {/*
-          El logotipo va en LIMA, sobre una placa bosque.
+          The logo goes in LIME, on a forest plate.
 
-          Lima directamente sobre el fondo claro da 1.14:1 de contraste: no es
-          poco, es invisible. Y el único tono de la familia que llega a 3:1 es
-          un oliva oscuro que ya no se lee como lima.
+          Lime straight on the light background gives 1.14:1 contrast: that
+          is not low, it is invisible. And the only tone of the family that
+          reaches 3:1 is a dark olive that no longer reads as lime.
 
-          Así que se hace lo que hace la referencia: el lima vive sobre oscuro.
-          Dentro de la placa da 10.1:1, el mismo par que en la barra lateral, y
-          la marca queda idéntica en las dos pantallas.
+          So it does what the reference does: lime lives on dark. Inside the
+          plate it gives 10.1:1, the same pair as in the sidebar, and the
+          brand looks identical on both screens.
         */}
-          {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
-            (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
-            BLOQUE con ancho automático, y centrar texto no lo movería. */}
+          {/* h-11 ≈ 168px wide, which is what the plate that sat behind it measured
+            (24px + logo + 24px). `mx-auto` and not `text-center`: it is a
+            BLOCK SVG with automatic width, and centering text would not move
+            it. */}
           {/*
-          El encabezado de nivel 1 de esta pantalla.
+          This screen's level-1 heading.
 
-          No se pinta porque lo que se ve ya es el logotipo, pero tiene que
-          EXISTIR: sin él, la única jerarquía de la página era el `<h2>` de la
-          tarjeta, así que quien navega con lector de pantalla saltaba de
-          encabezado en encabezado y aquí no encontraba ninguno del que
-          colgaran los demás. El logotipo es un SVG y no puede hacer ese papel.
+          It is not painted because what shows is already the logo, but it
+          has to EXIST: without it, the page's only hierarchy was the card's
+          `<h2>`, so whoever navigates with a screen reader jumped from
+          heading to heading and here found none for the rest to hang from.
+          The logo is an SVG and cannot play that role.
         */}
           <h1 className="sr-only">{t('auth.login.documentTitle')}</h1>
 
@@ -85,55 +86,55 @@ export function LoginPage() {
   );
 }
 
-/** La mitad de la marca, en pantalla ancha. */
+/** The brand half, on a wide screen. */
 function LoginBrand() {
   return (
     <>
       {/*
-      La mitad de marca. En móvil DESAPARECE, no se apila: un teléfono no
-      tiene alto que gastar en decoración antes del formulario, y empujar el
-      campo de correo bajo el pliegue es la forma más rápida de que alguien
-      abandone.
+      The brand half. On mobile it DISAPPEARS, it does not stack: a phone has
+      no height to spend on decoration before the form, and pushing the email
+      field below the fold is the fastest way to make someone give up.
 
-      El padding va en el CONTENEDOR y el redondeo en la imagen: así la
-      imagen respira contra el borde de la pantalla en vez de sangrar, que es
-      lo que pediste.
+      The padding goes on the CONTAINER and the rounding on the image: that
+      way the image breathes against the screen edge instead of bleeding,
+      which is what was asked for.
     */}
       <section className="hidden bg-background p-6 lg:block">
         {/*
-        El padding va en el CONTENEDOR y el redondeo en la imagen: así respira
-        contra el borde de la pantalla en vez de sangrar.
+        The padding goes on the CONTAINER and the rounding on the image: that
+        way it breathes against the screen edge instead of bleeding.
 
-        Por CSS y no con <img>: si la imagen no carga —red lenta, navegador
-        sin WebP— queda el verde de fondo y la pantalla sigue siendo usable.
-        Un <img> roto dejaría el icono de imagen partida.
+        Through CSS and not with <img>: if the image does not load —slow
+        network, a browser without WebP— the green background stays and the
+        screen is still usable. A broken <img> would leave the broken-image
+        icon.
 
-        WebP sin respaldo JPG a propósito: lo soportan todos los navegadores
-        desde 2020. El original vive en frontend/assets-source/, con cómo
-        regenerarlo.
+        WebP without a JPG fallback on purpose: every browser has supported
+        it since 2020. The original lives in frontend/assets-source/, with how
+        to regenerate it.
       */}
         <div
           className="relative size-full overflow-hidden rounded-lg bg-primary bg-cover bg-center"
           style={{ backgroundImage: 'url(/fondo-login.webp)' }}
         >
           {/*
-          Degradado en verde británico desde abajo.
+          A British-green gradient from the bottom.
 
-          No es decoración: la imagen tiene zonas de lima muy claro, y un
-          texto blanco encima de una de esas franjas desaparece. El degradado
-          garantiza que la parte baja —donde va el texto— sea siempre oscura,
-          se recorte la imagen por donde se recorte.
+          It is not decoration: the image has very light lime areas, and white
+          text over one of those strips disappears. The gradient guarantees
+          that the bottom —where the text goes— is always dark, wherever the
+          image gets cropped.
 
-          Sube hasta el 55% y no hasta arriba para no apagar la imagen entera:
-          arriba queda limpia.
+          It rises to 55% and not all the way up so as not to dim the whole
+          image: the top stays clean.
         */}
           <div className="absolute inset-x-0 bottom-0 h-11/20 bg-gradient-to-t from-primary via-primary/70 to-transparent" />
 
-          {/* `text-primary-foreground` y no blanco. El degradado de debajo es
-            `--primary`, y en oscuro ese primario es el teal CLARO del tema:
-            blanco encima daba 1.9:1 y la frase desaparecía. La tinta del
-            primario es, por definición, la que se lee sobre él —blanca en
-            claro, casi negra en oscuro— sin que haya que elegir. */}
+          {/* `text-primary-foreground` and not white. The gradient below is
+            `--primary`, and in dark that primary is the theme's LIGHT teal:
+            white on it gave 1.9:1 and the sentence disappeared. The
+            primary's ink is, by definition, the one that reads on it —white
+            in light, near black in dark— with no choice to make. */}
           <p className="absolute inset-x-0 bottom-0 p-10 text-5xl font-bold leading-portada tracking-tight text-primary-foreground xl:p-14 xl:text-6xl">
             {t('auth.login.taglineFirst')}
             <br />
@@ -198,7 +199,7 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
   );
 }
 
-/** El correo, la contraseña y el envío del formulario de entrada. */
+/** The email, the password and the submit of the sign-in form. */
 function useLoginForm(signIn: ReturnType<typeof useAuth>['signIn']) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

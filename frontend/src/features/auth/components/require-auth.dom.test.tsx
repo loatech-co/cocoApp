@@ -35,8 +35,8 @@ afterEach(() => {
   leaveNativeApp();
 });
 
-describe('Sin sesión, embebida en la app', () => {
-  it('no dibuja el formulario de entrar y avisa «sinSesion» una sola vez', () => {
+describe('No session, embedded in the app', () => {
+  it('does not draw the sign-in form and sends «sinSesion» only once', () => {
     const { cocoEventos: events } = fakeNativeApp();
     const { rerender } = renderShell('auth');
 
@@ -44,7 +44,7 @@ describe('Sin sesión, embebida en la app', () => {
     expect(screen.getByRole('status').textContent).toContain('Abriendo tu sesión desde la app…');
     expect(events.postMessage).toHaveBeenCalledWith({ tipo: 'sinSesion' });
 
-    // Un render más no es un aviso más: sería un sondeo a la app.
+    // One more render is not one more notice: it would be polling the app.
     rerender(
       <MemoryRouter initialEntries={['/']}>
         <RequireAuth>
@@ -55,16 +55,16 @@ describe('Sin sesión, embebida en la app', () => {
     expect(events.postMessage).toHaveBeenCalledTimes(1);
   });
 
-  it('en otra ruta se queda donde está, sin volver al índice', () => {
+  it('on another route it stays where it is, without going back to the index', () => {
     fakeNativeApp();
     renderShell('auth', '/centros-de-costos');
 
-    // Si la app pidió una ruta, al llegar la sesión tiene que pintarse ESA.
+    // If the app asked for a route, when the session arrives THAT one must be drawn.
     expect(screen.getByRole('status')).toBeTruthy();
     expect(screen.queryByRole('form', { name: 'Entrar' })).toBeNull();
   });
 
-  it('la guardia de administración hace lo mismo', () => {
+  it('the admin guard does the same', () => {
     const { cocoEventos: events } = fakeNativeApp();
     renderShell('admin', '/administracion');
 
@@ -73,7 +73,7 @@ describe('Sin sesión, embebida en la app', () => {
     expect(events.postMessage).toHaveBeenCalledWith({ tipo: 'sinSesion' });
   });
 
-  it('con sesión pinta la página', () => {
+  it('with a session it draws the page', () => {
     fakeNativeApp();
     auth.user = { email: 'g@coco.app' };
     renderShell('auth');
@@ -81,8 +81,8 @@ describe('Sin sesión, embebida en la app', () => {
   });
 });
 
-describe('Sin sesión, fuera de la app', () => {
-  it('sigue dibujando el login en /', () => {
+describe('No session, outside the app', () => {
+  it('keeps drawing the login at /', () => {
     leaveNativeApp();
     renderShell('auth');
     expect(screen.getByRole('form', { name: 'Entrar' })).toBeTruthy();

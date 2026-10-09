@@ -20,7 +20,7 @@ vi.mock('@/shared/api/auth-context', () => ({
 
 vi.mock('@/features/profile/api/preferences', () => ({ useHasAccounts: () => true }));
 
-/** jsdom no evalúa consultas de medios: se le dice la respuesta. */
+/** jsdom does not evaluate media queries: it is told the answer. */
 function atWidth(isMobile: boolean): void {
   window.matchMedia = ((query: string) => ({
     matches: query === MOBILE_QUERY ? isMobile : !isMobile,
@@ -31,9 +31,9 @@ function atWidth(isMobile: boolean): void {
 }
 
 /**
- * La ficha del (+) consulta las categorías nada más abrirse, así que el
- * armazón necesita un cliente. Sin red: lo que se comprueba es que la ficha
- * ESTÁ, no lo que trae dentro.
+ * The (+) sheet queries the categories as soon as it opens, so the shell
+ * needs a client. No network: what is checked is that the sheet IS there,
+ * not what it brings inside.
  */
 function renderShell() {
   const client = new QueryClient({
@@ -60,17 +60,17 @@ afterEach(() => {
   leaveNativeApp();
 });
 
-describe('El armazón por debajo del corte', () => {
+describe('The shell below the breakpoint', () => {
   beforeEach(() => atWidth(true));
 
-  it('el riel no se esconde: no está', () => {
+  it('the rail is not hidden: it is not there', () => {
     const { container } = renderShell();
-    // Escondido con CSS seguiría siendo nueve enlaces en el orden de
-    // tabulación y dos veces cada nombre en la página.
+    // Hidden with CSS it would still be nine links in the tab order and
+    // every name twice on the page.
     expect(container.querySelector('aside')).toBeNull();
   });
 
-  it('salen el techo y la barra, y el cuerpo se reserva su hueco', () => {
+  it('the top bar and the bar appear, and the body keeps its gap', () => {
     const { container } = renderShell();
 
     expect(container.querySelector('[data-armazon="techo"]')).toBeTruthy();
@@ -78,16 +78,16 @@ describe('El armazón por debajo del corte', () => {
 
     const body = container.querySelector('main')!;
     expect(body.className).toContain('movil:pb-[var(--hueco-de-la-barra)]');
-    // Recorta, no ofrece: `auto` convertiría la página entera en un
-    // desplazamiento lateral indistinguible del del documento.
+    // Clips, does not offer: `auto` would turn the whole page into a
+    // sideways scroll indistinguishable from the document's.
     expect(body.className).toContain('movil:overflow-x-clip');
   });
 
-  it('las tres hojas están montadas desde el principio, cerradas', () => {
+  it('the three sheets are mounted from the start, closed', () => {
     renderShell();
 
-    // Lo que se desliza no se puede reconstruir en cada render: aparecería en
-    // vez de llegar. Atajos, buscar y la cuenta.
+    // What slides cannot be rebuilt on every render: it would appear instead
+    // of arriving. Shortcuts, search and the account.
     const sheets = document.querySelectorAll('[data-superficie="panel"]');
     expect(sheets.length).toBeGreaterThanOrEqual(3);
     for (const sheet of sheets) {
@@ -95,19 +95,19 @@ describe('El armazón por debajo del corte', () => {
     }
   });
 
-  it('el techo lleva la marca y nada más: no hay hamburguesa', () => {
+  it('the top bar carries the brand and nothing else: there is no hamburger', () => {
     const { container } = renderShell();
     const top = container.querySelector('[data-armazon="techo"]')!;
 
-    // El menú a pantalla completa era la cuarta forma de llegar a las mismas
-    // páginas. Lo del día a día está en la barra, cualquier página en los
-    // atajos y lo de administrar en la hoja del avatar.
+    // The full-screen menu was the fourth way to reach the same pages.
+    // Everyday things are in the bar, any page in the shortcuts and admin
+    // in the avatar sheet.
     expect(top.querySelector('[aria-label="Abrir el menú"]')).toBeNull();
     expect(top.querySelector('button')).toBeNull();
     expect(top.querySelector('svg')).toBeTruthy();
   });
 
-  it('el (+) de la barra abre la ficha de un movimiento nuevo', () => {
+  it('the bar (+) opens the sheet of a new transaction', () => {
     renderShell();
 
     expect(document.querySelector('[aria-label="Nuevo movimiento"]')).toBeNull();
@@ -118,33 +118,33 @@ describe('El armazón por debajo del corte', () => {
   });
 });
 
-describe('El armazón por encima del corte', () => {
+describe('The shell above the breakpoint', () => {
   beforeEach(() => atWidth(false));
 
-  it('vuelve el riel y no hay nada del teléfono', () => {
+  it('the rail comes back and nothing of the phone is there', () => {
     const { container } = renderShell();
 
     expect(container.querySelector('aside')).toBeTruthy();
     expect(container.querySelector('[data-armazon="techo"]')).toBeNull();
     expect(document.querySelector('[data-armazon="barra"]')).toBeNull();
-    // Y ninguna hoja: en el escritorio el riel lleva lo que ellas llevan.
+    // And no sheet: on desktop the rail carries what they carry.
     expect(document.querySelector('[data-superficie="panel"]')).toBeNull();
   });
 });
 
-describe('El armazón embebido en la app', () => {
-  // La app corre en un teléfono casi siempre, pero el modo embebido no
-  // depende del ancho: en una tableta tampoco hay riel.
+describe('The shell embedded in the app', () => {
+  // The app runs on a phone almost always, but embedded mode does not
+  // depend on the width: on a tablet there is no rail either.
   beforeEach(() => {
     atWidth(true);
     fakeNativeApp();
   });
 
-  it('no monta el techo, ni la barra, ni la hoja de atajos ni la de la cuenta', () => {
+  it('mounts no top bar, no bar, no shortcuts sheet and no account sheet', () => {
     const { container } = renderShell();
 
-    // La barra nativa y la pestaña «Más» hacen ese papel. No se esconden con
-    // CSS: una barra fija escondida sigue ocupando el orden de tabulación.
+    // The native bar and the «Más» tab play that role. They are not hidden
+    // with CSS: a hidden fixed bar still takes its place in the tab order.
     expect(container.querySelector('[data-armazon="techo"]')).toBeNull();
     expect(document.querySelector('[data-armazon="barra"]')).toBeNull();
     expect(document.querySelector('[aria-label="Registrar un gasto"]')).toBeNull();
@@ -152,11 +152,11 @@ describe('El armazón embebido en la app', () => {
     expect(container.querySelector('aside')).toBeNull();
   });
 
-  it('sí monta la búsqueda, y window.__coco.abrirBusqueda() la abre', () => {
+  it('it does mount the search, and window.__coco.abrirBusqueda() opens it', () => {
     renderShell();
 
     const sheets = document.querySelectorAll('[data-superficie="panel"]');
-    // Solo una: la búsqueda. Atajos y cuenta no están.
+    // Only one: the search. Shortcuts and account are not there.
     expect(sheets.length).toBe(1);
     expect(sheets[0]!.getAttribute('data-abierta')).toBe('no');
 
@@ -164,7 +164,7 @@ describe('El armazón embebido en la app', () => {
     expect(sheets[0]!.getAttribute('data-abierta')).toBe('si');
   });
 
-  it('window.__coco.ir() cambia la página sin recargar', () => {
+  it('window.__coco.ir() changes the page without reloading', () => {
     const { container } = renderShell();
     expect(container.textContent).toContain('la página');
 
@@ -174,7 +174,7 @@ describe('El armazón embebido en la app', () => {
     expect(container.textContent).not.toContain('la página');
   });
 
-  it('en una tableta tampoco hay riel', () => {
+  it('on a tablet there is no rail either', () => {
     atWidth(false);
     const { container } = renderShell();
     expect(container.querySelector('aside')).toBeNull();
@@ -182,10 +182,10 @@ describe('El armazón embebido en la app', () => {
   });
 });
 
-describe('Fuera de la app no se instala el puente', () => {
+describe('Outside the app the bridge is not installed', () => {
   beforeEach(() => atWidth(true));
 
-  it('window.__coco no existe', () => {
+  it('window.__coco does not exist', () => {
     renderShell();
     expect(window.__coco).toBeUndefined();
   });

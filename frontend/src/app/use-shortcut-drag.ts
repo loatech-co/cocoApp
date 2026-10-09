@@ -6,14 +6,14 @@ import type { Mode } from './shortcut-types';
 
 interface Drag {
   index: number;
-  /** Desde dónde se mide el desplazamiento actual. Se reancla en cada salto. */
+  /** Where the current offset is measured from. Re-anchored on every jump. */
   x: number;
   y: number;
   dx: number;
   dy: number;
 }
 
-/** Sobre qué baldosa está el dedo, midiendo la rejilla de verdad. */
+/** Which tile the finger is over, measuring the real grid. */
 function indexUnder(grid: HTMLDivElement | null, x: number, y: number): number | null {
   const cells = grid?.querySelectorAll('[data-baldosa]');
   if (!cells) return null;
@@ -27,7 +27,7 @@ function indexUnder(grid: HTMLDivElement | null, x: number, y: number): number |
   return null;
 }
 
-/** Arrastrar una baldosa sobre otra mientras se arregla la rejilla. */
+/** Dragging one tile over another while the grid is being arranged. */
 export function useShortcutDrag(mode: Mode) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const grid = useRef<HTMLDivElement>(null);
@@ -35,7 +35,7 @@ export function useShortcutDrag(mode: Mode) {
   function handleDown(e: ReactPointerEvent<HTMLElement>, index: number): void {
     if (mode !== 'arreglando') return;
     e.preventDefault();
-    // jsdom no lo trae, aunque el tipo diga que todo elemento lo tiene.
+    // jsdom does not ship it, even though the type says every element has it.
     if ('setPointerCapture' in e.currentTarget) e.currentTarget.setPointerCapture(e.pointerId);
     setDrag({ index, x: e.clientX, y: e.clientY, dx: 0, dy: 0 });
   }
@@ -45,11 +45,11 @@ export function useShortcutDrag(mode: Mode) {
 
     const target = indexUnder(grid.current, e.clientX, e.clientY);
     if (target !== null && target !== drag.index) {
-      // Se escribe en el almacén y el render vuelve a dibujar desde él. El DOM
-      // nunca es el registro.
+      // It is written to the store and the render draws again from it. The DOM
+      // is never the record.
       moveShortcut(drag.index, target);
-      // Reanclado en el dedo: la baldosa acaba de saltar de hueco, así que su
-      // desplazamiento vuelve a cero y se queda justo debajo.
+      // Re-anchored on the finger: the tile just jumped slots, so its offset
+      // goes back to zero and it stays right underneath.
       setDrag({ index: target, x: e.clientX, y: e.clientY, dx: 0, dy: 0 });
       return;
     }

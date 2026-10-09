@@ -1,11 +1,11 @@
 import type { ComponentType } from 'react';
 
-/** Una página que puede ser un atajo: una hoja de la navegación, tal cual. */
+/** A page that can be a shortcut: a navigation leaf, as is. */
 export interface ShortcutPage {
   route: string;
   label: string;
   Icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
 }
 
-/** Galería, arreglo y elección de página: el único modo de edición y su paso. */
+/** Gallery, arranging and picking a page: the only editing mode and its step. */
 export type Mode = 'galeria' | 'arreglando' | 'eligiendo';

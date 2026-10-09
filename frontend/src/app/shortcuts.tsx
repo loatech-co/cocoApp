@@ -17,43 +17,42 @@ export type { ShortcutPage as PaginaDeAtajo } from './shortcut-types';
 
 interface ShortcutsOptions {
   isOpen: boolean;
-  /** Las hojas de la navegación, tal cual, en su orden. */
+  /** The navigation leaves, as they are, in their order. */
   library: readonly ShortcutPage[];
-  /** Lo que hay antes de que nadie toque nada. */
+  /** What there is before anyone touches anything. */
   defaults: readonly string[];
-  /** Se ha elegido una baldosa: el anfitrión cierra el panel. */
+  /** A tile was picked: the host closes the panel. */
   onGo: () => void;
 }
 
 /**
- * Los atajos.
+ * The shortcuts.
  *
- * ── Qué es esto y qué no ────────────────────────────────────────────────────
- * Es el único sitio de la barra que no está ya en otra parte: el resto de sus
- * huecos son secciones que también viven en el menú. Esto responde a "qué hago
- * ahora" en vez de a "a dónde puedo ir".
+ * ── What this is and what it is not ─────────────────────────────────────────
+ * It is the only slot in the bar that is not somewhere else already: the rest
+ * of its slots are sections that also live in the menu. This answers "what do
+ * I do now" instead of "where can I go".
  *
- * La superficie NO TIENE NOMBRE en los textos. Lo que uno tiene son ATAJOS,
- * enseñados como BALDOSAS. "Panel", "hoja" o "deslizable" describen la
- * mecánica y se quedan en los comentarios.
+ * The surface HAS NO NAME in the copy. What one has are SHORTCUTS, shown as
+ * TILES. "Panel", "sheet" or "drawer" describe the mechanics and stay in the
+ * comments.
  *
- * ── La biblioteca son las hojas de la navegación ────────────────────────────
- * Las mismas, leídas al dibujar. Una segunda lista de las páginas del producto
- * se separaría de la navegación la primera vez que se añada una pantalla, y la
- * separación no se vería.
+ * ── The library is the navigation leaves ────────────────────────────────────
+ * The same ones, read when drawing. A second list of the product's pages
+ * would drift from the navigation the first time a screen is added, and the
+ * drift would not be seen.
  *
- * ── Personalizar es QUÉ páginas y EN QUÉ ORDEN ──────────────────────────────
- * Un solo modo de edición, dos puertas de entrada y una sola salida:
+ * ── Customizing is WHICH pages and IN WHICH ORDER ───────────────────────────
+ * One editing mode, two ways in and one way out:
  *
- *   entrar    la pastilla «Editar», o mantener pulsada una baldosa — "quiero
- *             cambiar esto" es una sola intención por muchas formas que tenga
- *             de decirse
- *   dentro    las baldosas tiemblan, se arrastran unas sobre otras, cada una
- *             saca un menos, y aparece un hueco de «Añadir atajo»
- *   salir     la pastilla «Listo», desde cualquiera de las dos pantallas
+ *   enter     the «Editar» pill, or holding a tile — "I want to change this"
+ *             is one intent however many ways it has of being said
+ *   inside    the tiles wiggle, drag over each other, each one shows a minus,
+ *             and an «Añadir atajo» slot appears
+ *   exit      the «Listo» pill, from either of the two screens
  *
- * Elegir página es un paso DENTRO del arreglo: el galón vuelve a él y «Listo»
- * sale de la edición entera.
+ * Picking a page is a step INSIDE arranging: the chevron goes back to it and
+ * «Listo» leaves editing altogether.
  */
 export function useShortcutsSurface({ isOpen, library, defaults, onGo }: ShortcutsOptions): {
   header: ReactNode;
@@ -64,8 +63,8 @@ export function useShortcutsSurface({ isOpen, library, defaults, onGo }: Shortcu
   const [search, setSearch] = useState('');
   const drag = useShortcutDrag(mode);
 
-  // Los tres estados son efímeros, como el almacén: una pantalla que se reabre
-  // en mitad de una edición es una pantalla que se reabre mal.
+  // The three states are ephemeral, like the store: a screen that reopens in
+  // the middle of an edit is a screen that reopens wrong.
   useOnChange([isOpen], () => {
     if (!isOpen) {
       setMode('galeria');
@@ -74,8 +73,8 @@ export function useShortcutsSurface({ isOpen, library, defaults, onGo }: Shortcu
     }
   });
 
-  // Una ruta guardada cuya página ya no existe se cae aquí, al dibujar: quien
-  // sabe qué páginas hay es quien pinta, no el almacén.
+  // A saved route whose page no longer exists drops out here, when drawing:
+  // who knows which pages exist is whoever draws, not the store.
   const tiles = routes
     .map((route) => library.find((p) => p.route === route))
     .filter((p): p is ShortcutPage => p !== undefined);
@@ -101,8 +100,8 @@ export function useShortcutsSurface({ isOpen, library, defaults, onGo }: Shortcu
 const normal = (t: string): string => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /**
- * Solo lo que NO es ya una baldosa: una fila para una página que ya se tiene
- * solo podría significar "quitar", y quitar es para lo que está el menos.
+ * Only what is NOT a tile already: a row for a page one already has could
+ * only mean "remove", and removing is what the minus is for.
  */
 function availableFor(
   library: readonly ShortcutPage[],
@@ -116,8 +115,8 @@ function availableFor(
 
 function add(route: string): void {
   if (!addShortcut(route)) {
-    // La respuesta llega cuando se hace la pregunta: ni un contador
-    // permanente ni un control apagado, que no contesta nada al pulsarlo.
+    // The answer comes when the question is asked: no permanent counter and no
+    // disabled control, which answers nothing when pressed.
     showToast(t('shell.shortcuts.fullTitle'), {
       detail: t('shell.shortcuts.fullDetail', { max: MAX_SHORTCUTS }),
       tone: 'warning',
@@ -166,8 +165,8 @@ function ShortcutsHeader({
         )}
       </div>
 
-      {/* La cabeza se pasa del suelo de 78 solo porque su CONTENIDO es más
-          alto, que es la única razón por la que debería pasarse. */}
+      {/* The header goes past the 78 floor only because its CONTENT is taller,
+          which is the only reason it should. */}
       {mode === 'eligiendo' && <FindPage search={search} setSearch={setSearch} />}
     </div>
   );

@@ -18,18 +18,18 @@ import { PasswordPolicy, meetsPolicy } from '@/shared/ui/atoms/password-policy';
 import { LinkRow } from '@/shared/ui/molecules/link-row';
 
 /**
- * Mi cuenta: cambiar contraseña y cerrar sesión en todas partes.
+ * My account: change the password and sign out everywhere.
  *
- * Las dos acciones que tiene que poder hacer alguien que sospecha que su cuenta
- * está comprometida, sin depender de nadie.
+ * The two actions someone who suspects their account is compromised must be
+ * able to take, without depending on anyone.
  */
 export function AccountPage() {
   const { user, isAdmin } = useAuth();
   /*
-    Dentro de la app del teléfono esta página es la pestaña «Más», y hace lo
-    que fuera hace la hoja del avatar —que allí no se monta—: llevar a la
-    administración y cerrar sesión en ESTE dispositivo. Fuera de la app nada
-    de eso aparece, porque ya está en la hoja o en el menú del riel.
+    Inside the phone app this page is the «Más» tab, and it does what the
+    avatar sheet does outside —which is not mounted there—: lead to the admin
+    and sign out on THIS device. Outside the app none of that shows, because
+    it is already in the sheet or in the rail menu.
   */
   const isEmbedded = useIsInNativeApp();
 
@@ -46,18 +46,18 @@ export function AccountPage() {
         </Badge>
       )}
 
-      {/* El margen de desplazamiento es el alto del techo del teléfono más un
-          poco: sin él, la sección a la que se acaba de llegar queda justo
-          DEBAJO de la franja de la marca, que está pegada arriba. */}
+      {/* The scroll margin is the phone top bar's height plus a little: without
+          it, the section just reached sits right UNDER the brand strip, which
+          is stuck on top. */}
       <section id="ajustes" className="scroll-mt-20">
         <Settings />
       </section>
 
       {isEmbedded && isAdmin && <AdminLinks />}
 
-      {/* Las dos cosas que hace alguien que sospecha que su cuenta está
-          comprometida, juntas y con un nombre: cambiar la contraseña y echar
-          a todo el mundo. Separadas no había a dónde apuntar desde fuera. */}
+      {/* The two things someone who suspects their account is compromised does,
+          together and with a name: change the password and kick everyone
+          out. Apart, there was nowhere to point to from outside. */}
       <section id="seguridad" className="flex scroll-mt-20 flex-col gap-6">
         <ChangePassword />
 
@@ -142,7 +142,7 @@ function PasswordErrors({ error, problems }: { error: string; problems: string[]
   );
 }
 
-/** Las dos contraseñas, sus errores y el envío del cambio. */
+/** The two passwords, their errors and the submit of the change. */
 function usePasswordChange() {
   const { changePassword } = useAuth();
 
@@ -181,7 +181,7 @@ function usePasswordChange() {
   };
 }
 
-/** Cerrar sesión: aquí, dentro de la app, y en todos los dispositivos. */
+/** Signing out: here, inside the app, and on every device. */
 function SessionCards({ isEmbedded }: { isEmbedded: boolean }) {
   const { signOut, signOutEverywhere } = useAuth();
   return (
@@ -224,9 +224,9 @@ function AdminLinks() {
         <CardTitle>{t('shell.rail.admin')}</CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Las mismas secciones, en el mismo orden, que el riel y la hoja
-            del avatar: una segunda lista se separaría de esta la primera
-            vez que se añada una pantalla. */}
+        {/* The same sections, in the same order, as the rail and the avatar
+            sheet: a second list would drift from this one the first time a
+            screen is added. */}
         <nav aria-label={t('shell.rail.admin')} className="-mx-3 flex flex-col">
           {ADMIN_SECTIONS.map((section) => (
             <LinkRow key={section.to} Icon={section.Icon} to={section.to}>
@@ -242,14 +242,14 @@ function AdminLinks() {
 function useScrollToHash(): void {
   const { hash } = useLocation();
   /*
-    ── Las anclas ────────────────────────────────────────────────────────────
-    La hoja de la cuenta del teléfono ofrece «Ajustes» y «Seguridad» como dos
-    entradas distintas, y las dos llevan aquí: son dos TROZOS de esta página,
-    no dos pantallas. Partirla en tres dejaría tres pantallas de una tarjeta.
+    ── The anchors ───────────────────────────────────────────────────────────
+    The phone's account sheet offers «Ajustes» and «Seguridad» as two
+    different entries, and both lead here: they are two PARTS of this page,
+    not two screens. Splitting it in three would leave three one-card screens.
 
-    Y hace falta llevar la vista al sitio a mano porque el enrutador no lo
-    hace: cambia la ruta sin tocar el desplazamiento, así que «Seguridad»
-    dejaba a la persona arriba del todo mirando los ajustes.
+    And the view has to be taken to the spot by hand because the router does
+    not: it changes the route without touching the scroll, so «Seguridad»
+    left the person at the very top looking at the settings.
   */
   useEffect(() => {
     if (!hash) return;

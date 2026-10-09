@@ -24,7 +24,7 @@ const LIBRARY: PaginaDeAtajo[] = [
   { route: '/mi-cuenta', label: 'Mi cuenta', Icon: UserCog },
 ];
 
-/** Doce páginas, para poder llegar al tope de nueve. */
+/** Twelve pages, to be able to reach the cap of nine. */
 const LONG_LIBRARY: PaginaDeAtajo[] = Array.from({ length: 12 }, (_, i) => ({
   route: `/p${i}`,
   label: `Página ${i}`,
@@ -57,18 +57,18 @@ function Surface({
   );
 }
 
-describe('Los atajos', () => {
-  it('empiezan en lo de fábrica, y son enlaces de verdad', () => {
+describe('The shortcuts', () => {
+  it('start with the defaults, and are real links', () => {
     render(<Surface />);
 
     const summary = screen.getByText('Resumen').closest('a');
     expect(summary?.getAttribute('href')).toBe('/');
     expect(screen.getByText('Bitácora').closest('a')).toBeTruthy();
-    // Lo que no es baldosa no se pinta.
+    // What is not a tile is not drawn.
     expect(screen.queryByText('Usuarios')).toBeNull();
   });
 
-  it('«Editar» saca los menos y el hueco de agregar', () => {
+  it('«Editar» brings out the minuses and the add slot', () => {
     render(<Surface />);
     expect(screen.queryByLabelText('Quitar Resumen')).toBeNull();
 
@@ -76,22 +76,22 @@ describe('Los atajos', () => {
 
     expect(screen.getByLabelText('Quitar Resumen')).toBeTruthy();
     expect(screen.getByText('Agregar atajo')).toBeTruthy();
-    // Y la salida está donde estaba la entrada.
+    // And the exit is where the entrance was.
     expect(screen.getByText('Listo')).toBeTruthy();
   });
 
-  it('mantener pulsada una baldosa entra a lo mismo', () => {
+  it('holding a tile enters the same mode', () => {
     vi.useFakeTimers();
     try {
       render(<Surface />);
       const tile = screen.getByText('Resumen').closest('a')!;
 
       fireEvent.pointerDown(tile);
-      // El reloj corre fuera de React: sin `act` el cambio de estado no llega
-      // al DOM y la prueba mira una pantalla vieja.
-      // Las llaves importan: sin ellas la flecha DEVUELVE lo que da
-      // `advanceTimersByTime`, `act` lo toma por un thenable y pasa a
-      // devolver una promesa que nadie espera.
+      // The clock runs outside React: without `act` the state change does not
+      // reach the DOM and the test looks at a stale screen.
+      // The braces matter: without them the arrow RETURNS what
+      // `advanceTimersByTime` gives, `act` takes it for a thenable and starts
+      // returning a promise nobody awaits.
       act(() => {
         vi.advanceTimersByTime(600);
       });
@@ -102,7 +102,7 @@ describe('Los atajos', () => {
     }
   });
 
-  it('quitar escribe en el almacén, y el dibujo sale de ahí', () => {
+  it('removing writes to the store, and the drawing comes from there', () => {
     render(<Surface />);
     fireEvent.click(screen.getByText('Editar'));
 
@@ -112,19 +112,19 @@ describe('Los atajos', () => {
     expect(screen.getByText('Bitácora')).toBeTruthy();
   });
 
-  it('la lista de páginas enseña solo lo que NO se tiene', () => {
+  it('the list of pages shows only what one does NOT have', () => {
     render(<Surface />);
     fireEvent.click(screen.getByText('Editar'));
     fireEvent.click(screen.getByText('Agregar atajo'));
 
-    // Una fila para una página que ya se tiene solo podría significar
-    // "quitar", y quitar es para lo que está el menos.
+    // A row for a page one already has could only mean "remove", and
+    // removing is what the minus is for.
     expect(screen.queryByText('Bitácora')).toBeNull();
     expect(screen.getByText('Usuarios')).toBeTruthy();
     expect(screen.getByText('Centros de costos')).toBeTruthy();
   });
 
-  it('el buscador filtra sin acentos', () => {
+  it('the search box filters ignoring accents', () => {
     render(<Surface />);
     fireEvent.click(screen.getByText('Editar'));
     fireEvent.click(screen.getByText('Agregar atajo'));
@@ -136,21 +136,21 @@ describe('Los atajos', () => {
     expect(screen.getByText('Cuentas')).toBeTruthy();
   });
 
-  it('elegir una página la añade y la saca de la lista', () => {
+  it('picking a page adds it and takes it off the list', () => {
     render(<Surface />);
     fireEvent.click(screen.getByText('Editar'));
     fireEvent.click(screen.getByText('Agregar atajo'));
 
     fireEvent.click(screen.getByText('Usuarios'));
 
-    // La fila desaparece porque el almacén cambió y el render vuelve a leerlo.
+    // The row disappears because the store changed and the render reads it again.
     expect(screen.queryByRole('button', { name: 'Usuarios' })).toBeNull();
 
     fireEvent.click(screen.getByLabelText('Volver a los atajos'));
     expect(screen.getByText('Usuarios')).toBeTruthy();
   });
 
-  it('sin nada por agregar, la lista lo dice', () => {
+  it('with nothing left to add, the list says so', () => {
     render(<Surface defaults={LIBRARY.map((p) => p.route)} />);
     fireEvent.click(screen.getByText('Editar'));
     fireEvent.click(screen.getByText('Agregar atajo'));
@@ -158,7 +158,7 @@ describe('Los atajos', () => {
     expect(screen.getByText('No queda ninguna página por agregar.')).toBeTruthy();
   });
 
-  it('el décimo se contesta con un aviso, uno solo por muchas veces que se pida', () => {
+  it('the tenth is answered with a notice, only one however many times it is asked', () => {
     render(
       <Surface library={LONG_LIBRARY} defaults={LONG_LIBRARY.slice(0, 9).map((p) => p.route)} />,
     );
@@ -169,20 +169,21 @@ describe('Los atajos', () => {
     fireEvent.click(screen.getByText('Página 10'));
     fireEvent.click(screen.getByText('Página 9'));
 
-    // La respuesta llega cuando se hace la pregunta, y es UNA tarjeta por
-    // mucho que se insista: ni un contador permanente ni un botón apagado.
+    // The answer comes when the question is asked, and it is ONE card however
+    // much one insists: no permanent counter and no disabled button.
     //
-    // Se comprueban el titular Y el detalle: el aviso pasó de una línea a
-    // dos, y con solo el titular la prueba seguiría en verde aunque el
-    // detalle —que es el que dice cuántos caben y qué hacer— desapareciera.
+    // Both the headline AND the detail are checked: the notice went from one
+    // line to two, and with only the headline the test would stay green even
+    // if the detail —the one that says how many fit and what to do—
+    // disappeared.
     expect(screen.getAllByText('No caben más atajos')).toHaveLength(1);
     expect(screen.getAllByText('El máximo son 9. Quita uno para agregar otro.')).toHaveLength(1);
-    // Y no entró ninguno.
+    // And none went in.
     expect(screen.getByText('Página 9')).toBeTruthy();
     expect(screen.getByText('Página 10')).toBeTruthy();
   });
 
-  it('cerrar olvida en qué estado quedó', () => {
+  it('closing forgets the state it was left in', () => {
     const { rerender } = render(<Surface />);
     fireEvent.click(screen.getByText('Editar'));
     expect(screen.getByText('Listo')).toBeTruthy();
@@ -190,7 +191,7 @@ describe('Los atajos', () => {
     rerender(<Surface isOpen={false} />);
     rerender(<Surface isOpen={true} />);
 
-    // Una pantalla que se reabre en mitad de una edición se reabre mal.
+    // A screen that reopens in the middle of an edit reopens wrong.
     expect(screen.getByText('Editar')).toBeTruthy();
   });
 });

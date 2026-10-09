@@ -18,11 +18,11 @@ import type {
 } from '@/shared/api/generated/model';
 
 /**
- * Consultas del panel de administración.
+ * Admin panel queries.
  *
- * Separadas de `lib/queries.ts` a propósito: son de otro dominio y solo las
- * usa un rol. Mezclarlas obligaría a cargar el código de administración en el
- * paquete de cualquiera.
+ * Kept apart from `lib/queries.ts` on purpose: they belong to another domain
+ * and only one role uses them. Mixing them would load the admin code into
+ * everyone's bundle.
  */
 
 const adminKeys = {
@@ -51,9 +51,9 @@ export function useAuditLog(page = 1): UseQueryResult<{
 }
 
 /**
- * Cualquier acción sobre un usuario invalida las listas Y la bitácora: la
- * acción acaba de generar un evento, y verlo aparecer es parte de confiar en
- * que quedó registrada.
+ * Any action on a user invalidates the lists AND the audit log: the action
+ * just produced an event, and seeing it show up is part of trusting it was
+ * recorded.
  */
 function useInvalidateAdmin() {
   const queryClient = useQueryClient();

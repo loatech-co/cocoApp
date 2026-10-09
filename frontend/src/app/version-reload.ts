@@ -11,7 +11,7 @@
  * the network is down— reloading does not fix it, and an unguarded handler
  * would reload forever. So the time of the last reload goes to
  * `sessionStorage`, which survives the reload, and a second failure within
- * `VENTANA_MS` is left alone: it reaches the router and its error screen,
+ * `WINDOW_MS` is left alone: it reaches the router and its error screen,
  * which offers the reload as a button instead.
  *
  * Without `sessionStorage` (blocked, private mode) there is no way to tell the

@@ -7,20 +7,21 @@ import {
 } from '@/shared/api/generated/preferences-v2/preferences-v2';
 
 /**
- * Preferencias del usuario.
+ * User preferences.
  *
- * Hoy solo hay una, y es la que decide la forma de media aplicación: si esta
- * persona lleva cuentas. Apagada —lo normal— la navegación no muestra Cuentas,
- * la captura rápida no la pide, y los saldos simplemente no aparecen.
+ * Today there is only one, and it decides the shape of half the app: whether
+ * this person keeps accounts. Off —the usual— the navigation does not show
+ * Accounts, quick capture does not ask for one, and balances simply do not
+ * appear.
  */
 export type UserPreferences = Preferences;
 
 /**
- * Lo que se asume mientras el servidor responde.
+ * What is assumed while the server answers.
  *
- * Tiene que coincidir con `PREFERENCIAS_POR_DEFECTO` de la API. Y el valor
- * importa: si aquí se asumiera `true`, durante el primer parpadeo se vería un
- * menú de Cuentas que después desaparece.
+ * It has to match the API's default preferences. And the value matters: if
+ * `true` were assumed here, an Accounts menu would show during the first
+ * flicker and then disappear.
  */
 const DEFAULTS: UserPreferences = { accountsEnabled: false };
 
@@ -30,17 +31,17 @@ export function usePreferences(): UseQueryResult<UserPreferences> {
   return useQuery({
     queryKey: preferencesKey,
     queryFn: async () => (await preferencesGet()).data,
-    // Cambian poquísimo y las consulta media aplicación: no tiene sentido
-    // volver a pedirlas en cada montaje.
+    // They change very rarely and half the app reads them: there is no point
+    // asking for them again on every mount.
     staleTime: 5 * 60_000,
   });
 }
 
 /**
- * Atajo para la pregunta que se hace en varios sitios.
+ * Shortcut for the question asked in several places.
  *
- * Devuelve el valor por defecto mientras carga, en vez de `undefined`: así
- * ningún componente tiene que manejar un tercer estado solo para esto.
+ * It returns the default while loading, instead of `undefined`: that way no
+ * component has to handle a third state just for this.
  */
 export function useHasAccounts(): boolean {
   return usePreferences().data?.accountsEnabled ?? DEFAULTS.accountsEnabled;
@@ -52,9 +53,9 @@ export function useUpdatePreferences() {
   return useMutation({
     mutationFn: async (changes: UpdatePreferencesInput) => (await preferencesUpdate(changes)).data,
     onSuccess: (preferences) => {
-      // Se escribe la respuesta directamente en la caché en vez de invalidar:
-      // apagar el interruptor tiene que reordenar la navegación al instante,
-      // sin un viaje de red de por medio.
+      // The answer is written straight into the cache instead of invalidating:
+      // turning the switch off has to reorder the navigation at once, without
+      // a network round trip in between.
       queryClient.setQueryData(preferencesKey, preferences);
     },
   });

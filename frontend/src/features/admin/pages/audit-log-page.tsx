@@ -34,7 +34,7 @@ type AuditAction =
 
 const isKnown = (action: string): action is AuditAction => Object.hasOwn(LABELS, action);
 
-/** Cada acción auditada, en español y sin jerga. */
+/** Every audited action, in Spanish and without jargon. */
 const LABELS: Record<AuditAction, string> = {
   'auth.register': t('admin.auditLog.actions.register'),
   'auth.login': t('admin.auditLog.actions.login'),
@@ -51,15 +51,16 @@ const LABELS: Record<AuditAction, string> = {
   'admin.role_changed': t('admin.auditLog.actions.roleChanged'),
 };
 
-/** Las que merecen destacarse a simple vista. */
+/** The ones worth highlighting at a glance. */
 const WORRYING = new Set<AuditAction>(['auth.login_failed', 'auth.token_reuse_detected']);
 
 /**
- * Bitácora de seguridad.
+ * Security audit log.
  *
- * Qué NO aparece aquí, a propósito: contraseñas, tokens, montos ni
- * descripciones de movimientos. La bitácora responde "quién hizo qué y cuándo",
- * no "cuánto dinero". Si guardara lo segundo, filtrarla sería mucho más caro.
+ * What does NOT show here, on purpose: passwords, tokens, amounts or
+ * transaction descriptions. The audit log answers "who did what and when",
+ * not "how much money". If it stored the latter, leaking it would cost far
+ * more.
  */
 export function AuditLogPage() {
   const [page, setPage] = useState(1);
@@ -119,7 +120,7 @@ function AuditEvent({ event }: { event: AuditEntry }) {
         <CardContent className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">
           <div className="min-w-0">
             <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
-              {/* Una API más nueva puede traer una acción que esta lista aún no conoce. */}
+              {/* A newer API may bring an action this list does not know yet. */}
               {isKnown(event.action) ? LABELS[event.action] : event.action}
               {isWorrying && (
                 <Badge variant="warning" className="font-normal">

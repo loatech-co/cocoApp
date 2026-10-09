@@ -11,29 +11,29 @@ import { LinkRow } from '@/shared/ui/molecules/link-row';
 import { Avatar } from './navigation';
 
 /**
- * La hoja del avatar.
+ * The avatar sheet.
  *
- * ── Qué contesta ────────────────────────────────────────────────────────────
- * Lo mismo que el menú de la cuenta del riel en el escritorio: «¿con qué
- * cuenta estoy dentro?» y «¿por dónde salgo?». Lo de en medio son las páginas
- * que se configuran una vez y casi no se tocan — las que no merecen un hueco
- * fijo en una barra de cinco.
+ * ── What it answers ─────────────────────────────────────────────────────────
+ * The same as the rail's account menu on desktop: «which account am I signed
+ * in with?» and «where do I sign out?». What sits in between are the pages
+ * that are set up once and hardly touched — the ones that do not earn a fixed
+ * slot in a five-slot bar.
  *
- * ── Por qué sube desde abajo y no baja desde el avatar ──────────────────────
- * Porque el avatar vive en la esquina de abajo a la derecha. Un desplegable
- * colgado de ahí crece hacia el borde y hacia el pie: se recorta contra los
- * dos. Una hoja llega por el mismo borde por el que se tocó, que es el único
- * movimiento que el ojo puede seguir de vuelta.
+ * ── Why it rises from the bottom instead of dropping from the avatar ────────
+ * Because the avatar lives in the bottom-right corner. A dropdown hanging from
+ * there grows toward the edge and toward the foot: it gets clipped by both. A
+ * sheet arrives through the same edge that was touched, which is the only
+ * movement the eye can follow back.
  *
- * ── El perfil no es una fila más ────────────────────────────────────────────
- * Va en la cabeza, con su avatar, su nombre y su correo. Es lo que la hoja
- * CONTESTA nada más abrirse —con qué cuenta se está dentro—, y puesto como
- * sexta fila haría falta leerlo para encontrarlo. El correo va debajo del
- * nombre porque dos personas pueden llamarse igual y no tener el mismo correo.
+ * ── The profile is not one more row ─────────────────────────────────────────
+ * It goes in the header, with its avatar, its name and its email. It is what
+ * the sheet ANSWERS as soon as it opens —which account one is in—, and as a
+ * sixth row it would have to be read to be found. The email goes under the
+ * name because two people can share a name and not an email.
  *
- * ── Lo que no está para todo el mundo, no está ──────────────────────────────
- * Usuarios y Bitácora son de administración: quien no lo es no las tiene ni
- * apagadas ni escondidas con CSS. Ausentes, como en el riel.
+ * ── What is not for everyone is not there ───────────────────────────────────
+ * Users and Audit log are admin pages: whoever is not an admin does not get
+ * them disabled or hidden with CSS. Absent, as in the rail.
  */
 export function AccountPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { user, isAdmin, isRealAdmin, signOut } = useAuth();
@@ -48,11 +48,11 @@ export function AccountPanel({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     >
       <div className="flex flex-col">
         {/*
-          Ajustes y Seguridad son dos TROZOS de Mi cuenta, no dos pantallas.
-          Por eso van por ancla y no por ruta: partir esa página en tres dejaría
-          tres pantallas de una tarjeta cada una, y la de en medio sin nada que
-          justificara el viaje. El ancla lleva al sitio exacto y la página sigue
-          siendo una.
+          Settings and Security are two PARTS of My account, not two screens.
+          That is why they go by anchor and not by route: splitting that page
+          in three would leave three one-card screens, the middle one with
+          nothing to justify the trip. The anchor goes to the exact spot and
+          the page stays one.
         */}
         <LinkRow Icon={SlidersHorizontal} to="/mi-cuenta#ajustes" onNavigate={onClose}>
           {t('shell.account.settings')}
@@ -74,15 +74,16 @@ export function AccountPanel({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           </LinkRow>
         )}
 
-        {/* La raya, y no un hueco: lo de abajo no lleva a ninguna página. */}
+        {/* The rule, not a gap: what is below does not lead to any page. */}
         <hr className="my-2 border-border" />
 
         {/*
-          Ver la aplicación como la ve quien no administra nada.
+          See the app as someone who administers nothing sees it.
 
-          Se enseña con el rol DE VERDAD y no con el efectivo: encendida la
-          vista, `esAdmin` es falso —para eso está— y con esa condición el
-          interruptor desaparecería justo cuando hace falta para apagarlo.
+          It shows with the REAL role and not the effective one: with the
+          view on, `isAdmin` is false —that is the point— and with that
+          condition the switch would vanish exactly when it is needed to
+          turn it off.
         */}
         {isRealAdmin && <ViewAsUserRow onClose={onClose} />}
 
@@ -96,11 +97,11 @@ export function AccountPanel({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 }
 
 /**
- * La cabeza: con qué cuenta se está dentro.
+ * The header: which account one is signed in with.
  *
- * Es un enlace a Mi cuenta —lo que uno espera al tocar su propia cara— y no un
- * rótulo: la página entera está detrás, y las dos filas de abajo solo llevan a
- * trozos suyos.
+ * It is a link to My account —what one expects when touching one's own face—
+ * and not a label: the whole page is behind it, and the two rows below only
+ * lead to parts of it.
  */
 function ProfileSummary({ name }: { name: string }) {
   const { user } = useAuth();
@@ -124,7 +125,7 @@ function ProfileSummary({ name }: { name: string }) {
   );
 }
 
-/** El interruptor de la vista de usuario, en forma de fila. */
+/** The user-view switch, shaped as a row. */
 function ViewAsUserRow({ onClose }: { onClose: () => void }) {
   const { isViewingAsUser, setViewAsUser } = useAuth();
   const navigate = useNavigate();
@@ -133,8 +134,8 @@ function ViewAsUserRow({ onClose }: { onClose: () => void }) {
       onClick={() => {
         onClose();
         setViewAsUser(!isViewingAsUser);
-        // Encendiéndola desde una pantalla de administración, quedarse
-        // sería quedarse mirando un «no tienes acceso».
+        // Turned on from an admin screen, staying would mean staring at a
+        // «you do not have access».
         if (!isViewingAsUser) void navigate('/');
       }}
     >

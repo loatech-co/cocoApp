@@ -51,17 +51,17 @@ const lazily = {
 };
 
 /**
- * Rutas en español, una por módulo del catálogo.
+ * Routes in Spanish, one per catalog module.
  *
- * Por ahora solo existen las de la Fase 1 más las de auth y administración.
- * Presupuestos, Fijos, Deudas, Metas y Reportes se añaden en su fase, cada una
- * como un `feature` propio bajo `src/features/`.
+ * For now only the Phase 1 ones exist, plus auth and admin. Budgets, Fixed,
+ * Debts, Goals and Reports are added in their phase, each as its own
+ * `feature` under `src/features/`.
  *
- * La de escanear extractos SE FUE, y con ella sus redirecciones: era una
- * pantalla para cargar un CSV o un PDF de banco y revisar sus filas antes de
- * guardarlas. Lo que sí se usa —leer UN soporte al registrar un movimiento—
- * nunca pasó por ahí: vive en `features/transactions/api/read-receipt.ts` y sigue
- * intacto.
+ * The statement-scanning one IS GONE, and its redirects with it: it was a
+ * screen to load a bank CSV or PDF and review its rows before saving them.
+ * What is used —reading ONE receipt when recording a transaction— never went
+ * through there: it lives in `features/transactions/api/read-receipt.ts` and
+ * is untouched.
  */
 export const routes: RouteObject[] = [
   {
@@ -74,19 +74,19 @@ export const routes: RouteObject[] = [
     errorElement: <ErrorScreen />,
     children: [
       /*
-    La dirección vieja de entrar. Sigue viva y redirige: hay marcadores y
-    enlaces guardados apuntando ahí, y romperlos es gratis de evitar.
+    The old sign-in address. It is still alive and redirects: there are
+    bookmarks and saved links pointing there, and not breaking them is free.
 
-    El login ya no vive en una ruta propia: lo dibuja `RequireAuth` en el sitio
-    donde se estaba pidiendo entrar, para que la barra de direcciones no se
-    quede en `/entrar` después de cerrar sesión.
+    The login no longer lives on its own route: `RequireAuth` draws it where
+    signing in was being asked for, so the address bar does not stay on
+    `/entrar` after signing out.
   */
       { path: '/entrar', element: <Navigate to="/" replace /> },
       { path: '/registro', lazy: lazily.register },
       {
-        // Dentro de la app del teléfono, `window.__coco` —ir a una ruta, abrir la
-        // búsqueda— lo publica `PuenteDeNavegacion`, un hijo del armazón: es el
-        // único sitio que llega a la vez al enrutador y a la búsqueda.
+        // Inside the phone app, `window.__coco` —go to a route, open the
+        // search— is published by `NavigationBridge`, a child of the shell:
+        // it is the only place that reaches both the router and the search.
         path: '/',
         element: (
           <RequireAuth>
@@ -97,14 +97,14 @@ export const routes: RouteObject[] = [
           { index: true, element: <DashboardPage /> },
           { path: 'cuentas', lazy: lazily.accounts },
           { path: 'centros-de-costos', lazy: lazily.costCenters },
-          // La ruta vieja sigue viva y redirige: hay enlaces guardados y marcadores
-          // apuntando a /categorias, y romperlos por un cambio de nombre es gratis
-          // de evitar.
+          // The old route is still alive and redirects: there are saved links and
+          // bookmarks pointing at /categorias, and not breaking them over a
+          // rename is free.
           { path: 'categorias', element: <Navigate to="/centros-de-costos" replace /> },
           { path: 'mi-cuenta', lazy: lazily.account },
 
-          // Administración. El RequireAdmin es comodidad de navegación; quien
-          // decide de verdad es el RolesGuard del backend.
+          // Admin. RequireAdmin is a navigation convenience; what really decides
+          // is the backend's RolesGuard.
           { path: 'administracion', lazy: lazily.users },
           { path: 'administracion/bitacora', lazy: lazily.auditLog },
         ],

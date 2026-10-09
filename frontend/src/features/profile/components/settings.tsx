@@ -8,11 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { Switch } from '@/shared/ui/atoms/switch';
 
 /**
- * Ajustes de la aplicación.
+ * App settings.
  *
- * Hoy hay uno solo, y es el que cambia la forma de media interfaz. Vive en Mi
- * cuenta y no en una sección propia: un menú de ajustes con un único
- * interruptor es un menú que no vale la pena abrir.
+ * Today there is only one, and it is the one that changes the shape of half
+ * the interface. It lives in My account and not in its own section: a
+ * settings menu with a single switch is a menu not worth opening.
  */
 export function Settings() {
   const preferences = usePreferences();

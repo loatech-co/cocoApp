@@ -21,7 +21,7 @@ vi.mock('@/shared/api/auth-context', () => ({
   errorDetails: () => [],
 }));
 
-// Los ajustes traen sus propias consultas; no son lo que se mira aquí.
+// Settings bring their own queries; they are not what is checked here.
 vi.mock('@/features/profile/components/settings', () => ({ Settings: () => <p>ajustes</p> }));
 
 function renderShell() {
@@ -42,26 +42,26 @@ afterEach(() => {
   leaveNativeApp();
 });
 
-describe('Mi cuenta dentro de la app', () => {
+describe('My account inside the app', () => {
   beforeEach(() => fakeNativeApp());
 
-  it('ofrece cerrar sesión en este dispositivo, y llama a salir()', () => {
+  it('offers signing out on this device, and calls salir()', () => {
     renderShell();
 
     const button = screen.getByRole('button', { name: 'Cerrar sesión' });
     fireEvent.click(button);
     expect(auth.signOut).toHaveBeenCalledTimes(1);
 
-    // La de siempre sigue estando: son dos cosas distintas.
+    // The usual one is still there: they are two different things.
     expect(screen.getByRole('button', { name: 'Cerrar todo' })).toBeTruthy();
   });
 
-  it('sin rol de administrador no hay bloque de administración', () => {
+  it('without the admin role there is no admin block', () => {
     renderShell();
     expect(screen.queryByRole('navigation', { name: 'Administración' })).toBeNull();
   });
 
-  it('con rol de administrador, las secciones de administración como enlaces', () => {
+  it('with the admin role, the admin sections as links', () => {
     auth.isAdmin = true;
     renderShell();
 
@@ -77,8 +77,8 @@ describe('Mi cuenta dentro de la app', () => {
   });
 });
 
-describe('Mi cuenta fuera de la app', () => {
-  it('nada cambia: ni cerrar sesión aquí ni bloque de administración', () => {
+describe('My account outside the app', () => {
+  it('nothing changes: no sign-out here and no admin block', () => {
     leaveNativeApp();
     auth.isAdmin = true;
     renderShell();

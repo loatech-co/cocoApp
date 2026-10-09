@@ -9,12 +9,12 @@ import { MovableTile, TileRemove, tileClass } from '@/shared/ui/atoms/tile';
 import type { Mode, ShortcutPage } from './shortcut-types';
 import type { useShortcutDrag } from './use-shortcut-drag';
 
-/** Lo que hay que mantener pulsado para entrar a editar. */
+/** How long to hold to enter editing. */
 const HOLD_MS = 500;
 
 type Drag = ReturnType<typeof useShortcutDrag>;
 
-/** La rejilla de baldosas y, mientras se arregla, el hueco de «Agregar atajo». */
+/** The grid of tiles and, while arranging, the «Agregar atajo» slot. */
 export function ShortcutGrid({
   tiles,
   mode,
@@ -33,8 +33,8 @@ export function ShortcutGrid({
   return (
     <div
       ref={grid}
-      // Mientras se arregla, la rejilla se queda con el puntero: sin esto, un
-      // arrastre hacia abajo para mover una baldosa cerraría el panel.
+      // While arranging, the grid keeps the pointer: without this, a downward
+      // drag to move a tile would close the panel.
       data-no-swipe={mode === 'arreglando' ? '' : undefined}
       className="grid grid-cols-3 gap-3"
     >
@@ -66,7 +66,7 @@ export function ShortcutGrid({
   );
 }
 
-/** Mantener pulsada una baldosa entra a editar; soltarla antes, no. */
+/** Holding a tile enters editing; releasing it earlier does not. */
 function useLongPress(onHold: () => void) {
   const clock = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wasHeld = useRef(false);
@@ -155,7 +155,7 @@ function Tile(props: TileProps) {
   );
 }
 
-/** Fuera de la edición, la baldosa lleva a su página; mantenida, entra a editar. */
+/** Outside editing, the tile leads to its page; held, it enters editing. */
 function TileLink({
   route,
   className,
@@ -183,7 +183,7 @@ function TileLink({
       onPointerCancel={stopCounting}
       onPointerMove={stopCounting}
       onClick={(e) => {
-        // Se mantuvo pulsada: la intención era editar, no ir.
+        // It was held: the intent was to edit, not to go.
         if (wasHeld.current) {
           e.preventDefault();
           return;

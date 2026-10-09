@@ -21,51 +21,51 @@ interface BottomBarProps {
 /** The bar itself: fixed to the bottom edge, over the page and under the top bar. */
 const BAR_CLASSES = cn(
   'fixed inset-x-0 bottom-0 flex items-stretch',
-  // Por DEBAJO del techo, que va a 20, y a propósito: un desplegable
-  // anclado al techo es hijo suyo, así que ningún z-index de dentro
-  // puede ganarle a un hermano del techo. Las dos barras no se solapan
-  // nunca —una está arriba y otra al pie—, así que no se pierde nada.
+  // BELOW the top bar, which is at 20, and on purpose: a dropdown
+  // anchored to the top bar is its child, so no z-index inside can beat
+  // a sibling of the top bar. The two bars never overlap —one is on top
+  // and the other at the foot—, so nothing is lost.
   'z-[15]',
   'bg-sidebar pb-seguro',
-  // El relleno de abajo, y no más alto: la fila de la barra mide 60
-  // exactos y el borde seguro del teléfono es hueco muerto por debajo,
-  // que es justo lo que ese hueco es.
+  // The bottom padding, and no taller: the bar's row measures exactly 60
+  // and the phone's safe area is dead space below, which is exactly what
+  // that gap is.
   'border-t border-sidebar-border shadow-[var(--sombra-pegada-arriba)]',
 );
 
 /**
- * La barra de abajo. La forma de llegar a lo del día a día con una mano.
+ * The bottom bar. The way to reach the everyday things with one hand.
  *
- * ── Cinco huecos, y cinco es un TECHO, no un objetivo ───────────────────────
- * Material limita una barra de navegación a cinco destinos y Apple limita una
- * de pestañas a cinco, los dos por lo mismo: el sexto deja todos los blancos
- * demasiado estrechos. A 375 de ancho, cinco huecos son 75×60.
+ * ── Five slots, and five is a CEILING, not a goal ───────────────────────────
+ * Material caps a navigation bar at five destinations and Apple caps a tab
+ * bar at five, both for the same reason: the sixth makes every target too
+ * narrow. At 375 wide, five slots are 75×60.
  *
- * ── Uno solo es un destino; los otros cuatro son cosas que se HACEN ─────────
+ * ── Only one is a destination; the other four are things one DOES ─────────
  *
- *   Inicio    la única sección de la barra
- *   Buscar    abre una hoja con el campo y los resultados dentro
- *   (+)       registra un gasto, sin pasar por ningún menú
- *   Atajos    las páginas que cada quien se arma
- *   Avatar    su hoja: el perfil, los ajustes y la salida
+ *   Home      the bar's only section
+ *   Search    opens a sheet with the field and the results inside
+ *   (+)       records an expense, without going through any menu
+ *   Shortcuts the pages each person builds
+ *   Avatar    its sheet: the profile, the settings and the way out
  *
- * Eran cuatro secciones y un botón, y estaba al revés de como se usa un
- * teléfono: lo que se hace veinte veces por semana —anotar un gasto, buscar
- * uno— quedaba a dos toques, y lo que se visita una vez al mes tenía su hueco
- * fijo. Las secciones que salieron de aquí siguen a un toque desde los atajos,
- * que es exactamente para lo que están.
+ * It used to be four sections and a button, and it was backwards from how a
+ * phone is used: what is done twenty times a week —noting an expense,
+ * searching for one— was two taps away, and what is visited once a month had
+ * its fixed slot. The sections that left are still one tap away in the
+ * shortcuts, which is exactly what they are for.
  *
- * ── Por qué el (+) NO abre un menú ──────────────────────────────────────────
- * Porque solo hay una respuesta. El menú de «Nuevo movimiento» ofrece gasto e
- * ingreso, y el ingreso está apagado —«Pronto»—: en el teléfono eso es un
- * toque de más para elegir la única opción viva. En la pantalla ancha el menú
- * se queda, porque ahí el segundo toque no cuesta un gesto sino un clic, y el
- * día que el ingreso exista el menú ya está escrito.
+ * ── Why the (+) does NOT open a menu ────────────────────────────────────────
+ * Because there is only one answer. The «Nuevo movimiento» menu offers
+ * expense and income, and income is disabled —«Pronto»—: on the phone that
+ * is one more tap to pick the only live option. On the wide screen the menu
+ * stays, because there the second tap costs a click and not a gesture, and the
+ * day income exists the menu is already written.
  *
- * ── Solo iconos ─────────────────────────────────────────────────────────────
- * Cinco palabras de 12px bajo cinco dibujos son una segunda fila de texto
- * compitiendo con la página, y aplanarían la única jerarquía que la barra
- * tiene. Cada hueco lleva su nombre accesible.
+ * ── Icons only ──────────────────────────────────────────────────────────────
+ * Five 12px words under five drawings are a second row of text competing
+ * with the page, and they would flatten the only hierarchy the bar has. Each
+ * slot carries its accessible name.
  */
 export function BottomBar({
   name,
@@ -91,8 +91,8 @@ export function BottomBar({
         </BarSlotButton>
       </div>
 
-      {/* Ancho fijo: es lo que mantiene el botón en el centro exacto cuando
-          los grupos no tienen el mismo número de huecos. */}
+      {/* Fixed width: it is what keeps the button in the exact center when
+          the groups do not have the same number of slots. */}
       <div className="flex w-18 shrink-0 items-start justify-center">
         <BarFab label={t('shell.bottomBar.newExpense')} onClick={onNewExpense} />
       </div>
@@ -123,10 +123,10 @@ function AccountSlot({
 }) {
   return (
     <BarSlotButton label={t('shell.account.myAccount')} isOn={isOpen} onClick={onClick}>
-      {/* Apagado va de la superficie tenue de la barra y encendido del
-          color de la marca con su tinta. Nunca al revés: cuando el avatar
-          llevaba el color de la barra, el círculo desaparecía y quedaban
-          unas iniciales sueltas que se leían como el hueco activo. */}
+      {/* Off it takes the bar's dim surface and on the brand color with its
+          ink. Never the other way round: when the avatar carried the bar's
+          color, the circle vanished and loose initials were left that read
+          as the active slot. */}
       <Avatar
         name={name}
         className={cn(

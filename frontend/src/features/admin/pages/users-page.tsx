@@ -19,10 +19,11 @@ const FILTERS: { value: ProfileStatus | undefined; label: string }[] = [
 ];
 
 /**
- * Aprobación de cuentas y gestión de roles.
+ * Account approval and role management.
  *
- * El filtro arranca en "Pendientes" porque son las que exigen una decisión:
- * el trabajo del administrador es responderlas, no navegar hasta encontrarlas.
+ * The filter starts on "Pendientes" because those are the ones that demand a
+ * decision: the admin's job is to answer them, not to browse until finding
+ * them.
  */
 export function UsersPage() {
   const { user: me } = useAuth();

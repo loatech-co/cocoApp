@@ -33,7 +33,7 @@ const TYPES: { value: Account['type']; label: string }[] = [
 
 const TYPE_LABEL = Object.fromEntries(TYPES.map((t) => [t.value, t.label]));
 
-/** M3 — Cuentas. El saldo nunca se escribe: se deriva de los movimientos. */
+/** M3 — Accounts. The balance is never written: it derives from the transactions. */
 export function AccountsPage() {
   const accounts = useAccounts(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -224,7 +224,7 @@ function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
   );
 }
 
-/** Los campos de una cuenta nueva y cómo se crea. */
+/** A new account's fields and how it is created. */
 function useAccountForm(onDone: () => void) {
   const create = useCreateAccount();
 
