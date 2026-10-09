@@ -3,18 +3,19 @@ import request from 'supertest';
 import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 
 /**
- * Fase 2 — lo que la ficha enseña al servidor al guardar.
+ * Phase 2 — what the transaction sheet teaches the server on save.
  *
- * `POST /categorization/learn` es el camino por el que el sistema mejora con
- * el uso: la ficha lo llama cuando hubo una sugerencia y el movimiento se
- * guardó clasificado, y lo que quedó —aceptado o corregido— se vuelve regla.
+ * `POST /categorization/learn` is the path through which the system improves
+ * with use: the sheet calls it when there was a suggestion and the
+ * transaction was saved classified, and whatever stayed —accepted or
+ * corrected— becomes a rule.
  *
- * Lo que se protege aquí es lo que no puede fallar en silencio: que aceptar
- * cree la regla, que corregir la ACTUALICE en vez de dejar dos reglas que se
- * contradicen, que una descripción que no dice nada no deje basura, y que
- * nadie pueda apuntar una regla a la categoría de otra cuenta.
+ * What is protected here is what cannot fail silently: that accepting creates
+ * the rule, that correcting UPDATES it instead of leaving two rules that
+ * contradict each other, that a description that says nothing leaves no
+ * garbage, and that nobody can point a rule at another account's category.
  */
-describe('Fase 2 — Aprender al guardar (e2e)', () => {
+describe('Phase 2 — Learning on save (e2e)', () => {
   let env: TestEnvironment;
   let http: ReturnType<typeof request>;
 
@@ -57,45 +58,45 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
       .set('Authorization', auth)
       .send({ description, categoryId });
 
-  /** Las reglas de un usuario, leídas de la base: lo que de verdad quedó. */
+  /** A user's rules, read from the database: what was really stored. */
   const rulesOf = (user: TestUser) =>
     env.prisma.categoryRule.findMany({
       where: { userId: user.id },
       select: { pattern: true, categoryId: true, priority: true, hits: true },
     });
 
-  // ── Aceptar y corregir ─────────────────────────────────────────────────────
+  // ── Accept and correct ─────────────────────────────────────────────────────
 
-  it('aceptar una sugerencia crea la regla con el token que la describe', async () => {
+  it('accepting a suggestion creates the rule with the token that describes it', async () => {
     const energy = await createCategory(asAna, 'Energía');
 
     const r = await learn(asAna, 'Pago Celsia Energía', energy.id).expect(201);
     expect(r.body.data).toEqual({ learned: true });
 
-    // «pago» es genérico y se descarta; de «celsia» y «energia» gana el más
-    // largo. Sin tildes: la regla tiene que coincidir con lo que escriba la
-    // persona la próxima vez, y nadie escribe igual dos veces.
+    // «pago» is generic and dropped; of «celsia» and «energia» the longer one
+    // wins. Without accents: the rule has to match what the person types next
+    // time, and nobody types the same way twice.
     expect(await rulesOf(ana)).toEqual([
       { pattern: 'energia', categoryId: BigInt(energy.id), priority: 10, hits: 1 },
     ]);
   });
 
-  it('corregir una sugerencia ACTUALIZA la regla en vez de dejar dos que se contradicen', async () => {
+  it('correcting a suggestion UPDATES the rule instead of leaving two that contradict each other', async () => {
     const energy = await createCategory(asAna, 'Energía');
     const gas = await createCategory(asAna, 'Gas');
 
     await learn(asAna, 'Pago Celsia Energía', energy.id).expect(201);
-    // La misma descripción, otra categoría: la persona corrigió.
+    // The same description, another category: the person corrected it.
     await learn(asAna, 'Pago Celsia Energía', gas.id).expect(201);
 
-    // Una sola regla, apuntando a lo último que se dijo, y con los dos golpes
-    // contados: es la clave `(userId, pattern)` haciendo su trabajo.
+    // A single rule, pointing at the last thing said, with both hits counted:
+    // that is the `(userId, pattern)` key doing its job.
     expect(await rulesOf(ana)).toEqual([
       { pattern: 'energia', categoryId: BigInt(gas.id), priority: 10, hits: 2 },
     ]);
   });
 
-  it('lo aprendido es lo que la sugerencia devuelve la próxima vez', async () => {
+  it('what was learned is what the suggestion returns next time', async () => {
     const energy = await createCategory(asAna, 'Energía');
     await learn(asAna, 'Pago Celsia Energía', energy.id).expect(201);
 
@@ -107,9 +108,9 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
     expect(r.body.data).toMatchObject({ categoryId: energy.id, reason: 'rule' });
   });
 
-  // ── Lo que no deja regla ───────────────────────────────────────────────────
+  // ── What leaves no rule ────────────────────────────────────────────────────
 
-  it('una descripción vacía no crea reglas, y lo dice', async () => {
+  it('an empty description creates no rules, and says so', async () => {
     const energy = await createCategory(asAna, 'Energía');
 
     const r = await learn(asAna, '', energy.id).expect(201);
@@ -117,11 +118,11 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
     expect(await rulesOf(ana)).toEqual([]);
   });
 
-  it('una descripción hecha solo de palabras genéricas tampoco', async () => {
+  it('nor does a description made only of generic words', async () => {
     const energy = await createCategory(asAna, 'Energía');
 
-    // Todo genérico o demasiado corto o un número: no hay nada que recordar.
-    // Una regla «pago» clasificaría la mitad de los movimientos como energía.
+    // All generic, too short or a number: there is nothing to remember.
+    // A «pago» rule would classify half the transactions as energy.
     const r = await learn(asAna, 'PAGO FACTURA SERVICIOS 2026', energy.id).expect(201);
     expect(r.body.data).toEqual({ learned: false });
     expect(await rulesOf(ana)).toEqual([]);
@@ -129,7 +130,7 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
 
   // ── Aislamiento ────────────────────────────────────────────────────────────
 
-  it('rechaza una categoría de otra cuenta y no deja rastro', async () => {
+  it("rejects another account's category and leaves no trace", async () => {
     const betos = await createCategory(asBeto, 'Energía');
 
     await learn(asAna, 'Pago Celsia Energía', betos.id).expect(422);
@@ -138,7 +139,7 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
     expect(await rulesOf(beto)).toEqual([]);
   });
 
-  it('exige el cuerpo completo: sin categoría o sin descripción es 400', async () => {
+  it('requires the whole body: without a category or a description it is 400', async () => {
     await http
       .post('/api/v2/categorization/learn')
       .set('Authorization', asAna)

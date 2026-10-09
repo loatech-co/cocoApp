@@ -3,17 +3,17 @@ import request from 'supertest';
 import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 
 /**
- * Cuentas opcionales.
+ * Optional accounts.
  *
- * La decisión de producto: llevar cuentas —tarjetas, ahorros, efectivo— es una
- * función que se enciende en los ajustes, no un requisito para registrar un
- * gasto. Nadie debería tener que inventarse una cuenta antes de poder anotar
- * el primer café.
+ * The product decision: tracking accounts —cards, savings, cash— is a feature
+ * switched on in the settings, not a requirement for recording an expense.
+ * Nobody should have to make up an account before they can note down their
+ * first coffee.
  *
- * Lo que se protege aquí es que esa promesa se cumpla de verdad en toda la
- * cadena: crear, listar, y los saldos de quien SÍ lleva cuentas.
+ * What is protected here is that the promise really holds along the whole
+ * chain: creating, listing, and the balances of whoever DOES track accounts.
  */
-describe('Cuentas opcionales (e2e)', () => {
+describe('Optional accounts (e2e)', () => {
   let env: TestEnvironment;
   let http: ReturnType<typeof request>;
   let ana: TestUser;
@@ -40,10 +40,10 @@ describe('Cuentas opcionales (e2e)', () => {
       .set('Authorization', asAna)
       .send({ date: '2026-08-01', amount: '45900.50', type: 'expense', ...body });
 
-  // ── Preferencias ───────────────────────────────────────────────────────────
+  // ── Preferences ────────────────────────────────────────────────────────────
 
-  describe('La preferencia', () => {
-    it('nace APAGADA: registrar un gasto no exige inventarse una cuenta', async () => {
+  describe('The preference', () => {
+    it('is born OFF: recording an expense does not require making up an account', async () => {
       const response = await http
         .get('/api/v2/preferences')
         .set('Authorization', asAna)
@@ -52,7 +52,7 @@ describe('Cuentas opcionales (e2e)', () => {
       expect(response.body.data).toEqual({ accountsEnabled: false });
     });
 
-    it('se puede encender y queda guardada', async () => {
+    it('can be switched on and stays saved', async () => {
       await http
         .patch('/api/v2/preferences')
         .set('Authorization', asAna)
@@ -66,8 +66,8 @@ describe('Cuentas opcionales (e2e)', () => {
       expect(response.body.data.accountsEnabled).toBe(true);
     });
 
-    it('encenderla dos veces no duplica nada', async () => {
-      // El upsert va contra el índice único (user_id, pref_key): es idempotente.
+    it('switching it on twice duplicates nothing', async () => {
+      // The upsert goes against the unique index (user_id, pref_key): it is idempotent.
       for (let i = 0; i < 3; i += 1) {
         await http
           .patch('/api/v2/preferences')
@@ -78,7 +78,7 @@ describe('Cuentas opcionales (e2e)', () => {
       expect(await env.prisma.userPreference.count({ where: { userId: ana.id } })).toBe(1);
     });
 
-    it('rechaza una preferencia que no existe en el catálogo', async () => {
+    it('rejects a preference that is not in the catalogue', async () => {
       await http
         .patch('/api/v2/preferences')
         .set('Authorization', asAna)
@@ -86,7 +86,7 @@ describe('Cuentas opcionales (e2e)', () => {
         .expect(400);
     });
 
-    it('rechaza un valor que no es booleano', async () => {
+    it('rejects a value that is not a boolean', async () => {
       await http
         .patch('/api/v2/preferences')
         .set('Authorization', asAna)
@@ -94,7 +94,7 @@ describe('Cuentas opcionales (e2e)', () => {
         .expect(400);
     });
 
-    it('las preferencias de otra persona no se ven', async () => {
+    it("another person's preferences are not visible", async () => {
       const beto = await env.createUser();
       await http
         .patch('/api/v2/preferences')
@@ -110,10 +110,10 @@ describe('Cuentas opcionales (e2e)', () => {
     });
   });
 
-  // ── El caso que motivó todo ────────────────────────────────────────────────
+  // ── The case that started it all ───────────────────────────────────────────
 
-  describe('Registrar un gasto sin cuenta', () => {
-    it('funciona, y es el camino por defecto', async () => {
+  describe('Recording an expense without an account', () => {
+    it('works, and is the default path', async () => {
       const response = await expense({ description: 'Café' }).expect(201);
 
       expect(response.body.data).toMatchObject({
@@ -123,7 +123,7 @@ describe('Cuentas opcionales (e2e)', () => {
       });
     });
 
-    it('aparece en el listado como cualquier otro', async () => {
+    it('shows up in the list like any other', async () => {
       await expense({ description: 'Café' }).expect(201);
 
       const response = await http
@@ -135,12 +135,12 @@ describe('Cuentas opcionales (e2e)', () => {
       expect(response.body.data[0].accountId).toBeNull();
     });
 
-    it('respeta los centavos, cuenta o no cuenta', async () => {
+    it('keeps the cents, account or no account', async () => {
       const response = await expense({ amount: '0.01' }).expect(201);
       expect(response.body.data.amount).toBe('0.01');
     });
 
-    it('se puede categorizar igual', async () => {
+    it('can be categorised all the same', async () => {
       const category = await http
         .post('/api/v2/categories')
         .set('Authorization', asAna)
@@ -151,7 +151,7 @@ describe('Cuentas opcionales (e2e)', () => {
       expect(response.body.data.categoryId).toBe(category.body.data.id);
     });
 
-    it('el dashboard funciona sin una sola cuenta', async () => {
+    it('the dashboard works without a single account', async () => {
       await expense().expect(201);
       await http.get('/api/v2/dashboard').set('Authorization', asAna).expect(200);
     });
@@ -159,7 +159,7 @@ describe('Cuentas opcionales (e2e)', () => {
 
   // ── Convivencia ────────────────────────────────────────────────────────────
 
-  describe('Quien SÍ lleva cuentas', () => {
+  describe('Whoever DOES track accounts', () => {
     const createAccount = () =>
       http
         .post('/api/v2/accounts')
@@ -167,21 +167,21 @@ describe('Cuentas opcionales (e2e)', () => {
         .send({ name: 'Bancolombia', type: 'debit', openingBalance: '500000' })
         .expect(201);
 
-    it('el saldo IGNORA los movimientos sin cuenta', async () => {
-      // Es la consecuencia que hay que asumir de frente: un gasto que no
-      // pertenece a ninguna cuenta no puede alterar el saldo de ninguna.
+    it('the balance IGNORES transactions without an account', async () => {
+      // It is the consequence to face head on: an expense that belongs to no
+      // account cannot change the balance of any.
       const account = await createAccount();
 
       await expense({ accountId: account.body.data.id, amount: '100000.00' }).expect(201);
-      await expense({ amount: '999999.00' }).expect(201); // sin cuenta
+      await expense({ amount: '999999.00' }).expect(201); // no account
 
       const accounts = await http.get('/api/v2/accounts').set('Authorization', asAna).expect(200);
 
-      // 500000 − 100000, sin rastro de los 999999.
+      // 500000 − 100000, with no trace of the 999999.
       expect(accounts.body.data[0].balance).toBe('400000.00');
     });
 
-    it('los dos tipos de movimiento conviven en el mismo listado', async () => {
+    it('both kinds of transaction live together in the same list', async () => {
       const account = await createAccount();
       await expense({ accountId: account.body.data.id }).expect(201);
       await expense().expect(201);
@@ -198,7 +198,7 @@ describe('Cuentas opcionales (e2e)', () => {
       expect(withAccount).toHaveLength(1);
     });
 
-    it('se puede asignar una cuenta después, al movimiento que no la tenía', async () => {
+    it('an account can be assigned later, to the transaction that had none', async () => {
       const account = await createAccount();
       const transaction = await expense({ amount: '100000.00' }).expect(201);
 
@@ -212,7 +212,7 @@ describe('Cuentas opcionales (e2e)', () => {
       expect(accounts.body.data[0].balance).toBe('400000.00');
     });
 
-    it('sigue rechazando una cuenta ajena, con 422', async () => {
+    it("still rejects someone else's account, with 422", async () => {
       const beto = await env.createUser();
       const own = await http
         .post('/api/v2/accounts')

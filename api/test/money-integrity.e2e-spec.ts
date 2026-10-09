@@ -5,12 +5,12 @@ import { makeAccount, makeTransaction } from './factories';
 import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
 
 /**
- * Integridad del dinero (R-3): lo que una edición o dos capturas a la vez no
- * pueden dejar a medias. Cada caso corre por la v2.
+ * Money integrity (R-3): what an edit, or two captures at once, cannot leave
+ * half done. Every case runs through v2.
  *
- * - Cambiar el monto sin reenviar el desglose: 422, y nada cambia.
- * - Editar una pata de una transferencia edita las dos, o ninguna.
- * - Wallet y el SMS del mismo pago, a la vez: un solo movimiento.
+ * - Changing the amount without resending the splits: 422, and nothing changes.
+ * - Editing one leg of a transfer edits both, or neither.
+ * - Wallet and the SMS of the same payment, at once: a single transaction.
  */
 const VERSIONS = [
   {
@@ -29,7 +29,7 @@ const VERSIONS = [
   },
 ] as const;
 
-describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
+describe.each(VERSIONS)('Money integrity through $v (e2e)', (version) => {
   let env: TestEnvironment;
   let http: ReturnType<typeof request>;
   let user: TestUser;
@@ -54,7 +54,7 @@ describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
   const patch = (id: bigint, body: Record<string, unknown>) =>
     http.patch(`${base}/${id.toString()}`).set('Authorization', auth).send(body);
 
-  describe('un movimiento con desglose', () => {
+  describe('a transaction with splits', () => {
     const withSplits = async () => {
       const tx = await makeTransaction(env.prisma, user.id, { amount: '1000' });
       await env.prisma.transactionSplit.createMany({
@@ -66,7 +66,7 @@ describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
       return tx;
     };
 
-    it('cambiar el monto SIN reenviar el desglose es 422, y no se escribe nada', async () => {
+    it('changing the amount WITHOUT resending the splits is 422, and nothing is written', async () => {
       const tx = await withSplits();
 
       const response = await patch(tx.id, { amount: '1200', description: 'otra' }).expect(422);
@@ -77,7 +77,7 @@ describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
       expect(after.description).toBeNull();
     });
 
-    it('con el desglose ajustado, o sin tocar el monto, se guarda', async () => {
+    it('with the splits adjusted, or without touching the amount, it saves', async () => {
       const tx = await withSplits();
 
       await patch(tx.id, { amount: '1200', splits: [{ amount: '700' }, { amount: '500' }] }).expect(
@@ -93,7 +93,7 @@ describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
     });
   });
 
-  describe('una transferencia', () => {
+  describe('a transfer', () => {
     const transfer = async () => {
       const from = await makeAccount(env.prisma, user.id);
       const to = await makeAccount(env.prisma, user.id, { name: 'Ahorro', type: 'savings' });
@@ -115,7 +115,7 @@ describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
         orderBy: { transferDir: 'asc' },
       });
 
-    it('editar el monto y la fecha de una pata edita las dos', async () => {
+    it('editing the amount and date of one leg edits both', async () => {
       const t = await transfer();
 
       await patch(t.out.id, { amount: '2500', date: '2026-09-12', description: 'Ahorro' }).expect(
@@ -129,11 +129,11 @@ describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
         expect(leg.date.toISOString().slice(0, 10)).toBe('2026-09-12');
         expect(leg.description).toBe('Ahorro');
       }
-      // La cuenta es de cada pata: no viaja a la otra.
+      // The account belongs to each leg: it does not travel to the other.
       expect(legs.map((l) => l.accountId)).toContain(t.from.id);
     });
 
-    it('una pata no cambia de tipo, ni se lleva la cuenta de la otra: 422', async () => {
+    it("a leg does not change type, nor take the other one's account: 422", async () => {
       const t = await transfer();
 
       await patch(t.in.id, { type: 'expense' }).expect(422);
@@ -142,11 +142,11 @@ describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
       }).expect(422);
     });
 
-    it('si la escritura de la segunda pata falla, la primera tampoco queda escrita', async () => {
+    it('if writing the second leg fails, the first is not left written either', async () => {
       const t = await transfer();
-      // Un disparador de prueba que hace fallar SOLO la escritura de la pata
-      // `in`. El PATCH entra por la `out`, así que esa ya se escribió cuando
-      // revienta la segunda: lo que se comprueba es que se deshace.
+      // A test trigger that makes ONLY the write of the `in` leg fail. The PATCH
+      // comes in through the `out` one, so that one is already written when the
+      // second blows up: what is checked is that it is rolled back.
       await env.prisma.$executeRawUnsafe(`
         CREATE OR REPLACE FUNCTION r3_falla_la_pata_in() RETURNS trigger AS $$
         BEGIN
@@ -174,15 +174,15 @@ describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
     });
   });
 
-  describe('Wallet y el SMS del mismo pago, a la vez', () => {
+  describe('Wallet and the SMS of the same payment, at once', () => {
     const capture = (body: Record<string, unknown>) =>
       http.post(`${base}/capture`).set('Authorization', auth).send(body);
 
-    it('acaban en UN movimiento enriquecido, todas las veces', async () => {
+    it('end up as ONE enriched transaction, every time', async () => {
       const t0 = new Date('2026-10-02T15:00:00-05:00').getTime();
 
       for (let i = 0; i < 8; i++) {
-        // Un monto distinto por vuelta: cada vuelta es un pago aparte.
+        // A different amount per round: each round is a separate payment.
         const thousands = 120 + i;
         const en = new Date(t0 + i * 3_600_000).toISOString();
         const [wallet, sms] = await Promise.all([
@@ -198,7 +198,7 @@ describe.each(VERSIONS)('Integridad del dinero por la $v (e2e)', (version) => {
           ),
         ]);
         expect([wallet.status, sms.status]).toEqual([200, 200]);
-        // Exactamente una de las dos se fusionó con la otra.
+        // Exactly one of the two was merged into the other.
         const mergedOnes = [wallet, sms].filter((r) => r.body.data[version.merged] === true);
         expect(mergedOnes).toHaveLength(1);
 
