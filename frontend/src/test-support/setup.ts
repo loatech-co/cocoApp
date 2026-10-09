@@ -26,3 +26,12 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
     dispatchEvent: () => false,
   });
 }
+
+/**
+ * ── `scrollIntoView` ────────────────────────────────────────────────────────
+ * jsdom does not lay anything out, so it does not ship it either. `Combo`
+ * calls it to keep the row the arrows point at inside its scrolled list.
+ */
+if (typeof window !== 'undefined' && typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = () => {};
+}

@@ -1,11 +1,12 @@
-import { Check, ChevronDown, CornerDownLeft, Plus } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import { useActiveOption } from '@/shared/lib/active-option';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
+import { CreateOption, Option } from '@/shared/ui/atoms/option';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
 import { fieldTrigger, useInsideField } from '@/shared/ui/foundations/field';
-import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 import { Menu } from '@/shared/ui/molecules/menu';
 
 /**
@@ -104,7 +105,9 @@ export function Combo({
   return (
     <Menu
       label={label}
-      kind="list"
+      // A dialog and not a listbox: in here there is a text box, the list and
+      // the «create» button, and a listbox can only hold options.
+      kind="search"
       align="left"
       isFloating
       // The panel draws its own full-bleed strips —the search box on top, the
@@ -118,6 +121,7 @@ export function Combo({
     >
       {(close) => (
         <ComboPanel
+          label={label}
           inputRef={inputRef}
           search={search}
           value={value}
@@ -180,6 +184,7 @@ function useComboSearch(
 }
 
 interface ComboPanelProps {
+  label: string;
   inputRef: React.RefObject<HTMLInputElement | null>;
   search: ComboSearch;
   value: string;
@@ -188,8 +193,29 @@ interface ComboPanelProps {
   close: () => void;
 }
 
-function ComboPanel({ inputRef, search, value, emptyLabel, isCreating, close }: ComboPanelProps) {
+/**
+ * Enter picks the row the arrows chose; without one, the only thing left,
+ * which is what one expects after typing three letters and seeing a single
+ * row; with nothing left, it creates what was typed, if that is offered.
+ */
+function onEnter(
+  activeValue: string | undefined,
+  { filtered, canCreate }: ComboSearch,
+  pick: (value: string) => void,
+  create: () => void,
+): void {
+  const [only] = filtered;
+  if (activeValue !== undefined) pick(activeValue);
+  else if (filtered.length === 1 && only !== undefined) pick(only.value);
+  else if (canCreate) create();
+}
+
+function ComboPanel(props: ComboPanelProps) {
+  const { label, inputRef, search, value, emptyLabel, isCreating, close } = props;
   const { query, setQuery, filtered, canCreate } = search;
+
+  // The rows the arrows walk: the empty one first, as it is drawn.
+  const nav = useActiveOption(['', ...filtered.map((o) => o.value)], query);
 
   // Focus on open: if the field has to be clicked before typing, the gesture
   // is two clicks and nobody ever discovers that it could filter.
@@ -213,21 +239,20 @@ function ComboPanel({ inputRef, search, value, emptyLabel, isCreating, close }: 
       <SearchBox
         shape="header"
         ref={inputRef}
+        aria-label={label}
+        {...nav.boxProps}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => {
-          // Enter picks the only thing left, which is what one expects after
-          // typing three letters and seeing a single row.
-          if (e.key !== 'Enter') return;
-          e.preventDefault();
-          const [only] = filtered;
-          if (filtered.length === 1 && only !== undefined) onSelect(only.value);
-          else if (canCreate) onCreate();
+          if (nav.move(e.key) || e.key === 'Enter') e.preventDefault();
+          if (e.key === 'Enter') onEnter(nav.activeValue, search, onSelect, onCreate);
         }}
         placeholder={t('ui.combo.search')}
       />
 
       <ComboOptions
+        label={label}
+        nav={nav}
         filtered={filtered}
         value={value}
         emptyLabel={emptyLabel}
@@ -244,117 +269,54 @@ function ComboPanel({ inputRef, search, value, emptyLabel, isCreating, close }: 
   );
 }
 
-/**
- * The «create what is missing» row, at the foot of a list with a search box.
- *
- * Exported because the concept search offers the same: two copies drift
- * apart. `hasEnterHint` adds the hint that Enter picks it, when it is the only
- * thing that can be picked.
- */
-export function CreateOption({
-  isCreating,
-  hasEnterHint = false,
-  onCreate,
-  children,
-}: {
-  isCreating: boolean;
-  hasEnterHint?: boolean;
-  onCreate: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onCreate}
-      disabled={isCreating}
-      className={cn(
-        'flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm',
-        'font-medium transition-colors',
-        HIGHLIGHT,
-        'disabled:opacity-60',
-      )}
-    >
-      <Plus className="size-4 shrink-0" aria-hidden="true" />
-      <span className="min-w-0 truncate">{children}</span>
-      {hasEnterHint && (
-        <CornerDownLeft className="ml-auto size-3.5 shrink-0 opacity-50" aria-hidden="true" />
-      )}
-    </button>
-  );
-}
-
-/**
- * A selectable row of a dropdown with a search box.
- *
- * Exported because the concept search uses it too: the same row, with the
- * same highlight and the same check mark, so that picking a concept looks the
- * same in both places. Two copies drift apart.
- */
-export function Option({
-  isSelected,
-  onClick,
-  children,
-}: {
-  isSelected: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="option"
-      aria-selected={isSelected}
-      onClick={onClick}
-      className={cn(
-        'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
-        'movil:min-h-[42px]',
-        isSelected ? cn('bg-muted font-medium', HIGHLIGHT) : HIGHLIGHT,
-      )}
-    >
-      <span className="min-w-0 flex-1 truncate">{children}</span>
-      {isSelected && <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />}
-    </button>
-  );
-}
-
 /** Without accents or capitals: "Educación" is found by typing "educacion". */
 function normal(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
+/**
+ * The listbox the search box controls.
+ *
+ * The options are its DIRECT children: a `ul` with an `li` around each one
+ * put a list between the listbox and its options, and a listbox can only
+ * own options. «Nada coincide» goes outside for the same reason.
+ */
 function ComboOptions({
+  label,
+  nav,
   filtered,
   value,
   emptyLabel,
   canCreate,
   onSelect,
 }: Pick<ComboSearch, 'filtered' | 'canCreate'> & {
+  label: string;
+  nav: ReturnType<typeof useActiveOption>;
   value: string;
   emptyLabel: string;
   onSelect: (value: string) => void;
 }) {
+  const rows = [{ value: '', label: emptyLabel }, ...filtered];
   return (
-    <ul className="max-h-64 overflow-y-auto p-1">
-      <li>
-        <Option isSelected={value === ''} onClick={() => onSelect('')}>
-          <span className="text-muted-foreground">{emptyLabel}</span>
-        </Option>
-      </li>
-
-      {filtered.map((o) => (
-        <li key={o.value}>
-          <Option isSelected={o.value === value} onClick={() => onSelect(o.value)}>
-            {o.label}
+    <div className="max-h-64 overflow-y-auto p-1">
+      <div role="listbox" id={nav.listId} aria-label={label}>
+        {rows.map((o, i) => (
+          <Option
+            key={o.value}
+            id={nav.optionId(i)}
+            isSelected={o.value === value}
+            isActive={nav.activeId === nav.optionId(i)}
+            onClick={() => onSelect(o.value)}
+          >
+            {i === 0 ? <span className="text-muted-foreground">{o.label}</span> : o.label}
           </Option>
-        </li>
-      ))}
+        ))}
+      </div>
 
       {filtered.length === 0 && !canCreate && (
-        <li className="px-2.5 py-2 text-sm text-muted-foreground">
-          {t('ui.combo.nothingMatches')}
-        </li>
+        <p className="px-2.5 py-2 text-sm text-muted-foreground">{t('ui.combo.nothingMatches')}</p>
       )}
-    </ul>
+    </div>
   );
 }
 

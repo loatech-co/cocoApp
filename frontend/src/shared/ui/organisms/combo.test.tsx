@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Combo } from './combo';
@@ -163,5 +163,64 @@ describe('Combo', () => {
     expect(screen.queryByRole('button')).toBeNull();
     const field = screen.getByText('Aseo').closest('[aria-disabled="true"]');
     expect(field?.id).toBe('concepto');
+  });
+});
+
+/**
+ * The combobox pattern: the search box is the combobox, it controls the
+ * listbox, and the arrows move a pointer without taking the caret out of it.
+ */
+describe('Combo, read by a screen reader', () => {
+  const activeText = (box: HTMLElement) =>
+    document.getElementById(box.getAttribute('aria-activedescendant') ?? '')?.textContent;
+
+  it('opens a dialog whose search box is a combobox that controls the listbox', () => {
+    renderCombo();
+
+    const trigger = screen.getByRole('button', { name: /Sin elegir/ });
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+
+    const dialog = screen.getByRole('dialog', { name: 'Concepto' });
+    const box = within(dialog).getByRole('combobox', { name: 'Concepto' });
+    const list = within(dialog).getByRole('listbox', { name: 'Concepto' });
+
+    expect(box.getAttribute('aria-expanded')).toBe('true');
+    expect(box.getAttribute('aria-controls')).toBe(list.id);
+    expect(box.getAttribute('aria-activedescendant')).toBeNull();
+    // The options are the listbox's own children: nothing in between.
+    for (const option of within(list).getAllByRole('option')) {
+      expect(option.parentElement).toBe(list);
+      expect(option.tabIndex).toBe(-1);
+    }
+  });
+
+  it('moves the active option with the arrows and picks it with Enter', () => {
+    const { onChange } = renderCombo();
+    const box = open();
+
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    expect(activeText(box)).toBe('Aseo');
+
+    fireEvent.keyDown(box, { key: 'ArrowUp' });
+    expect(activeText(box)).toBe('Sin elegir');
+
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledWith('1');
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('forgets the active option when the search changes', () => {
+    renderCombo();
+    const box = open();
+
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    expect(box.getAttribute('aria-activedescendant')).not.toBeNull();
+    fireEvent.change(box, { target: { value: 'tra' } });
+    expect(box.getAttribute('aria-activedescendant')).toBeNull();
   });
 });

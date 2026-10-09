@@ -2,8 +2,8 @@ import { useId, type ReactNode } from 'react';
 
 import type { ReceiptCandidate } from '@/features/transactions/model/transaction-form';
 import { t } from '@/shared/lib/i18n';
+import { CreateOption, Option } from '@/shared/ui/atoms/option';
 import { TextButton } from '@/shared/ui/atoms/text-button';
-import { CreateOption, Option } from '@/shared/ui/organisms/combo';
 import { readablePath, type IndexEntry } from '@coco/receipt-parser';
 
 /** The step of picking which category the concept about to be created goes in. */

@@ -22,6 +22,25 @@ test.describe('the concept finder', () => {
 
     await results.getByRole('option', { name: /Mercado/ }).click();
     await expect(sheet.getByRole('button', { name: 'Concepto' })).toContainText('Mercado');
+
+    // The cascade's center is a combo: its search box is the combobox and the
+    // arrows walk the list without taking the caret out of it.
+    await sheet.getByRole('button', { name: 'Elegir por centro y categoría' }).click();
+    await sheet.getByRole('button', { name: 'Centro de costos' }).click();
+    const box = page.getByRole('combobox', { name: 'Centro de costos' });
+    await expect(box).toBeFocused();
+    await box.fill('fijos');
+    await expect(page.getByRole('listbox', { name: 'Centro de costos' })).toBeVisible();
+    await expectAccessible(page, 'the open cost-center combo');
+
+    // The empty row first, then the only match.
+    await box.press('ArrowDown');
+    await box.press('ArrowDown');
+    await expect(box).toHaveAttribute('aria-activedescendant', /.+/);
+    await box.press('Enter');
+    await expect(sheet.getByRole('button', { name: 'Centro de costos' })).toContainText(
+      'Costos fijos',
+    );
   });
 
   test('creates the concept that is missing, in the category chosen', async ({ page, entrar }) => {
