@@ -11,6 +11,13 @@
 //   · Physical names are snake_case plural through @@map / @map. They do not move.
 //   · The client is English; where the database kept a Spanish name, @map and
 //     @@map pair the two, and this file is the one place that does (ADR 0026).
+//   · Constraint and index names are English and use the MODEL names
+//     (7.2-r5): pk_<table>, fk_<table>_<column>, uq_<table>_<columns>,
+//     idx_<table>_<columns>, ck_<table>_<rule>. Every one is written in a
+//     `map:` here, so `migrate diff` against the database stays empty.
+//   · `updated_at` on every table whose rows change, written by @updatedAt.
+//     Not on `audit_log` (append-only) nor `import_rows` (staging). The
+//     columns added in 7.2-r5 are already timestamptz(3).
 //   · Money is ALWAYS Decimal @db.Decimal(15,2). Never Float. In TypeScript it
 //     is handled with Prisma.Decimal (.plus/.minus/.times), never with `number`:
 //     a JS `number` is IEEE-754 and piles up rounding error.
@@ -163,7 +170,7 @@ enum ImportSource {
 // authentication is our own, not delegated.
 
 model User {
-  id          BigInt     @id @default(autoincrement())
+  id          BigInt     @id(map: "pk_users") @default(autoincrement())
   uuid        String     @unique(map: "uq_users_uuid") @default(uuid()) @db.Char(36)
   email       String     @unique(map: "uq_users_email") @db.VarChar(255)
   /// Link to Supabase's `auth.users`, which is where the credentials live.
@@ -196,7 +203,7 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(3)
 
-  approvedBy    User?            @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull, map: "fk_users_approved_by")
+  approvedBy    User?            @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull, map: "fk_users_approved_by_id")
   approvedUsers User[]           @relation("ApprovedBy")
   auditEvents   AuditLog[]
   accounts      Account[]
@@ -234,7 +241,7 @@ model User {
 // is no user to attribute it to.
 
 model AuditLog {
-  id          BigInt   @id @default(autoincrement())
+  id          BigInt   @id(map: "pk_audit_logs") @default(autoincrement())
   userId      BigInt?  @map("user_id")
   entity      String   @db.VarChar(64)
   entityId    BigInt?  @map("entity_id")
@@ -244,11 +251,11 @@ model AuditLog {
   userAgent   String?  @map("user_agent") @db.VarChar(255)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(3)
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull, map: "fk_audit_user")
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull, map: "fk_audit_logs_user_id")
 
-  @@index([userId, createdAt], map: "idx_audit_user_created")
-  @@index([entity, entityId], map: "idx_audit_entity")
-  @@index([action, createdAt], map: "idx_audit_action_created")
+  @@index([userId, createdAt], map: "idx_audit_logs_user_id_created_at")
+  @@index([entity, entityId], map: "idx_audit_logs_entity_entity_id")
+  @@index([action, createdAt], map: "idx_audit_logs_action_created_at")
   @@map("audit_log")
 }
 
@@ -258,7 +265,7 @@ model AuditLog {
 // history are archived (is_archived), never deleted.
 
 model Account {
-  id             BigInt      @id @default(autoincrement())
+  id             BigInt      @id(map: "pk_accounts") @default(autoincrement())
   userId         BigInt      @map("user_id")
   name           String      @db.VarChar(255)
   type           AccountType @default(other)
@@ -273,11 +280,11 @@ model Account {
   createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamp(3)
   updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamp(3)
 
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_accounts_user")
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_accounts_user_id")
   transactions  Transaction[]
   importBatches ImportBatch[]
 
-  @@index([userId, isArchived], map: "idx_accounts_user_archived")
+  @@index([userId, isArchived], map: "idx_accounts_user_id_is_archived")
   @@map("accounts")
 }
 
@@ -314,8 +321,8 @@ enum Periodicity {
 /// query and every restore, and buys nothing: an endpoint that checks the
 /// session before handing it over is needed anyway.
 model Receipt {
-  id            BigInt   @id @default(autoincrement())
-  uuid          String   @unique(map: "uq_soportes_uuid") @default(uuid()) @db.Char(36)
+  id            BigInt   @id(map: "pk_receipts") @default(autoincrement())
+  uuid          String   @unique(map: "uq_receipts_uuid") @default(uuid()) @db.Char(36)
   /// DENORMALIZED from the transaction, on purpose.
   ///
   /// Access control is a `where` on this column, without going through a
@@ -333,24 +340,25 @@ model Receipt {
   /// The RELATIVE path inside the private store, written by the server:
   /// `<userId>/<uuid>.<ext>`. Opaque on purpose —it carries nothing that comes
   /// from the original name— so there is no way to step out of the store.
-  storageKey    String   @unique(map: "uq_soportes_storage_key") @map("storage_key") @db.VarChar(500)
+  storageKey    String   @unique(map: "uq_receipts_storage_key") @map("storage_key") @db.VarChar(500)
   sizeBytes     Int      @map("tamano")
   /// sha256 of the CONTENT. It is what makes the import idempotent: the same
   /// file twice is the same receipt, even if its name changes.
   contentHash   String   @map("huella") @db.Char(64)
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_soportes_user")
-  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_soportes_transaction")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_receipts_user_id")
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_receipts_transaction_id")
 
-  @@unique([transactionId, contentHash], map: "uq_soportes_tx_huella")
-  @@index([transactionId, position], map: "idx_soportes_tx_orden")
-  @@index([userId], map: "idx_soportes_user")
+  @@unique([transactionId, contentHash], map: "uq_receipts_transaction_id_content_hash")
+  @@index([transactionId, position], map: "idx_receipts_transaction_id_position")
+  @@index([userId], map: "idx_receipts_user_id")
   @@map("soportes")
 }
 
 model Category {
-  id         BigInt       @id @default(autoincrement())
+  id         BigInt       @id(map: "pk_categories") @default(autoincrement())
   userId     BigInt       @map("user_id")
   name       String       @db.VarChar(255)
   parentId   BigInt?      @map("parent_id")
@@ -360,6 +368,7 @@ model Category {
   sortOrder  Int          @default(0) @map("sort_order")
   isArchived Boolean      @default(false) @map("is_archived")
   createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt  DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   /// ── Recurrence ────────────────────────────────────────────────────────
   /// It lives on the CATEGORY and not on the transaction because what repeats
@@ -472,15 +481,15 @@ model Category {
   /// into «aquaoccidente» on the screen of whoever typed it.
   keywords String[] @default([]) @map("palabras_clave")
 
-  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_categories_user")
-  parent       Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull, map: "fk_categories_parent")
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_categories_user_id")
+  parent       Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull, map: "fk_categories_parent_id")
   children     Category[]         @relation("CategoryTree")
   transactions Transaction[]
   importRows   ImportRow[]
   rules        CategoryRule[]
   splits       TransactionSplit[]
 
-  @@index([userId, kind, parentId], map: "idx_categories_user_kind_parent")
+  @@index([userId, kind, parentId], map: "idx_categories_user_id_kind_parent_id")
   @@map("categories")
 }
 
@@ -493,15 +502,16 @@ model Category {
 // creates them on the fly while the user types, without asking.
 
 model Tag {
-  id     BigInt  @id @default(autoincrement())
-  userId BigInt  @map("user_id")
-  name   String  @db.VarChar(255)
-  color  String? @db.Char(7)
+  id        BigInt   @id(map: "pk_tags") @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  name      String   @db.VarChar(255)
+  color     String?  @db.Char(7)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_tags_user")
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_tags_user_id")
   transactions TransactionTag[]
 
-  @@unique([userId, name], map: "uq_tags_user_name")
+  @@unique([userId, name], map: "uq_tags_user_id_name")
   @@map("tags")
 }
 
@@ -519,7 +529,7 @@ model Tag {
 // they are added as new migrations, never by rewriting one already applied.
 
 model Transaction {
-  id              BigInt             @id @default(autoincrement())
+  id              BigInt             @id(map: "pk_transactions") @default(autoincrement())
   uuid            String             @unique(map: "uq_transactions_uuid") @default(uuid()) @db.Char(36)
   userId          BigInt             @map("user_id")
   /// OPTIONAL on purpose.
@@ -588,16 +598,16 @@ model Transaction {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(3)
 
-  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_tx_user")
-  account  Account?           @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_tx_account")
-  category Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_tx_category")
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_transactions_user_id")
+  account  Account?           @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_transactions_account_id")
+  category Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_transactions_category_id")
   splits   TransactionSplit[]
   tags     TransactionTag[]
   receipts Receipt[]
 
   /// SetNull and not Cascade: deleting an import's record cannot take with it
   /// transactions the person already took as good.
-  importBatch        ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull, map: "fk_tx_import_batch")
+  importBatch        ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull, map: "fk_transactions_import_batch_id")
   possibleDuplicates ImportRow[]  @relation("PossibleDuplicate")
 
   /// UNIQUE, not just indexed. `external_ref` is the fingerprint two paths use
@@ -605,13 +615,13 @@ model Transaction {
   /// `auto:<concept>:<month>`. Both check before inserting, and both can lose
   /// that race against another simultaneous request —two open tabs are
   /// enough—. Here it is not lost.
-  @@unique([userId, externalRef], map: "uq_tx_user_external_ref")
-  @@index([userId, importBatchId], map: "idx_tx_user_import_batch")
-  @@index([userId, date], map: "idx_tx_user_date")
-  @@index([userId, period], map: "idx_tx_user_period")
-  @@index([userId, categoryId], map: "idx_tx_user_category")
-  @@index([accountId, date], map: "idx_tx_account_date")
-  @@index([transferGroupId], map: "idx_tx_transfer_group")
+  @@unique([userId, externalRef], map: "uq_transactions_user_id_external_ref")
+  @@index([userId, importBatchId], map: "idx_transactions_user_id_import_batch_id")
+  @@index([userId, date], map: "idx_transactions_user_id_date")
+  @@index([userId, period], map: "idx_transactions_user_id_period")
+  @@index([userId, categoryId], map: "idx_transactions_user_id_category_id")
+  @@index([accountId, date], map: "idx_transactions_account_id_date")
+  @@index([transferGroupId], map: "idx_transactions_transfer_group_id")
   @@map("transactions")
 }
 
@@ -628,16 +638,17 @@ model Transaction {
 // splits, not the header's category_id.
 
 model TransactionSplit {
-  id            BigInt  @id @default(autoincrement())
-  transactionId BigInt  @map("transaction_id")
-  categoryId    BigInt? @map("category_id")
-  amount        Decimal @db.Decimal(15, 2)
-  note          String? @db.VarChar(255)
+  id            BigInt   @id(map: "pk_transaction_splits") @default(autoincrement())
+  transactionId BigInt   @map("transaction_id")
+  categoryId    BigInt?  @map("category_id")
+  amount        Decimal  @db.Decimal(15, 2)
+  note          String?  @db.VarChar(255)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_splits_tx")
-  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_splits_category")
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_transaction_splits_transaction_id")
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_transaction_splits_category_id")
 
-  @@index([transactionId], map: "idx_splits_transaction")
+  @@index([transactionId], map: "idx_transaction_splits_transaction_id")
   @@map("transaction_splits")
 }
 
@@ -647,14 +658,15 @@ model TransactionSplit {
 // transaction or the tag is deleted, the link goes away on its own.
 
 model TransactionTag {
-  transactionId BigInt @map("transaction_id")
-  tagId         BigInt @map("tag_id")
+  transactionId BigInt   @map("transaction_id")
+  tagId         BigInt   @map("tag_id")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_tt_tx")
-  tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade, map: "fk_tt_tag")
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_transaction_tags_transaction_id")
+  tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade, map: "fk_transaction_tags_tag_id")
 
-  @@id([transactionId, tagId])
-  @@index([tagId], map: "idx_tt_tag")
+  @@id([transactionId, tagId], map: "pk_transaction_tags")
+  @@index([tagId], map: "idx_transaction_tags_tag_id")
   @@map("transaction_tags")
 }
 
@@ -672,7 +684,7 @@ model TransactionTag {
 // by hand.
 
 model ImportBatch {
-  id          BigInt       @id @default(autoincrement())
+  id          BigInt       @id(map: "pk_import_batches") @default(autoincrement())
   uuid        String       @unique(map: "uq_import_batches_uuid") @default(uuid()) @db.Char(36)
   userId      BigInt       @map("user_id")
   /// Optional, for the same reason as in transactions: a statement can be
@@ -689,12 +701,12 @@ model ImportBatch {
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamp(3)
   updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamp(3)
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_import_batch_user")
-  account      Account?      @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_import_batch_account")
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_import_batches_user_id")
+  account      Account?      @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_import_batches_account_id")
   rows         ImportRow[]
   transactions Transaction[]
 
-  @@index([userId, status], map: "idx_import_batch_user_status")
+  @@index([userId, status], map: "idx_import_batches_user_id_status")
   @@map("import_batches")
 }
 
@@ -707,7 +719,7 @@ model ImportBatch {
 // here and converting later would already have lost cents.
 
 model ImportRow {
-  id            BigInt          @id @default(autoincrement())
+  id            BigInt          @id(map: "pk_import_rows") @default(autoincrement())
   batchId       BigInt          @map("batch_id")
   /// Order in the document. Reviewing out of order is disorienting.
   position      Int
@@ -726,11 +738,11 @@ model ImportRow {
   /// If a repeat is suspected, which existing transaction it looks like.
   duplicateOfId BigInt?         @map("duplicate_of_id")
 
-  batch       ImportBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade, map: "fk_import_row_batch")
-  category    Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_import_row_category")
-  duplicateOf Transaction? @relation("PossibleDuplicate", fields: [duplicateOfId], references: [id], onDelete: SetNull, map: "fk_import_row_duplicate")
+  batch       ImportBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade, map: "fk_import_rows_batch_id")
+  category    Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_import_rows_category_id")
+  duplicateOf Transaction? @relation("PossibleDuplicate", fields: [duplicateOfId], references: [id], onDelete: SetNull, map: "fk_import_rows_duplicate_of_id")
 
-  @@index([batchId, position], map: "idx_import_row_batch_position")
+  @@index([batchId, position], map: "idx_import_rows_batch_id_position")
   @@map("import_rows")
 }
 
@@ -746,7 +758,7 @@ model ImportRow {
 // history, which is the strongest signal and needs no lists to maintain.
 
 model CategoryRule {
-  id         BigInt   @id @default(autoincrement())
+  id         BigInt   @id(map: "pk_category_rules") @default(autoincrement())
   userId     BigInt   @map("user_id")
   /// Fragment to look for in the description, already lowercase and without
   /// accents.
@@ -758,12 +770,13 @@ model CategoryRule {
   /// How many times it got it right. Goes up when the suggestion is accepted.
   hits       Int      @default(0)
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_rule_user")
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "fk_rule_category")
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_category_rules_user_id")
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "fk_category_rules_category_id")
 
-  @@unique([userId, pattern], map: "uq_rule_user_pattern")
-  @@index([userId, priority], map: "idx_rule_user_priority")
+  @@unique([userId, pattern], map: "uq_category_rules_user_id_pattern")
+  @@index([userId, priority], map: "idx_category_rules_user_id_priority")
   @@map("category_rules")
 }
 
@@ -775,13 +788,14 @@ model CategoryRule {
 // `Json` is `jsonb` in Postgres.
 
 model UserPreference {
-  id        BigInt @id @default(autoincrement())
-  userId    BigInt @map("user_id")
-  prefKey   String @map("pref_key") @db.VarChar(64)
-  prefValue Json   @map("pref_value")
+  id        BigInt   @id(map: "pk_user_preferences") @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  prefKey   String   @map("pref_key") @db.VarChar(64)
+  prefValue Json     @map("pref_value")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_pref_user")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_user_preferences_user_id")
 
-  @@unique([userId, prefKey], map: "uq_pref_user_key")
+  @@unique([userId, prefKey], map: "uq_user_preferences_user_id_pref_key")
   @@map("user_preferences")
 }

@@ -1,6 +1,9 @@
 import request from 'supertest';
 
 import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
+import { checkViolationMessage } from '../src/common/filters/check-constraints';
+
+const GENERIC_MESSAGE = 'Los datos no cumplen una regla de la base de datos.';
 
 /**
  * Phase 6.3: the CHECK constraints on a concept's recurrence.
@@ -62,6 +65,32 @@ describe('Recurrence CHECK constraints (e2e)', () => {
     await expect(
       env.prisma.$executeRawUnsafe(`UPDATE "categories" SET ${assignment} WHERE "id" = $1`, id),
     ).rejects.toThrow(constraint);
+  });
+
+  it('has a sentence of its own for every CHECK the database has', async () => {
+    // Read from the catalog, not from a list: a CHECK added or renamed in a
+    // migration without its sentence in check-constraints.ts fails here.
+    const rows = await env.prisma.$queryRaw<{ conname: string }[]>`
+      SELECT conname FROM pg_constraint
+      WHERE contype = 'c' AND connamespace = 'public'::regnamespace
+      ORDER BY conname`;
+
+    expect(rows.length).toBeGreaterThan(0);
+    for (const { conname } of rows) {
+      expect([
+        conname,
+        checkViolationMessage(`violates check constraint "${conname}"`),
+      ]).not.toEqual([conname, GENERIC_MESSAGE]);
+    }
+  });
+
+  it('turns the real error of a direct write into its sentence', async () => {
+    const id = await validConcept();
+    const error = await env.prisma
+      .$executeRawUnsafe(`UPDATE "categories" SET "dia_de_pago" = 32 WHERE "id" = $1`, id)
+      .catch((caught: unknown) => caught);
+
+    expect(checkViolationMessage(String(error))).toBe('El día de pago va del 1 al 31.');
   });
 
   it('accepts every coherent combination the app writes', async () => {
