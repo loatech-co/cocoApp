@@ -1,7 +1,0 @@
-{
-  "src/shared/api/flags-engine.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 2
-    }
-  }
-}

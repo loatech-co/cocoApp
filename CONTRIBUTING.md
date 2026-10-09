@@ -170,7 +170,8 @@ is recorded, and only that passes:
   `naming-convention` (booleans without a prefix, mostly). After a rename,
   `npx eslint . --prune-suppressions` from the workspace (in `api/`,
   `eslint "{src,test}/**/*.ts" --prune-suppressions`). Never
-  `--suppress-rule` again: a new name is fixed, not suppressed.
+  `--suppress-rule` again: a new name is fixed, not suppressed. The web's
+  emptied and was deleted in 7.2-p.
 
 Each 7.2 slice empties its folder in both, and they are deleted when they are
 empty.
