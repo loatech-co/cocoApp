@@ -45,3 +45,15 @@ display name — stays in Spanish.
   App IDs per week the first time it is signed.
 - Once the app is on a phone, this freedom is gone: changing any of these
   names needs a migration or breaks the person's automations.
+
+## Update (step 7.2-r2)
+
+The second exception is gone: the bridge names moved to English on both
+sides in one PR, for the same reason (no app installed, no old client).
+Handlers `cocoSession` and `cocoEvents`; the message field is `type`
+(`requestSession`; events `signOut`, `sessionClosed`, `noSession`,
+`openCapture`); `window.__coco` has `navigate`, `openSearch`,
+`receiveSession`, `sessionClosed` and the notices `captured` and
+`foreground` (`AppNotices`). Each side's tests read the other side
+(`ContractsTests.testBridgeNamesMatchTheWeb`, `bridge.contract.test.ts`),
+and `WebBridgeSmokeTests` loads the built web in a real `WKWebView`.
