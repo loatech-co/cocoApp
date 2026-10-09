@@ -1,26 +1,31 @@
 #!/usr/bin/env node
 //
-// Deja la base LOCAL con datos con los que se pueda trabajar.
+// Leaves the LOCAL database with data worth working with.
 //
-// ── Por qué hace falta ───────────────────────────────────────────────────────
-// Hasta ahora `api/.env` apuntaba a Supabase, así que «tener datos» en
-// desarrollo salía gratis: eran los de verdad. Al separar los dos entornos esa
-// comodidad desaparece, y una base vacía no sirve para probar nada —ni los
-// pagos pendientes, ni el presupuesto, ni la dona—.
+// ── Why it is needed ─────────────────────────────────────────────────────────
+// `api/.env` used to point at Supabase, so "having data" in development came
+// for free: it was the real data. Separating the two environments took that
+// away, and an empty database is no good for testing anything —not the
+// pending payments, not the budget, not the donut—.
 //
-// ── Es IDEMPOTENTE ───────────────────────────────────────────────────────────
-// Se puede correr las veces que haga falta: busca por nombre antes de crear y
-// no duplica. Eso importa porque va a correrse después de cada `migrate reset`,
-// y un script de siembra que al repetirse deja dos «Mercado» obliga a limpiar a
-// mano justo cuando uno quería empezar limpio.
+// ── It is IDEMPOTENT ─────────────────────────────────────────────────────────
+// It can run as many times as needed: it looks up by name before creating and
+// does not duplicate. That matters because it runs after every
+// `migrate reset`, and a seed script that leaves two «Mercado» on a rerun
+// forces a manual cleanup right when one wanted to start clean.
 //
-// ── Y se niega a salir de esta máquina ───────────────────────────────────────
-// Siembra escribe. Apuntado a una base remota por un `.env` heredado, metería
-// categorías inventadas en los datos de alguien. La comprobación es la misma
-// que la del arranque de la API, y por el mismo motivo.
+// ── And it refuses to leave this machine ─────────────────────────────────────
+// Seeding writes. Pointed at a remote database by an inherited `.env`, it
+// would put made-up categories into somebody's data. The check is the same as
+// the one the API runs on start, and for the same reason.
+//
+// The names it writes (categories, the «Mercado» concept, the descriptions)
+// are user data, so they stay in Spanish, like the template the sign-up
+// seeds. The `siembra:` prefix of `externalRef` is the key a rerun recognises
+// its own rows by, so it stays too.
 import { createPrisma } from './db/prisma-client.mjs';
 
-const HOSTS_LOCALES = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0']);
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0']);
 
 const url = process.env.DATABASE_URL ?? '';
 const host = (() => {
@@ -31,134 +36,132 @@ const host = (() => {
   }
 })();
 
-if (!HOSTS_LOCALES.has(host)) {
+if (!LOCAL_HOSTS.has(host)) {
   console.error(
-    `Esto siembra datos, y DATABASE_URL apunta a «${host || '(ilegible)'}», que no es tu máquina.\n` +
-      `Corré el script con el entorno local:\n\n  npm run seed:local\n`,
+    `This seeds data, and DATABASE_URL points at "${host || '(unreadable)'}", which is not your machine.\n` +
+      `Run the script with the local environment:\n\n  npm run seed:local\n`,
   );
   process.exit(1);
 }
 
 const prisma = createPrisma();
 
-/** Busca por nombre dentro de un padre, y lo crea si no está. */
-async function asegurar(userId, parentId, name, datos = {}) {
-  const existente = await prisma.category.findFirst({ where: { userId, parentId, name } });
-  if (existente) {
-    // Si ya está pero le falta lo que esto viene a poner, se completa. Correr
-    // la siembra sobre una base a medias tiene que dejarla entera.
-    const faltantes = Object.fromEntries(
-      Object.entries(datos).filter(([k, v]) => String(existente[k] ?? '') !== String(v ?? '')),
+/** Looks a category up by name under a parent, and creates it if it is not there. */
+async function ensure(userId, parentId, name, data = {}) {
+  const existing = await prisma.category.findFirst({ where: { userId, parentId, name } });
+  if (existing) {
+    // If it is there but lacks what this comes to set, it is completed.
+    // Seeding a half-made database has to leave it whole.
+    const missing = Object.fromEntries(
+      Object.entries(data).filter(([k, v]) => String(existing[k] ?? '') !== String(v ?? '')),
     );
-    if (Object.keys(faltantes).length === 0) return { fila: existente, nuevo: false };
+    if (Object.keys(missing).length === 0) return { row: existing, created: false };
     return {
-      fila: await prisma.category.update({ where: { id: existente.id }, data: faltantes }),
-      nuevo: false,
-      ajustado: Object.keys(faltantes),
+      row: await prisma.category.update({ where: { id: existing.id }, data: missing }),
+      created: false,
+      adjusted: Object.keys(missing),
     };
   }
   return {
-    fila: await prisma.category.create({ data: { userId, parentId, name, ...datos } }),
-    nuevo: true,
+    row: await prisma.category.create({ data: { userId, parentId, name, ...data } }),
+    created: true,
   };
 }
 
-const usuario = await prisma.user.findFirst({ orderBy: { id: 'asc' } });
-if (!usuario) {
+const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } });
+if (!user) {
   console.error(
-    'No hay ningún usuario en la base local.\n\n' +
-      'Registrate una vez desde la aplicación: el registro siembra solo la\n' +
-      'plantilla de centros de costos. Después volvé a correr esto.',
+    'There is no user in the local database.\n\n' +
+      'Sign up once from the app: the sign-up seeds the cost-center template\n' +
+      'by itself. Then run this again.',
   );
   process.exit(1);
 }
-const userId = usuario.id;
-const hechos = [];
+const userId = user.id;
+const done = [];
 
-// ── La plantilla, por si la base nació antes que ella ───────────────────────
-const fijos = await asegurar(userId, null, 'Costos fijos', { estatico: true });
-const variables = await asegurar(userId, null, 'Costos variables', { estatico: false });
-for (const [padre, hijos] of [
-  [fijos, ['Educación', 'Vivienda', 'Familia', 'Salud y vida', 'Servicios públicos', 'Vehículos']],
-  [variables, ['Licencias']],
+// ── The template, in case the database is older than it ─────────────────────
+const fixed = await ensure(userId, null, 'Costos fijos', { isStatic: true });
+const variable = await ensure(userId, null, 'Costos variables', { isStatic: false });
+for (const [parent, children] of [
+  [fixed, ['Educación', 'Vivienda', 'Familia', 'Salud y vida', 'Servicios públicos', 'Vehículos']],
+  [variable, ['Licencias']],
 ]) {
-  for (const nombre of hijos) {
-    const r = await asegurar(userId, padre.fila.id, nombre);
-    if (r.nuevo) hechos.push(`categoría «${nombre}»`);
+  for (const name of children) {
+    const result = await ensure(userId, parent.row.id, name);
+    if (result.created) done.push(`category "${name}"`);
   }
 }
 
-// ── Un concepto recurrente CON presupuesto ──────────────────────────────────
-// Mercado y no otro: es el caso que de verdad distingue el presupuesto del
-// promedio. Un alquiler vale lo mismo todos los meses, así que promediarlo
-// acierta por accidente; el mercado se paga en varias idas de valor distinto,
-// y ahí el promedio de los tres meses anteriores no dice nada útil.
-const alimentacion = await asegurar(userId, variables.fila.id, 'Alimentación', {
+// ── A recurring concept WITH a budget ───────────────────────────────────────
+// Groceries and nothing else: it is the case that really tells the budget
+// from the average. Rent is the same every month, so averaging it is right by
+// accident; groceries are paid in several trips of different amounts, and
+// there the average of the three previous months says nothing useful.
+const food = await ensure(userId, variable.row.id, 'Alimentación', {
   icon: 'utensils',
 });
-if (alimentacion.nuevo) hechos.push('categoría «Alimentación»');
+if (food.created) done.push('category "Alimentación"');
 
-const mercado = await asegurar(userId, alimentacion.fila.id, 'Mercado', {
-  recurrente: true,
-  periodicidad: 'mensual',
-  diaDePago: 1,
-  presupuesto: '1200000',
-  // Marcado, que es lo que lo hace útil para probar: con las dos idas de
-  // abajo queda pagado en parte, que es el estado donde se ve si las cifras
-  // del mes cuadran.
-  variosPagos: true,
+const groceries = await ensure(userId, food.row.id, 'Mercado', {
+  isRecurring: true,
+  periodicity: 'monthly',
+  paymentDay: 1,
+  budget: '1200000',
+  // Set, which is what makes it useful for testing: with the two trips below
+  // it is partly paid, the state where you see whether the month's figures add
+  // up.
+  isMultiPayment: true,
   icon: 'shopping-cart',
 });
-if (mercado.nuevo) hechos.push('concepto «Mercado» con presupuesto');
-else if (mercado.ajustado) hechos.push(`«Mercado» completado: ${mercado.ajustado.join(', ')}`);
+if (groceries.created) done.push('concept "Mercado" with a budget');
+else if (groceries.adjusted) done.push(`"Mercado" completed: ${groceries.adjusted.join(', ')}`);
 
-// ── Dos idas al mercado este mes ────────────────────────────────────────────
-// Para que el concepto no esté solo presente sino VIVO: pagado en parte, que
-// es el estado en el que de verdad se ve si las cifras del mes cuadran.
+// ── Two grocery trips this month ────────────────────────────────────────────
+// So the concept is not just present but ALIVE: partly paid, which is the
+// state where you really see whether the month's figures add up.
 //
-// `external_ref` lleva la marca `siembra:` por la misma razón que existe para
-// los cobros automáticos: es la llave con la que esto se reconoce a sí mismo al
-// repetirse, y de paso deja dicho en la fila que el dato no lo escribió nadie.
-const primeroDelMes = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1));
-const idas = [
-  { dia: 3, monto: '320450', donde: 'Supermercado (siembra)' },
-  { dia: 14, monto: '287900', donde: 'Supermercado (siembra)' },
+// `external_ref` carries the `siembra:` mark for the same reason it exists for
+// automatic charges: it is the key this recognises itself by on a rerun, and
+// it also says on the row that nobody typed that data.
+const firstOfMonth = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1));
+const trips = [
+  { day: 3, amount: '320450', where: 'Supermercado (siembra)' },
+  { day: 14, amount: '287900', where: 'Supermercado (siembra)' },
 ];
-for (const { dia, monto, donde } of idas) {
-  const ref = `siembra:mercado:${primeroDelMes.toISOString().slice(0, 7)}:${dia}`;
-  const ya = await prisma.transaction.findFirst({ where: { userId, externalRef: ref } });
-  if (ya) continue;
-  const fecha = new Date(primeroDelMes);
-  fecha.setUTCDate(dia);
+for (const { day, amount, where } of trips) {
+  const ref = `siembra:mercado:${firstOfMonth.toISOString().slice(0, 7)}:${day}`;
+  const already = await prisma.transaction.findFirst({ where: { userId, externalRef: ref } });
+  if (already) continue;
+  const date = new Date(firstOfMonth);
+  date.setUTCDate(day);
   await prisma.transaction.create({
     data: {
       userId,
-      categoryId: mercado.fila.id,
-      date: fecha,
-      period: primeroDelMes,
-      amount: monto,
+      categoryId: groceries.row.id,
+      date,
+      period: firstOfMonth,
+      amount,
       type: 'expense',
       status: 'cleared',
-      description: donde,
+      description: where,
       externalRef: ref,
     },
   });
-  hechos.push(`movimiento de Mercado del día ${dia}`);
+  done.push(`"Mercado" transaction on day ${day}`);
 }
 
-const conteo = {
-  usuarios: await prisma.user.count(),
-  'centros de costos': await prisma.category.count({ where: { parentId: null } }),
-  'conceptos recurrentes': await prisma.category.count({ where: { recurrente: true } }),
-  'con presupuesto': await prisma.category.count({ where: { presupuesto: { not: null } } }),
-  movimientos: await prisma.transaction.count(),
+const totals = {
+  users: await prisma.user.count(),
+  'cost centers': await prisma.category.count({ where: { parentId: null } }),
+  'recurring concepts': await prisma.category.count({ where: { isRecurring: true } }),
+  'with a budget': await prisma.category.count({ where: { budget: { not: null } } }),
+  transactions: await prisma.transaction.count(),
 };
 
-console.log(
-  hechos.length ? `Sembrado:\n  · ${hechos.join('\n  · ')}` : 'Ya estaba todo. Nada que hacer.',
-);
-console.log(`\nLa base local queda así:`);
-for (const [que, cuantos] of Object.entries(conteo))
-  console.log(`  ${String(cuantos).padStart(5)}  ${que}`);
+console.log(done.length ? `Seeded:\n  · ${done.join('\n  · ')}` : 'Everything was there. Nothing to do.');
+console.log(`\nThe local database now has:`);
+for (const [label, count] of Object.entries(totals))
+  console.log(`  ${String(count).padStart(5)}  ${label}`);
 
 await prisma.$disconnect();

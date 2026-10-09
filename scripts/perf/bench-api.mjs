@@ -87,12 +87,12 @@ export async function startBenchApi({ port = 0 } = {}) {
   installBigIntSerializer();
   const builder = Test.createTestingModule({ imports: [AppModule] });
   builder.overrideProvider(SupabaseAuthService).useValue({
-    verificarAccessToken: (token) =>
+    verifyAccessToken: (token) =>
       token === ACCESS_TOKEN
         ? Promise.resolve({ authId, email: 'bench@local', iatMs: Date.now() })
         : Promise.reject(new Error('bench: unknown token')),
-    refrescar: (token) => Promise.resolve(token === REFRESH_TOKEN ? session() : null),
-    cerrarSesion: () => Promise.resolve(),
+    refresh: (token) => Promise.resolve(token === REFRESH_TOKEN ? session() : null),
+    signOut: () => Promise.resolve(),
   });
   builder.overrideProvider(ThrottlerStorage).useValue({
     increment: () =>

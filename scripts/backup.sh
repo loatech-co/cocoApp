@@ -1,142 +1,145 @@
 #!/usr/bin/env bash
 #
-# Respaldo COMPLETO de producción, cifrado, fuera del portátil y probado.
+# FULL backup of production, encrypted, off the laptop and tested.
 #
-# ── Qué lleva ────────────────────────────────────────────────────────────────
-#   - el esquema `public`: esquema y datos, la aplicación entera;
-#   - el esquema `auth` de Supabase: usuarios, identidades y sesiones. Sin él,
-#     restaurar `public` devuelve los datos de unas cuentas con las que nadie
-#     puede entrar;
-#   - el bucket privado `soportes`, objeto por objeto, cada uno verificado por
-#     sha256 contra `soportes.huella`;
-#   - un manifiesto con las filas de cada tabla, contadas en la MISMA foto de
-#     la base que el volcado (scripts/backup/extract.mjs explica por qué).
+# ── What it holds ────────────────────────────────────────────────────────────
+#   - the `public` schema: schema and data, the whole application;
+#   - Supabase's `auth` schema: users, identities and sessions. Without it,
+#     restoring `public` brings back the data of accounts nobody can sign in
+#     to;
+#   - the private `soportes` bucket, object by object, each one checked by
+#     sha256 against `soportes.huella`;
+#   - a manifest with the rows of each table, counted in the SAME snapshot of
+#     the database as the dump (scripts/backup/extract.mjs explains why).
 #
-# ── Por qué el plan gratuito no alcanza ──────────────────────────────────────
-# Supabase gratis guarda respaldos poco tiempo, sin recuperación a un punto en
-# el tiempo, y no respalda el bucket. Un respaldo propio, en un disco que
-# controlás vos, es lo único que sobrevive a que alguien borre el proyecto por
-# error o a que la cuenta se suspenda.
+# ── Why the free plan is not enough ──────────────────────────────────────────
+# Free Supabase keeps backups for a short time, without point-in-time
+# recovery, and does not back up the bucket. A backup of our own, on a disk
+# we control, is the only thing that survives someone deleting the project by
+# mistake or the account being suspended.
 #
-# ── Solo lectura ─────────────────────────────────────────────────────────────
-# Lee producción con api/.env.supabase dentro de una transacción READ ONLY y
-# baja el bucket con GET. No escribe nada allá.
+# ── Read-only ────────────────────────────────────────────────────────────────
+# It reads production with api/.env.supabase inside a READ ONLY transaction
+# and downloads the bucket with GET. It writes nothing there.
 #
-# ── Cifrado ──────────────────────────────────────────────────────────────────
-# Con age (https://age-encryption.org), a la clave PÚBLICA de
-# ~/.config/coco/respaldo.pub (o $COCO_BACKUP_RECIPIENT). Para cifrar no hace
-# falta la privada; para restaurar, sí. Dónde la guarda el dueño:
-# docs/runbook.md, «Backups and restore».
+# ── Encryption ───────────────────────────────────────────────────────────────
+# With age (https://age-encryption.org), to the PUBLIC key in
+# ~/.config/coco/respaldo.pub (or $COCO_BACKUP_RECIPIENT). Encrypting does not
+# need the private key; restoring does. Where the owner keeps it:
+# docs/runbook.md, "Backups and restore".
 #
-# ── Dónde queda ──────────────────────────────────────────────────────────────
-# $COCO_DATA_DIR/respaldos/coco-<fecha>.tar.age (por defecto
-# ~/Documents/VS Code/Personal/coco-datos/respaldos). Documents está bajo
-# iCloud Drive: ese es el «fuera del portátil». Lo que se sube es SOLO el
-# archivo cifrado; la copia en claro se arma en una carpeta temporal privada
-# y se borra al terminar.
+# ── Where it ends up ─────────────────────────────────────────────────────────
+# $COCO_DATA_DIR/respaldos/coco-<date>.tar.age (by default
+# ~/Documents/VS Code/Personal/coco-datos/respaldos). Documents is under
+# iCloud Drive: that is the "off the laptop". Only the encrypted file is
+# uploaded; the plain copy is assembled in a private temporary folder and
+# deleted at the end. (The folder and key names on disk stay in Spanish: they
+# hold every backup made so far.)
 #
-# ── Probado o no es un respaldo ──────────────────────────────────────────────
-# Al final restaura el archivo cifrado en una base local desechable con
-# scripts/restore.sh, y compara las filas de cada tabla con el manifiesto.
+# ── Tested or it is not a backup ─────────────────────────────────────────────
+# At the end it restores the encrypted file into a throwaway local database
+# with scripts/restore.sh, and compares the rows of each table with the
+# manifest.
 #
-# Uso: npm run backup [-- <carpeta de destino>]
+# Usage: npm run backup [-- <target folder>]
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Documents/VS Code/Personal/coco-datos}"
-DESTINO="${1:-$COCO_DATA_DIR/respaldos}"
+TARGET="${1:-$COCO_DATA_DIR/respaldos}"
 ENV_FILE="${COCO_ENV_FILE:-api/.env.supabase}"
-CLAVES="${COCO_KEYS_DIR:-$HOME/.config/coco}"
-CLAVE_PRIVADA="${COCO_BACKUP_KEY:-$CLAVES/respaldo.key}"
+KEYS="${COCO_KEYS_DIR:-$HOME/.config/coco}"
+PRIVATE_KEY="${COCO_BACKUP_KEY:-$KEYS/respaldo.key}"
 
 export PATH="/opt/homebrew/opt/postgresql@17/bin:/opt/homebrew/opt/libpq/bin:$PATH"
 
-falta() {
-  echo "Falta $1. $2" >&2
+missing() {
+  echo "Missing $1. $2" >&2
   exit 1
 }
-command -v pg_dump >/dev/null || falta pg_dump "Instalalo con: brew install postgresql@17"
-command -v age >/dev/null || falta age "Instalalo con: brew install age"
-[ -f "$ENV_FILE" ] || falta "$ENV_FILE" "Es el que trae las credenciales de producción."
+command -v pg_dump >/dev/null || missing pg_dump "Install it with: brew install postgresql@17"
+command -v age >/dev/null || missing age "Install it with: brew install age"
+[ -f "$ENV_FILE" ] || missing "$ENV_FILE" "It is the one that holds the production credentials."
 
-# ── El destinatario del cifrado ──────────────────────────────────────────────
+# ── The encryption recipient ─────────────────────────────────────────────────
 if [ -n "${COCO_BACKUP_RECIPIENT:-}" ]; then
-  DESTINATARIO="$COCO_BACKUP_RECIPIENT"
-elif [ -f "$CLAVES/respaldo.pub" ]; then
-  DESTINATARIO="$(cat "$CLAVES/respaldo.pub")"
-elif [ -f "$CLAVE_PRIVADA" ]; then
-  DESTINATARIO="$(age-keygen -y "$CLAVE_PRIVADA")"
+  RECIPIENT="$COCO_BACKUP_RECIPIENT"
+elif [ -f "$KEYS/respaldo.pub" ]; then
+  RECIPIENT="$(cat "$KEYS/respaldo.pub")"
+elif [ -f "$PRIVATE_KEY" ]; then
+  RECIPIENT="$(age-keygen -y "$PRIVATE_KEY")"
 else
-  falta "la clave de cifrado" "Creala con:
-  mkdir -p \"$CLAVES\" && chmod 700 \"$CLAVES\"
-  age-keygen -o \"$CLAVE_PRIVADA\" && chmod 600 \"$CLAVE_PRIVADA\"
-  age-keygen -y \"$CLAVE_PRIVADA\" > \"$CLAVES/respaldo.pub\"
-y guardá una copia de la privada donde dice docs/runbook.md."
+  missing "the encryption key" "Create it with:
+  mkdir -p \"$KEYS\" && chmod 700 \"$KEYS\"
+  age-keygen -o \"$PRIVATE_KEY\" && chmod 600 \"$PRIVATE_KEY\"
+  age-keygen -y \"$PRIVATE_KEY\" > \"$KEYS/respaldo.pub\"
+and keep a copy of the private key where docs/runbook.md says."
 fi
 
-mkdir -p "$DESTINO"
-FECHA=$(date +%Y%m%d-%H%M%S)
-NOMBRE="coco-$FECHA"
-ARCHIVO="$DESTINO/$NOMBRE.tar.age"
+mkdir -p "$TARGET"
+STAMP=$(date +%Y%m%d-%H%M%S)
+NAME="coco-$STAMP"
+ARCHIVE="$TARGET/$NAME.tar.age"
 
-# La copia en claro, en una carpeta temporal solo nuestra (nunca en iCloud).
-TEMPORAL="$(mktemp -d "${TMPDIR:-/tmp}/coco-respaldo.XXXXXX")"
-chmod 700 "$TEMPORAL"
-limpiar() {
-  local estado=$?
-  rm -rf "$TEMPORAL"
-  rm -f "$ARCHIVO.parcial"
-  exit "$estado"
+# The plain copy, in a temporary folder of our own (never in iCloud).
+WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/coco-backup.XXXXXX")"
+chmod 700 "$WORKDIR"
+cleanup() {
+  local status=$?
+  rm -rf "$WORKDIR"
+  rm -f "$ARCHIVE.partial"
+  exit "$status"
 }
-trap limpiar EXIT
-EN_CLARO="$TEMPORAL/$NOMBRE"
+trap cleanup EXIT
+PLAIN="$WORKDIR/$NAME"
 
-INICIO=$SECONDS
-echo "▸ Extrayendo producción (solo lectura)…"
-npx dotenv -e "$ENV_FILE" -- node scripts/backup/extract.mjs --out "$EN_CLARO"
+START=$SECONDS
+echo "▸ Extracting production (read-only)…"
+npx dotenv -e "$ENV_FILE" -- node scripts/backup/extract.mjs --out "$PLAIN"
 
-echo "▸ Cifrando con age…"
-tar -C "$TEMPORAL" -cf - "$NOMBRE" | age -r "$DESTINATARIO" -o "$ARCHIVO.parcial"
-chmod 600 "$ARCHIVO.parcial"
-mv "$ARCHIVO.parcial" "$ARCHIVO"
-echo "   $ARCHIVO ($(du -h "$ARCHIVO" | cut -f1))"
+echo "▸ Encrypting with age…"
+tar -C "$WORKDIR" -cf - "$NAME" | age -r "$RECIPIENT" -o "$ARCHIVE.partial"
+chmod 600 "$ARCHIVE.partial"
+mv "$ARCHIVE.partial" "$ARCHIVE"
+echo "   $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1))"
 
-echo "▸ Probando la restauración…"
-if [ -f "$CLAVE_PRIVADA" ]; then
-  # Prueba lo que de verdad quedó guardado: el archivo cifrado.
-  bash scripts/restore.sh "$ARCHIVO"
+echo "▸ Testing the restore…"
+if [ -f "$PRIVATE_KEY" ]; then
+  # Tests what was really stored: the encrypted file.
+  bash scripts/restore.sh "$ARCHIVE"
 else
-  # Sin la privada en este equipo no se puede descifrar. Se prueba la copia
-  # en claro, y se avisa: que el cifrado se abra queda sin demostrar.
-  bash scripts/restore.sh "$EN_CLARO"
-  echo "⚠️  La clave privada no está en $CLAVE_PRIVADA: se probó la copia en claro, no el archivo cifrado." >&2
+  # Without the private key on this machine it cannot be decrypted. The
+  # plain copy is tested instead, with a warning: that the encryption opens
+  # is left unproven.
+  bash scripts/restore.sh "$PLAIN"
+  echo "⚠️  The private key is not at $PRIVATE_KEY: the plain copy was tested, not the encrypted file." >&2
 fi
 
-# ── ¿Está fuera del portátil? ────────────────────────────────────────────────
-# Documents se sincroniza con iCloud Drive si la carpeta pertenece al
-# proveedor de archivos de iCloud. Se avisa, no se falla: la subida es
-# asíncrona y puede tardar.
-en_icloud() {
-  local carpeta
-  carpeta="$(cd "$1" && pwd -P)"
-  while [ "$carpeta" != "/" ]; do
-    if xattr -p com.apple.file-provider-domain-id "$carpeta" 2>/dev/null | grep -q CloudDocs; then
+# ── Is it off the laptop? ────────────────────────────────────────────────────
+# Documents syncs with iCloud Drive if the folder belongs to the iCloud file
+# provider. It warns, it does not fail: the upload is asynchronous and may
+# take a while.
+in_icloud() {
+  local folder
+  folder="$(cd "$1" && pwd -P)"
+  while [ "$folder" != "/" ]; do
+    if xattr -p com.apple.file-provider-domain-id "$folder" 2>/dev/null | grep -q CloudDocs; then
       return 0
     fi
-    carpeta="$(dirname "$carpeta")"
+    folder="$(dirname "$folder")"
   done
   return 1
 }
-if en_icloud "$DESTINO"; then
-  echo "   destino bajo iCloud Drive: se sube solo"
+if in_icloud "$TARGET"; then
+  echo "   target under iCloud Drive: it uploads by itself"
 else
-  echo "⚠️  $DESTINO NO está bajo iCloud Drive: el respaldo sigue solo en este equipo." >&2
+  echo "⚠️  $TARGET is NOT under iCloud Drive: the backup is only on this machine." >&2
 fi
 
 echo ""
-echo "Respaldo completo y probado: $ARCHIVO ($((SECONDS - INICIO)) s)"
+echo "Backup complete and tested: $ARCHIVE ($((SECONDS - START)) s)"
 
 # No backup is deleted here. The retention policy is a proposal awaiting the
 # owner (docs/runbook.md, "Backups and restore").
-echo "   ($(find "$DESTINO" -maxdepth 1 -name 'coco-*' -type f | wc -l | tr -d ' ') backups in $DESTINO)"
+echo "   ($(find "$TARGET" -maxdepth 1 -name 'coco-*' -type f | wc -l | tr -d ' ') backups in $TARGET)"

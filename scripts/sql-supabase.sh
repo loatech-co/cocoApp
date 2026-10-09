@@ -1,53 +1,53 @@
 #!/usr/bin/env bash
 #
-# Ejecuta SQL contra el Postgres de Supabase.
+# Runs SQL against Supabase's Postgres.
 #
-# ── Por qué por la Management API y no por conexión directa ──────────────────
-# Porque no necesita la contraseña de la base. Es el mismo endpoint que usa el
-# editor SQL del dashboard: se autentica con el Personal Access Token, que ya
-# está en .env.migrate. La contraseña de Postgres sigue haciendo falta para lo
-# que conecta por cable —Prisma y la API— pero no para inspeccionar ni corregir
-# desde acá.
+# ── Why through the Management API and not a direct connection ───────────────
+# Because it does not need the database password. It is the same endpoint the
+# dashboard's SQL editor uses: it authenticates with the Personal Access
+# Token, which is already in .env.migrate. The Postgres password is still
+# needed for what connects over the wire —Prisma and the API— but not to
+# inspect or fix things from here.
 #
-# El token NO se pasa por la línea de comandos: lo inyecta `dotenv` en el
-# entorno y lo expande el propio proceso, porque los argumentos son visibles
-# en `ps` para cualquier otro proceso de la máquina.
+# The token is NOT passed on the command line: `dotenv` injects it into the
+# environment and the process itself expands it, because arguments are
+# visible in `ps` to any other process on the machine.
 set -euo pipefail
 
-PROYECTO="${SUPABASE_PROJECT_REF:-yocafgrrbtmldygjxkva}"
+PROJECT="${SUPABASE_PROJECT_REF:-yocafgrrbtmldygjxkva}"
 
 SQL="${1:-}"
 if [ -z "$SQL" ]; then
-  echo 'Uso: npm run sql:supabase -- "SELECT ..."' >&2
+  echo 'Usage: npm run sql:supabase -- "SELECT ..."' >&2
   exit 1
 fi
 
 if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
-  echo "Falta SUPABASE_ACCESS_TOKEN. Corré esto con: npm run sql:supabase -- \"...\"" >&2
+  echo "SUPABASE_ACCESS_TOKEN is missing. Run this with: npm run sql:supabase -- \"...\"" >&2
   exit 1
 fi
 
-# jq arma el JSON: el SQL puede traer comillas, saltos de línea y barras, y
-# construir el cuerpo a mano los rompería.
-CUERPO=$(jq -n --arg q "$SQL" '{query: $q}')
+# jq builds the JSON: the SQL may carry quotes, line breaks and backslashes,
+# and building the body by hand would break them.
+BODY=$(jq -n --arg q "$SQL" '{query: $q}')
 
-RESPUESTA=$(curl -s -X POST \
-  "https://api.supabase.com/v1/projects/${PROYECTO}/database/query" \
+RESPONSE=$(curl -s -X POST \
+  "https://api.supabase.com/v1/projects/${PROJECT}/database/query" \
   -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d "$CUERPO" --max-time 60)
+  -d "$BODY" --max-time 60)
 
-# Un error de la API llega como objeto con "message"; un resultado, como lista.
-if echo "$RESPUESTA" | jq -e 'type == "object" and has("message")' >/dev/null 2>&1; then
-  echo "Error: $(echo "$RESPUESTA" | jq -r '.message')" >&2
+# An API error arrives as an object with "message"; a result, as a list.
+if echo "$RESPONSE" | jq -e 'type == "object" and has("message")' >/dev/null 2>&1; then
+  echo "Error: $(echo "$RESPONSE" | jq -r '.message')" >&2
   exit 1
 fi
 
-if [ "$(echo "$RESPUESTA" | jq 'length')" = "0" ]; then
-  echo "(sin filas)"
+if [ "$(echo "$RESPONSE" | jq 'length')" = "0" ]; then
+  echo "(no rows)"
 else
-  echo "$RESPUESTA" | jq -r '(.[0] | keys_unsorted) as $k
+  echo "$RESPONSE" | jq -r '(.[0] | keys_unsorted) as $k
     | ($k | @tsv), (.[] | [$k[] as $c | .[$c] | tostring] | @tsv)' \
     | column -t -s $'\t'
-  echo "$(echo "$RESPUESTA" | jq 'length') fila(s)"
+  echo "$(echo "$RESPONSE" | jq 'length') row(s)"
 fi

@@ -7,6 +7,11 @@
 //   <out>/sumas.sha256   sha256 of every downloaded object (shasum -c format)
 //   <out>/manifest.json  versions, totals and timings; no secrets, no amounts
 //
+// The names inside the archive stay as they were (`conteos.tsv`,
+// `sumas.sha256`, and `soportes/`, named after the bucket): they are a stored
+// format, and restore.sh has to open every backup already on disk. Nothing
+// reads the manifest but people, so its keys went to English (format 2).
+//
 // ONE snapshot for all of it. A read-only REPEATABLE READ transaction exports
 // its snapshot; the row counts, the list of bucket objects, the `soportes`
 // rows and pg_dump itself (--snapshot) all read that same instant. Counting in
@@ -45,7 +50,7 @@ const serviceKey = clean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 const databaseUrl = clean(process.env.DIRECT_URL);
 const bucket = process.env.SOPORTES_BUCKET ?? 'soportes';
 if (!supabaseUrl || !serviceKey || !databaseUrl) {
-  console.error('Faltan SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY o DIRECT_URL.');
+  console.error('SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY or DIRECT_URL is missing.');
   process.exit(1);
 }
 
@@ -72,7 +77,7 @@ function dump(snapshot, file) {
     );
     child.on('error', reject);
     child.on('exit', (code) =>
-      code === 0 ? resolve() : reject(new Error(`pg_dump terminó con ${code}`)),
+      code === 0 ? resolve() : reject(new Error(`pg_dump exited with ${code}`)),
     );
   });
 }
@@ -80,7 +85,7 @@ function dump(snapshot, file) {
 /** A storage name becomes a path under soportes/; nothing may climb out. */
 function safePath(name) {
   if (name.startsWith('/') || name.split('/').includes('..'))
-    throw new Error(`nombre de objeto inválido en el bucket: ${name}`);
+    throw new Error(`invalid object name in the bucket: ${name}`);
   return name;
 }
 
@@ -151,12 +156,12 @@ try {
 const dumpSeconds = seconds(dumpStarted);
 await writeFile(join(out, 'conteos.tsv'), counts.map((row) => row.join('\t')).join('\n') + '\n');
 console.log(
-  `   base: ${tables.length} tablas, ${counts.reduce((sum, [, n]) => sum + Number(n), 0)} filas (${dumpSeconds} s)`,
+  `   database: ${tables.length} tables, ${counts.reduce((sum, [, n]) => sum + Number(n), 0)} rows (${dumpSeconds} s)`,
 );
 
 // ── 3. The bucket ────────────────────────────────────────────────────────────
 const bucketStarted = Date.now();
-const huellaByKey = new Map(receipts.map((row) => [row.storage_key, row.huella]));
+const hashByKey = new Map(receipts.map((row) => [row.storage_key, row.huella]));
 const objectNames = new Set(objects.map((row) => row.name));
 const missing = receipts.filter((row) => !objectNames.has(row.storage_key));
 const sums = [];
@@ -167,9 +172,9 @@ async function fetchOne(name) {
   try {
     const content = await download(name);
     const hash = sha256(content);
-    const expected = huellaByKey.get(name);
+    const expected = hashByKey.get(name);
     if (expected && expected !== hash) {
-      failed.push(`${name}: la huella no coincide`);
+      failed.push(`${name}: the hash does not match`);
       return;
     }
     const path = join(out, 'soportes', safePath(name));
@@ -190,30 +195,30 @@ for (let index = 0; index < names.length; index += 4) {
 }
 sums.sort();
 await writeFile(join(out, 'sumas.sha256'), sums.join('\n') + (sums.length ? '\n' : ''));
-const orphans = names.filter((name) => !huellaByKey.has(name)).length;
+const orphans = names.filter((name) => !hashByKey.has(name)).length;
 console.log(
-  `   bucket: ${sums.length} objetos, ${Math.round(bytes / 1024 / 1024)} MB, ` +
-    `${receipts.length - missing.length} verificados contra soportes.huella, ` +
-    `${orphans} sin fila (${seconds(bucketStarted)} s)`,
+  `   bucket: ${sums.length} objects, ${Math.round(bytes / 1024 / 1024)} MB, ` +
+    `${receipts.length - missing.length} checked against soportes.huella, ` +
+    `${orphans} without a row (${seconds(bucketStarted)} s)`,
 );
 
 const manifest = {
-  formato: 1,
-  creado: new Date(started).toISOString(),
-  origen: new URL(supabaseUrl).host,
+  format: 2,
+  created: new Date(started).toISOString(),
+  source: new URL(supabaseUrl).host,
   postgres: serverVersion,
-  esquemas: ['public', 'auth'],
-  tablas: tables.length,
-  filas: counts.reduce((sum, [, n]) => sum + Number(n), 0),
-  bucket: { nombre: bucket, objetos: sums.length, bytes, sinFila: orphans },
-  soportes: { filas: receipts.length, sinObjeto: missing.length },
-  segundos: { volcado: dumpSeconds, bucket: seconds(bucketStarted), total: seconds(started) },
+  schemas: ['public', 'auth'],
+  tables: tables.length,
+  rows: counts.reduce((sum, [, n]) => sum + Number(n), 0),
+  bucket: { name: bucket, objects: sums.length, bytes, withoutRow: orphans },
+  receipts: { rows: receipts.length, withoutObject: missing.length },
+  seconds: { dump: dumpSeconds, bucket: seconds(bucketStarted), total: seconds(started) },
 };
 await writeFile(join(out, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 
 if (missing.length > 0 || failed.length > 0) {
-  for (const row of missing) console.error(`   sin objeto en el bucket: ${row.storage_key}`);
-  for (const line of failed) console.error(`   falló: ${line}`);
-  console.error('El respaldo está INCOMPLETO: no sirve.');
+  for (const row of missing) console.error(`   no object in the bucket: ${row.storage_key}`);
+  for (const line of failed) console.error(`   failed: ${line}`);
+  console.error('The backup is INCOMPLETE: it cannot be used.');
   process.exit(1);
 }

@@ -103,7 +103,7 @@ scripts/deploy-migrations.sh              # production: status, confirm, deploy,
 ```
 
 - **Read `migrate status` before confirming:** the pending list must be
-  exactly the migrations you expect. Never pipe a blind `si` into the script —
+  exactly the migrations you expect. Never pipe a blind `yes` into the script —
   that confirmation is the only check between a typo and production.
 - Names are `YYYYMMDDHHMMSS_<verb>_<object>` in English, with a UTC timestamp
   later than every existing one. One came out with a local time earlier than
@@ -148,7 +148,7 @@ sees no other user's rows.
   `coco_app.<project-ref>`; host, port (6543) and parameters stay as they were.
 - **A restore needs `coco_app` first**: the policies and grants name it.
 - **After a migration**, `scripts/close-data-api.sql` prints
-  `politicas = 14`, and every public table except `_prisma_migrations` is
+  `policies = 14`, and every public table except `_prisma_migrations` is
   forced:
   `SELECT count(*) FILTER (WHERE NOT relforcerowsecurity) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relname <> '_prisma_migrations'` → `0`.
 

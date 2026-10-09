@@ -1,54 +1,55 @@
 #!/usr/bin/env bash
 #
-# Aplica las migraciones pendientes a Supabase (producción).
+# Applies the pending migrations to Supabase (production).
 #
-# ── Por qué es un script aparte y no el final de new-migration.sh ──────────
-# Porque tocar producción tiene que ser un acto deliberado. Encadenarlo a la
-# creación de la migración haría que un `migrate diff` exploratorio —de esos
-# que uno corre para VER qué saldría— terminara alterando la base real.
+# ── Why this is a separate script and not the end of new-migration.sh ───────
+# Because touching production has to be a deliberate act. Chaining it to the
+# creation of the migration would let an exploratory `migrate diff` —the kind
+# you run to SEE what would come out— end up altering the real database.
 #
-# Va por DIRECT_URL (session pooler, 5432): el transaction pooler no soporta
-# las sentencias del motor de migraciones.
+# It goes through DIRECT_URL (session pooler, 5432): the transaction pooler
+# does not support the statements of the migration engine.
 set -euo pipefail
 
 cd "$(dirname "$0")/../api"
 
-echo "▸ Estado actual en Supabase…"
-# La compuerta la decide el código de salida de `migrate status`, no quien lee:
-# 0 es «al día» y aquí no hay nada que hacer. Distinto de 0 es o bien que hay
-# pendientes —lo único que justifica seguir— o bien cualquier otra cosa (sin
-# conexión, una migración fallida a medias), y entonces no se aplica nada.
-# La URL sale de `prisma.config.ts` (DIRECT_URL), que lee lo que inyecta dotenv.
-if ESTADO=$(npx dotenv -e .env.supabase -- npx prisma migrate status 2>&1); then
-  echo "$ESTADO"
-  echo "No hay migraciones pendientes. No se tocó nada."
+echo "▸ Current state in Supabase…"
+# The gate is the exit code of `migrate status`, not whoever reads it: 0 means
+# "up to date" and there is nothing to do here. Anything else is either
+# pending migrations —the only thing that justifies going on— or something
+# else (no connection, a half-failed migration), and then nothing is applied.
+# The URL comes from `prisma.config.ts` (DIRECT_URL), which reads what dotenv
+# injects.
+if STATUS=$(npx dotenv -e .env.supabase -- npx prisma migrate status 2>&1); then
+  echo "$STATUS"
+  echo "No pending migrations. Nothing was touched."
   exit 0
 fi
-echo "$ESTADO"
-if ! grep -q 'have not yet been applied' <<<"$ESTADO"; then
-  echo "migrate status falló sin listar pendientes. No se aplica nada." >&2
+echo "$STATUS"
+if ! grep -q 'have not yet been applied' <<<"$STATUS"; then
+  echo "migrate status failed without listing pending migrations. Nothing is applied." >&2
   exit 1
 fi
 
 echo ""
-read -r -p "¿Aplicar las migraciones pendientes a PRODUCCIÓN? (escribí 'si') " RESPUESTA
-if [ "$RESPUESTA" != "si" ]; then
-  echo "Cancelado. No se tocó nada."
+read -r -p "Apply the pending migrations to PRODUCTION? (type 'yes') " ANSWER
+if [ "$ANSWER" != "yes" ]; then
+  echo "Cancelled. Nothing was touched."
   exit 0
 fi
 
 npx dotenv -e .env.supabase -- npx prisma migrate deploy
 
-# ── La seguridad por filas de las tablas NUEVAS ──────────────────────────────
-# Supabase publica el esquema `public` como API REST y le concede permiso a
-# `anon` sobre cada tabla que aparece. Una tabla recién migrada nace, por tanto,
-# abierta a cualquiera que tenga la clave pública del proyecto.
+# ── Row-level security on NEW tables ─────────────────────────────────────────
+# Supabase publishes the `public` schema as a REST API and grants `anon`
+# access to every table that appears. A freshly migrated table is therefore
+# born open to anyone holding the project's public key.
 #
-# `close-data-api.sql` lo deshace y es idempotente, así que se corre
-# siempre: si no había nada que cerrar, no cierra nada.
+# `close-data-api.sql` undoes that and is idempotent, so it always runs: if
+# there was nothing to close, it closes nothing.
 echo ""
-echo "▸ Cerrando el API de datos sobre las tablas nuevas…"
+echo "▸ Closing the data API over the new tables…"
 cd ..
 npm run --silent sql:supabase -- "$(cat scripts/close-data-api.sql)"
 
-echo "Listo."
+echo "Done."

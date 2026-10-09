@@ -1,44 +1,44 @@
--- Cierra el API de datos de Supabase sobre el esquema `public`.
+-- Closes Supabase's data API over the `public` schema.
 --
--- Se aplica con:
+-- Applied with:
 --   npm run sql:supabase -- "$(cat scripts/close-data-api.sql)"
 --
--- Es idempotente: se puede volver a ejecutar cuantas veces haga falta, y hay
--- que hacerlo después de cada migración que añada una tabla.
+-- It is idempotent: it can be run again as many times as needed, and it has
+-- to be after every migration that adds a table.
 --
--- ── Qué problema resuelve ───────────────────────────────────────────────────
--- Supabase no es solo un Postgres alojado: además publica todo el esquema
--- `public` como API REST en https://<ref>.supabase.co/rest/v1/, y le concede a
--- los roles `anon` y `authenticated` permiso sobre cada tabla que se crea.
+-- ── The problem it solves ────────────────────────────────────────────────────
+-- Supabase is not just a hosted Postgres: it also publishes the whole `public`
+-- schema as a REST API at https://<ref>.supabase.co/rest/v1/, and grants the
+-- `anon` and `authenticated` roles access to every table that is created.
 --
--- Lo único que separa esa puerta del contenido es la seguridad por filas. Sin
--- ella, cualquiera que tenga la clave `anon` del proyecto puede leer la base
--- entera —y vaciarla— sin pasar por la API de Coco. Y la clave `anon` NO es un
--- secreto: el modelo de Supabase la reparte a los navegadores a propósito, y
--- da por supuesto que lo que protege es la seguridad por filas.
+-- The only thing between that door and the content is row-level security.
+-- Without it, anyone holding the project's `anon` key can read the whole
+-- database —and empty it— without going through Coco's API. And the `anon`
+-- key is NOT a secret: Supabase's model hands it to browsers on purpose, and
+-- assumes row-level security is what protects the data.
 --
--- El asesor del panel lo reportó como CRÍTICO en las catorce tablas, y tenía
--- razón: `anon` tenía SELECT, INSERT, UPDATE, DELETE y TRUNCATE en todas,
--- incluidas `users` y `audit_log`.
+-- The dashboard advisor reported it as CRITICAL on all fourteen tables, and it
+-- was right: `anon` had SELECT, INSERT, UPDATE, DELETE and TRUNCATE on all of
+-- them, `users` and `audit_log` included.
 --
--- ── Por qué no rompe nada ───────────────────────────────────────────────────
--- Porque Coco nunca usa esa puerta. El frontend no lleva cliente de Supabase
--- ni clave —habla solo con su propia API, por `/api/v2`— y la API entra por
--- cable con Prisma, como el rol `postgres`, que es DUEÑO de las catorce tablas
--- y además tiene `rolbypassrls`. Una política que no existe no le afecta: el
--- dueño de una tabla se salta la seguridad por filas mientras no se declare
--- FORCE, y aquí no se declara.
+-- ── Why it breaks nothing ────────────────────────────────────────────────────
+-- Because Coco never uses that door. The frontend carries no Supabase client
+-- and no key —it only talks to its own API, through `/api/v2`— and the API
+-- connects over the wire with Prisma, as the `postgres` role, which OWNS the
+-- fourteen tables and also has `rolbypassrls`. A policy that does not exist
+-- does not affect it: a table owner bypasses row-level security unless FORCE
+-- is declared, and it is not declared here.
 --
--- ── Por qué no es una migración de Prisma ───────────────────────────────────
--- Porque las migraciones se aplican también contra el Postgres local, donde
--- los roles `anon` y `authenticated` no existen: el REVOKE fallaría y dejaría
--- el entorno de desarrollo sin poder migrar. Esto es configuración del
--- alojamiento, no estructura de la base, y por eso vive aquí.
+-- ── Why it is not a Prisma migration ─────────────────────────────────────────
+-- Because migrations also run against the local Postgres, where the `anon`
+-- and `authenticated` roles do not exist: the REVOKE would fail and leave the
+-- development environment unable to migrate. This is hosting configuration,
+-- not database structure, and that is why it lives here.
 
--- ── 1. Seguridad por filas en todo lo que haya, sin una sola política ───────
--- Sin política no pasa nadie. Se recorre `pg_tables` en vez de escribir las
--- catorce a mano para que una tabla nueva no se quede fuera por olvido el día
--- que alguien vuelva a ejecutar esto.
+-- ── 1. Row-level security on everything there is, without a single policy ───
+-- Without a policy nobody gets through. It walks `pg_tables` instead of
+-- listing the fourteen by hand so that a new table is not left out by
+-- oversight the day someone runs this again.
 DO $$
 DECLARE t record;
 BEGIN
@@ -47,38 +47,39 @@ BEGIN
   END LOOP;
 END $$;
 
--- ── 2. Y que no tengan ni permiso que ejercer ───────────────────────────────
--- La seguridad por filas ya bastaría. Esto es la segunda cerradura: si algún
--- día alguien añade una política pensando en otra cosa, los permisos no están
--- puestos y la puerta sigue cerrada.
+-- ── 2. And no grants left to exercise ───────────────────────────────────────
+-- Row-level security would be enough. This is the second lock: if someone
+-- ever adds a policy with something else in mind, the grants are not there
+-- and the door stays shut.
 --
--- `service_role` se queda como está: solo se puede usar con la clave secreta
--- del proyecto —que no sale de aquí— y se salta la seguridad por filas igual.
+-- `service_role` stays as it is: it can only be used with the project's
+-- secret key —which never leaves here— and it bypasses row-level security
+-- anyway.
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
 
--- ── 3. Para que las tablas FUTURAS tampoco nazcan abiertas ──────────────────
--- Los permisos de arriba los concede Supabase con un ALTER DEFAULT PRIVILEGES
--- a nombre de `postgres`. Sin desactivarlo, la próxima migración crearía una
--- tabla con los mismos permisos que se acaban de quitar.
+-- ── 3. So FUTURE tables are not born open either ────────────────────────────
+-- Supabase grants the permissions above with an ALTER DEFAULT PRIVILEGES on
+-- behalf of `postgres`. Without turning it off, the next migration would
+-- create a table with the same grants just removed.
 --
--- Ojo: esto NO activa la seguridad por filas en las tablas nuevas. Eso no se
--- puede dejar automático, así que la parte 1 hay que volver a ejecutarla
--- después de cada migración que añada una tabla.
+-- Careful: this does NOT enable row-level security on new tables. That cannot
+-- be made automatic, so part 1 has to be run again after every migration that
+-- adds a table.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
   REVOKE ALL ON TABLES FROM anon, authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
   REVOKE ALL ON SEQUENCES FROM anon, authenticated;
 
--- ── Comprobación ────────────────────────────────────────────────────────────
--- `tablas_sin_seguridad` y `permisos_abiertos` tienen que salir en cero. Desde
--- el paso 7.11-b `politicas` sale en 14, y todas son `TO coco_app`: el rol con
--- el que entra la API (ADR 0019). Ninguna nombra a `anon` ni a `authenticated`,
--- así que para ellos sigue sin haber política, igual que antes.
+-- ── Check ───────────────────────────────────────────────────────────────────
+-- `tables_without_rls` and `open_grants` must come out as zero. Since step
+-- 7.11-b `policies` comes out as 14, all of them `TO coco_app`: the role the
+-- API connects as (ADR 0019). None names `anon` or `authenticated`, so for
+-- them there is still no policy, same as before.
 SELECT
-  count(*) FILTER (WHERE NOT rowsecurity) AS tablas_sin_seguridad,
-  (SELECT count(*) FROM pg_policies WHERE schemaname = 'public') AS politicas,
+  count(*) FILTER (WHERE NOT rowsecurity) AS tables_without_rls,
+  (SELECT count(*) FROM pg_policies WHERE schemaname = 'public') AS policies,
   (SELECT count(*) FROM information_schema.role_table_grants
-    WHERE table_schema = 'public' AND grantee IN ('anon', 'authenticated')) AS permisos_abiertos
+    WHERE table_schema = 'public' AND grantee IN ('anon', 'authenticated')) AS open_grants
 FROM pg_tables
 WHERE schemaname = 'public';

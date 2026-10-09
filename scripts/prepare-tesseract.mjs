@@ -1,24 +1,26 @@
 #!/usr/bin/env node
 /**
- * Deja los recursos de Tesseract servidos desde nuestro propio origen.
+ * Leaves the Tesseract resources served from our own origin.
  *
- * ── El problema que resuelve ────────────────────────────────────────────────
- * Por defecto, `tesseract.js` descarga su worker, su motor WASM y los datos del
- * idioma desde `cdn.jsdelivr.net` EN TIEMPO DE EJECUCIÓN. Para una app de
- * finanzas eso tiene tres inconvenientes, en orden de gravedad:
+ * ── The problem it solves ────────────────────────────────────────────────────
+ * By default, `tesseract.js` downloads its worker, its WASM engine and the
+ * language data from `cdn.jsdelivr.net` AT RUN TIME. For a finance app that has
+ * three drawbacks, in order of severity:
  *
- *   1. Se ejecutaría en el navegador del usuario un binario WASM traído de un
- *      tercero, sin pasar por el lockfile ni por ninguna verificación nuestra.
- *   2. Importar un extracto dejaría de funcionar si ese CDN falla.
- *   3. Una CSP estricta en el sitio desplegado lo bloquearía.
+ *   1. A WASM binary fetched from a third party would run in the user's
+ *      browser, without going through the lockfile or any check of ours.
+ *   2. Importing a statement would stop working if that CDN fails.
+ *   3. A strict CSP on the deployed site would block it.
  *
- * Lo que hace este script: copia el worker y el motor DESDE node_modules —donde
- * ya llegaron verificados por package-lock.json— y descarga los datos del
- * idioma español desde el repositorio oficial de Tesseract, una sola vez, en
- * tiempo de compilación. En ejecución no se sale a ninguna parte.
+ * What this script does: it copies the worker and the engine FROM
+ * node_modules —where they already arrived verified by package-lock.json— and
+ * downloads the Spanish language data from Tesseract's official repository,
+ * once, at build time. At run time nothing goes anywhere.
  *
- * La salida va a `frontend/public/tesseract/`, que está en .gitignore: son
- * artefactos reproducibles, no fuente.
+ * It runs as the root `postinstall`, so on the server too, on every deploy.
+ *
+ * The output goes to `frontend/public/tesseract/`, which is in .gitignore:
+ * they are reproducible artifacts, not source.
  */
 import { createWriteStream } from 'node:fs';
 import { cp, mkdir, stat } from 'node:fs/promises';
@@ -27,42 +29,43 @@ import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import { Readable } from 'node:stream';
 
-const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
-const DESTINO = join(RAIZ, 'frontend', 'public', 'tesseract');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const TARGET = join(ROOT, 'frontend', 'public', 'tesseract');
 
 /**
- * Datos del idioma, del repositorio oficial de Tesseract.
+ * Language data, from Tesseract's official repository.
  *
- * `tessdata_fast` y no `tessdata_best`: es cuatro veces más pequeño y bastante
- * más rápido, y sobre el texto impreso y regular de un extracto bancario la
- * diferencia de precisión es marginal. Para letra manuscrita no serviría, pero
- * aquí no hay ninguna.
+ * `tessdata_fast` and not `tessdata_best`: it is four times smaller and quite a
+ * bit faster, and on the printed, regular text of a bank statement the
+ * difference in accuracy is marginal. It would not do for handwriting, but
+ * there is none here.
  */
-const IDIOMA = 'spa';
-const URL_IDIOMA = `https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/${IDIOMA}.traineddata`;
+const LANGUAGE = 'spa';
+const LANGUAGE_URL = `https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/${LANGUAGE}.traineddata`;
 
 /**
- * Variantes del motor que hay que copiar. TRES, no las veinticuatro que trae
- * el paquete (50 MB).
+ * Engine variants to copy. THREE, not the twenty-four the package ships
+ * (50 MB).
  *
- * Se leyó el propio `worker.min.js` para saber cuáles pide de verdad: elige
- * entre `relaxedsimd`, `simd` y la básica según lo que soporte el navegador, y
- * añade el sufijo `-lstm` cuando los datos del idioma son solo LSTM — que es
- * exactamente el caso de `tessdata_fast`, el que se descarga aquí abajo.
+ * `worker.min.js` itself was read to learn which ones it really asks for: it
+ * picks among `relaxedsimd`, `simd` and the basic one depending on what the
+ * browser supports, and adds the `-lstm` suffix when the language data is
+ * LSTM-only — which is exactly the case of `tessdata_fast`, the one
+ * downloaded below.
  *
- * Son 11 MB en disco, de los que cada navegador baja UNO (3,7 MB). Si algún
- * día se cambiara a `tessdata_best`, que incluye el motor heredado, habría que
- * añadir aquí las variantes sin `-lstm` o daría 404.
+ * They are 11 MB on disk, of which each browser downloads ONE (3.7 MB). If it
+ * ever moved to `tessdata_best`, which includes the legacy engine, the
+ * variants without `-lstm` would have to be added here or they would 404.
  */
-const VARIANTES_DEL_MOTOR = [
+const ENGINE_VARIANTS = [
   'tesseract-core-relaxedsimd-lstm.wasm.js',
   'tesseract-core-simd-lstm.wasm.js',
   'tesseract-core-lstm.wasm.js',
 ];
 
-async function existe(ruta) {
+async function exists(path) {
   try {
-    await stat(ruta);
+    await stat(path);
     return true;
   } catch {
     return false;
@@ -70,44 +73,42 @@ async function existe(ruta) {
 }
 
 async function main() {
-  await mkdir(join(DESTINO, 'core'), { recursive: true });
-  await mkdir(join(DESTINO, 'lang'), { recursive: true });
+  await mkdir(join(TARGET, 'core'), { recursive: true });
+  await mkdir(join(TARGET, 'lang'), { recursive: true });
 
-  // El worker y el motor vienen de node_modules: ya los verificó el lockfile.
+  // The worker and the engine come from node_modules: the lockfile already
+  // verified them.
   await cp(
-    join(RAIZ, 'node_modules', 'tesseract.js', 'dist', 'worker.min.js'),
-    join(DESTINO, 'worker.min.js'),
+    join(ROOT, 'node_modules', 'tesseract.js', 'dist', 'worker.min.js'),
+    join(TARGET, 'worker.min.js'),
   );
 
-  for (const variante of VARIANTES_DEL_MOTOR) {
-    await cp(
-      join(RAIZ, 'node_modules', 'tesseract.js-core', variante),
-      join(DESTINO, 'core', variante),
-    );
+  for (const variant of ENGINE_VARIANTS) {
+    await cp(join(ROOT, 'node_modules', 'tesseract.js-core', variant), join(TARGET, 'core', variant));
   }
-  console.log(`✓ worker y ${VARIANTES_DEL_MOTOR.length} variantes del motor, desde node_modules`);
+  console.log(`✓ worker and ${ENGINE_VARIANTS.length} engine variants, from node_modules`);
 
-  // Los datos del idioma no vienen en ningún paquete: hay que traerlos.
-  const destinoIdioma = join(DESTINO, 'lang', `${IDIOMA}.traineddata`);
-  if (await existe(destinoIdioma)) {
-    console.log(`✓ ${IDIOMA}.traineddata ya estaba`);
+  // The language data comes in no package: it has to be fetched.
+  const languageTarget = join(TARGET, 'lang', `${LANGUAGE}.traineddata`);
+  if (await exists(languageTarget)) {
+    console.log(`✓ ${LANGUAGE}.traineddata was already there`);
     return;
   }
 
-  console.log(`Descargando ${IDIOMA}.traineddata…`);
-  const respuesta = await fetch(URL_IDIOMA);
-  if (!respuesta.ok || !respuesta.body) {
-    throw new Error(`No se pudo descargar el idioma: HTTP ${respuesta.status}`);
+  console.log(`Downloading ${LANGUAGE}.traineddata…`);
+  const response = await fetch(LANGUAGE_URL);
+  if (!response.ok || !response.body) {
+    throw new Error(`Could not download the language data: HTTP ${response.status}`);
   }
 
-  await pipeline(Readable.fromWeb(respuesta.body), createWriteStream(destinoIdioma));
+  await pipeline(Readable.fromWeb(response.body), createWriteStream(languageTarget));
 
-  const { size } = await stat(destinoIdioma);
-  console.log(`✓ ${IDIOMA}.traineddata (${(size / 1024 / 1024).toFixed(1)} MB)`);
+  const { size } = await stat(languageTarget);
+  console.log(`✓ ${LANGUAGE}.traineddata (${(size / 1024 / 1024).toFixed(1)} MB)`);
 }
 
 main().catch((error) => {
-  console.error('Falló la preparación de Tesseract:', error.message);
-  console.error('Sin esto, el reconocimiento de imágenes no funcionará.');
+  console.error('Preparing Tesseract failed:', error.message);
+  console.error('Without it, image recognition will not work.');
   process.exit(1);
 });
