@@ -1,4 +1,4 @@
-// The Prisma client for the operational scripts (`npm run sql`, `sembrar:local`,
+// The Prisma client for the operational scripts (`npm run sql`, `seed:local`,
 // `cargar`, `soportes:importar`), on the same generated client as the API.
 //
 // Prisma 7 generates the client as TypeScript into api/src/generated/prisma

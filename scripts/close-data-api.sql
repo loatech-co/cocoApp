@@ -1,7 +1,7 @@
 -- Cierra el API de datos de Supabase sobre el esquema `public`.
 --
 -- Se aplica con:
---   npm run sql:supabase -- "$(cat scripts/cerrar-el-api-de-datos.sql)"
+--   npm run sql:supabase -- "$(cat scripts/close-data-api.sql)"
 --
 -- Es idempotente: se puede volver a ejecutar cuantas veces haga falta, y hay
 -- que hacerlo después de cada migración que añada una tabla.

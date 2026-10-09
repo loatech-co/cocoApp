@@ -10,7 +10,7 @@
 #   - el bucket privado `soportes`, objeto por objeto, cada uno verificado por
 #     sha256 contra `soportes.huella`;
 #   - un manifiesto con las filas de cada tabla, contadas en la MISMA foto de
-#     la base que el volcado (scripts/respaldo/extraer.mjs explica por qué).
+#     la base que el volcado (scripts/backup/extract.mjs explica por qué).
 #
 # ── Por qué el plan gratuito no alcanza ──────────────────────────────────────
 # Supabase gratis guarda respaldos poco tiempo, sin recuperación a un punto en
@@ -37,9 +37,9 @@
 #
 # ── Probado o no es un respaldo ──────────────────────────────────────────────
 # Al final restaura el archivo cifrado en una base local desechable con
-# scripts/restaurar.sh, y compara las filas de cada tabla con el manifiesto.
+# scripts/restore.sh, y compara las filas de cada tabla con el manifiesto.
 #
-# Uso: npm run respaldar [-- <carpeta de destino>]
+# Uso: npm run backup [-- <carpeta de destino>]
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -94,7 +94,7 @@ EN_CLARO="$TEMPORAL/$NOMBRE"
 
 INICIO=$SECONDS
 echo "▸ Extrayendo producción (solo lectura)…"
-npx dotenv -e "$ENV_FILE" -- node scripts/respaldo/extraer.mjs --out "$EN_CLARO"
+npx dotenv -e "$ENV_FILE" -- node scripts/backup/extract.mjs --out "$EN_CLARO"
 
 echo "▸ Cifrando con age…"
 tar -C "$TEMPORAL" -cf - "$NOMBRE" | age -r "$DESTINATARIO" -o "$ARCHIVO.parcial"
@@ -105,11 +105,11 @@ echo "   $ARCHIVO ($(du -h "$ARCHIVO" | cut -f1))"
 echo "▸ Probando la restauración…"
 if [ -f "$CLAVE_PRIVADA" ]; then
   # Prueba lo que de verdad quedó guardado: el archivo cifrado.
-  bash scripts/restaurar.sh "$ARCHIVO"
+  bash scripts/restore.sh "$ARCHIVO"
 else
   # Sin la privada en este equipo no se puede descifrar. Se prueba la copia
   # en claro, y se avisa: que el cifrado se abra queda sin demostrar.
-  bash scripts/restaurar.sh "$EN_CLARO"
+  bash scripts/restore.sh "$EN_CLARO"
   echo "⚠️  La clave privada no está en $CLAVE_PRIVADA: se probó la copia en claro, no el archivo cifrado." >&2
 fi
 

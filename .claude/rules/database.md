@@ -4,8 +4,8 @@ paths:
   - 'api/src/prisma/**'
   - 'api/src/**/*.repository.ts'
   - 'scripts/*migracion*.sh'
-  - 'scripts/cerrar-el-api-de-datos.sql'
-  - 'scripts/respaldar.sh'
+  - 'scripts/close-data-api.sql'
+  - 'scripts/backup.sh'
 ---
 
 # La base de datos
@@ -32,13 +32,13 @@ mover una columna sí. Así se hacen los renombres de 7.2
 ([rename-plan](../../docs/standards/rename-plan.md)); tablas y columnas
 físicas en `snake_case` plural.
 
-**El esquema solo cambia por migración: `scripts/nueva-migracion.sh <verb>_<object>`, nunca un `CREATE TABLE` a mano.**
+**El esquema solo cambia por migración: `scripts/new-migration.sh <verb>_<object>`, nunca un `CREATE TABLE` a mano.**
 
 Lo escrito a mano queda fuera de `schema.prisma`, y el siguiente `diff`
 intenta crearlo otra vez. Nombre `YYYYMMDDHHMMSS_<verb>_<object>` en inglés y
 en UTC, posterior a todos los existentes.
 
-**A producción solo con `scripts/desplegar-migraciones.sh`, leyendo `migrate status` antes de confirmar.**
+**A producción solo con `scripts/deploy-migrations.sh`, leyendo `migrate status` antes de confirmar.**
 
 Esa confirmación es lo único entre una errata y producción; el script cierra
 además la API de datos de Supabase, y sus tres cuentas deben dar `0`

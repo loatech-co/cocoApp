@@ -34,7 +34,7 @@ const host = (() => {
 if (!HOSTS_LOCALES.has(host)) {
   console.error(
     `Esto siembra datos, y DATABASE_URL apunta a «${host || '(ilegible)'}», que no es tu máquina.\n` +
-      `Corré el script con el entorno local:\n\n  npm run sembrar:local\n`,
+      `Corré el script con el entorno local:\n\n  npm run seed:local\n`,
   );
   process.exit(1);
 }

@@ -21,12 +21,12 @@
 #
 # ── Dónde se aplica ──────────────────────────────────────────────────────────
 # Solo en la base LOCAL (.env.migrate). Llevarla a Supabase es un paso aparte
-# y deliberado: scripts/desplegar-migraciones.sh
+# y deliberado: scripts/deploy-migrations.sh
 set -euo pipefail
 
 NOMBRE="${1:-}"
 if [ -z "$NOMBRE" ]; then
-  echo "Uso: scripts/nueva-migracion.sh <nombre_en_snake_case>" >&2
+  echo "Uso: scripts/new-migration.sh <nombre_en_snake_case>" >&2
   exit 1
 fi
 
@@ -63,4 +63,4 @@ echo ""
 
 npx dotenv -e .env.migrate -- npx prisma migrate deploy
 npx prisma generate >/dev/null
-echo "Listo en local. Para llevarla a Supabase: scripts/desplegar-migraciones.sh"
+echo "Listo en local. Para llevarla a Supabase: scripts/deploy-migrations.sh"

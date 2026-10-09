@@ -13,13 +13,13 @@ with the key could read or empty the database without going through Coco.
 Coco never uses that door — the browser talks only to the API, and the API
 connects with Prisma as the table owner, which bypasses row-level security.
 
-Step 7.12 asked whether `scripts/cerrar-el-api-de-datos.sql` should become a
+Step 7.12 asked whether `scripts/close-data-api.sql` should become a
 Prisma migration.
 
 ## Considered options
 
 - A Prisma migration.
-- **Keep the script, run by `scripts/desplegar-migraciones.sh` after every
+- **Keep the script, run by `scripts/deploy-migrations.sh` after every
   `migrate deploy`.**
 
 ## Decision outcome
@@ -41,7 +41,7 @@ counts that must be zero.
 
 - Good: no table is ever reachable through the data API, even for a moment
   longer than the deploy.
-- Bad: a migration applied without `desplegar-migraciones.sh` leaves new
+- Bad: a migration applied without `deploy-migrations.sh` leaves new
   tables open until the script runs; the runbook says never to do that.
 - Revisit when RLS with an application role
   ([0010](0010-rls-with-application-role.md)) lands: policies will then

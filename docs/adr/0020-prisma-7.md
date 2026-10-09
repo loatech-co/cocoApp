@@ -44,7 +44,7 @@ monorepo and what the scripts and the server need.
   stays as the runtime the generated code imports.
 - **Scripts.** `migrate diff` lost `--shadow-database-url` (now in the config)
   and `--to-schema-datamodel` (now `--to-schema`); `--from-url` is
-  `--from-config-datasource`. `desplegar-migraciones.sh` gates on the exit code
+  `--from-config-datasource`. `deploy-migrations.sh` gates on the exit code
   of `migrate status`: 0 is up to date and stops; non-zero continues only if the
   output lists pending migrations. The operational `.mjs` scripts build their
   client through `scripts/db/prisma-client.mjs` (adapter required) and run

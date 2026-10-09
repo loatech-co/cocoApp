@@ -2,7 +2,7 @@
 #
 # Aplica las migraciones pendientes a Supabase (producción).
 #
-# ── Por qué es un script aparte y no el final de nueva-migracion.sh ──────────
+# ── Por qué es un script aparte y no el final de new-migration.sh ──────────
 # Porque tocar producción tiene que ser un acto deliberado. Encadenarlo a la
 # creación de la migración haría que un `migrate diff` exploratorio —de esos
 # que uno corre para VER qué saldría— terminara alterando la base real.
@@ -44,11 +44,11 @@ npx dotenv -e .env.supabase -- npx prisma migrate deploy
 # `anon` sobre cada tabla que aparece. Una tabla recién migrada nace, por tanto,
 # abierta a cualquiera que tenga la clave pública del proyecto.
 #
-# `cerrar-el-api-de-datos.sql` lo deshace y es idempotente, así que se corre
+# `close-data-api.sql` lo deshace y es idempotente, así que se corre
 # siempre: si no había nada que cerrar, no cierra nada.
 echo ""
 echo "▸ Cerrando el API de datos sobre las tablas nuevas…"
 cd ..
-npm run --silent sql:supabase -- "$(cat scripts/cerrar-el-api-de-datos.sql)"
+npm run --silent sql:supabase -- "$(cat scripts/close-data-api.sql)"
 
 echo "Listo."

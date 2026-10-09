@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 #
-# Restaura un respaldo de respaldar.sh y demuestra que volvió entero: cuenta
+# Restaura un respaldo de backup.sh y demuestra que volvió entero: cuenta
 # las filas de cada tabla de `public` y `auth` y las compara con las que anotó
 # el manifiesto al hacer el respaldo, y comprueba el sha256 de cada archivo del
 # bucket.
 #
 # Uso:
-#   bash scripts/restaurar.sh [respaldo]
+#   bash scripts/restore.sh [respaldo]
 #       Sin --target restaura en una base LOCAL desechable (coco_restore_test,
 #       o $COCO_RESTORE_DB, que tiene que terminar en _restore_test), compara y
 #       la borra. `respaldo` es un coco-<fecha>.tar.age o una carpeta ya
 #       descifrada; por defecto, el más reciente de $COCO_DATA_DIR/respaldos.
 #
-#   bash scripts/restaurar.sh [respaldo] --target <url> [--i-know-this-is-production]
+#   bash scripts/restore.sh [respaldo] --target <url> [--i-know-this-is-production]
 #       Restaura en otra base. Pide escribir el nombre de la base de destino,
 #       letra por letra. Con producción se niega salvo que se pase además
 #       --i-know-this-is-production. Restaurar en producción es una PARADA del
@@ -21,7 +21,7 @@
 #       Si el destino es un Supabase, `auth` va solo con datos (el esquema es
 #       de Supabase y ya existe) y tiene que estar vacío: es para un proyecto
 #       nuevo. El bucket no se sube desde aquí: se descifra el respaldo a mano
-#       (docs/runbook.md) y se sube con scripts/soportes/copy-to-storage.mjs.
+#       (docs/runbook.md) y se sube con scripts/receipts/copy-to-storage.mjs.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

@@ -2,8 +2,8 @@
 // one that is there (phase 6.9). Idempotent.
 //
 // Usage (the env file decides which project):
-//   npx dotenv -e api/.env -- node scripts/soportes/create-bucket.mjs            # dev project (local .env)
-//   npx dotenv -e api/.env.supabase -- node scripts/soportes/create-bucket.mjs   # production
+//   npx dotenv -e api/.env -- node scripts/receipts/create-bucket.mjs            # dev project (local .env)
+//   npx dotenv -e api/.env.supabase -- node scripts/receipts/create-bucket.mjs   # production
 //
 // Private, with the only types the API stores and the API's own size limit:
 // the bucket refuses on its own whatever the API would refuse, so a bug in the

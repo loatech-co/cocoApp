@@ -11,7 +11,7 @@
 // quedaría fuera de prisma/migrations y del schema.prisma, y la próxima
 // migración generada por `migrate diff` intentaría crear la tabla otra vez —
 // o peor, borrar la que se creó a mano. La estructura se cambia en
-// schema.prisma y se materializa con scripts/nueva-migracion.sh.
+// schema.prisma y se materializa con scripts/new-migration.sh.
 //
 // ── Por qué no lee las credenciales ──────────────────────────────────────────
 // La DATABASE_URL la inyecta `dotenv -e` en el entorno del proceso. Este

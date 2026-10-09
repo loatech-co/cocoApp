@@ -53,7 +53,7 @@ cp frontend/.env.example    frontend/.env
 
 npm install                                   # also prepares Tesseract and builds @coco/receipt-parser
 npm run prisma:migrate:dev --workspace api    # creates the schema
-npm run sembrar:local                         # idempotent seed: user, template, recurring concepts
+npm run seed:local                         # idempotent seed: user, template, recurring concepts
 ```
 
 Fill the `__CAMBIAR__` values. `api/.env` points at the local database and at
@@ -73,7 +73,7 @@ active; every other account is born pending until an admin approves it.
 | iOS  | `cd ios && xcodegen generate`, then Run in Xcode | see [`ios/README.md`](ios/README.md) |
 
 `npm run sql -- "SELECT …"` queries the local database. Real data reaches it
-only through `scripts/traer-datos-a-local.sh` (see the runbook).
+only through `scripts/pull-data-to-local.sh` (see the runbook).
 
 ## Test
 
@@ -95,7 +95,7 @@ iOS: `xcodebuild test` (details in [`ios/README.md`](ios/README.md)).
 Work on a branch from `Dev`, open a PR against `Dev`, and integrate only with
 `bash scripts/merge.sh`: it waits for CI and fast-forwards `Dev`, which the
 host builds and deploys. Migrations go first, with
-`scripts/desplegar-migraciones.sh`. iOS is installed from Xcode and renewed
+`scripts/deploy-migrations.sh`. iOS is installed from Xcode and renewed
 every 7 days. Verification, rollback, backups and incidents:
 [`docs/runbook.md`](docs/runbook.md).
 

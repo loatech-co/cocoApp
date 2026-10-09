@@ -10,7 +10,7 @@
 #   - No --delete, ever: this only adds to the local folder.
 #   - Read-only on the server.
 #
-# Usage: bash scripts/soportes/backup-from-server.sh [destination]
+# Usage: bash scripts/receipts/backup-from-server.sh [destination]
 #   default destination: $COCO_DATA_DIR/respaldos/soportes-YYYYMMDD-HHMMSS
 #   COCO_DATA_DIR defaults to ~/Documents/VS Code/Personal/coco-datos: real
 #   receipts live OUTSIDE the repository (see docs/runbook.md).

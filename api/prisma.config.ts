@@ -12,7 +12,7 @@ import { defineConfig } from 'prisma/config';
 // en el datasource de Prisma 6. `prisma generate` no necesita ninguna, y el
 // build del servidor la corre sin base: por eso el datasource es opcional.
 const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
-// Solo para `migrate diff --from-migrations` (scripts/nueva-migracion.sh): la
+// Solo para `migrate diff --from-migrations` (scripts/new-migration.sh): la
 // base desechable donde se reproducen las migraciones. Antes era un flag.
 const shadowDatabaseUrl = process.env.SHADOW_DATABASE_URL;
 

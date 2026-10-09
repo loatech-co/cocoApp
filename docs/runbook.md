@@ -7,7 +7,7 @@ these rules are in [`docs/adr/`](adr/); the system is described in
 
 Production: the Hostinger Node.js app `dev-cocoapp.viteri.me` (API and web in
 one process), PostgreSQL, Auth and the `soportes` bucket on Supabase. The SSH
-target and key path are in `scripts/soportes/backup-from-server.sh`.
+target and key path are in `scripts/receipts/backup-from-server.sh`.
 
 **Never develop against production.** The API refuses to start outside
 production when the database is not local. Real data reaches a local machine
@@ -97,9 +97,9 @@ by expand and contract.** Dropping anything follows the stop table in
 [`CLAUDE.md`](../CLAUDE.md), the only one.
 
 ```bash
-scripts/nueva-migracion.sh <verb>_<object>   # create and apply LOCALLY
+scripts/new-migration.sh <verb>_<object>   # create and apply LOCALLY
 npm run test:e2e --workspace api              # coco_test gets it too
-scripts/desplegar-migraciones.sh              # production: status, confirm, deploy, close the data API
+scripts/deploy-migrations.sh              # production: status, confirm, deploy, close the data API
 ```
 
 - **Read `migrate status` before confirming:** the pending list must be
@@ -109,7 +109,7 @@ scripts/desplegar-migraciones.sh              # production: status, confirm, dep
   later than every existing one. One came out with a local time earlier than
   the previous migration and had to be renamed (and its local
   `_prisma_migrations` row fixed) before it was applied anywhere else.
-- The script ends with `scripts/cerrar-el-api-de-datos.sql`; its three counts
+- The script ends with `scripts/close-data-api.sql`; its three counts
   (tables without RLS, policies, open grants) must print `0`
   ([ADR 0007](adr/0007-close-supabase-data-api-by-script.md)). Never apply a
   migration to production any other way: a new table is born open to the
@@ -147,7 +147,7 @@ sees no other user's rows.
   `DATABASE_URL` on the server. Through Supavisor the user is
   `coco_app.<project-ref>`; host, port (6543) and parameters stay as they were.
 - **A restore needs `coco_app` first**: the policies and grants name it.
-- **After a migration**, `scripts/cerrar-el-api-de-datos.sql` prints
+- **After a migration**, `scripts/close-data-api.sql` prints
   `politicas = 14`, and every public table except `_prisma_migrations` is
   forced:
   `SELECT count(*) FILTER (WHERE NOT relforcerowsecurity) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relname <> '_prisma_migrations'` → `0`.
@@ -175,7 +175,7 @@ COCO_APP_DB_PASSWORD=<local, ≥16> MIGRATION_ROLE=coco_migrate bash scripts/db/
   `DIRECT_URL` as `coco_migrate`.
 - The journeys run the API as `coco_app` when `E2E_APP_DATABASE_URL` is set
   (CI sets it); `api-bench.mjs` does with `COCO_BENCH_APP_DATABASE_URL`.
-- `scripts/traer-datos-a-local.sh` writes through `DIRECT_URL`.
+- `scripts/pull-data-to-local.sh` writes through `DIRECT_URL`.
 
 ## Backups and restore
 
@@ -186,8 +186,8 @@ every deletion in production (step 7.10 included); what a deletion requires
 [`CLAUDE.md`](../CLAUDE.md).
 
 ```bash
-npm run respaldar              # full backup → $COCO_DATA_DIR/respaldos/coco-<date>.tar.age, restore-tested
-bash scripts/restaurar.sh      # restore the newest one into a throwaway local database and count rows
+npm run backup              # full backup → $COCO_DATA_DIR/respaldos/coco-<date>.tar.age, restore-tested
+bash scripts/restore.sh      # restore the newest one into a throwaway local database and count rows
 ```
 
 ### What a backup holds
@@ -222,14 +222,14 @@ file; about 90 s to back up and 15 s to restore and count.
 `datos/` and `respaldos/`) is outside the repository and inside `Documents`,
 which iCloud Drive syncs ("Desktop & Documents"; checked on 2026-10-05: the
 folder belongs to the iCloud Drive file provider and existing backups report
-uploaded). `respaldar.sh` checks it on every run and warns if the destination
+uploaded). `backup.sh` checks it on every run and warns if the destination
 is not under iCloud Drive. Why outside the repository: it is real financial
 data; a stray `git add -f`, or a zip of the project, would take it along.
 
 Supabase's free plan keeps backups briefly, has no point-in-time recovery and
 does not back up Storage. Ours are the ones that count.
 
-`traer-datos-a-local.sh` copies production DATA (not schema) into the local
+`pull-data-to-local.sh` copies production DATA (not schema) into the local
 database, read-only on production; it is the sanctioned way to work with real
 data locally.
 
@@ -250,7 +250,7 @@ so is that key and every backup encrypted with it. **The owner must:**
 2. Or replace it with a key born there: `age-keygen -o respaldo.key`, store
    the file in the password manager, and leave only the public line
    (`age-keygen -y respaldo.key > ~/.config/coco/respaldo.pub`) on the laptop.
-   Without the private key on the laptop, `respaldar.sh` tests the plain copy
+   Without the private key on the laptop, `backup.sh` tests the plain copy
    before encrypting and says the decryption was not proven.
 
 Backups made with the interim key need it to be read: keep it until they
@@ -262,7 +262,7 @@ Restoring into production: see the stop table in [`CLAUDE.md`](../CLAUDE.md).
 To check or recover:
 
 ```bash
-bash scripts/restaurar.sh [coco-<date>.tar.age | decrypted folder]
+bash scripts/restore.sh [coco-<date>.tar.age | decrypted folder]
 ```
 
 - **No `--target`:** restores into the local throwaway database
@@ -277,11 +277,11 @@ bash scripts/restaurar.sh [coco-<date>.tar.age | decrypted folder]
   a stop for the owner.**
 - Into a Supabase project, `auth` goes in data-only (Supabase owns the schema),
   so it is for a NEW project with an empty `auth`. Then run
-  `cerrar-el-api-de-datos.sql` and point `DATABASE_URL` / `DIRECT_URL` at it
+  `close-data-api.sql` and point `DATABASE_URL` / `DIRECT_URL` at it
   (see [Rotate secrets](#rotate-secrets)). This path has not been run yet.
-- The bucket is not uploaded by `restaurar.sh`. Decrypt by hand and re-upload:
+- The bucket is not uploaded by `restore.sh`. Decrypt by hand and re-upload:
   `age -d -i ~/.config/coco/respaldo.key coco-<date>.tar.age | tar -xf -`, then
-  `scripts/soportes/copy-to-storage.mjs --from coco-<date>/soportes` (it
+  `scripts/receipts/copy-to-storage.mjs --from coco-<date>/soportes` (it
   verifies every file by sha256).
 - The older `coco-<date>.sql` files (public only, plain SQL) restore with
   `createdb coco_restore && psql -v ON_ERROR_STOP=1 -d coco_restore -f <file>`.
@@ -289,7 +289,7 @@ bash scripts/restaurar.sh [coco-<date>.tar.age | decrypted folder]
 ### Retention — PROPOSAL, not in force
 
 Deleting a backup follows the stop table in [`CLAUDE.md`](../CLAUDE.md).
-`respaldar.sh` no longer prunes. Proposed policy:
+`backup.sh` no longer prunes. Proposed policy:
 
 - the 14 most recent daily backups;
 - the last backup of each month, for 12 months;
@@ -375,7 +375,7 @@ fix it.**
   says the file could not be attached.
 - Copies of the files: the server disk (`~/soportes-cocoapp`, kept until the
   owner retires it) and `$COCO_DATA_DIR/respaldos/soportes-*`.
-  `scripts/soportes/copy-to-storage.mjs` re-uploads and verifies each file by
+  `scripts/receipts/copy-to-storage.mjs` re-uploads and verifies each file by
   sha256 against `soportes.huella`; `create-bucket.mjs` recreates the private
   bucket (jpeg/png/pdf, 25 MB).
 

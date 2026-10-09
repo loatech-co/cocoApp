@@ -1,5 +1,5 @@
 // Pulls everything a full backup needs out of production, READ-ONLY, into a
-// local staging folder that respaldar.sh then encrypts (step R-1c).
+// local staging folder that backup.sh then encrypts (step R-1c).
 //
 //   <out>/db.dump        pg_dump custom format of the `public` and `auth` schemas
 //   <out>/conteos.tsv    "schema.table<TAB>rows" for every table in both schemas
@@ -22,8 +22,8 @@
 // or a hash that differs, fails the backup. Objects without a row are kept and
 // reported (orphans): a backup takes everything and judges nothing.
 //
-// Usage (run by respaldar.sh):
-//   npx dotenv -e api/.env.supabase -- node scripts/respaldo/extraer.mjs --out <dir>
+// Usage (run by backup.sh):
+//   npx dotenv -e api/.env.supabase -- node scripts/backup/extract.mjs --out <dir>
 
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -35,7 +35,7 @@ import pg from 'pg';
 const args = process.argv.slice(2);
 const out = args[args.indexOf('--out') + 1];
 if (!args.includes('--out') || !out) {
-  console.error('Usage: extraer.mjs --out <dir>');
+  console.error('Usage: extract.mjs --out <dir>');
   process.exit(1);
 }
 

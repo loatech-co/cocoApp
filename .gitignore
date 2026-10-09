@@ -71,7 +71,7 @@ Thumbs.db
 *.swp
 *.swo
 
-# Recursos de Tesseract: los genera scripts/preparar-tesseract.mjs.
+# Recursos de Tesseract: los genera scripts/prepare-tesseract.mjs.
 # Son artefactos reproducibles, no fuente.
 frontend/public/tesseract/
 
