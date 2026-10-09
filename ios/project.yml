@@ -130,8 +130,8 @@ targets:
         buildPhase: resources
     dependencies:
       - target: Coco
-    # La mitad web del puente, por el mismo motivo: ContractsTests y
-    # WebBridgeSmokeTests la leen desde el paquete.
+    # La mitad web del puente y el contrato v2, por el mismo motivo:
+    # ContractsTests y WebBridgeSmokeTests los leen desde el paquete.
     postCompileScripts:
       - name: Copiar la web para las pruebas del puente
         script: bash "$SRCROOT/scripts/copy-web-for-tests.sh"

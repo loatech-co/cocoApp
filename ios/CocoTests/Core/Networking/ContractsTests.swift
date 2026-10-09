@@ -93,24 +93,18 @@ final class ContractsTests: XCTestCase {
         XCTAssertTrue(CaptureBody(amount: "1", categoryId: 2).isSendable)
     }
 
-    /// Lee frontend/src/shared/lib/native-contract.ts y api/openapi.v2.json y
-    /// falla si la marca, la cabecera nativa o el campo de los soportes se
-    /// separan.
+    /// Lee `native-contract.ts` y `api/openapi.v2.json` —copiados en el
+    /// paquete de pruebas por `scripts/copy-web-for-tests.sh`— y falla si la
+    /// marca, la cabecera nativa o el campo de los soportes se separan. Sin la
+    /// copia falla: no se salta.
     func testBrandMatchesCocoTypes() throws {
-        // ios/CocoTests/Core/Networking/<este archivo> → la raíz del repo.
-        let root = (0..<5).reduce(URL(fileURLWithPath: #filePath)) { url, _ in url.deletingLastPathComponent() }
-        let path = root.appending(path: "frontend/src/shared/lib/native-contract.ts")
-        guard let source = try? String(contentsOf: path, encoding: .utf8) else {
-            throw XCTSkip("No está el repo al lado: \(path.path)")
-        }
+        let web = try XCTUnwrap(Bundle(for: Self.self).resourceURL).appending(path: "Web")
+        let source = try String(contentsOf: web.appending(path: "native-contract.ts"), encoding: .utf8)
         let regex = try NSRegularExpression(pattern: "export const USER_AGENT_APP = '([^']+)'")
         let match = try XCTUnwrap(regex.firstMatch(in: source, range: NSRange(source.startIndex..., in: source)))
         let value = try XCTUnwrap(Range(match.range(at: 1), in: source)).map { String(source[$0]) }
         XCTAssertEqual(value, Brand.userAgentApp)
-        let spec = root.appending(path: "api/openapi.v2.json")
-        guard let openAPI = try? String(contentsOf: spec, encoding: .utf8) else {
-            throw XCTSkip("No está el contrato v2 al lado: \(spec.path)")
-        }
+        let openAPI = try String(contentsOf: web.appending(path: "openapi.v2.json"), encoding: .utf8)
         XCTAssertTrue(openAPI.contains(#""name": "\#(RequestBuilder.nativeClientHeader.lowercased())""#))
         XCTAssertTrue(openAPI.contains(#""enum": ["\#(RequestBuilder.nativeClient)"]"#))
         XCTAssertTrue(openAPI.contains(#""required": ["\#(RequestBuilder.attachmentsField)"]"#))
