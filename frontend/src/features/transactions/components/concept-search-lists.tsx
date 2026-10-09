@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react';
 
-import type { ReceiptCandidate } from '@/features/transactions/model/movement-form';
+import type { ReceiptCandidate } from '@/features/transactions/model/transaction-form';
 import { t } from '@/shared/lib/i18n';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { CreateOption, Option } from '@/shared/ui/organisms/combo';

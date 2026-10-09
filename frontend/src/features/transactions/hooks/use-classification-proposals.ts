@@ -2,14 +2,14 @@ import { useMemo } from 'react';
 
 import { useTransactions } from '@/features/transactions/api/transactions';
 import { useCategorySuggestion } from '@/features/transactions/hooks/use-category-suggestion';
-import { proposalFromText } from '@/features/transactions/model/movement-form';
 import { recentConcepts } from '@/features/transactions/model/recent';
+import { proposalFromText } from '@/features/transactions/model/transaction-form';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { useOnChange } from '@/shared/lib/on-change';
 import { toSearchableNodes } from '@/shared/lib/searchable-tree';
 import { indexTree } from '@coco/receipt-parser';
 
-import type { MovementSheetState } from './use-movement-form';
+import type { TransactionSheetState } from './use-transaction-form';
 
 /**
  * The automatic sources of the classification, and the recent concepts.
@@ -34,7 +34,7 @@ import type { MovementSheetState } from './use-movement-form';
  * pending payments card without anyone remembering touching it.
  */
 export function useClassificationProposals(
-  sheet: MovementSheetState,
+  sheet: TransactionSheetState,
   {
     isOpen,
     transaction,

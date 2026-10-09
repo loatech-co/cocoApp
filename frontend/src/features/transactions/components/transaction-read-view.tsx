@@ -27,7 +27,7 @@ interface ReadViewProps {
  * receipt is the proof of what happened and the note is someone's comment
  * about it, so it goes on the side where what happened is told.
  */
-export function MovementReadColumn({ notes, ...reading }: ReadViewProps & { notes: string }) {
+export function TransactionReadColumn({ notes, ...reading }: ReadViewProps & { notes: string }) {
   return (
     <div className="flex flex-col gap-4">
       <ReadView {...reading} />

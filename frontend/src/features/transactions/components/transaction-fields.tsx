@@ -6,8 +6,8 @@ import { Textarea } from '@/shared/ui/atoms/textarea';
 import { MoneyField } from '@/shared/ui/molecules/money-field';
 
 import { DateSelector } from './date-selector';
-import { MovementClassification } from './movement-classification';
 import { WhatWasRead, CouldNotRead } from './reading-notices';
+import { TransactionClassification } from './transaction-classification';
 
 /**
  * The column of fields, when the sheet can be edited.
@@ -17,7 +17,7 @@ import { WhatWasRead, CouldNotRead } from './reading-notices';
  * paper. No section label: three fields with their name on them do not need
  * someone announcing that they are three fields.
  */
-export function MovementFields(props: ComponentProps<typeof MovementClassification>) {
+export function TransactionFields(props: ComponentProps<typeof TransactionClassification>) {
   const { sheet } = props;
 
   return (
@@ -34,7 +34,7 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
       {sheet.reading && <WhatWasRead />}
       {sheet.unreadNotice && <CouldNotRead text={sheet.unreadNotice} />}
 
-      <MovementClassification {...props} />
+      <TransactionClassification {...props} />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t('transactions.fields.amount')} id="mov-valor">

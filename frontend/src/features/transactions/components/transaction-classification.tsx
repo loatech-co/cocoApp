@@ -1,4 +1,4 @@
-import type { MovementSheetState } from '@/features/transactions/hooks/use-movement-form';
+import type { TransactionSheetState } from '@/features/transactions/hooks/use-transaction-form';
 import { originName } from '@/features/transactions/model/precedence';
 import { selectedPath } from '@/features/transactions/model/transactions';
 import { type CategoryTree } from '@/shared/api/categories';
@@ -10,7 +10,7 @@ import { Combo } from '@/shared/ui/organisms/combo';
 import { ConceptSearch } from './concept-search';
 
 interface ClassificationProps {
-  sheet: MovementSheetState;
+  sheet: TransactionSheetState;
   tree: CategoryTree[];
   /** The SAVED center is static: neither the search nor the cascade moves. */
   isStatic: boolean;
@@ -19,7 +19,7 @@ interface ClassificationProps {
 }
 
 /** What the search says underneath: where what is set came from. */
-function searchHelp(sheet: MovementSheetState): string | undefined {
+function searchHelp(sheet: TransactionSheetState): string | undefined {
   const { classification, categoryId, receiptCandidates } = sheet;
   if (classification.origin && classification.origin !== 'manual' && categoryId !== undefined) {
     return t('transactions.classification.canChange', {
@@ -51,7 +51,7 @@ function searchHelp(sheet: MovementSheetState): string | undefined {
  * What a static center protects is its structure. Deleting the transaction is
  * allowed —that is the record, not the structure—; moving it to another concept is not.
  */
-export function MovementClassification({
+export function TransactionClassification({
   sheet,
   tree,
   isStatic,

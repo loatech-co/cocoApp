@@ -2,16 +2,16 @@ import { useState } from 'react';
 
 import type { ReadingProgress } from '@/features/transactions/api/read-receipt';
 import {
-  todayInBogota,
-  initialAmountAndDate,
-  type ReceiptCandidate,
-} from '@/features/transactions/model/movement-form';
-import {
   UNCLASSIFIED,
   apply,
   type Classification,
   type Origin,
 } from '@/features/transactions/model/precedence';
+import {
+  todayInBogota,
+  initialAmountAndDate,
+  type ReceiptCandidate,
+} from '@/features/transactions/model/transaction-form';
 import {
   type PendingPayment,
   type Transaction,
@@ -29,7 +29,7 @@ export interface SheetOpening {
 }
 
 /** What is typed in the sheet: the transaction's data and its classification. */
-function useMovementFields(opening: SheetOpening, discards: number) {
+function useTransactionFields(opening: SheetOpening, discards: number) {
   const { isOpen, transaction, payment, defaultType } = opening;
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -171,7 +171,7 @@ function useSheetStatus(opening: SheetOpening, discards: number) {
 }
 
 /** The reading of a receipt and the files waiting for the transaction to exist. */
-function useSheetSupports(opening: SheetOpening, discards: number) {
+function useSheetReceipts(opening: SheetOpening, discards: number) {
   const { isOpen, transaction, payment, defaultType } = opening;
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
   const [reading, setReading] = useState<Reading | null>(null);
@@ -197,7 +197,7 @@ function useSheetSupports(opening: SheetOpening, discards: number) {
    * The transaction that was just created, when its receipt was left un-uploaded.
    *
    * It is what keeps a retry from creating a second transaction for the same
-   * money. See the long why in `useSaveMovement`.
+   * money. See the long why in `useSaveTransaction`.
    */
   const [registered, setRegistered] = useState<number | null>(null);
 
@@ -232,7 +232,7 @@ function useSheetSupports(opening: SheetOpening, discards: number) {
  * It is fifteen states, and they reload together every time the sheet opens or an
  * edit is cancelled.
  */
-export function useMovementForm(opening: SheetOpening) {
+export function useTransactionForm(opening: SheetOpening) {
   /*
     Goes up every time an edit is cancelled.
 
@@ -245,11 +245,11 @@ export function useMovementForm(opening: SheetOpening) {
   const [discards, setDiscards] = useState(0);
 
   return {
-    ...useMovementFields(opening, discards),
+    ...useTransactionFields(opening, discards),
     ...useSheetStatus(opening, discards),
-    ...useSheetSupports(opening, discards),
+    ...useSheetReceipts(opening, discards),
     discard: (): void => setDiscards((n) => n + 1),
   };
 }
 
-export type MovementSheetState = ReturnType<typeof useMovementForm>;
+export type TransactionSheetState = ReturnType<typeof useTransactionForm>;

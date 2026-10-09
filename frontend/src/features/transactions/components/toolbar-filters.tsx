@@ -14,7 +14,7 @@ import { Input } from '@/shared/ui/atoms/input';
 import { PageHeader } from '@/shared/ui/atoms/page-header';
 
 import { DateSelector } from './date-selector';
-import { ClassificationMenu, NewMovementMenu, SortMenu } from './toolbar-menus';
+import { ClassificationMenu, NewTransactionMenu, SortMenu } from './toolbar-menus';
 
 interface ToolbarFiltersProps {
   title: string;
@@ -114,7 +114,7 @@ export function ToolbarFilters(props: ToolbarFiltersProps) {
           the screen. Up here it was the same button repeated, and in
           a row of four controls it was the one that fit least.
         */}
-          {onNew && !isMobile && <NewMovementMenu onNew={onNew} />}
+          {onNew && !isMobile && <NewTransactionMenu onNew={onNew} />}
 
           {actions}
         </div>

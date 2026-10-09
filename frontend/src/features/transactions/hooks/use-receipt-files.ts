@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { useReceipts, useUploadReceipts } from '@/features/transactions/api/receipts';
-import type { ReceiptFailure } from '@/features/transactions/model/supports';
+import type { ReceiptFailure } from '@/features/transactions/model/receipts';
 import { ApiClientError, apiBlob } from '@/shared/api/api-client';
 import { getSoportesDownloadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
 import { t } from '@/shared/lib/i18n';
@@ -20,7 +20,7 @@ import { useOnChange } from '@/shared/lib/on-change';
  * the receipt NOT having a URL that works for whoever has it. If a
  * `src` were enough, it would also be enough for someone to copy the link.
  */
-export function useSupportFiles(transactionId: number) {
+export function useReceiptFiles(transactionId: number) {
   const receipts = useReceipts(transactionId);
   const list = receipts.data ?? [];
 
@@ -100,7 +100,7 @@ export function useSupportFiles(transactionId: number) {
 }
 
 /** Upload receipts to an already saved transaction, with their progress and their error. */
-export function useSupportUpload(transactionId: number, onDone: () => void) {
+export function useReceiptUpload(transactionId: number, onDone: () => void) {
   const upload = useUploadReceipts(transactionId);
   const [progress, setProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);

@@ -84,7 +84,7 @@ export function ClassificationMenu({
    come from `size="sm"` inside the button, which is where they live. Written here,
    this button measured differently from the date selector next to it and the
    row looked misaligned. */
-export function NewMovementMenu({ onNew }: { onNew: (type: TransactionType) => void }) {
+export function NewTransactionMenu({ onNew }: { onNew: (type: TransactionType) => void }) {
   return (
     <Menu
       label={t('transactions.newMovement')}

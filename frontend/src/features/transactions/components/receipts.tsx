@@ -1,20 +1,20 @@
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { useSupportFiles, useSupportUpload } from '@/features/transactions/hooks/use-support-files';
+import { useReceiptFiles, useReceiptUpload } from '@/features/transactions/hooks/use-receipt-files';
 import { type Receipt } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { OverlayButton } from '@/shared/ui/molecules/overlay-control';
 
-import { ConfirmSupportDeletion } from './confirm-support-deletion';
-import { DropZone } from './support-drop-zone';
-import { SupportPager } from './support-pager';
-import { FilePreview } from './support-preview';
-import { UploadPanel } from './support-upload-panel';
-import { Lightbox } from './support-viewer';
+import { ConfirmReceiptDeletion } from './confirm-receipt-deletion';
+import { DropZone } from './receipt-drop-zone';
+import { ReceiptPager } from './receipt-pager';
+import { FilePreview } from './receipt-preview';
+import { UploadPanel } from './receipt-upload-panel';
+import { Lightbox } from './receipt-viewer';
 
 /** What the gallery remembers: which one is shown, which one is being deleted, which one is enlarged. */
-function useSupportGallery(transactionId: number) {
+function useReceiptGallery(transactionId: number) {
   /**
    * Adding: the upload panel opens on top of the sheet.
    *
@@ -36,8 +36,8 @@ function useSupportGallery(transactionId: number) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return {
-    files: useSupportFiles(transactionId),
-    upload: useSupportUpload(transactionId, () => setIsAdding(false)),
+    files: useReceiptFiles(transactionId),
+    upload: useReceiptUpload(transactionId, () => setIsAdding(false)),
     isAdding,
     setIsAdding,
     isDeleting,
@@ -49,7 +49,7 @@ function useSupportGallery(transactionId: number) {
   };
 }
 
-type Gallery = ReturnType<typeof useSupportGallery>;
+type Gallery = ReturnType<typeof useReceiptGallery>;
 
 /**
  * A transaction's receipts: the receipt that proves the payment existed.
@@ -61,10 +61,10 @@ type Gallery = ReturnType<typeof useSupportGallery>;
  * recognized at a glance: the water bill does not look like the school one.
  *
  * The files are requested with the token and arrive as `blob:`; the why is in
- * `useSupportFiles`.
+ * `useReceiptFiles`.
  */
 export function Receipts({ transactionId }: { transactionId: number }) {
-  const g = useSupportGallery(transactionId);
+  const g = useReceiptGallery(transactionId);
   const { list } = g.files;
 
   if (g.files.isLoading) {
@@ -145,7 +145,7 @@ function GalleryPreview({ g }: { g: Gallery }) {
       onOpen={() => g.setEnlargedIndex(i)}
       actions={
         <>
-          <SupportPager index={i} total={list.length} onGo={g.setActiveIndex} />
+          <ReceiptPager index={i} total={list.length} onGo={g.setActiveIndex} />
 
           <OverlayButton
             label={t('transactions.supports.addAnother')}
@@ -174,7 +174,7 @@ function GalleryOverlays({ g, transactionId }: { g: Gallery; transactionId: numb
 
   return (
     <>
-      <ConfirmSupportDeletion
+      <ConfirmReceiptDeletion
         transactionId={transactionId}
         receipt={g.isDeleting}
         onCancel={() => g.setIsDeleting(null)}

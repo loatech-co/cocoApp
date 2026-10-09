@@ -12,7 +12,7 @@ import { OverlayButton, ControlSeparator } from '@/shared/ui/molecules/overlay-c
  * controls that do nothing. The rule at the end separates moving from what
  * modifies (see `ControlSeparator`).
  */
-export function SupportPager({
+export function ReceiptPager({
   index,
   total,
   onGo,

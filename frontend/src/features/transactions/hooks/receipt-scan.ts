@@ -1,9 +1,9 @@
 import { readReceipt } from '@/features/transactions/api/read-receipt';
-import { unreadNotice, proposalFromReading } from '@/features/transactions/model/movement-form';
+import { unreadNotice, proposalFromReading } from '@/features/transactions/model/transaction-form';
 import { type Category } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 
-import type { MovementSheetState } from './use-movement-form';
+import type { TransactionSheetState } from './use-transaction-form';
 
 /**
  * The minimum length of the reading step of a receipt.
@@ -46,7 +46,7 @@ async function waitForReadingFloor(startedAt: number): Promise<void> {
  * receipt that saves itself is worse than not reading it, because nobody looks again at
  * what was already recorded.
  */
-export function makeReceiptScan(sheet: MovementSheetState, tree: Category[] | undefined) {
+export function makeReceiptScan(sheet: TransactionSheetState, tree: Category[] | undefined) {
   return async function scan(file: File): Promise<void> {
     sheet.setStep('leyendo');
     sheet.setError(null);

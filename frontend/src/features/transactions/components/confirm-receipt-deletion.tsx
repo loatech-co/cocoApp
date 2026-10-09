@@ -1,5 +1,5 @@
 import { useDeleteReceipt } from '@/features/transactions/api/receipts';
-import { DELETE_RECEIPT } from '@/features/transactions/model/supports';
+import { DELETE_RECEIPT } from '@/features/transactions/model/receipts';
 import { type Receipt } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { Confirmation } from '@/shared/ui/organisms/confirmation';
@@ -12,7 +12,7 @@ import { Confirmation } from '@/shared/ui/organisms/confirmation';
  * same words: it is the same action, done from another place. Open
  * while there is a `receipt`.
  */
-export function ConfirmSupportDeletion({
+export function ConfirmReceiptDeletion({
   transactionId,
   receipt,
   onCancel,

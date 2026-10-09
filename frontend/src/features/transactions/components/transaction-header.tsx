@@ -1,6 +1,6 @@
 import { Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 
-import { capitalize, typeName } from '@/features/transactions/model/movement-form';
+import { capitalize, typeName } from '@/features/transactions/model/transaction-form';
 import { type PendingPayment, type TransactionType } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
@@ -51,7 +51,7 @@ function sheetHelp(payment: PendingPayment | null): string | undefined {
     : t('transactions.sheet.attachNote', { name: payment.name });
 }
 
-interface MovementHeaderProps {
+interface TransactionHeaderProps {
   mode: SheetMode;
   onEdit: () => void;
   onDelete: () => void;
@@ -66,7 +66,7 @@ interface MovementHeaderProps {
  * here it is no longer a question —it is what is being talked about, and the pastel
  * says it before reading—.
  */
-export function MovementHeader({ mode, onEdit, onDelete, onClose }: MovementHeaderProps) {
+export function TransactionHeader({ mode, onEdit, onDelete, onClose }: TransactionHeaderProps) {
   const { type, isEditing, isEditable } = mode;
 
   return (

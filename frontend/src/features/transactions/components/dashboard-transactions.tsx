@@ -12,7 +12,7 @@ import { TableFooter, Td } from '@/shared/ui/molecules/table';
 type Table = ReturnType<typeof useDashboardPage>['table'];
 
 /** The dashboard table: everything that falls in the cut, paginated. */
-export function DashboardMovements({
+export function DashboardTransactions({
   table,
   tree,
   onOpen,

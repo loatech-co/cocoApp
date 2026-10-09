@@ -17,7 +17,7 @@ import {
   proposalFromReading,
   proposalFromText,
   unreadNotice,
-} from './movement-form';
+} from './transaction-form';
 
 const TREE: SearchableNode[] = [
   {
@@ -102,9 +102,9 @@ describe('initialAmountAndDate', () => {
     }) as PendingPayment;
 
   it('opens a transaction with its own amount and date', () => {
-    const movement = { amount: '45000.50', date: '2026-04-02' } as Transaction;
+    const transaction = { amount: '45000.50', date: '2026-04-02' } as Transaction;
 
-    expect(initialAmountAndDate(movement, payment({}))).toEqual({
+    expect(initialAmountAndDate(transaction, payment({}))).toEqual({
       amount: '45000.5',
       date: '2026-04-02',
     });

@@ -2,7 +2,7 @@ import { ChevronDown } from 'lucide-react';
 import { useEffect, useRef, type RefObject } from 'react';
 
 import { useConceptSearch } from '@/features/transactions/hooks/use-concept-search';
-import type { ReceiptCandidate } from '@/features/transactions/model/movement-form';
+import type { ReceiptCandidate } from '@/features/transactions/model/transaction-form';
 import { t } from '@/shared/lib/i18n';
 import type { TreeNode } from '@/shared/lib/searchable-tree';
 import { cn } from '@/shared/lib/utils';

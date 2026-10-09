@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 
 import {
-  useMovementSheet,
-  type MovementSheet,
-} from '@/features/transactions/hooks/use-movement-sheet';
+  useTransactionSheet,
+  type TransactionSheet,
+} from '@/features/transactions/hooks/use-transaction-sheet';
 import { selectedPath } from '@/features/transactions/model/transactions';
 import {
   type PendingPayment,
@@ -17,11 +17,11 @@ import { ModalBody, MODAL_PANEL } from '@/shared/ui/molecules/modal-parts';
 import { Confirmation } from '@/shared/ui/organisms/confirmation';
 
 import { CameraCapture } from './camera-capture';
-import { MovementHeader } from './movement-header';
-import { MovementSheetForm } from './movement-sheet-form';
 import { Scanning } from './reading-progress';
+import { TransactionHeader } from './transaction-header';
+import { TransactionSheetForm } from './transaction-sheet-form';
 
-interface MovementModalProps {
+interface TransactionModalProps {
   isOpen: boolean;
   /** Without a transaction, the form creates. With one, it edits that one. */
   transaction?: Transaction | null | undefined;
@@ -61,26 +61,26 @@ interface MovementModalProps {
  * ones and leaving it there would make a transaction that shows up in no
  * per-concept breakdown.
  *
- * What it needs to work is gathered by `useMovementSheet`.
+ * What it needs to work is gathered by `useTransactionSheet`.
  */
-export function TransactionModal(props: MovementModalProps) {
+export function TransactionModal(props: TransactionModalProps) {
   const { isOpen, transaction, payment, defaultType = 'expense', onClose } = props;
-  const movementSheet = useMovementSheet({
+  const transactionSheet = useTransactionSheet({
     isOpen,
     transaction,
     payment,
     defaultType,
     onClose,
   });
-  const { sheet } = movementSheet;
+  const { sheet } = transactionSheet;
 
   if (!isOpen) return null;
   const isEditing = Boolean(transaction);
-  const { category, concept } = selectedPath(movementSheet.tree, sheet.categoryId);
+  const { category, concept } = selectedPath(transactionSheet.tree, sheet.categoryId);
 
   return (
     <SheetOverlay isEditing={isEditing} onClose={onClose}>
-      <MovementHeader
+      <TransactionHeader
         mode={{
           type: sheet.type,
           isEditing,
@@ -102,16 +102,16 @@ export function TransactionModal(props: MovementModalProps) {
           a min height: with that the form can stretch and take its buttons
           to the bottom instead of leaving them halfway up. */}
       <ModalBody>
-        <MovementSteps sheet={movementSheet} transaction={transaction} onClose={onClose} />
+        <TransactionSteps sheet={transactionSheet} transaction={transaction} onClose={onClose} />
 
-        <ConfirmMovementDeletion
+        <ConfirmTransactionDeletion
           isOpen={sheet.isConfirmingDeletion}
-          isBusy={movementSheet.save.remove.isPending}
+          isBusy={transactionSheet.save.remove.isPending}
           concept={concept?.name ?? category?.name ?? t('transactions.sheet.conceptFallback')}
           onCancel={() => sheet.setIsConfirmingDeletion(false)}
           onConfirm={() =>
             transaction &&
-            movementSheet.save.remove.mutate(transaction.id, {
+            transactionSheet.save.remove.mutate(transaction.id, {
               onSuccess: () => {
                 sheet.setIsConfirmingDeletion(false);
                 onClose();
@@ -125,16 +125,16 @@ export function TransactionModal(props: MovementModalProps) {
 }
 
 /** The camera, the reading or the form: whatever fills the sheet right now. */
-function MovementSteps({
-  sheet: movementSheet,
+function TransactionSteps({
+  sheet: transactionSheet,
   transaction,
   onClose,
 }: {
-  sheet: MovementSheet;
+  sheet: TransactionSheet;
   transaction: Transaction | null | undefined;
   onClose: () => void;
 }) {
-  const { sheet, scan } = movementSheet;
+  const { sheet, scan } = transactionSheet;
 
   if (sheet.step === 'camara') {
     return (
@@ -147,17 +147,17 @@ function MovementSteps({
   }
 
   return (
-    <MovementSheetForm
+    <TransactionSheetForm
       sheet={sheet}
-      tree={movementSheet.tree}
-      isStatic={movementSheet.isStatic}
-      createInside={movementSheet.create.createInside}
-      isCreating={movementSheet.create.isCreating}
-      recent={movementSheet.recent}
+      tree={transactionSheet.tree}
+      isStatic={transactionSheet.isStatic}
+      createInside={transactionSheet.create.createInside}
+      isCreating={transactionSheet.create.isCreating}
+      recent={transactionSheet.recent}
       transaction={transaction}
       scan={scan}
-      onSubmit={movementSheet.save.onSubmit}
-      isSaving={movementSheet.save.isSaving}
+      onSubmit={transactionSheet.save.onSubmit}
+      isSaving={transactionSheet.save.isSaving}
       onCancel={() => {
         if (!transaction) {
           onClose();
@@ -242,7 +242,7 @@ function SheetOverlay({
  * trash can seems to be pointing at the concept. It is not. Without that sentence,
  * nobody deletes a mistyped expense for fear of taking «Aseo» down with it.
  */
-function ConfirmMovementDeletion({
+function ConfirmTransactionDeletion({
   isOpen,
   isBusy,
   concept,

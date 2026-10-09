@@ -5,8 +5,8 @@ import { useCategories } from '@/shared/api/categories';
 
 import { makeReceiptScan } from './receipt-scan';
 import { useClassificationProposals } from './use-classification-proposals';
-import { useMovementForm, type SheetOpening } from './use-movement-form';
-import { useCreateInside, useSaveMovement } from './use-save-movement';
+import { useCreateInside, useSaveTransaction } from './use-save-transaction';
+import { useTransactionForm, type SheetOpening } from './use-transaction-form';
 
 function useCloseOnEscape(isOpen: boolean, onClose: () => void): void {
   useEffect(() => {
@@ -22,20 +22,20 @@ function useCloseOnEscape(isOpen: boolean, onClose: () => void): void {
 /**
  * Everything a transaction's sheet needs, together.
  *
- * The state lives in `useMovementForm`; what the automatic sources
+ * The state lives in `useTransactionForm`; what the automatic sources
  * propose, in `useClassificationProposals`; reading a receipt, in
- * `makeReceiptScan`; and saving, in `useSaveMovement`.
+ * `makeReceiptScan`; and saving, in `useSaveTransaction`.
  */
-export function useMovementSheet(opening: SheetOpening & { onClose: () => void }) {
+export function useTransactionSheet(opening: SheetOpening & { onClose: () => void }) {
   const { isOpen, transaction, onClose } = opening;
   const categories = useCategories();
-  const sheet = useMovementForm(opening);
+  const sheet = useTransactionForm(opening);
   const recent = useClassificationProposals(sheet, {
     isOpen,
     transaction,
     tree: categories.data,
   });
-  const save = useSaveMovement(sheet, transaction, onClose);
+  const save = useSaveTransaction(sheet, transaction, onClose);
   const create = useCreateInside(sheet);
   useCloseOnEscape(isOpen, onClose);
 
@@ -66,4 +66,4 @@ export function useMovementSheet(opening: SheetOpening & { onClose: () => void }
   };
 }
 
-export type MovementSheet = ReturnType<typeof useMovementSheet>;
+export type TransactionSheet = ReturnType<typeof useTransactionSheet>;

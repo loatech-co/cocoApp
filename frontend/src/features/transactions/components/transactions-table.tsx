@@ -87,7 +87,7 @@ export function TransactionsTable({
 
   return (
     <Table>
-      <MovementsHead sort={sort} />
+      <TransactionsHead sort={sort} />
 
       <tbody>
         {transactions.map((m) => (
@@ -312,7 +312,7 @@ function NameCell({
   );
 }
 
-function MovementsHead({ sort }: { sort: ColumnOrder | undefined }) {
+function TransactionsHead({ sort }: { sort: ColumnOrder | undefined }) {
   return (
     <thead>
       <tr>

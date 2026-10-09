@@ -1,6 +1,6 @@
 import { FileWarning } from 'lucide-react';
 
-import type { ReceiptFailure } from '@/features/transactions/model/supports';
+import type { ReceiptFailure } from '@/features/transactions/model/receipts';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';

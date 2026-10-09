@@ -1,7 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import type { ComponentProps, SubmitEvent } from 'react';
 
-import type { MovementSheetState } from '@/features/transactions/hooks/use-movement-form';
+import type { TransactionSheetState } from '@/features/transactions/hooks/use-transaction-form';
 import { transactionName, selectedPath } from '@/features/transactions/model/transactions';
 import { type Transaction } from '@/shared/api/generated/model';
 import { DEFAULT_CURRENCY } from '@/shared/lib/format';
@@ -9,10 +9,10 @@ import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 
-import { MovementFields } from './movement-fields';
-import { MovementReadColumn } from './movement-read-view';
-import { PendingReceipts } from './pending-supports';
+import { PendingReceipts } from './pending-receipts';
 import { Receipts } from './receipts';
+import { TransactionFields } from './transaction-fields';
+import { TransactionReadColumn } from './transaction-read-view';
 
 /**
  * THE grid of a transaction sheet: the paper and what it says.
@@ -35,7 +35,7 @@ import { Receipts } from './receipts';
  */
 const SHEET_GRID = 'grid gap-5 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:grid-cols-2';
 
-type FieldsProps = ComponentProps<typeof MovementFields>;
+type FieldsProps = ComponentProps<typeof TransactionFields>;
 
 type SheetFormProps = FieldsProps & {
   transaction: Transaction | null | undefined;
@@ -49,7 +49,7 @@ type SheetFormProps = FieldsProps & {
  * The sheet's form: the receipt on the left, the data on the right
  * —to read or to edit— and the footer.
  */
-export function MovementSheetForm({
+export function TransactionSheetForm({
   transaction,
   scan,
   onSubmit,
@@ -78,12 +78,12 @@ export function MovementSheetForm({
           {transaction ? (
             <Receipts transactionId={transaction.id} />
           ) : (
-            <PendingSupportsColumn sheet={sheet} scan={scan} />
+            <PendingReceiptsColumn sheet={sheet} scan={scan} />
           )}
         </div>
 
         {sheet.isEditable ? (
-          <MovementFields {...fields} />
+          <TransactionFields {...fields} />
         ) : (
           <ReadColumn sheet={sheet} transaction={transaction} tree={fields.tree} />
         )}
@@ -126,11 +126,11 @@ export function MovementSheetForm({
  * unread, because what fills the form is ONE document. What was read shows up
  * as a notice to verify, not as a saved fact.
  */
-function PendingSupportsColumn({
+function PendingReceiptsColumn({
   sheet,
   scan,
 }: {
-  sheet: MovementSheetState;
+  sheet: TransactionSheetState;
   scan: (file: File) => Promise<void>;
 }) {
   return (
@@ -160,14 +160,14 @@ function ReadColumn({
   transaction,
   tree,
 }: {
-  sheet: MovementSheetState;
+  sheet: TransactionSheetState;
   transaction: Transaction | null | undefined;
   tree: FieldsProps['tree'];
 }) {
   const { costCenter, category, concept } = selectedPath(tree, sheet.categoryId);
 
   return (
-    <MovementReadColumn
+    <TransactionReadColumn
       type={sheet.type}
       // The name comes from the concept, same as in the table. It read `description`,
       // which on a transaction recorded by hand has been empty since the sheet

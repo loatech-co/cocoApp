@@ -8,7 +8,7 @@ import {
   openConfirmation,
   openNew,
   fakeReceiptBrowser,
-} from '@/test-support/movement-sheet';
+} from '@/test-support/transaction-sheet';
 
 /*
   The receipt reader, faked.

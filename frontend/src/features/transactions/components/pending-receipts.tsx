@@ -6,12 +6,12 @@ import { useObjectUrls } from '@/shared/lib/object-url';
 import { Button } from '@/shared/ui/atoms/button';
 import { OverlayButton } from '@/shared/ui/molecules/overlay-control';
 
-import { DropZone } from './support-drop-zone';
-import { SupportPager } from './support-pager';
-import { FilePreview } from './support-preview';
-import { UploadPanel } from './support-upload-panel';
+import { DropZone } from './receipt-drop-zone';
+import { ReceiptPager } from './receipt-pager';
+import { FilePreview } from './receipt-preview';
+import { UploadPanel } from './receipt-upload-panel';
 
-interface PendingSupportsProps {
+interface PendingReceiptsProps {
   files: File[];
   onAdd: (files: File[]) => void;
   onRemove: (index: number) => void;
@@ -27,7 +27,7 @@ interface PendingSupportsProps {
  * created in each place, the same file would be loaded twice in memory.
  * Here they are created once and released together.
  */
-export function PendingReceipts(props: PendingSupportsProps) {
+export function PendingReceipts(props: PendingReceiptsProps) {
   const { files, onAdd, onRemove, onTakePhoto } = props;
   const [activeIndex, setActiveIndex] = useState(0);
   const urls = useObjectUrls(files);
@@ -78,7 +78,7 @@ export function PendingReceipts(props: PendingSupportsProps) {
       )}
 
       {files.length === 0 && (
-        <EmptyPendingSupports
+        <EmptyPendingReceipts
           onAdd={onAdd}
           onLoad={() => setIsAdding(true)}
           onTakePhoto={onTakePhoto}
@@ -114,7 +114,7 @@ export function PendingReceipts(props: PendingSupportsProps) {
  * this sheet —that is "Registrar", at the foot— and a filled button here would
  * compete with it.
  */
-function EmptyPendingSupports({
+function EmptyPendingReceipts({
   onAdd,
   onLoad,
   onTakePhoto,
@@ -159,7 +159,7 @@ function PendingActions({
 }) {
   return (
     <>
-      <SupportPager index={index} total={total} onGo={onGoTo} />
+      <ReceiptPager index={index} total={total} onGo={onGoTo} />
 
       <OverlayButton label={t('transactions.supports.addAnother')} onClick={onAdd}>
         <Plus className="size-4" aria-hidden="true" />

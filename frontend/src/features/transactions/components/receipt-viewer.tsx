@@ -1,18 +1,18 @@
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import type { ReceiptFailure } from '@/features/transactions/model/supports';
+import type { ReceiptFailure } from '@/features/transactions/model/receipts';
 import { type Receipt } from '@/shared/api/generated/model';
 import { PAGE_WIDTH, PdfPage } from '@/shared/ui/atoms/pdf-page';
 
-import { ConfirmSupportDeletion } from './confirm-support-deletion';
-import { UnavailableReceipt } from './support-unavailable';
+import { ConfirmReceiptDeletion } from './confirm-receipt-deletion';
+import { UnavailableReceipt } from './receipt-unavailable';
 import {
   ViewerArrow,
   ViewerControls,
   ViewerHeader,
   useViewerZoom,
-} from './support-viewer-controls';
+} from './receipt-viewer-controls';
 
 /** Escape closes, the arrows move between receipts, `+` and `-` zoom. */
 function useViewerKeys(
@@ -207,7 +207,7 @@ function DeleteFromViewer({
   onFinish,
 }: ViewerProps & { receipt: Receipt | null; onFinish: () => void }) {
   return (
-    <ConfirmSupportDeletion
+    <ConfirmReceiptDeletion
       transactionId={transactionId}
       receipt={receipt}
       onCancel={onFinish}

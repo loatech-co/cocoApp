@@ -1,14 +1,14 @@
 import { Loader2, Maximize2, Minus, Plus } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useRef } from 'react';
 
-import type { ReceiptFailure } from '@/features/transactions/model/supports';
+import type { ReceiptFailure } from '@/features/transactions/model/receipts';
 import { t } from '@/shared/lib/i18n';
 import { usePanZoom } from '@/shared/lib/pan-zoom';
 import { cn } from '@/shared/lib/utils';
 import { PdfCanvas } from '@/shared/ui/atoms/pdf-canvas';
 import { OverlayButton, ControlReadout } from '@/shared/ui/molecules/overlay-control';
 
-import { UnavailableReceipt } from './support-unavailable';
+import { UnavailableReceipt } from './receipt-unavailable';
 
 /** The zoom steps, as multiples of the scale that fills the box. */
 const PREVIEW_STEPS = [1, 1.5, 2, 3];

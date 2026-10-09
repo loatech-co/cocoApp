@@ -13,10 +13,10 @@ import { getSoportesUploadUrl } from '@/shared/api/generated/soportes-v2/soporte
 import { t } from '@/shared/lib/i18n';
 import { shrinkReceipts } from '@/shared/lib/shrink-receipt';
 
-import type { MovementSheetState } from './use-movement-form';
+import type { TransactionSheetState } from './use-transaction-form';
 
 /** What is sent to the server, taken from what was typed. */
-function movementPayload(sheet: MovementSheetState) {
+function transactionPayload(sheet: TransactionSheetState) {
   return {
     date: sheet.date,
     amount: sheet.amount.replace(',', '.'),
@@ -57,7 +57,7 @@ async function uploadPending(id: number, pending: File[]): Promise<void> {
  * empty or generic descriptions the server does not learn; it decides that, since it
  * is the one that has the list.
  */
-function learnFromSuggestion(body: ReturnType<typeof movementPayload>): void {
+function learnFromSuggestion(body: ReturnType<typeof transactionPayload>): void {
   if (body.categoryId === null || !body.description) return;
   void categorizationLearn({
     description: body.description,
@@ -80,7 +80,7 @@ function learnFromSuggestion(body: ReturnType<typeof movementPayload>): void {
  * expense is how accounts end up with "Casa", "casa" and "Hogar" being the
  * same. Its combo does not offer creating, and this is not called from there.
  */
-export function useCreateInside(sheet: MovementSheetState) {
+export function useCreateInside(sheet: TransactionSheetState) {
   const createCategory = useCreateCategory();
 
   async function createInside(name: string, parentId: number | undefined): Promise<void> {
@@ -107,7 +107,7 @@ export function useCreateInside(sheet: MovementSheetState) {
 /** Undoes what THIS attempt created, because its receipt did not arrive. */
 async function undoCreation(
   remove: ReturnType<typeof useDeleteTransaction>,
-  sheet: MovementSheetState,
+  sheet: TransactionSheetState,
   id: number,
   message: string,
 ): Promise<void> {
@@ -147,8 +147,8 @@ async function undoCreation(
  * Then it did stay recorded, and that has to be said. There the id is remembered: the
  * next attempt UPDATES that transaction instead of creating another.
  */
-export function useSaveMovement(
-  sheet: MovementSheetState,
+export function useSaveTransaction(
+  sheet: TransactionSheetState,
   transaction: Transaction | null | undefined,
   onClose: () => void,
 ) {
@@ -159,7 +159,7 @@ export function useSaveMovement(
   async function onSubmit(event: SubmitEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     sheet.setError(null);
-    const body = movementPayload(sheet);
+    const body = transactionPayload(sheet);
     const existing = transaction?.id ?? sheet.registered;
     let id = existing ?? undefined;
     /** THIS attempt created it. It is the only thing that can be undone without asking. */

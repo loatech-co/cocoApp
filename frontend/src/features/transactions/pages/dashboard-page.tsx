@@ -1,7 +1,7 @@
 import { DashboardCharts } from '@/features/transactions/components/dashboard-charts';
 import { DashboardKpis } from '@/features/transactions/components/dashboard-kpis';
-import { DashboardMovements } from '@/features/transactions/components/dashboard-movements';
 import { DashboardSkeleton } from '@/features/transactions/components/dashboard-skeleton';
+import { DashboardTransactions } from '@/features/transactions/components/dashboard-transactions';
 import { ToolbarFilters } from '@/features/transactions/components/toolbar-filters';
 import { TransactionModal } from '@/features/transactions/components/transaction-modal';
 import { useDashboardPage } from '@/features/transactions/hooks/use-dashboard-page';
@@ -66,7 +66,7 @@ export function DashboardPage() {
               p.apply({ categoryIds: previous ? [previous.id] : [] });
             }}
           />
-          <DashboardMovements table={table} tree={p.tree} onOpen={sheet.setEditing} />
+          <DashboardTransactions table={table} tree={p.tree} onOpen={sheet.setEditing} />
         </>
       )}
 

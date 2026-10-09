@@ -4,7 +4,7 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
-import { DropZone } from './support-drop-zone';
+import { DropZone } from './receipt-drop-zone';
 
 /**
  * The upload box, over the sheet that asked for it.
