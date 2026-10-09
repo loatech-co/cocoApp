@@ -13,11 +13,11 @@ import { PageHeader } from '@/shared/ui/atoms/page-header';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
 /**
- * Centros de costos.
+ * Cost centers.
  *
- * Es la pantalla donde se define la FORMA de los reportes, así que explica el
- * modelo en vez de dar por sentado que se entiende. Alguien que abre esto por
- * primera vez tiene que salir sabiendo qué es una categoría y por qué existe.
+ * It is the screen where the SHAPE of the reports is defined, so it explains the
+ * model instead of taking for granted that it is understood. Someone who opens this for
+ * the first time has to come out knowing what a category is and why it exists.
  */
 export function CostCentersPage() {
   const categories = useCategories();
@@ -27,15 +27,15 @@ export function CostCentersPage() {
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
-      {/* El botón al extremo opuesto del título, como en el resto de la app:
-          es la única acción de la pantalla y se busca siempre en la misma
-          esquina. */}
+      {/* The button at the opposite end from the title, as in the rest of the app:
+          it is the only action on the screen and it is always looked for in the same
+          corner. */}
       <PageHeader
         title={t('shell.sections.costCenters')}
         description={t('centers.page.help')}
-        /* La explicación se enseña una vez y estorba el resto de las veces.
-           Detrás del signo de interrogación sigue estando para quien la
-           necesite, sin ocupar media pantalla para quien ya la leyó. */
+        /* The explanation is shown once and gets in the way every other time.
+           Behind the question mark it is still there for whoever needs
+           it, without taking up half the screen for whoever already read it. */
         beside={
           <Button
             type="button"
@@ -50,8 +50,8 @@ export function CostCentersPage() {
           </Button>
         }
         actions={
-          // `size="sm"` como la acción principal del resumen, y el icono sin
-          // medida propia: el tamaño de los iconos lo pone el botón.
+          // `size="sm"` like the main action of the summary, and the icon without
+          // a size of its own: the size of the icons is set by the button.
           <Button type="button" size="sm" onClick={() => setIsCreating(true)} className="shrink-0">
             <Plus aria-hidden="true" />
             {t('centers.page.newCostCenter')}
@@ -106,9 +106,9 @@ function NoCostCenters({ onCreate }: { onCreate: () => void }) {
     <Card>
       <CardContent className="p-10 text-center">
         <p className="text-sm text-muted-foreground">{t('centers.page.empty')}</p>
-        {/* El botón aquí además de arriba: en una pantalla vacía, lo
-            único que se puede hacer tiene que estar donde se está
-            mirando. */}
+        {/* The button here as well as above: on an empty screen, the
+            only thing that can be done has to be where one is
+            looking. */}
         <Button type="button" onClick={onCreate} className="mt-4">
           <Plus className="size-4" aria-hidden="true" />
           {t('centers.page.createCostCenter')}

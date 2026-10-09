@@ -20,24 +20,24 @@ import { RecurrenceFields } from './recurrence-fields';
 
 interface ConceptModalProps {
   isOpen: boolean;
-  /** Sin concepto, el formulario crea dentro de `categoríaId`. Con él, edita. */
+  /** Without a concept, the form creates inside `categoryId`. With one, it edits. */
   concept?: Category | null;
   categoryId?: number;
   onClose: () => void;
 }
 
 /**
- * Crear o renombrar un concepto, y decir si se paga cada cierto tiempo.
+ * Create or rename a concept, and say whether it is paid every so often.
  *
- * ── Por qué solo los conceptos ──────────────────────────────────────────────
- * Un centro de costos y una categoría no se pagan: son sumas. Lo que tiene un
- * importe, una fecha y una periodicidad es el concepto —el alquiler, la
- * energía—, y es el único nivel donde la recurrencia significa algo.
+ * ── Why only concepts ───────────────────────────────────────────────────────
+ * A cost center and a category are not paid: they are sums. What has an
+ * amount, a date and a periodicity is the concept —the rent, the
+ * electricity—, and it is the only level where recurrence means something.
  *
- * ── Por qué el mismo formato que el de movimientos ──────────────────────────
- * Porque es la misma clase de acto: abrir una ficha, cambiar unos campos,
- * guardar. Dos formularios distintos para lo mismo obligan a aprender dos
- * veces dónde está el botón de guardar.
+ * ── Why the same format as the transactions one ─────────────────────────────
+ * Because it is the same kind of act: open a form, change some fields,
+ * save. Two different forms for the same thing force learning twice
+ * where the save button is.
  */
 export function ConceptModal({ isOpen, concept, categoryId, onClose }: ConceptModalProps) {
   const categories = useCategories();
@@ -55,8 +55,8 @@ export function ConceptModal({ isOpen, concept, categoryId, onClose }: ConceptMo
         isOpen={isOpen}
         title={concept ? t('centers.conceptModal.editTitle') : t('centers.conceptModal.newTitle')}
         description={t('centers.conceptModal.help')}
-        // Eliminar va en la cabecera, al lado de la equis: es la otra acción
-        // de la ficha que no es "guardar".
+        // Delete goes in the header, next to the cross: it is the other action
+        // of the form that is not "save".
         actions={
           concept && <DeleteConceptButton concept={concept} onClick={() => setIsConfirming(true)} />
         }
@@ -72,7 +72,7 @@ export function ConceptModal({ isOpen, concept, categoryId, onClose }: ConceptMo
           tree={tree}
           isOpen={isConfirming}
           onClose={() => setIsConfirming(false)}
-          // Sin el concepto, esta ficha no tiene de qué hablar.
+          // Without the concept, this form has nothing to talk about.
           onDeleted={onClose}
         />
       )}
@@ -119,21 +119,21 @@ function ConceptForm({ form, concept, tree, twin, onClose }: ConceptFormProps) {
         />
       </Field>
 
-      {/* Solo al editar: al crear, la categoría es aquella cuyo botón se pulsó
-          para abrir esto, así que preguntarlo otra vez es preguntar por
-          algo que se acaba de decir. */}
+      {/* Only when editing: when creating, the category is the one whose button was pressed
+          to open this, so asking it again is asking about
+          something that was just said. */}
       {concept && siblings.length > 1 && <SiblingCategoryField form={form} siblings={siblings} />}
 
       <RecurrenceFields value={form.recurrence} onChange={form.setRecurrence} />
 
       {/*
-        Después de la recurrencia y no antes del nombre.
+        After the recurrence and not before the name.
 
-        Lo que se viene a hacer a esta ficha es crear o corregir un
-        concepto; que sus recibos se lean solos es lo que se hace DESPUÉS,
-        y la primera vez casi nunca —no se sabe qué dice el recibo hasta
-        que llega—. Arriba obligaría a pasar por encima de un campo que la
-        mayoría de las veces se deja vacío.
+        What one comes to do in this form is create or correct a
+        concept; having its receipts read on their own is what is done AFTERWARD,
+        and the first time almost never —one does not know what the receipt says until
+        it arrives—. Above, it would force going over a field that
+        most of the time is left empty.
       */}
       <KeywordsFields
         value={form.keywords}
@@ -171,13 +171,13 @@ function TwinNotice({
 }) {
   return (
     /*
-      Superficie neutra, no ámbar.
+      Neutral surface, not amber.
 
-      El ámbar es para lo que está PENDIENTE —un movimiento sin
-      clasificar, un pago que vence—. Esto no está pendiente ni salió
-      mal: es una salida que se ofrece. Y en oscuro, además, el
-      `warning-surface` es un marrón que sobre el verde del modal daba
-      un verde oliva sucio.
+      Amber is for what is PENDING —an unclassified
+      transaction, a payment coming due—. This is not pending nor did it go
+      wrong: it is a way out being offered. And in dark mode, besides, the
+      `warning-surface` is a brown that over the green of the modal gave
+      a dirty olive green.
     */
     <Block className="flex flex-col gap-3">
       <p className="text-sm text-muted-foreground">
@@ -215,7 +215,7 @@ function ConceptFormFooter({
 }: {
   form: ReturnType<typeof useConceptForm>;
   isEditing: boolean;
-  /** Hay otro concepto con el mismo nombre: se unifica, no se guarda. */
+  /** There is another concept with the same name: it is merged, not saved. */
   isLocked: boolean;
   onClose: () => void;
 }) {

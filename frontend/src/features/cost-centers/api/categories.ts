@@ -24,11 +24,11 @@ export function useUpdateCategory() {
 }
 
 /**
- * Funde un concepto en otro: sus movimientos pasan al destino y él desaparece.
+ * Merges one concept into another: its transactions move to the target and it disappears.
  *
- * Invalida TODO lo que dependa de categorías —el árbol, el resumen, la lista
- * de movimientos— porque después de esto no hay una sola pantalla que siga
- * mostrando lo mismo.
+ * Invalidates EVERYTHING that depends on categories —the tree, the summary, the
+ * transactions list— because after this there is not a single screen still
+ * showing the same thing.
  */
 export function useMergeCategory() {
   const queryClient = useQueryClient();
@@ -45,11 +45,11 @@ export function useMergeCategory() {
 }
 
 /**
- * Cuánto arrastra un borrado, antes de hacerlo.
+ * How much a deletion drags along, before doing it.
  *
- * Se pide al ABRIR la confirmación y no antes: es una consulta por categoría y
- * traerla para las cuarenta del árbol, cada vez que se abre la pantalla, sería
- * pagar cuarenta peticiones por una que casi nunca se usa.
+ * It is requested when the confirmation OPENS and not before: it is one query per category,
+ * and fetching it for the forty in the tree every time the screen opens would mean
+ * paying for forty requests to get one that is almost never used.
  */
 export function useCategoryUsage(id: number | undefined) {
   return useQuery({
@@ -65,21 +65,21 @@ export function useDeleteCategory() {
 
   return useMutation({
     /**
-     * `reasignarA` es a dónde pasan sus movimientos.
+     * `reassignTo` is where its transactions go.
      *
-     * Obligatorio si tiene alguno —la API se niega sin él— y por eso no se
-     * adivina aquí: el sistema no sabe si el alquiler mal clasificado
-     * pertenece a «Vivienda» o a «Oficina», y elegir por su cuenta significa
-     * mover plata a un sitio que nadie pidió.
+     * Required if it has any —the API refuses without it— and that is why it is not
+     * guessed here: the system does not know whether the misclassified rent
+     * belongs to «Vivienda» or to «Oficina», and choosing on its own means
+     * moving money to a place nobody asked for.
      */
     mutationFn: async ({ id, reassignTo }: { id: number; reassignTo?: number | undefined }) => {
       await categoriesRemove(id, reassignTo === undefined ? {} : { reassignTo });
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.categories });
-      // Los movimientos cambian de categoría, así que la tabla y el resumen
-      // dejan de ser ciertos: sin esto, una fila reasignada sigue enseñando su
-      // categoría vieja hasta que alguien recarga.
+      // The transactions change category, so the table and the summary
+      // stop being true: without this, a reassigned row keeps showing its
+      // old category until someone reloads.
       void queryClient.invalidateQueries({ queryKey: ['transactions'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },

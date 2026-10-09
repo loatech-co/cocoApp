@@ -8,66 +8,66 @@ import {
 } from '@coco/receipt-parser';
 
 /**
- * Las palabras que alguien escribe en un concepto para que sus recibos se
- * reconozcan solos.
+ * The words someone writes in a concept so that its receipts are
+ * recognized on their own.
  *
- * ── Por qué el usuario tiene que poder escribirlas ──────────────────────────
- * Porque el catálogo de firmas —`packages/receipt-parser/src/signatures.ts`— se sacó de 443
- * soportes reales, y eso es exactamente lo que le pasa: sabe reconocer a los
- * acreedores de QUIEN los trajo. El primer recibo de una inmobiliaria que no
- * está ahí no se reconoce, y la única salida era abrir el código.
+ * ── Why the user has to be able to write them ───────────────────────────────
+ * Because the signature catalog —`packages/receipt-parser/src/signatures.ts`— was drawn from 443
+ * real receipts, and that is exactly what happens to it: it knows how to recognize the
+ * creditors of WHOEVER brought them. The first receipt from a real estate agency that is not
+ * in there is not recognized, and the only way out was to open the code.
  *
- * Con las palabras clave, quien tiene el recibo delante escribe lo que dice
- * —«Comfandi», el NIT— y el siguiente se clasifica solo. Es el mismo trato que
- * ya tiene la categorización de extractos, que aprende del historial: el
- * sistema no adivina mejor que la persona, aprende de ella.
+ * With keywords, whoever has the receipt in front of them writes what it says
+ * —«Comfandi», the NIT— and the next one is classified on its own. It is the same deal
+ * statement categorization already has, which learns from history: the
+ * system does not guess better than the person, it learns from them.
  *
- * ── Lo que aquí NO se hace ──────────────────────────────────────────────────
- * Guardar las palabras en minúscula y sin tildes. Se comparan así, pero se
- * guardan como se escribieron: «Aquaoccidente» en la ficha tiene que seguir
- * diciendo «Aquaoccidente».
+ * ── What is NOT done here ───────────────────────────────────────────────────
+ * Saving the words in lowercase and without accents. They are compared that way, but they
+ * are saved as they were written: «Aquaoccidente» in the form has to keep
+ * saying «Aquaoccidente».
  */
 
 /**
- * El largo mínimo de una palabra clave.
+ * The minimum length of a keyword.
  *
- * Dos letras aparecen DENTRO de otras palabras —«ao» está en «pago», «da» en
- * «fecha»— y una firma que coincide con cualquier recibo no clasifica: barre.
- * El catálogo tiene abreviaturas de dos letras, pero ancladas al principio del
- * nombre del archivo (`prefijosDeNombre`), que es otra cosa; lo que se escribe
- * aquí se busca suelto en todo el texto.
+ * Two letters show up INSIDE other words —«ao» is in «pago», «da» in
+ * «fecha»— and a signature that matches any receipt does not classify: it sweeps.
+ * The catalog has two-letter abbreviations, but anchored to the start of the
+ * file name (`namePrefixes`), which is something else; what is written
+ * here is searched for loose across the whole text.
  */
 export const MIN_LENGTH = 3;
 
-/** Lo que admite la API. Se repite aquí para no dejar escribir lo que se va a rechazar. */
+/** What the API accepts. Repeated here so as not to allow writing what is going to be rejected. */
 export const MAX_KEYWORDS = 30;
 const MAX_LENGTH = 60;
 
-/** Sin tildes, en minúscula y con los espacios apretados. Para comparar, no para guardar. */
+/** Without accents, in lowercase and with the spaces squeezed. For comparing, not for saving. */
 function comparisonKey(keyword: string): string {
   return normalize(keyword);
 }
 
 /**
- * Recorta y aprieta los espacios. Lo que se guarda: con sus tildes y sus
- * mayúsculas.
+ * Trims and squeezes the spaces. What gets saved: with its accents and its
+ * capital letters.
  */
 export function cleanKeyword(keyword: string): string {
   return keyword.replace(/\s+/g, ' ').trim();
 }
 
-/** ¿Esta lista ya tiene esta palabra? Sin mirar tildes ni mayúsculas. */
+/** Does this list already have this word? Ignoring accents and capitals. */
 export function includesKeyword(keywords: readonly string[], keyword: string): boolean {
   const wanted = comparisonKey(keyword);
   return keywords.some((kept) => comparisonKey(kept) === wanted);
 }
 
 /**
- * Parte lo que se escribió o se pegó en palabras sueltas.
+ * Splits what was typed or pasted into separate words.
  *
- * La coma separa porque es como se pega una lista —«Celsia, EPSA, 805027653»—
- * y porque nadie escribe un acreedor con una coma dentro. El salto de línea,
- * porque copiar tres renglones de un recibo es el otro gesto.
+ * The comma separates because that is how a list is pasted —«Celsia, EPSA, 805027653»—
+ * and because nobody writes a creditor with a comma inside. The line break,
+ * because copying three lines from a receipt is the other gesture.
  */
 export function splitKeywords(text: string): string[] {
   return text
@@ -76,7 +76,7 @@ export function splitKeywords(text: string): string[] {
     .filter((keyword) => keyword !== '');
 }
 
-/** Por qué una palabra no entra. `null` si entra. */
+/** Why a word is not accepted. `null` if it is. */
 export function rejectionReason(keyword: string, existing: readonly string[]): string | null {
   const cleaned = cleanKeyword(keyword);
 
@@ -96,7 +96,7 @@ export function rejectionReason(keyword: string, existing: readonly string[]): s
   return null;
 }
 
-/** Los conceptos del árbol: las hojas, que es donde cuelgan los movimientos. */
+/** The concepts of the tree: the leaves, which is where the transactions hang. */
 function conceptsOf(tree: readonly CategoryTree[]): {
   concept: CategoryTree;
   category: CategoryTree;
@@ -110,13 +110,13 @@ function conceptsOf(tree: readonly CategoryTree[]): {
 }
 
 /**
- * Qué OTRO concepto ya usa esta palabra.
+ * Which OTHER concept already uses this word.
  *
- * ── Por qué se avisa en vez de prohibirlo ───────────────────────────────────
- * Porque una palabra en dos conceptos no rompe nada —el clasificador elige uno
- * y sigue— pero sí hace que la misma factura caiga un mes en «Energía» y otro
- * en «Internet» sin que nadie entienda por qué. Es la misma clase de aviso que
- * el del concepto duplicado: se dice lo que hay y se deja decidir.
+ * ── Why it warns instead of forbidding it ───────────────────────────────────
+ * Because a word in two concepts breaks nothing —the classifier picks one
+ * and moves on— but it does make the same bill land one month in «Energía» and another
+ * in «Internet» without anyone understanding why. It is the same kind of warning as
+ * the one for a duplicate concept: it says what there is and lets the person decide.
  */
 export function conceptAlreadyUsing(
   tree: readonly CategoryTree[],
@@ -132,12 +132,12 @@ export function conceptAlreadyUsing(
 }
 
 /**
- * Las firmas que salen del árbol de alguien.
+ * The signatures that come out of someone's tree.
  *
- * Van DELANTE del catálogo cuando se clasifica, y además con más prioridad:
- * ver `TYPED_TEXT_PRIORITY` en `packages/receipt-parser/src/signatures.ts`.
+ * They go IN FRONT of the catalog when classifying, and with higher priority too:
+ * see `TYPED_TEXT_PRIORITY` in `packages/receipt-parser/src/signatures.ts`.
  */
 export function treeSignatures(tree: readonly CategoryTree[]): Signature[] {
-  // El recorrido vive en el paquete desde la fase 3: la API lo necesita igual.
+  // The traversal lives in the package since phase 3: the API needs it too.
   return sharedTreeSignatures(toSearchableNodes(tree));
 }

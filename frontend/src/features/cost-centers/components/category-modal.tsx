@@ -17,7 +17,7 @@ import { IconGrid } from '@/shared/ui/molecules/icon-grid';
 import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 import { Modal } from '@/shared/ui/organisms/modal';
 
-/** Sin tildes ni mayúsculas: «Educación» se encuentra escribiendo «educacion». */
+/** Without accents or capitals: «Educación» is found by typing «educacion». */
 function normal(text: string): string {
   return text
     .normalize('NFD')
@@ -27,23 +27,23 @@ function normal(text: string): string {
 }
 
 /**
- * Los cincuenta iconos, con un filtro.
+ * The fifty icons, with a filter.
  *
- * ── Por qué hace falta el filtro ────────────────────────────────────────────
- * Sin él la rejilla era cincuenta dibujos en una caja que enseña veintitrés:
- * el resto había que descubrirlo desplazando, sin saber que estaban ahí ni
- * cuántos quedaban. Y no es un problema hipotético —el de «Educación» era el
- * número veintitrés, justo en el pliegue—.
+ * ── Why the filter is needed ────────────────────────────────────────────────
+ * Without it the grid was fifty drawings in a box that shows twenty-three:
+ * the rest had to be discovered by scrolling, without knowing they were there or
+ * how many were left. And it is not a hypothetical problem —the one for «Educación» was
+ * number twenty-three, right at the fold—.
  *
- * Escribiendo tres letras quedan dos o tres iconos y se elige mirando, que es
- * para lo que existe un icono. Filtra por el NOMBRE en castellano y no por el
- * de lucide: quien busca un icono para Educación escribe «educación», no
+ * Typing three letters leaves two or three icons and one picks by looking, which is
+ * what an icon exists for. It filters by the Spanish NAME and not by the
+ * lucide one: whoever looks for an icon for Educación types «educación», not
  * «graduation cap».
  *
- * ── Por qué se puede quitar ─────────────────────────────────────────────────
- * Porque una categoría sin icono es un caso legítimo —los hay que no se parecen a
- * ningún dibujo— y sin una forma de volver atrás, el primer icono que alguien
- * pulse por curiosidad se queda ahí para siempre.
+ * ── Why it can be removed ───────────────────────────────────────────────────
+ * Because a category without an icon is a legitimate case —there are some that do not look like
+ * any drawing— and without a way to go back, the first icon someone
+ * presses out of curiosity stays there forever.
  */
 function IconPicker({
   value,
@@ -82,36 +82,36 @@ function IconPicker({
 interface CategoryModalProps {
   isOpen: boolean;
   /**
-   * Qué se está tocando. Cambia el título, la ayuda y si aparece el
-   * interruptor: lo estático se lee del CENTRO, que es el nivel de arriba, y
-   * una categoría hereda lo que diga el suyo.
+   * What is being touched. It changes the title, the help and whether the
+   * switch shows up: the static flag is read from the COST CENTER, which is the level above, and
+   * a category inherits whatever its own says.
    */
   level: 'costCenter' | 'category';
-  /** Con una categoría, se edita. Sin ella, se crea. */
+  /** With a category, it edits. Without one, it creates. */
   category?: Category | null;
-  /** Al crear una categoría, de qué centro cuelga. */
+  /** When creating a category, which cost center it hangs from. */
   parentId?: number;
   onClose: () => void;
 }
 
 /**
- * Crear o editar un centro de costos.
+ * Create or edit a cost center.
  *
- * ── Por qué en una ficha y no en la propia pantalla ─────────────────────────
- * Porque crear un centro se hace dos o tres veces en la vida de una cuenta, y
- * el formulario ocupaba la primera pantalla entera todos los demás días. Lo
- * que se mira aquí a diario es la estructura que ya existe; crear es una
- * excepción, y las excepciones van detrás de un botón.
+ * ── Why in a form and not on the screen itself ──────────────────────────────
+ * Because creating a cost center is done two or three times in the life of an account, and
+ * the form took up the whole first screen every other day. What
+ * is looked at here daily is the structure that already exists; creating is an
+ * exception, and exceptions go behind a button.
  *
- * ── Por qué crear y editar son la MISMA ficha ───────────────────────────────
- * Porque los campos son los mismos —el nombre y si es estático— y la única
- * diferencia es de dónde salen sus valores iniciales. Dos fichas se separan:
- * una aprende un campo nuevo y la otra no, y entonces hay cosas que solo se
- * pueden poner al crear.
+ * ── Why creating and editing are the SAME form ──────────────────────────────
+ * Because the fields are the same —the name and whether it is static— and the only
+ * difference is where their initial values come from. Two forms drift apart:
+ * one learns a new field and the other does not, and then there are things that can only
+ * be set when creating.
  *
- * Y editar hacía falta: los centros y las categorías no se podían renombrar desde
- * ningún sitio. Un nombre mal escrito obligaba a borrar el centro entero —con
- * sus categorías y sus conceptos— y volver a armarlo.
+ * And editing was needed: cost centers and categories could not be renamed from
+ * anywhere. A misspelled name forced deleting the whole cost center —with
+ * its categories and its concepts— and building it again.
  */
 export function CategoryModal({ isOpen, level, category, parentId, onClose }: CategoryModalProps) {
   const form = useCategoryForm({ isOpen, level, category, parentId, onClose });
@@ -135,38 +135,38 @@ export function CategoryModal({ isOpen, level, category, parentId, onClose }: Ca
         </Field>
 
         {/*
-          El selector de icono, solo en las categorías.
+          The icon picker, only on categories.
 
-          No está en los centros porque ahí no se ve: la fila de un centro ya
-          lleva su flecha de desplegar a la izquierda del nombre, y un segundo
-          símbolo al lado sería un icono compitiendo con un control.
+          It is not on cost centers because there it is not shown: the row of a cost center already
+          carries its expand arrow to the left of the name, and a second
+          symbol next to it would be an icon competing with a control.
 
-          Y es una REJILLA y no un desplegable: cincuenta iconos en una lista
-          hay que abrirla, recorrerla y cerrarla; abiertos a la vez se
-          reconocen mirando, que es para lo que existe un icono. Ocupa cuatro
-          filas de ocho, con su propio desplazamiento para no estirar la ficha.
+          And it is a GRID and not a dropdown: fifty icons in a list
+          have to be opened, scrolled through and closed; open all at once they are
+          recognized by looking, which is what an icon exists for. It takes four
+          rows of eight, with its own scrolling so as not to stretch the form.
         */}
         {!isCostCenter && <IconPicker value={icon} onSelect={setIcon} />}
 
         {/*
-          El interruptor a la DERECHA y dentro de una caja.
+          The switch on the RIGHT and inside a box.
 
-          Suelto y a la izquierda quedaba flotando entre dos campos, con tres
-          renglones de letra pequeña colgando a su lado: se leía como una nota
-          al pie y no como el control que es. La caja lo vuelve una fila de
-          ajustes —nombre a un lado, estado al otro— que es la forma en la que
-          ya se lee un interruptor en cualquier parte.
+          Loose and on the left it was left floating between two fields, with three
+          lines of small print hanging beside it: it read like a
+          footnote and not like the control it is. The box turns it into a settings
+          row —name on one side, state on the other— which is the way a
+          switch is already read anywhere.
 
-          La etiqueta envuelve las dos cosas, así que el texto entero es
-          pulsable: en un teléfono es la diferencia entre acertarle y no.
+          The label wraps both things, so the whole text is
+          pressable: on a phone that is the difference between hitting it and not.
 
-          Y la explicación, corta. El porqué largo —que los costos fijos no se
-          improvisan, que un clic distraído mueve plata sin que nadie lo note—
-          vive en el código, no en el formulario.
+          And the explanation, short. The long why —that fixed costs are not
+          improvised, that a distracted click moves money without anyone noticing—
+          lives in the code, not in the form.
         */}
-        {/* Solo en los centros: lo estático se lee del nivel de arriba, y un
-            categoría hereda lo que diga el suyo. Ofrecerlo en una categoría sería un
-            interruptor que no hace nada. */}
+        {/* Only on cost centers: the static flag is read from the level above, and a
+            category inherits whatever its own says. Offering it on a category would be a
+            switch that does nothing. */}
         {isCostCenter && <StaticSwitch isStatic={form.isStatic} onChange={form.setIsStatic} />}
 
         {error && (

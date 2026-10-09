@@ -1,10 +1,10 @@
 import { t } from '@/shared/lib/i18n';
 /**
- * Lo que la ficha de un centro o una categoría manda al servidor.
+ * What the form of a cost center or a category sends to the server.
  *
- * Cada nivel guarda lo suyo: lo estático es del CENTRO —una categoría hereda lo
- * que diga el suyo— y el icono es de la categoría, porque en la fila de un
- * centro no se ve.
+ * Each level saves its own: the static flag belongs to the COST CENTER —a category inherits
+ * whatever its own says— and the icon belongs to the category, because in the row of a
+ * cost center it is not shown.
  */
 
 export interface CategoryFormValues {
@@ -14,12 +14,12 @@ export interface CategoryFormValues {
   icon: string | null;
 }
 
-/** Los cambios al renombrar. */
+/** The changes when renaming. */
 export function categoryChanges({ isCostCenter, name, isStatic, icon }: CategoryFormValues) {
   return isCostCenter ? { name: name.trim(), isStatic } : { name: name.trim(), icon };
 }
 
-/** Lo que se crea. Una categoría cuelga de su padre, si lo hay. */
+/** What gets created. A category hangs from its parent, if there is one. */
 export function newCategory(
   { isCostCenter, name, isStatic, icon }: CategoryFormValues,
   parentId: number | undefined,
@@ -36,7 +36,7 @@ export function newCategory(
   };
 }
 
-/** El título y la línea de ayuda de la ficha. */
+/** The title and the help line of the form. */
 export function categoryModalTexts(
   isCostCenter: boolean,
   isEditing: boolean,

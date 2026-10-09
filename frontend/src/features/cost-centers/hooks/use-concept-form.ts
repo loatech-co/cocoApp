@@ -21,7 +21,7 @@ interface ConceptFormOptions {
   onClose: () => void;
 }
 
-/** El estado de la ficha de un concepto, y cómo se guarda o se funde con otro. */
+/** The state of a concept's form, and how it is saved or merged into another. */
 export function useConceptForm({ isOpen, concept, categoryId, onClose }: ConceptFormOptions) {
   const create = useCreateCategory();
   const update = useUpdateCategory();
@@ -71,18 +71,18 @@ export function useConceptForm({ isOpen, concept, categoryId, onClose }: Concept
   };
 }
 
-/** Los campos de la ficha, rellenos con lo del concepto en cada apertura. */
+/** The fields of the form, filled with the concept's data on every opening. */
 function useConceptFields(isOpen: boolean, concept: Category | null | undefined) {
   const [name, setName] = useState('');
   const [recurrence, setRecurrence] = useState<Recurrence>(() => initialRecurrence(null));
   const [error, setError] = useState<string | null>(null);
-  /** Lo que se busca en un soporte para reconocer este concepto. */
+  /** What is looked for in a receipt to recognize this concept. */
   const [keywords, setKeywords] = useState<string[]>([]);
-  /** La categoría al que pertenece. Vacío mientras no se esté editando. */
+  /** The category it belongs to. Empty while not editing. */
   const [category, setCategory] = useState('');
 
-  // Se recarga en cada apertura: sin esto, abrir el segundo concepto mostraría
-  // los datos del primero.
+  // Reloaded on every opening: without this, opening the second concept would show
+  // the data of the first.
   useOnChange([isOpen, concept], () => {
     if (!isOpen) return;
     setName(concept?.name ?? '');

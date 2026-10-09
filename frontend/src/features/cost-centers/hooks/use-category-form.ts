@@ -17,11 +17,11 @@ interface CategoryFormOptions {
 }
 
 /**
- * El estado de la ficha de un centro o una categoría, y cómo se guarda.
+ * The state of the form of a cost center or a category, and how it is saved.
  *
- * Crear y renombrar son el mismo formulario: lo único que cambia es a qué
- * mutación se llama y qué campos le tocan a cada nivel —lo estático al centro,
- * el icono a la categoría—.
+ * Creating and renaming are the same form: the only thing that changes is which
+ * mutation is called and which fields belong to each level —the static flag to the cost center,
+ * the icon to the category—.
  */
 export function useCategoryForm({
   isOpen,
@@ -39,8 +39,8 @@ export function useCategoryForm({
 
   const isCostCenter = level === 'costCenter';
 
-  // Se rellena en cada apertura con lo que toque: sin esto, lo que se canceló
-  // la vez anterior reaparece escrito la siguiente.
+  // Refilled on every opening with whatever applies: without this, what was canceled
+  // the previous time shows up written again the next.
   useOnChange([isOpen, category], () => {
     if (!isOpen) return;
     setName(category?.name ?? '');

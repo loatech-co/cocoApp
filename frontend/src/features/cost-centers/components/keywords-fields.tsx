@@ -17,36 +17,36 @@ import { FieldAction, Input } from '@/shared/ui/atoms/input';
 interface KeywordFieldsProps {
   value: string[];
   onChange: (next: string[]) => void;
-  /** Para avisar si otra palabra ya está puesta en otro concepto. */
+  /** To warn if another word is already set on another concept. */
   tree?: readonly Category[];
-  /** El concepto que se está editando, para no avisar de sí mismo. */
+  /** The concept being edited, so it does not warn about itself. */
   conceptId?: Category['id'] | undefined;
   className?: string;
 }
 
 /**
- * Las palabras que hacen que un recibo se reconozca solo.
+ * The words that make a receipt be recognized on its own.
  *
- * ── Qué resuelve ────────────────────────────────────────────────────────────
- * Al adjuntar un soporte, la ficha del movimiento lo lee y rellena el valor,
- * la fecha y el concepto. Lo hace con un catálogo de firmas que salió de 443
- * recibos reales, y por eso sabe reconocer a los acreedores de quien los
- * trajo: el primer recibo de una inmobiliaria que no esté ahí no se reconoce,
- * y hasta hoy la única salida era abrir el código.
+ * ── What it solves ──────────────────────────────────────────────────────────
+ * When a receipt is attached, the transaction's form reads it and fills in the amount,
+ * the date and the concept. It does so with a signature catalog that came out of 443
+ * real receipts, and that is why it knows how to recognize the creditors of whoever
+ * brought them: the first receipt from a real estate agency that is not in there is not recognized,
+ * and until today the only way out was to open the code.
  *
- * Aquí se escribe lo que dice ESE recibo —«Comfandi», el NIT— y el siguiente
- * entra clasificado. Lo escrito gana al catálogo: ver `TYPED_TEXT_PRIORITY`.
+ * Here one writes what THAT receipt says —«Comfandi», the NIT— and the next one
+ * comes in classified. What is typed beats the catalog: see `TYPED_TEXT_PRIORITY`.
  *
- * ── Por qué en el concepto y no en una pantalla de reglas ───────────────────
- * Porque el momento en que uno sabe qué palabra reconoce un recibo es el
- * momento en que lo tiene delante, y el sitio donde se dice qué es cada cosa
- * ya existe: Centros de costos. Una pantalla aparte de «reglas de lectura»
- * sería un segundo mapa que mantener de acuerdo con el primero.
+ * ── Why on the concept and not on a rules screen ────────────────────────────
+ * Because the moment one knows which word recognizes a receipt is the
+ * moment one has it in front of them, and the place where it is said what each thing is
+ * already exists: Centros de costos. A separate «reading rules» screen
+ * would be a second map to keep in agreement with the first.
  *
- * ── Por qué se escriben y se ven como chips ─────────────────────────────────
- * Porque son una lista corta de cosas cortas. En un campo de texto con comas
- * —que es la otra forma— no se ve dónde acaba una y empieza la otra, y quitar
- * la del medio es editar una cadena a mano.
+ * ── Why they are typed and shown as chips ───────────────────────────────────
+ * Because they are a short list of short things. In a text field with commas
+ * —which is the other way— one cannot see where one ends and the next begins, and removing
+ * the middle one is editing a string by hand.
  */
 export function KeywordsFields({
   value,
@@ -79,10 +79,10 @@ export function KeywordsFields({
             if (notice) setNotice(null);
           }}
           onKeyDown={onKeyDown}
-          // Lo tecleado y no confirmado entra igual al salir del campo: si no,
-          // escribir la palabra y pulsar «Guardar» la pierde en silencio, y
-          // nadie relee una lista para comprobar que está lo que acaba de
-          // escribir.
+          // What is typed and not confirmed goes in anyway when leaving the field: otherwise,
+          // typing the word and pressing «Guardar» loses it silently, and
+          // nobody rereads a list to check that what they just
+          // typed is there.
           onBlur={add}
           placeholder={t('centers.keywords.placeholder')}
           icon={ScanText}
@@ -93,11 +93,11 @@ export function KeywordsFields({
       {value.length > 0 && <KeywordChips value={value} onRemove={remove} />}
 
       {/*
-        Los dos avisos, en gris y no en rojo.
+        The two warnings, in gray and not in red.
 
-        Ninguno es un error: uno dice que una palabra no entró y por qué, y el
-        otro que ya está puesta en otro concepto —que se puede hacer, y a veces
-        es lo que se quiere—. El rojo es para lo que salió mal.
+        Neither is an error: one says that a word did not go in and why, and the
+        other that it is already set on another concept —which is allowed, and sometimes
+        is what one wants—. Red is for what went wrong.
       */}
       {notice && <p className="text-xs leading-relaxed text-muted-foreground">{notice}</p>}
 
@@ -123,9 +123,9 @@ function KeywordChips({
     <ul className="flex flex-wrap gap-1.5">
       {value.map((keyword) => (
         <li key={keyword}>
-          {/* El nombre no abre nada: solo se quita. Por eso va sin
-              `onClick`, y el chip lo pinta como texto en vez de como un
-              botón que no haría nada. */}
+          {/* The name opens nothing: it can only be removed. That is why it goes without
+              `onClick`, and the chip paints it as text instead of as a
+              button that would do nothing. */}
           <Chip
             onRemove={() => onRemove(keyword)}
             removeLabel={t('centers.keywords.remove', { word: keyword })}
@@ -139,15 +139,15 @@ function KeywordChips({
   );
 }
 
-/** Lo que se está escribiendo, el aviso de lo que no entró y los gestos que añaden y quitan. */
+/** What is being typed, the warning about what did not go in, and the gestures that add and remove. */
 function useKeywordInput(value: string[], onChange: (next: string[]) => void) {
   const [draft, setDraft] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
 
   /**
-   * Añade lo que haya escrito. Devuelve lo que no pudo entrar, para dejarlo en
-   * la caja: borrar lo que alguien acaba de teclear sin decir por qué es la
-   * forma más rápida de que deje de escribir.
+   * Adds whatever is typed. Returns what could not go in, to leave it in
+   * the box: deleting what someone just typed without saying why is the
+   * fastest way to make them stop typing.
    */
   function add(): void {
     const candidates = splitKeywords(draft);
@@ -177,11 +177,11 @@ function useKeywordInput(value: string[], onChange: (next: string[]) => void) {
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
     /*
-      Enter añade, y NO envía el formulario.
+      Enter adds, and does NOT submit the form.
 
-      Sin el `preventDefault`, teclear una palabra y pulsar Enter —que es el
-      gesto con el que se escribe una lista— guardaba el concepto con la
-      palabra a medio escribir y cerraba la ficha.
+      Without the `preventDefault`, typing a word and pressing Enter —which is the
+      gesture a list is written with— saved the concept with the
+      word half-typed and closed the form.
     */
     if (event.key === 'Enter') {
       event.preventDefault();
@@ -189,8 +189,8 @@ function useKeywordInput(value: string[], onChange: (next: string[]) => void) {
       return;
     }
 
-    // Retroceso con la caja vacía quita la última: es como se corrige una
-    // lista de chips en cualquier parte, y ahorra apuntar a un aspa de 16px.
+    // Backspace with the box empty removes the last one: it is how a
+    // list of chips is corrected everywhere, and it saves aiming at a 16px cross.
     if (event.key === 'Backspace' && draft === '' && value.length > 0) {
       onChange(value.slice(0, -1));
       setNotice(null);
@@ -207,9 +207,9 @@ function useKeywordInput(value: string[], onChange: (next: string[]) => void) {
 
 function AddKeywordButton({ draft, onClick }: { draft: string; onClick: () => void }) {
   return (
-    // Enter ya lo hace, pero en un teléfono el teclado no siempre enseña un
-    // Enter y este es el único sitio donde se ve que la caja no guarda una
-    // frase sino una lista.
+    // Enter already does it, but on a phone the keyboard does not always show an
+    // Enter and this is the only place where one sees that the box does not hold a
+    // sentence but a list.
     <FieldAction
       Icon={Plus}
       label={t('centers.keywords.add')}

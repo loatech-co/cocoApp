@@ -2,45 +2,45 @@ import { describe, expect, it } from 'vitest';
 
 import { shortMonthNotice, whenItRecurs, clampDay } from './recurrence-fields';
 
-describe('El día de pago escrito a mano', () => {
-  it('deja pasar cualquier día del mes', () => {
+describe('The payment day typed by hand', () => {
+  it('lets any day of the month through', () => {
     expect(clampDay('15')).toBe(15);
     expect(clampDay('1')).toBe(1);
     expect(clampDay('31')).toBe(31);
   });
 
-  it('recorta lo que se pasa por arriba o por abajo', () => {
+  it('clamps what goes over the top or under the bottom', () => {
     expect(clampDay('45')).toBe(31);
     expect(clampDay('0')).toBe(1);
     expect(clampDay('-3')).toBe(1);
   });
 
-  it('un campo vacío vale 1, no queda en blanco', () => {
-    // Sin valor, el formulario queda en un estado que no se puede guardar y no
-    // lo dice.
+  it('an empty field is worth 1, it is not left blank', () => {
+    // Without a value, the form is left in a state that cannot be saved and does not
+    // say so.
     expect(clampDay('')).toBe(1);
     expect(clampDay('abc')).toBe(1);
   });
 });
 
-describe('El aviso de los meses cortos', () => {
-  it('hasta el 28 no hay nada que avisar', () => {
+describe('The warning about short months', () => {
+  it('up to the 28th there is nothing to warn about', () => {
     expect(shortMonthNotice(15)).toBe('');
     expect(shortMonthNotice(28)).toBe('');
   });
 
-  it('el 29 solo se cae en febrero no bisiesto', () => {
+  it('the 29th only falls off in a non-leap February', () => {
     expect(shortMonthNotice(29)).toContain('bisiestos');
     expect(shortMonthNotice(29)).not.toContain('abril');
   });
 
-  it('el 30 se cae en febrero, pero no en los meses de 30', () => {
+  it('the 30th falls off in February, but not in the 30-day months', () => {
     expect(shortMonthNotice(30)).toContain('febrero');
     expect(shortMonthNotice(30)).not.toContain('abril');
   });
 
-  it('el 31 se cae también en los meses de 30, y los nombra', () => {
-    // "Se ajusta en los meses cortos" obliga a imaginarse cuáles.
+  it('the 31st also falls off in the 30-day months, and names them', () => {
+    // "Se ajusta en los meses cortos" forces you to imagine which ones.
     const notice = shortMonthNotice(31);
     for (const month of ['febrero', 'abril', 'junio', 'septiembre', 'noviembre']) {
       expect(notice).toContain(month);
@@ -48,34 +48,34 @@ describe('El aviso de los meses cortos', () => {
   });
 });
 
-describe('Cuándo vuelve el pago', () => {
-  it('lo mensual no necesita decir de qué mes', () => {
+describe('When the payment comes back', () => {
+  it('a monthly one does not need to say which month', () => {
     expect(whenItRecurs('monthly', 15, 3)).toBe('Todos los meses el día 15.');
   });
 
-  it('lo anual dice el día y el mes', () => {
+  it('a yearly one says the day and the month', () => {
     expect(whenItRecurs('annual', 20, 9)).toBe('Cada 20 de septiembre.');
   });
 
-  it('lo trimestral NOMBRA los cuatro meses', () => {
-    // "Cada tres meses" no dice cuáles, y cuáles es justo lo que hay que poder
-    // comprobar antes de guardar.
+  it('a quarterly one NAMES the four months', () => {
+    // "Cada tres meses" does not say which ones, and which ones is exactly what has to be
+    // checkable before saving.
     expect(whenItRecurs('quarterly', 15, 3)).toBe(
       'El día 15 de marzo, junio, septiembre, diciembre.',
     );
   });
 
-  it('dos trimestrales con meses distintos dan listas distintas', () => {
+  it('two quarterly ones with different months give different lists', () => {
     expect(whenItRecurs('quarterly', 1, 1)).toContain('enero');
     expect(whenItRecurs('quarterly', 1, 2)).toContain('febrero');
     expect(whenItRecurs('quarterly', 1, 1)).not.toContain('febrero');
   });
 
-  it('lo semestral nombra los dos', () => {
+  it('a semiannual one names the two', () => {
     expect(whenItRecurs('semiannual', 10, 2)).toBe('El día 10 de febrero, agosto.');
   });
 
-  it('lo bimestral nombra los seis', () => {
+  it('a bimonthly one names the six', () => {
     expect(whenItRecurs('bimonthly', 5, 1).split(',').length).toBe(6);
   });
 });

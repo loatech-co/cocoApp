@@ -4,7 +4,7 @@ import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 
-/** El modelo explicado con el ejemplo más común, no en abstracto. */
+/** The model explained with the most common example, not in the abstract. */
 export function CostCentersHelp({ onClose }: { onClose: () => void }) {
   return (
     <Card>

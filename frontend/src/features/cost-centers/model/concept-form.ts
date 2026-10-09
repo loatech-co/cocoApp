@@ -3,24 +3,24 @@ import { type CategoryTree } from '@/shared/api/categories';
 import type { Recurrence } from '../components/recurrence-fields';
 
 /**
- * Lo que la ficha de un concepto lee del árbol y lo que manda al servidor.
+ * What a concept's form reads from the tree and what it sends to the server.
  *
- * Funciones puras: la ficha (`ConceptModal`) y su estado
- * (`useConceptForm`) solo deciden CUÁNDO se llaman.
+ * Pure functions: the form (`ConceptModal`) and its state
+ * (`useConceptForm`) only decide WHEN they are called.
  */
 
-/** La recurrencia con la que abre la ficha: la del concepto, o la de fábrica. */
+/** The recurrence the form opens with: the concept's, or the factory default. */
 export function initialRecurrence(concept: CategoryTree | null | undefined): Recurrence {
   return {
     isRecurring: concept?.isRecurring ?? false,
     periodicity: concept?.periodicity ?? 'monthly',
     paymentDay: concept?.paymentDay ?? 1,
-    // El mes en curso: si alguien pasa a trimestral, lo más probable es que el
-    // ciclo empiece ahora, no en enero.
+    // The current month: if someone switches to quarterly, the most likely thing is that the
+    // cycle starts now, not in January.
     paymentMonth: concept?.paymentMonth ?? new Date().getMonth() + 1,
-    // Sin decimales: el campo escribe pesos enteros, que es como se escribe
-    // la plata aquí. Un «180000.00» que vuelve de la API se enseñaría con un
-    // «.00» que nadie tecleó y que el campo no deja borrar.
+    // No decimals: the field writes whole pesos, which is how
+    // money is written here. A «180000.00» coming back from the API would be shown with a
+    // «.00» nobody typed and that the field does not let you delete.
     budget: concept?.budget != null ? String(Math.round(Number(concept.budget))) : '',
     isAutoPay: concept?.isAutoPaid ?? false,
     isMultiPayment: concept?.isMultiPayment ?? false,
@@ -28,17 +28,17 @@ export function initialRecurrence(concept: CategoryTree | null | undefined): Rec
 }
 
 /*
-  ── Las categorías del MISMO centro, y solo esos ────────────────────────────
-  Mover un concepto de categoría es corregir dónde está dentro de su centro:
-  «Claro Móvil» estaba en Vivienda y va en Servicios públicos. Mover de
-  CENTRO es otra cosa —cambia de qué bolsa sale la plata— y es la clase de
-  decisión que no se toma de pasada en un desplegable mientras se corrige un
-  nombre.
+  ── The categories of the SAME cost center, and only those ─────────────────
+  Moving a concept to another category is correcting where it sits inside its cost center:
+  «Claro Móvil» was in Vivienda and belongs in Servicios públicos. Moving to another
+  COST CENTER is something else —it changes which pot the money comes out of— and it is the kind of
+  decision that is not made in passing in a dropdown while correcting a
+  name.
 
-  Y hay una razón práctica encima: un centro puede ser estático, y entonces
-  lo que cuelga de él no se reclasifica. Ofrecer el salto entre centros
-  obligaría a decidir aquí qué pasa con esa regla; limitándolo al centro
-  propio, la pregunta no existe.
+  And there is a practical reason on top: a cost center can be static, and then
+  what hangs from it is not reclassified. Offering the jump between cost centers
+  would force deciding here what happens to that rule; by limiting it to its own
+  cost center, the question does not exist.
 */
 export function siblingCategories(
   tree: CategoryTree[],
@@ -53,18 +53,18 @@ export function siblingCategories(
 }
 
 /*
-  ── El choque de nombres ────────────────────────────────────────────────
-  Los duplicados aparecen solos: una importación crea "Movistar", otra crea
-  "MOVISTAR S.A.", y a partir de ahí la misma factura suma por separado en
-  dos conceptos. Ningún total cuadra y la dona muestra dos porciones donde
-  hay una.
+  ── The name clash ──────────────────────────────────────────────────────
+  Duplicates show up on their own: one import creates "Movistar", another creates
+  "MOVISTAR S.A.", and from then on the same bill adds up separately in
+  two concepts. No total adds up and the donut shows two slices where
+  there is one.
 
-  Renombrar a secas no lo arregla —quedarían dos conceptos con el mismo
-  nombre, que es peor: se ven iguales y siguen sumando aparte—, así que
-  cuando el nombre ya existe se ofrece fundirlos.
+  Just renaming does not fix it —there would be two concepts with the same
+  name, which is worse: they look the same and keep adding up separately—, so
+  when the name already exists, merging them is offered.
 
-  Sin distinguir mayúsculas ni espacios de sobra, que es justo como se
-  escriben distinto dos veces la misma cosa.
+  Ignoring capitals and extra spaces, which is exactly how the same
+  thing gets written differently twice.
 */
 export function findTwin(
   tree: CategoryTree[],
@@ -76,52 +76,52 @@ export function findTwin(
   );
 }
 
-/** Los campos que se guardan, al crear y al editar. */
+/** The fields that are saved, when creating and when editing. */
 export function conceptFields(name: string, recurrence: Recurrence, keywords: string[]) {
   return {
     name: name.trim(),
     isRecurring: recurrence.isRecurring,
     periodicity: recurrence.isRecurring ? recurrence.periodicity : null,
     paymentDay: recurrence.isRecurring ? recurrence.paymentDay : null,
-    // El mes solo significa algo si el ciclo no es mensual.
+    // The month only means something if the cycle is not monthly.
     paymentMonth:
       recurrence.isRecurring && recurrence.periodicity !== 'monthly'
         ? recurrence.paymentMonth
         : null,
     /*
-      Vacío es `null`, no cero.
+      Empty is `null`, not zero.
 
-      Son dos cosas distintas y la API las distingue: `null` es «no lo sé,
-      estímalo con el promedio» y cero es «esto ahora no cuesta». Mandar cero
-      por un campo en blanco haría desaparecer el concepto del presupuesto
-      del mes sin que nadie lo hubiera pedido.
+      They are two different things and the API tells them apart: `null` is «I don't know,
+      estimate it with the average» and zero is «this costs nothing now». Sending zero
+      for a blank field would make the concept disappear from the month's budget
+      without anyone having asked for it.
 
-      Y si deja de ser recurrente se va con la recurrencia: un presupuesto
-      «cada vez» no significa nada donde no hay una próxima vez.
+      And if it stops being recurring it goes away with the recurrence: a budget
+      «each time» means nothing where there is no next time.
     */
     budget:
       recurrence.isRecurring && recurrence.budget.trim() !== '' ? Number(recurrence.budget) : null,
-    // Se va con la recurrencia, como el presupuesto: cobrar solo «cada vez»
-    // no significa nada donde no hay una próxima vez.
+    // It goes away with the recurrence, like the budget: charging only «each time»
+    // means nothing where there is no next time.
     isAutoPaid: recurrence.isRecurring && recurrence.isAutoPay,
     /*
-      Se va con la recurrencia por lo mismo, y además NUNCA junto al pago
-      automático.
+      It goes away with the recurrence for the same reason, and besides NEVER together with
+      automatic payment.
 
-      El segundo filtro parece redundante —en la pantalla los dos
-      interruptores se excluyen— pero no lo es: la exclusión de allí depende
-      de un estado que esta función no controla, y basta con que alguien
-      reordene los campos para que se cuelen las dos marcas encendidas. La
-      API contestaría 422 y el concepto no se guardaría, lo cual está bien
-      como última defensa pero es un error que no tiene por qué llegar a
-      ocurrir.
+      The second filter looks redundant —on the screen the two
+      switches exclude each other— but it is not: the exclusion there depends
+      on a state this function does not control, and it only takes someone
+      reordering the fields for both flags to slip through switched on. The
+      API would answer 422 and the concept would not be saved, which is fine
+      as a last defense but it is an error that has no reason to ever
+      happen.
     */
     isMultiPayment: recurrence.isRecurring && recurrence.isMultiPayment && !recurrence.isAutoPay,
     keywords,
   };
 }
 
-/** Los cambios al editar: los campos, y la categoría solo si de verdad cambió. */
+/** The changes when editing: the fields, and the category only if it really changed. */
 export function conceptChanges(
   fields: ReturnType<typeof conceptFields>,
   category: string,
@@ -129,16 +129,16 @@ export function conceptChanges(
 ) {
   return {
     ...fields,
-    // Solo si de verdad cambió: un `parentId` en cada guardado
-    // dispara la comprobación de ciclos y de profundidad del árbol
-    // para nada.
+    // Only if it really changed: a `parentId` on every save
+    // triggers the cycle and tree-depth checks
+    // for nothing.
     ...(category !== '' && Number(category) !== Number(concept.parentId)
       ? { parentId: Number(category) }
       : {}),
   };
 }
 
-/** Lo que se crea, colgado de la categoría cuyo botón abrió la ficha. */
+/** What gets created, hanging from the category whose button opened the form. */
 export function newConcept(fields: ReturnType<typeof conceptFields>, categoryId?: number) {
   return {
     ...fields,
@@ -147,14 +147,14 @@ export function newConcept(fields: ReturnType<typeof conceptFields>, categoryId?
   };
 }
 
-/** Los conceptos del árbol: las hojas, que es donde cuelgan los movimientos. */
+/** The concepts of the tree: the leaves, which is where the transactions hang. */
 function conceptsOf(tree: CategoryTree[]): CategoryTree[] {
   return tree.flatMap((costCenter) =>
     (costCenter.children ?? []).flatMap((category) => category.children ?? []),
   );
 }
 
-/** Dos nombres son el mismo si solo se diferencian en mayúsculas o espacios. */
+/** Two names are the same if they only differ in capitals or spaces. */
 function normalize(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, ' ');
 }

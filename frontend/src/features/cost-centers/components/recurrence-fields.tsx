@@ -24,21 +24,21 @@ export interface Recurrence {
   isRecurring: boolean;
   periodicity: Periodicity;
   paymentDay: number;
-  /** El mes del ciclo. Solo se usa —y se pregunta— si no es mensual. */
+  /** The month of the cycle. Only used —and only asked— if it is not monthly. */
   paymentMonth: number;
   /**
-   * Lo que se espera que cueste cada vez. Solo cifras, sin puntos; vacío es
-   * «no lo sé, estímalo».
+   * What it is expected to cost each time. Digits only, no dots; empty is
+   * «I don't know, estimate it».
    */
   budget: string;
-  /** Si el movimiento se crea solo al llegar el día de pago. */
+  /** Whether the transaction is created on its own when the payment day arrives. */
   isAutoPay: boolean;
   /**
-   * Si el concepto se cubre a pedazos: el mercado en cuatro idas, la gasolina
-   * en seis tanqueadas. Se queda en pagos pendientes hasta que lo pagado
-   * alcanza lo esperado, en vez de salirse al primer movimiento.
+   * Whether the concept is covered in pieces: the groceries in four trips, the gas
+   * in six fill-ups. It stays in pending payments until what was paid
+   * reaches what was expected, instead of leaving at the first transaction.
    *
-   * Incompatible con `pagoAutomatico`: ver el porqué junto al interruptor.
+   * Incompatible with `isAutoPay`: see the reason next to the switch.
    */
   isMultiPayment: boolean;
 }
@@ -46,20 +46,20 @@ export interface Recurrence {
 const MONTHS = LONG_MONTHS.map(capitalize);
 
 /**
- * Marcar un concepto como un pago que vuelve.
+ * Marking a concept as a payment that comes back.
  *
- * ── Por qué es del CONCEPTO y no del movimiento ─────────────────────────────
- * Lo que se repite es "el alquiler", no el pago de septiembre. Puesta en cada
- * movimiento habría que repetirla doce veces al año y mantenerlas de acuerdo
- * entre sí; y en un mes sin pagar no habría ningún movimiento donde leerla,
- * que es justo cuando hace falta saber que falta.
+ * ── Why it belongs to the CONCEPT and not to the transaction ────────────────
+ * What repeats is "the rent", not the September payment. Set on each
+ * transaction it would have to be repeated twelve times a year and kept in agreement
+ * with each other; and in an unpaid month there would be no transaction to read it from,
+ * which is exactly when one needs to know that it is missing.
  *
- * Por eso el aviso: tocarla aquí cambia el concepto entero, no esta fila.
+ * That is why the warning: touching it here changes the whole concept, not this row.
  */
 export function RecurrenceFields({
   value,
   onChange,
-  /** El nombre del concepto, para que el aviso diga a qué afecta. */
+  /** The name of the concept, so the warning says what it affects. */
   concept,
   className,
 }: {
@@ -70,22 +70,22 @@ export function RecurrenceFields({
 }) {
   return (
     /*
-      Un bloque, no un `fieldset` con su `legend`.
+      A block, not a `fieldset` with its `legend`.
 
-      La leyenda se dibuja ENCIMA del borde, partiéndolo, y con el título en
-      versalitas el conjunto se leía como una etiqueta pegada a una caja. Aquí
-      lo que hay es un interruptor con su explicación, y lo que aparece debajo
-      solo existe si está encendido: eso se lee mejor como una fila con un
-      control a la derecha.
+      The legend is drawn ON TOP of the border, splitting it, and with the title in
+      small caps the whole thing read like a label stuck to a box. Here
+      what there is is a switch with its explanation, and what shows up below
+      only exists if it is on: that reads better as a row with a
+      control on the right.
     */
     /*
-      SIN `overflow-hidden`, y con `relative z-10`.
+      WITHOUT `overflow-hidden`, and with `relative z-10`.
 
-      El recorte estaba ahí para que el fondo de la fila de abajo respetara
-      las esquinas, pero también recortaba el desplegable de la periodicidad,
-      que se abre por fuera del bloque. Las esquinas las redondea ahora esa
-      fila por su cuenta; el `z-10` lo pone por encima de lo que venga
-      después, que si no lo tapaba por orden de pintado.
+      The clipping was there so the background of the row below would respect
+      the corners, but it also clipped the periodicity dropdown,
+      which opens outside the block. The corners are now rounded by that
+      row on its own; the `z-10` puts it above whatever comes
+      after, which otherwise covered it because of paint order.
     */
     <div className={cn('relative z-10 rounded-lg border border-border', className)}>
       <label className="flex cursor-pointer items-center gap-3 p-3">
@@ -109,10 +109,10 @@ export function RecurrenceFields({
       </label>
 
       {/*
-        Los campos solo existen si está encendido, y CUÁLES depende de cada
-        cuánto vuelve. "Cada tres meses" con un solo día del mes no dice nada:
-        ¿tres meses contados desde cuándo? Por eso, en cuanto deja de ser
-        mensual, aparece el mes del ciclo.
+        The fields only exist if it is on, and WHICH ones depends on how
+        often it comes back. "Every three months" with a single day of the month says nothing:
+        three months counted from when? That is why, as soon as it stops being
+        monthly, the month of the cycle shows up.
       */}
       {value.isRecurring && <RecurrenceDetails value={value} onChange={onChange} />}
     </div>
@@ -120,52 +120,52 @@ export function RecurrenceFields({
 }
 
 /**
- * El día escrito, encajado entre 1 y 31.
+ * The typed day, clamped between 1 and 31.
  *
- * Vacío cuenta como 1 en vez de quedar en blanco: un campo numérico sin valor
- * deja el formulario en un estado que no se puede guardar y no lo dice.
+ * Empty counts as 1 instead of staying blank: a numeric field with no value
+ * leaves the form in a state that cannot be saved and does not say so.
  */
 /**
- * El día del mes, que se puede BORRAR mientras se escribe.
+ * The day of the month, which can be DELETED while typing.
  *
- * ── El fallo ────────────────────────────────────────────────────────────────
- * El campo pintaba directamente el número del valor y recortaba cada tecla con
- * `entre1y31`. Y `entre1y31('')` devuelve 1 —no hay número, se cae al mínimo—,
- * así que al borrar el contenido el campo se rescribía solo en el mismo
- * fotograma: la tecla de borrar no hacía nada visible y para cambiar el día
- * había que seleccionar y sobrescribir.
+ * ── The bug ─────────────────────────────────────────────────────────────────
+ * The field painted the number of the value directly and clamped every keystroke with
+ * `clampDay`. And `clampDay('')` returns 1 —there is no number, it falls to the minimum—,
+ * so when the content was deleted the field rewrote itself in the same
+ * frame: the delete key did nothing visible and to change the day
+ * one had to select and overwrite.
  *
- * ── Por qué hace falta un borrador ──────────────────────────────────────────
- * Porque un campo de texto tiene estados que el dato no tiene. «Vacío» es uno
- * de ellos: no es un día válido, pero es por donde se pasa para escribir otro.
- * Atando lo que se ve al número recortado, esos estados intermedios no pueden
- * existir.
+ * ── Why a draft is needed ───────────────────────────────────────────────────
+ * Because a text field has states the data does not have. «Empty» is one
+ * of them: it is not a valid day, but it is what one goes through to type another.
+ * Tying what is shown to the clamped number, those intermediate states cannot
+ * exist.
  *
- * Así que lo escrito vive aquí y el número sale de ello: mientras haya algo
- * escrito se avisa hacia arriba, y vacío no se avisa —se conserva el último
- * día válido—. Al salir del campo, lo que se ve vuelve a ser ese día: nadie se
- * queda con un campo en blanco y un dato que no coincide.
+ * So what is typed lives here and the number comes out of it: while there is something
+ * typed it is reported upward, and empty is not reported —the last
+ * valid day is kept—. On leaving the field, what is shown goes back to being that day: nobody
+ * is left with a blank field and a value that does not match.
  *
- * ── Lo que NO cambia ────────────────────────────────────────────────────────
- * El recorte sigue siendo al escribir y no al guardar: un 45 que se queda en
- * pantalla hasta que alguien pulsa «Guardar» es un error que nadie ve hasta
- * que ya no está mirando el campo.
+ * ── What does NOT change ────────────────────────────────────────────────────
+ * The clamping still happens while typing and not on save: a 45 that stays on
+ * screen until someone presses «Guardar» is an error nobody sees until
+ * they are no longer looking at the field.
  */
 function DayField({ day, onChange }: { day: number; onChange: (day: number) => void }) {
   const [draft, setDraft] = useState(String(day));
 
-  // El día puede cambiar desde fuera —al abrir la ficha de otro concepto— y lo
-  // que se ve tiene que seguirlo.
+  // The day can change from outside —when opening another concept's form— and what
+  // is shown has to follow it.
   useOnChange([day], () => setDraft(String(day)));
 
   return (
     <Field label={t('centers.recurrence.dayOfMonth')} id="dia-de-pago">
       <Input
         id="dia-de-pago"
-        // `text` y no `number`: un campo numérico devuelve la cadena vacía
-        // cuando su contenido no es un número válido —«3e», «--»—, así que lo
-        // escrito y lo que se lee dejan de coincidir justo mientras se teclea.
-        // Los dígitos los filtra la propia función.
+        // `text` and not `number`: a numeric field returns the empty string
+        // when its content is not a valid number —«3e», «--»—, so what is
+        // typed and what is read stop matching right while typing.
+        // The function itself filters the digits.
         type="text"
         inputMode="numeric"
         maxLength={2}
@@ -175,9 +175,9 @@ function DayField({ day, onChange }: { day: number; onChange: (day: number) => v
           setDraft(digits);
           if (digits !== '') onChange(clampDay(digits));
         }}
-        // Al salir, lo que se ve vuelve a ser el día guardado: un campo en
-        // blanco con un dato detrás es una mentira que solo se descubre al
-        // volver a abrir la ficha.
+        // On leaving, what is shown goes back to being the saved day: a blank
+        // field with a value behind it is a lie that is only discovered when
+        // opening the form again.
         onBlur={() => setDraft(String(day))}
       />
     </Field>
@@ -191,17 +191,17 @@ export function clampDay(draft: string): number {
 }
 
 /**
- * Cuándo vuelve el pago, dicho entero.
+ * When the payment comes back, said in full.
  *
- * ── Por qué hace falta ──────────────────────────────────────────────────────
- * Un campo "día del mes" a solas es coherente con "cada mes" y con nada más:
- * en "cada año", ese día ¿de qué mes? La respuesta es que el mes lo pone el
- * ÚLTIMO PAGO —un anual vuelve doce meses después del anterior— y el día es
- * este. Eso no se adivina mirando un número suelto, así que se escribe.
+ * ── Why it is needed ────────────────────────────────────────────────────────
+ * A "day of the month" field on its own is consistent with "every month" and with nothing else:
+ * in "every year", that day of which month? The answer is that the month is set by the
+ * LAST PAYMENT —a yearly one comes back twelve months after the previous one— and the day is
+ * this one. That cannot be guessed by looking at a loose number, so it is written out.
  *
- * La alternativa era pedir también el mes, pero sería un dato que el sistema
- * ya tiene: obligaría a declarar dos veces lo mismo y a mantenerlos de
- * acuerdo.
+ * The alternative was to also ask for the month, but it would be a piece of data the system
+ * already has: it would force declaring the same thing twice and keeping them in
+ * agreement.
  */
 export function whenItRecurs(periodicity: Periodicity, day: number, month: number): string {
   if (periodicity === 'monthly') return t('centers.recurrence.summary.monthly', { day });
@@ -213,8 +213,8 @@ export function whenItRecurs(periodicity: Periodicity, day: number, month: numbe
 
   const step = { bimonthly: 2, quarterly: 3, semiannual: 6 }[periodicity];
 
-  // Los meses concretos, no "cada tres meses": es lo que hay que poder
-  // comprobar de un vistazo antes de guardar.
+  // The specific months, not "every three months": that is what has to be
+  // checkable at a glance before saving.
   const months: string[] = [];
   for (let m = (month - 1) % step; m < 12; m += step) months.push((MONTHS[m] ?? '').toLowerCase());
 
@@ -222,10 +222,10 @@ export function whenItRecurs(periodicity: Periodicity, day: number, month: numbe
 }
 
 /**
- * Qué va a pasar en los meses que no llegan a ese día.
+ * What is going to happen in the months that do not reach that day.
  *
- * Se dice ANTES de que ocurra, y con los meses concretos. "Se ajusta en los
- * meses cortos" obliga a imaginarse cuáles; "en febrero será el 28" no.
+ * It is said BEFORE it happens, and with the specific months. "Se ajusta en los
+ * meses cortos" forces you to imagine which ones; "en febrero será el 28" does not.
  */
 export function shortMonthNotice(day: number): string {
   if (day <= 28) return '';
@@ -319,15 +319,15 @@ function BudgetField({ value, onChange }: RecurrenceFieldProps) {
 const monthLabel = (periodicity: Periodicity): string =>
   periodicity === 'annual' ? t('centers.recurrence.month') : t('centers.recurrence.cycleMonth');
 
-/** Lo que aparece debajo del interruptor cuando el pago es recurrente. */
+/** What shows up below the switch when the payment is recurring. */
 function RecurrenceDetails({ value, onChange }: RecurrenceFieldProps) {
   return (
     <div
       className={cn(
         'grid gap-3 rounded-b-lg border-t border-border bg-muted/40 p-3',
-        // Tantas columnas como campos haya: con dos columnas fijas, el
-        // tercer campo se quedaba solo en un renglón a media anchura, y la
-        // fila parecía cortada por la mitad.
+        // As many columns as there are fields: with two fixed columns, the
+        // third field was left alone on a row at half width, and the
+        // row looked cut in half.
         value.periodicity === 'monthly' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
       )}
     >
@@ -359,41 +359,41 @@ function RecurrenceDetails({ value, onChange }: RecurrenceFieldProps) {
       />
 
       {/*
-        ── Cuánto, debajo de cuándo ────────────────────────────────────
-        A todo el ancho y en su propio renglón, no como una columna más de
-        la rejilla de arriba. Ahí se contesta CUÁNDO vuelve —cada cuánto,
-        qué mes, qué día—, que son tres formas de la misma pregunta; esto
-        es otra, y en la misma fila se leería como un cuarto ajuste del
-        calendario.
+        ── How much, below when ────────────────────────────────────────
+        Full width and on its own row, not as one more column of
+        the grid above. That one answers WHEN it comes back —how often,
+        which month, which day—, which are three forms of the same question; this
+        is another one, and on the same row it would read as a fourth setting of the
+        calendar.
       */}
       <BudgetField value={value} onChange={onChange} />
 
       {/*
-        ── Que se cobre solo ───────────────────────────────────────────
-        Debajo del presupuesto y no arriba, porque depende de él para ser
-        una buena idea: sin presupuesto, el movimiento se crea con el
-        promedio de los meses anteriores, que es una estimación. Se permite
-        igual —hay gastos que varían y aun así se domicilian— y por eso el
-        movimiento que se crea lo DICE en sus notas.
+        ── Charged on its own ──────────────────────────────────────────
+        Below the budget and not above, because it depends on it to be
+        a good idea: without a budget, the transaction is created with the
+        average of the previous months, which is an estimate. It is allowed
+        anyway —there are expenses that vary and are still set up as direct debits— and that is why the
+        transaction that gets created SAYS so in its notes.
 
-        Una fila entera con su explicación, como el interruptor de arriba,
-        y no un campo más de la rejilla: enciende un comportamiento, no
-        guarda un dato.
+        A whole row with its explanation, like the switch above,
+        and not one more field of the grid: it switches on a behavior, it does not
+        save a piece of data.
       */}
       <AutoPaySwitch value={value} onChange={onChange} />
 
       {/*
-        ── Que se cubra a pedazos ──────────────────────────────────────
-        Debajo del pago automático porque son las dos caras de la misma
-        pregunta —«¿cómo se salda esto?»— y porque se excluyen: el de
-        arriba dice que se cobra solo, entero, el día que vence; este dice
-        que se cubre en varias idas y no se sabe cuántas.
+        ── Covered in pieces ───────────────────────────────────────────
+        Below automatic payment because they are the two sides of the same
+        question —«how is this settled?»— and because they exclude each other: the one
+        above says it is charged on its own, in full, on the day it is due; this one says
+        it is covered in several trips and nobody knows how many.
 
-        Se EXCLUYEN en la pantalla, y no solo en el servidor. Dejar los dos
-        encendibles para que la API conteste 422 es hacer que la regla se
-        descubra fallando; apagar el otro al encender uno sería cambiarle
-        a alguien un ajuste que no tocó. Lo que queda es decirlo: el que no
-        se puede usar está apagado y explica por qué.
+        They EXCLUDE each other on the screen, and not only on the server. Leaving both
+        switchable so that the API answers 422 is making the rule be
+        discovered by failing; switching the other off when one is switched on would be changing
+        a setting someone did not touch. What is left is to say it: the one that
+        cannot be used is off and explains why.
       */}
       <InstallmentsSwitch value={value} onChange={onChange} />
 
@@ -407,7 +407,7 @@ interface RecurrenceFieldProps {
   onChange: (next: Recurrence) => void;
 }
 
-/** Cuándo vuelve, dicho con palabras. */
+/** When it comes back, said in words. */
 function WhenItReturns({ value }: { value: Recurrence }) {
   return (
     <p

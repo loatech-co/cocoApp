@@ -6,11 +6,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { RecurrenceFields, type Recurrence } from './recurrence-fields';
 
 /**
- * «Pago automático» y «se paga en varias veces» no pueden convivir.
+ * «Pago automático» and «se paga en varias veces» cannot coexist.
  *
- * Y la regla se enseña AQUÍ, no solo en el servidor. Dejar los dos
- * encendibles para que la API conteste 422 es hacer que la regla se descubra
- * fallando, después de pulsar guardar.
+ * And the rule is taught HERE, not only on the server. Leaving both
+ * switchable so that the API answers 422 is making the rule be discovered
+ * by failing, after pressing save.
  */
 afterEach(cleanup);
 
@@ -24,7 +24,7 @@ const BASE: Recurrence = {
   isMultiPayment: false,
 };
 
-/** Con estado de verdad: lo que se prueba es cómo reacciona a lo que se pulsa. */
+/** With real state: what is tested is how it reacts to what is pressed. */
 function Harness({ initial = BASE }: { initial?: Recurrence }) {
   const [value, setValue] = useState(initial);
   return <RecurrenceFields value={value} onChange={setValue} concept="Mercado" />;
@@ -33,15 +33,15 @@ function Harness({ initial = BASE }: { initial?: Recurrence }) {
 const switchFor = (name: RegExp) =>
   screen.getByText(name).closest('label')!.querySelector('input')!;
 
-describe('Las dos formas de saldar un concepto', () => {
-  it('con las dos apagadas, cualquiera se puede encender', () => {
+describe('The two ways of settling a concept', () => {
+  it('with both off, either one can be switched on', () => {
     render(<Harness />);
 
     expect(switchFor(/^Pago automático$/).disabled).toBe(false);
     expect(switchFor(/^Se paga en varias veces$/).disabled).toBe(false);
   });
 
-  it('encendido el pago automático, el otro se apaga y DICE por qué', () => {
+  it('with automatic payment on, the other one turns off and SAYS why', () => {
     render(<Harness />);
     fireEvent.click(switchFor(/^Pago automático$/));
 
@@ -49,16 +49,16 @@ describe('Las dos formas de saldar un concepto', () => {
     expect(screen.getByText(/No se puede junto al pago automático/i)).toBeDefined();
   });
 
-  it('y al revés', () => {
+  it('and the other way around', () => {
     render(<Harness />);
     fireEvent.click(switchFor(/^Se paga en varias veces$/));
 
     expect(switchFor(/^Pago automático$/).disabled).toBe(true);
   });
 
-  it('apagar el que estaba encendido vuelve a liberar al otro', () => {
-    // Sin esto los dos quedarían trabados para siempre en cuanto se tocara
-    // uno, que es peor que no tener la regla.
+  it('switching off the one that was on frees the other again', () => {
+    // Without this both would be stuck forever as soon as one was touched,
+    // which is worse than not having the rule.
     render(<Harness />);
     const autoPaySwitch = switchFor(/^Pago automático$/);
 
@@ -69,9 +69,9 @@ describe('Las dos formas de saldar un concepto', () => {
     expect(switchFor(/^Se paga en varias veces$/).disabled).toBe(false);
   });
 
-  it('encender uno NO apaga el otro a escondidas', () => {
-    // Apagar solo el ajuste de alguien sería cambiarle algo que no tocó. Lo
-    // que se hace es impedirlo y explicarlo, no corregirlo por su cuenta.
+  it('switching one on does NOT switch the other off behind the scenes', () => {
+    // Switching off someone's setting on its own would be changing something they did not touch. What
+    // is done is to prevent it and explain it, not to correct it on one's own.
     render(<Harness />);
     fireEvent.click(switchFor(/^Se paga en varias veces$/));
 
@@ -80,21 +80,21 @@ describe('Las dos formas de saldar un concepto', () => {
   });
 });
 
-describe('Lo que dice el interruptor de varias veces', () => {
-  it('con presupuesto, habla del presupuesto', () => {
+describe('What the several-payments switch says', () => {
+  it('with a budget, it talks about the budget', () => {
     render(<Harness />);
     expect(screen.getByText(/hasta cubrir el presupuesto/i)).toBeDefined();
   });
 
-  it('sin presupuesto, dice que se mide contra el promedio', () => {
-    // Que no haya presupuesto no lo deshabilita: hay una cifra igual, solo
-    // que estimada. Pero tiene que decir CUÁL, o el progreso se compara
-    // contra un número que nadie escribió.
+  it('without a budget, it says it is measured against the average', () => {
+    // Having no budget does not disable it: there is a figure all the same, just
+    // estimated. But it has to say WHICH one, or the progress is compared
+    // against a number nobody wrote.
     render(<Harness initial={{ ...BASE, budget: '' }} />);
     expect(screen.getByText(/hasta cubrir el promedio de los meses anteriores/i)).toBeDefined();
   });
 
-  it('y nada de esto aparece si el concepto no es recurrente', () => {
+  it('and none of this shows up if the concept is not recurring', () => {
     render(<Harness initial={{ ...BASE, isRecurring: false }} />);
     expect(screen.queryByText(/^Se paga en varias veces$/)).toBeNull();
   });

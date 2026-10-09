@@ -14,19 +14,19 @@ import { CategoryIcon } from '@/shared/ui/atoms/icons';
 import { Menu, MenuOption } from '@/shared/ui/molecules/menu';
 
 /**
- * Lo que hace de una tarjeta una pieza de la mampostería.
+ * What makes a card a piece of the masonry.
  *
- * ── Por qué `break-inside-avoid` no es opcional ─────────────────────────────
- * Sin él, una tarjeta que no cabe entera al pie de su columna se PARTE: el
- * título y dos conceptos abajo del todo, el resto arriba de la siguiente, y
- * ningún borde que cierre ni que abra. Es la declaración que convierte un
- * texto en columnas en un montón de fichas.
+ * ── Why `break-inside-avoid` is not optional ────────────────────────────────
+ * Without it, a card that does not fit whole at the foot of its column SPLITS: the
+ * title and two concepts at the very bottom, the rest at the top of the next one, and
+ * no border to close or to open. It is the declaration that turns a
+ * text in columns into a pile of tiles.
  *
- * ── Y por qué el hueco de abajo es un margen y no el `gap` ──────────────────
- * Porque en un contenedor de columnas `gap` es solo el hueco ENTRE COLUMNAS.
- * Lo que separa una tarjeta de la de debajo no lo pone nadie, y sin margen
- * quedan pegadas. Doce píxeles, los mismos del `gap-3` de al lado, para que la
- * separación se lea igual en los dos sentidos.
+ * ── And why the gap below is a margin and not the `gap` ─────────────────────
+ * Because in a columns container `gap` is only the gap BETWEEN COLUMNS.
+ * What separates a card from the one below is set by nobody, and without a margin
+ * they end up stuck together. Twelve pixels, the same as the `gap-3` alongside, so that the
+ * separation reads the same in both directions.
  */
 const TILE = 'mb-3 break-inside-avoid';
 
@@ -43,29 +43,29 @@ export function CategoryTile({ category, tree }: CategoryTileProps) {
   const concepts = category.children ?? [];
 
   return (
-    /* `pt` más corto que el resto del relleno: arriba de la tarjeta manda el
-       kebab, que es un botón de 36 con un icono de 16 dentro, y esos diez
-       píxeles de aire suyo se suman a los del borde. Con el relleno parejo,
-       el título quedaba hundido. */
+    /* `pt` shorter than the rest of the padding: at the top of the card the
+       kebab rules, which is a 36 button with a 16 icon inside, and those ten
+       pixels of its own air add to those of the border. With even padding,
+       the title looked sunken. */
     <Block className={cn('pt-2 sm:p-4 sm:pt-2.5', TILE)}>
       <div className="flex items-center justify-between gap-2">
         <CategoryName category={category} />
-        {/* El mismo menú que en el centro: un icono suelto no tiene dónde
-            pulsarse —en un teléfono hay que acertarle a 16px— y no se ve como
-            algo pulsable hasta que uno lo prueba. */}
+        {/* The same menu as on the cost center: a loose icon has nowhere to be
+            pressed —on a phone one has to hit 16px— and it does not look like
+            something pressable until one tries it. */}
         {/*
-          El kebab se acerca al canto con margen NEGATIVO, no encogiéndolo.
+          The kebab gets closer to the edge with a NEGATIVE margin, not by shrinking it.
 
-          Su blanco son 36px de puntero y 42 de dedo, y el icono son 16: los
-          diez de aire que quedan alrededor se sumaban a los del borde de la
-          tarjeta y el icono acababa a veintiséis píxeles de la esquina,
-          flotando. Recortando el botón se arreglaría la vista y se rompería
-          el blanco, que es lo que hay que acertar con el pulgar.
+          Its target is 36px for a pointer and 42 for a finger, and the icon is 16: the
+          ten of air left around it added to those of the border of the
+          card and the icon ended up twenty-six pixels from the corner,
+          floating. Trimming the button would fix the look and break
+          the target, which is what has to be hit with the thumb.
 
-          Con el margen en negativo el botón sigue midiendo lo mismo —se puede
-          pulsar igual— y lo que se mueve es dónde queda dibujado dentro de
-          él. El área táctil se come el relleno de la tarjeta, que es espacio
-          muerto de todos modos.
+          With the margin negative the button still measures the same —it can be
+          pressed the same— and what moves is where it is drawn inside
+          it. The touch area eats the card's padding, which is dead
+          space anyway.
         */}
         <CategoryMenu
           name={category.name}
@@ -76,15 +76,15 @@ export function CategoryTile({ category, tree }: CategoryTileProps) {
       </div>
 
       {/*
-        Ni caja que los desplace ni alto que rellenar: la tarjeta mide lo que
-        tienen ellos.
+        No box to scroll them and no height to fill: the card measures what
+        they have.
 
-        Estuvieron dentro de un `overflow-y-auto` con `flex-1`, que era lo que
-        sostenía el alto fijo de la rejilla: doce conceptos se desplazaban
-        dentro de su tarjeta en vez de costarle un centímetro a las vecinas.
-        En mampostería no hace falta pagar ese precio —una tarjeta alta no
-        infla a nadie— y desplazar escondía detrás de un gesto justamente lo
-        que se viene a leer a esta pantalla.
+        They were inside an `overflow-y-auto` with `flex-1`, which was what
+        held the fixed height of the grid: twelve concepts scrolled
+        inside their card instead of costing the neighbors a centimeter.
+        In masonry there is no need to pay that price —a tall card does not
+        inflate anyone— and scrolling hid behind a gesture precisely what
+        one comes to read on this screen.
       */}
       {concepts.length > 0 && <ConceptList concepts={concepts} onEdit={setIsEditing} />}
 
@@ -118,18 +118,18 @@ export function CategoryTile({ category, tree }: CategoryTileProps) {
 }
 
 /*
-  El icono a la IZQUIERDA del nombre, no encima ni dentro de un pastel.
+  The icon to the LEFT of the name, not above it nor inside a pastel.
 
-  Es lo que hace que una rejilla de doce categorías se recorra mirando en
-  vez de leyendo: la forma se reconoce antes que la palabra. A la
-  izquierda porque es por donde empieza a leerse la fila, y del mismo
-  tamaño que el texto —no un adorno grande— porque acompaña al nombre,
-  no lo sustituye.
+  It is what makes a grid of twelve categories be scanned by looking instead
+  of by reading: the shape is recognized before the word. To the
+  left because that is where the row starts being read, and the same
+  size as the text —not a big ornament— because it accompanies the name,
+  it does not replace it.
 
-  Una categoría sin icono no deja hueco reservado: `IconoDeCategoria`
-  devuelve nada y el nombre arranca donde arrancaba antes. Un hueco
-  vacío alineado con los que sí tienen icono se ve como un icono que
-  no cargó.
+  A category without an icon leaves no reserved slot: `CategoryIcon`
+  returns nothing and the name starts where it started before. An empty
+  slot aligned with the ones that do have an icon looks like an icon that
+  did not load.
 */
 function CategoryName({ category }: { category: CategoryTree }) {
   return (
@@ -161,15 +161,15 @@ function CategoryMenu({
     >
       {(close) => (
         <>
-          {/* Lo PRIMERO del menú: es lo que más se hace con una categoría.
-              Eliminar va al final y en rojo, porque es lo que menos. */}
+          {/* The FIRST thing in the menu: it is what is done most with a category.
+              Delete goes at the end and in red, because it is what is done least. */}
           <MenuOption Icon={Plus} onClick={afterClose(close, onAdd)}>
             {t('centers.tile.addConcept')}
           </MenuOption>
 
-          {/* Renombrar una categoría no existía por ningún camino, igual que en
-              el centro: la única salida era borrarlo con sus conceptos
-              dentro y volver a escribirlos. */}
+          {/* Renaming a category did not exist by any route, same as on
+              the cost center: the only way out was to delete it with its concepts
+              inside and type them again. */}
           <MenuOption Icon={Pencil} onClick={afterClose(close, onEdit)}>
             {t('common.edit')}
           </MenuOption>
@@ -193,18 +193,18 @@ function ConceptList({
     <ul className="mt-3 flex flex-wrap gap-1.5">
       {concepts.map((concept) => (
         <li key={concept.id}>
-          {/* Se abren para editar: renombrar y decir si se pagan solos.
-                Antes eran texto muerto, y el único modo de corregir un
-                nombre mal escrito era borrar el concepto y crearlo de nuevo
-                —con lo que los movimientos se quedaban sin clasificar—. */}
-          {/* El `Chip` compartido, que trae su forma y su relleno.
-                 Escrito a mano era un `bg-card` dentro de una caja `muted`
-                 dentro de una tarjeta `card`, y ese escalón va en sentidos
-                 contrarios según el tema: el chip se levantaba en claro y se
-                 hundía en oscuro. */}
-          {/* `max-w-full` y el nombre recortado: en una tarjeta de 17rem,
-                un concepto con nombre largo hacía un chip más ancho que su
-                tarjeta y se salía por el lado. */}
+          {/* They open for editing: renaming and saying whether they pay themselves.
+                Before they were dead text, and the only way to correct a
+                misspelled name was to delete the concept and create it again
+                —with which the transactions were left unclassified—. */}
+          {/* The shared `Chip`, which brings its shape and its padding.
+                 Written by hand it was a `bg-card` inside a `muted` box
+                 inside a `card` card, and that step goes in opposite
+                 directions depending on the theme: the chip rose in light and
+                 sank in dark. */}
+          {/* `max-w-full` and the name truncated: in a 17rem card,
+                a concept with a long name made a chip wider than its
+                card and it spilled out the side. */}
           <Chip
             onClick={() => onEdit(concept)}
             title={t('centers.tile.editConcept', { name: concept.name })}

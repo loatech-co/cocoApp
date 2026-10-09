@@ -5,47 +5,47 @@ import { t } from '@/shared/lib/i18n';
 import { AddSurface } from '@/shared/ui/atoms/add-surface';
 
 /**
- * El hueco de la siguiente categoría: una baldosa más de la rejilla.
+ * The slot for the next category: one more tile of the grid.
  *
- * ── Por qué un cuadro punteado y no un enlace ───────────────────────────────
- * Porque ocupa una celda en la misma rejilla que las categorías y con su misma
- * forma: se lee como el sitio del próximo, no como una acción en otra parte de
- * la tarjeta. Y el borde punteado es lo que en todas partes significa «aquí
- * cabe algo que todavía no está» —es el mismo lenguaje que el hueco de un
- * soporte y el de un atajo—.
+ * ── Why a dashed box and not a link ─────────────────────────────────────────
+ * Because it takes a cell in the same grid as the categories and with their same
+ * shape: it reads as the place of the next one, not as an action somewhere else on
+ * the card. And the dashed border is what everywhere means «something
+ * that is not here yet fits here» —it is the same language as the slot for a
+ * receipt and the one for a shortcut—.
  *
- * ── Por qué el campo aparece al pedirlo ─────────────────────────────────────
- * Tener veinte campos abiertos a la vez satura: en una pantalla con seis
- * centros serían seis cajas de texto vacías compitiendo con la estructura que
- * se viene a leer.
+ * ── Why the field shows up when asked for ───────────────────────────────────
+ * Having twenty fields open at once is overwhelming: on a screen with six
+ * cost centers there would be six empty text boxes competing with the structure that
+ * one comes to read.
  */
 /**
- * El hueco de la siguiente categoría.
+ * The slot for the next category.
  *
- * ── Por qué un cuadro punteado y no un enlace ───────────────────────────────
- * Porque el borde punteado es lo que en todas partes significa «aquí cabe algo
- * que todavía no está» —el mismo lenguaje que el hueco de un soporte y el de
- * un atajo—, y eso se lee como el sitio de la próxima categoría, no como una acción
- * suelta en otra parte de la tarjeta.
+ * ── Why a dashed box and not a link ─────────────────────────────────────────
+ * Because the dashed border is what everywhere means «something
+ * that is not here yet fits here» —the same language as the slot for a receipt and the one for
+ * a shortcut—, and that reads as the place of the next category, not as an action
+ * loose somewhere else on the card.
  *
- * ── Por qué abre la ficha y ya no un campo suelto ───────────────────────────
- * Tenía su propio formulario en línea: un campo para el nombre y dos botones.
- * Así, crear una categoría y editarlo eran dos formularios distintos para la misma
- * cosa, y el de crear no pedía el icono —que es la mitad de lo que hace a un
- * categoría reconocible en la rejilla—. El resultado es que todo categoría nacía sin
- * icono y había que abrir la ficha justo después para ponérselo.
+ * ── Why it opens the form and no longer a loose field ───────────────────────
+ * It had its own inline form: a field for the name and two buttons.
+ * That way, creating a category and editing it were two different forms for the same
+ * thing, and the create one did not ask for the icon —which is half of what makes a
+ * category recognizable in the grid—. The result is that every category was born without
+ * an icon and one had to open the form right after to give it one.
  *
- * Con la misma ficha en los dos casos, lo que se pide al crear es exactamente
- * lo que se puede cambiar al editar. Y de paso desaparece el único campo de la
- * pantalla que nacía enfocado.
+ * With the same form in both cases, what is asked when creating is exactly
+ * what can be changed when editing. And along the way the only field on the
+ * screen that was born focused disappears.
  */
 export function AddCategory({
   parentId,
   isAlone = false,
 }: {
-  /** De qué centro cuelga la categoría que se va a crear. */
+  /** Which cost center the category about to be created hangs from. */
   parentId: number;
-  /** Sin ningún categoría todavía: el hueco es lo único que hay en el centro. */
+  /** With no category yet: the slot is the only thing in the cost center. */
   isAlone?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);

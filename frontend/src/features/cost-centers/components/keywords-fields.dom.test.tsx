@@ -6,15 +6,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { KeywordsFields } from './keywords-fields';
 
 /**
- * Escribir una palabra clave es escribir una LISTA, no una frase.
+ * Typing a keyword is typing a LIST, not a sentence.
  *
- * Lo que se prueba aquí es el gesto, que es donde esto se rompe: Enter dentro
- * de un formulario envía el formulario, y en una ficha con un botón de guardar
- * eso significa cerrar la ficha con la palabra a medio escribir.
+ * What is tested here is the gesture, which is where this breaks: Enter inside
+ * a form submits the form, and in a sheet with a save button
+ * that means closing the sheet with the word half-typed.
  */
 afterEach(cleanup);
 
-/** Como vive de verdad: dentro de un formulario con su botón de guardar. */
+/** As it really lives: inside a form with its save button. */
 function Harness({ onGuardar: onSave = vi.fn(), inicial: initial = [] as string[] }) {
   const [keywords, setKeywords] = useState(initial);
   return (
@@ -31,8 +31,8 @@ function typeText(text: string): void {
   fireEvent.change(keywordsInput(), { target: { value: text } });
 }
 
-describe('Las palabras clave de un concepto', () => {
-  it('Enter añade la palabra y NO guarda el formulario', () => {
+describe('The keywords of a concept', () => {
+  it('Enter adds the word and does NOT submit the form', () => {
     const onSave = vi.fn();
     render(<Harness onGuardar={onSave} />);
 
@@ -44,7 +44,7 @@ describe('Las palabras clave de un concepto', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('una coma separa, así que una lista pegada entra entera', () => {
+  it('a comma separates, so a pasted list goes in whole', () => {
     render(<Harness />);
 
     typeText('Celsia, EPSA, 805027653');
@@ -55,8 +55,8 @@ describe('Las palabras clave de un concepto', () => {
     }
   });
 
-  it('lo escrito y no confirmado entra al salir del campo', () => {
-    // Si no, escribir la palabra y pulsar «Guardar» la pierde en silencio.
+  it('what is typed and not confirmed goes in when leaving the field', () => {
+    // Otherwise, typing the word and pressing «Guardar» loses it silently.
     render(<Harness />);
 
     typeText('Comfandi');
@@ -65,7 +65,7 @@ describe('Las palabras clave de un concepto', () => {
     expect(screen.getByText('Comfandi')).toBeTruthy();
   });
 
-  it('el aspa quita la palabra', () => {
+  it('the cross removes the word', () => {
     render(<Harness inicial={['Celsia', 'EPSA']} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Quitar Celsia' }));
@@ -74,38 +74,38 @@ describe('Las palabras clave de un concepto', () => {
     expect(screen.getByText('EPSA')).toBeTruthy();
   });
 
-  it('el nombre de la palabra no es un botón: solo se quita', () => {
+  it('the name of the word is not a button: it can only be removed', () => {
     render(<Harness inicial={['Celsia']} />);
 
     expect(screen.queryByRole('button', { name: 'Celsia' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Quitar Celsia' })).toBeTruthy();
   });
 
-  it('una palabra muy corta no entra, se dice por qué y se queda escrita', () => {
+  it('a very short word does not go in, it says why and stays typed', () => {
     render(<Harness />);
 
     typeText('ao');
     fireEvent.keyDown(keywordsInput(), { key: 'Enter' });
 
-    // Se queda en la caja: borrar lo que alguien acaba de teclear sin decir
-    // por qué es la forma más rápida de que deje de escribir.
+    // It stays in the box: deleting what someone just typed without saying
+    // why is the fastest way to make them stop typing.
     expect(keywordsInput().value).toBe('ao');
     expect(screen.getByText(/muy corta/i)).toBeTruthy();
   });
 
-  it('una repetida no se duplica', () => {
+  it('a repeated one is not duplicated', () => {
     render(<Harness inicial={['Celsia']} />);
 
     typeText('CELSIA');
     fireEvent.keyDown(keywordsInput(), { key: 'Enter' });
 
-    // Una sola en la lista. El aviso también la nombra, por eso se cuentan
-    // los chips y no las veces que aparece el texto.
+    // Only one in the list. The warning also names it, that is why the
+    // chips are counted and not the times the text appears.
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
     expect(screen.getByText(/ya está en la lista/i)).toBeTruthy();
   });
 
-  it('retroceso con la caja vacía quita la última', () => {
+  it('backspace with the box empty removes the last one', () => {
     render(<Harness inicial={['Celsia', 'EPSA']} />);
 
     fireEvent.keyDown(keywordsInput(), { key: 'Backspace' });
