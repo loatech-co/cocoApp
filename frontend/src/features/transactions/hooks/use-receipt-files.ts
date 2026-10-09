@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useReceipts, useUploadReceipts } from '@/features/transactions/api/receipts';
 import type { ReceiptFailure } from '@/features/transactions/model/receipts';
 import { ApiClientError, apiBlob } from '@/shared/api/api-client';
-import { getSoportesDownloadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
+import { getReceiptsDownloadUrl } from '@/shared/api/generated/receipts-v2/receipts-v2';
 import { t } from '@/shared/lib/i18n';
 import { useOnChange } from '@/shared/lib/on-change';
 
@@ -59,7 +59,7 @@ export function useReceiptFiles(transactionId: number) {
     for (const s of list) {
       if (!s.isAvailable) continue;
 
-      apiBlob(getSoportesDownloadUrl(transactionId, s.id), cutoff.signal)
+      apiBlob(getReceiptsDownloadUrl(transactionId, s.id), cutoff.signal)
         .then((blob) => {
           if (cutoff.signal.aborted) return;
           const url = URL.createObjectURL(blob);

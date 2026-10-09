@@ -4027,7 +4027,7 @@
     },
     "/api/v2/transactions/{id}/receipts": {
       "get": {
-        "operationId": "Soportes_list",
+        "operationId": "Receipts_list",
         "parameters": [
           {
             "name": "id",
@@ -4139,10 +4139,10 @@
             "bearer": []
           }
         ],
-        "tags": ["SoportesV2"]
+        "tags": ["ReceiptsV2"]
       },
       "post": {
-        "operationId": "Soportes_upload",
+        "operationId": "Receipts_upload",
         "parameters": [
           {
             "name": "id",
@@ -4284,12 +4284,12 @@
             "bearer": []
           }
         ],
-        "tags": ["SoportesV2"]
+        "tags": ["ReceiptsV2"]
       }
     },
     "/api/v2/transactions/{id}/receipts/{receiptId}": {
       "delete": {
-        "operationId": "Soportes_remove",
+        "operationId": "Receipts_remove",
         "parameters": [
           {
             "name": "id",
@@ -4380,11 +4380,11 @@
             "bearer": []
           }
         ],
-        "tags": ["SoportesV2"]
+        "tags": ["ReceiptsV2"]
       },
       "get": {
         "description": "The file opens inline, is never cached and runs nothing.",
-        "operationId": "Soportes_download",
+        "operationId": "Receipts_download",
         "parameters": [
           {
             "name": "id",
@@ -4496,12 +4496,12 @@
           }
         ],
         "summary": "",
-        "tags": ["SoportesV2"]
+        "tags": ["ReceiptsV2"]
       }
     },
     "/api/v2/transactions/interpret": {
       "post": {
-        "operationId": "Interpretacion_interpret",
+        "operationId": "Interpretation_interpret",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -4591,12 +4591,12 @@
             "bearer": []
           }
         ],
-        "tags": ["InterpretacionV2"]
+        "tags": ["InterpretationV2"]
       }
     },
     "/api/v2/transactions/capture": {
       "post": {
-        "operationId": "Interpretacion_capture",
+        "operationId": "Interpretation_capture",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -4706,7 +4706,7 @@
             "bearer": []
           }
         ],
-        "tags": ["InterpretacionV2"]
+        "tags": ["InterpretationV2"]
       }
     },
     "/api/v2/dashboard": {

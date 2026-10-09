@@ -14,10 +14,8 @@
  * Identifiers are integers (int64) and money travels as a decimal string.
  * OpenAPI spec version: 2
  */
-import type { Capture } from './capture';
-import type { InterpretacionCapture200Meta } from './interpretacionCapture200Meta';
 
-export type InterpretacionCapture200 = {
-  data: Capture;
-  meta: InterpretacionCapture200Meta;
+export type ReceiptsUploadBody = {
+  /** @maxItems 10 */
+  files: (Blob | File)[];
 };

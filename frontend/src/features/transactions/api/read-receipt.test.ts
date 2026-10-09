@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const createWorker = vi.fn();
 
 vi.mock('tesseract.js', () => ({ createWorker }));
-vi.mock('@/shared/api/generated/interpretacion-v2/interpretacion-v2', () => ({
-  interpretacionInterpret: vi.fn(() => Promise.reject(new Error('sin servidor'))),
+vi.mock('@/shared/api/generated/interpretation-v2/interpretation-v2', () => ({
+  interpretationInterpret: vi.fn(() => Promise.reject(new Error('sin servidor'))),
 }));
 
 const { readReceipt, ocrPaths } = await import('./read-receipt');

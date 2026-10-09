@@ -15,16 +15,4 @@
  * OpenAPI spec version: 2
  */
 
-export type SoportesListParams = {
-  /**
-   * 1-based; 1 by default.
-   * @minimum 1
-   */
-  page?: number;
-  /**
-   * 50 by default, at most 200.
-   * @minimum 1
-   * @maximum 200
-   */
-  perPage?: number;
-};
+export type InterpretationInterpret200Meta = { [key: string]: unknown };

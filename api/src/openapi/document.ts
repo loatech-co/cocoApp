@@ -44,24 +44,8 @@ function operationId(controllerKey: string, methodKey: string): string {
   const resource = controllerKey.endsWith('V2Controller')
     ? controllerKey.slice(0, -'V2Controller'.length)
     : controllerKey;
-  const id = `${resource}_${methodKey}`;
-  return V2_PUBLISHED_IDS[id] ?? id;
+  return `${resource}_${methodKey}`;
 }
-
-/**
- * The v2 ids published with a Spanish controller name. The id is built from
- * the class, and the web's generated client turns it into a function name:
- * renaming the class (7.2-g) must not rename the client's functions. The
- * table goes when the web regenerates its client with the English ids.
- */
-const V2_PUBLISHED_IDS: Readonly<Record<string, string>> = {
-  Interpretation_interpret: 'Interpretacion_interpret',
-  Interpretation_capture: 'Interpretacion_capture',
-  Receipts_list: 'Soportes_list',
-  Receipts_upload: 'Soportes_upload',
-  Receipts_remove: 'Soportes_remove',
-  Receipts_download: 'Soportes_download',
-};
 
 /** Every `$ref` reachable from `value`, followed through `schemas`. */
 function reachableSchemas(value: unknown, schemas: Record<string, unknown>): Set<string> {

@@ -9,7 +9,7 @@ import { ApiClientError, apiUpload } from '@/shared/api/api-client';
 import { useCreateCategory } from '@/shared/api/categories';
 import { categorizationLearn } from '@/shared/api/generated/categorization-v2/categorization-v2';
 import { type Transaction } from '@/shared/api/generated/model';
-import { getSoportesUploadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
+import { getReceiptsUploadUrl } from '@/shared/api/generated/receipts-v2/receipts-v2';
 import { t } from '@/shared/lib/i18n';
 import { shrinkReceipts } from '@/shared/lib/shrink-receipt';
 
@@ -42,7 +42,7 @@ async function uploadPending(id: number, pending: File[]): Promise<void> {
   for (const file of await shrinkReceipts(pending)) {
     data.append('files', file);
   }
-  await apiUpload(getSoportesUploadUrl(id), data);
+  await apiUpload(getReceiptsUploadUrl(id), data);
 }
 
 /**

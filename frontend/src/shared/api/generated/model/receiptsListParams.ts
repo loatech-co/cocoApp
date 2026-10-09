@@ -15,7 +15,16 @@
  * OpenAPI spec version: 2
  */
 
-export type SoportesUploadBody = {
-  /** @maxItems 10 */
-  files: (Blob | File)[];
+export type ReceiptsListParams = {
+  /**
+   * 1-based; 1 by default.
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * 50 by default, at most 200.
+   * @minimum 1
+   * @maximum 200
+   */
+  perPage?: number;
 };

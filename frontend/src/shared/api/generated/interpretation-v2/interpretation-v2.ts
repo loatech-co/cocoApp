@@ -17,20 +17,20 @@
 import type {
   CaptureInput,
   InterpretInput,
-  InterpretacionCapture200,
-  InterpretacionInterpret200,
+  InterpretationCapture200,
+  InterpretationInterpret200,
 } from '../model';
 
 import { apiRequest } from '../../api-client';
 
-export const getInterpretacionInterpretUrl = () => {
+export const getInterpretationInterpretUrl = () => {
   return `/api/v2/transactions/interpret`;
 };
 
-export const interpretacionInterpret = async (
+export const interpretationInterpret = async (
   interpretInput: InterpretInput,
   options?: Parameters<typeof apiRequest>[1],
-): Promise<InterpretacionInterpret200> => {
+): Promise<InterpretationInterpret200> => {
   const getHeaders = (
     h?: NonNullable<RequestInit['headers']>,
   ): Record<string, string | readonly string[]> => {
@@ -50,7 +50,7 @@ export const interpretacionInterpret = async (
     }
     return headers;
   };
-  return apiRequest<InterpretacionInterpret200>(getInterpretacionInterpretUrl(), {
+  return apiRequest<InterpretationInterpret200>(getInterpretationInterpretUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
@@ -58,14 +58,14 @@ export const interpretacionInterpret = async (
   });
 };
 
-export const getInterpretacionCaptureUrl = () => {
+export const getInterpretationCaptureUrl = () => {
   return `/api/v2/transactions/capture`;
 };
 
-export const interpretacionCapture = async (
+export const interpretationCapture = async (
   captureInput: CaptureInput,
   options?: Parameters<typeof apiRequest>[1],
-): Promise<InterpretacionCapture200> => {
+): Promise<InterpretationCapture200> => {
   const getHeaders = (
     h?: NonNullable<RequestInit['headers']>,
   ): Record<string, string | readonly string[]> => {
@@ -85,7 +85,7 @@ export const interpretacionCapture = async (
     }
     return headers;
   };
-  return apiRequest<InterpretacionCapture200>(getInterpretacionCaptureUrl(), {
+  return apiRequest<InterpretationCapture200>(getInterpretationCaptureUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },

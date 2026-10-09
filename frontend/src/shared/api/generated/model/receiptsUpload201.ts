@@ -14,10 +14,10 @@
  * Identifiers are integers (int64) and money travels as a decimal string.
  * OpenAPI spec version: 2
  */
-import type { InterpretacionInterpret200Meta } from './interpretacionInterpret200Meta';
-import type { Interpretation } from './interpretation';
+import type { PageMetaV2 } from './pageMetaV2';
+import type { Receipt } from './receipt';
 
-export type InterpretacionInterpret200 = {
-  data: Interpretation;
-  meta: InterpretacionInterpret200Meta;
+export type ReceiptsUpload201 = {
+  data: Receipt[];
+  meta: PageMetaV2;
 };

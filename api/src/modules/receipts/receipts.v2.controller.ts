@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiProduces } from '@nestjs/swagger';
 import type { Response } from 'express';
 
 import { MAX_UPLOAD_BYTES } from './receipts.optimization';
@@ -43,10 +43,6 @@ const MAX_PER_UPLOAD = 10;
 const FILES_FIELD = 'files';
 
 /** A transaction's receipts. The download is the file itself. */
-// The tag the contract was published with: the swagger plugin derives it from
-// the class name, and the web's generated client is split by tag. It goes with
-// the published ids (src/openapi/document.ts).
-@ApiTags('SoportesV2')
 @ApiAuthenticated()
 @Controller({ path: 'transactions', version: '2' })
 export class ReceiptsV2Controller {

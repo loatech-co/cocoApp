@@ -1,5 +1,4 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 
 import { CaptureInput, InterpretInput } from './dto/v2/interpretation.dto';
 import type {
@@ -17,10 +16,6 @@ import { captureV2, interpretationV2 } from '../../presenters/v2/interpretation.
  * Reading a text, and the phone's capture. The capture is idempotent: the
  * same `externalRef` twice is one transaction.
  */
-// The tag the contract was published with: the swagger plugin derives it from
-// the class name, and the web's generated client is split by tag. It goes with
-// the published ids (src/openapi/document.ts).
-@ApiTags('InterpretacionV2')
 @ApiAuthenticated()
 @Controller({ path: 'transactions', version: '2' })
 export class InterpretationV2Controller {

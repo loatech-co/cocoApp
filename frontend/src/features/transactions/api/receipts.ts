@@ -3,10 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiUpload } from '@/shared/api/api-client';
 import type { Receipt } from '@/shared/api/generated/model';
 import {
-  getSoportesUploadUrl,
-  soportesList,
-  soportesRemove,
-} from '@/shared/api/generated/soportes-v2/soportes-v2';
+  getReceiptsUploadUrl,
+  receiptsList,
+  receiptsRemove,
+} from '@/shared/api/generated/receipts-v2/receipts-v2';
 import { allPages } from '@/shared/api/pages';
 import { keys } from '@/shared/api/query-keys';
 import { shrinkReceipts } from '@/shared/lib/shrink-receipt';
@@ -24,7 +24,7 @@ export function useReceipts(transactionId: number | undefined) {
     enabled: transactionId !== undefined,
     // `enabled` guarantees the id; the `?? 0` only satisfies the type.
     queryFn: (): Promise<Receipt[]> =>
-      allPages(async (page) => soportesList(transactionId ?? 0, page)),
+      allPages(async (page) => receiptsList(transactionId ?? 0, page)),
   });
 }
 
@@ -46,7 +46,7 @@ export function useUploadReceipts(transactionId: number) {
       // —including the iPhone's HEIC, which cannot be opened over there— is in
       // `shared/lib/shrink-receipt.ts`.
       for (const file of await shrinkReceipts(files)) data.append('files', file);
-      return apiUpload<Receipt[]>(getSoportesUploadUrl(transactionId), data, onProgress);
+      return apiUpload<Receipt[]>(getReceiptsUploadUrl(transactionId), data, onProgress);
     },
     // The response is written into the cache instead of invalidating it: the server
     // just returned the whole list and asking for it again is a trip to
@@ -60,7 +60,7 @@ export function useDeleteReceipt(transactionId: number) {
 
   return useMutation({
     mutationFn: async (receiptId: number) => {
-      await soportesRemove(transactionId, receiptId);
+      await receiptsRemove(transactionId, receiptId);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.receipts(transactionId) }),
   });

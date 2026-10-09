@@ -15,15 +15,15 @@
  * OpenAPI spec version: 2
  */
 import type {
-  SoportesList200,
-  SoportesListParams,
-  SoportesUpload201,
-  SoportesUploadBody,
+  ReceiptsList200,
+  ReceiptsListParams,
+  ReceiptsUpload201,
+  ReceiptsUploadBody,
 } from '../model';
 
 import { apiRequest } from '../../api-client';
 
-export const getSoportesListUrl = (id: number, params?: SoportesListParams) => {
+export const getReceiptsListUrl = (id: number, params?: ReceiptsListParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -39,64 +39,64 @@ export const getSoportesListUrl = (id: number, params?: SoportesListParams) => {
     : `/api/v2/transactions/${id}/receipts`;
 };
 
-export const soportesList = async (
+export const receiptsList = async (
   id: number,
-  params?: SoportesListParams,
+  params?: ReceiptsListParams,
   options?: Parameters<typeof apiRequest>[1],
-): Promise<SoportesList200> => {
-  return apiRequest<SoportesList200>(getSoportesListUrl(id, params), {
+): Promise<ReceiptsList200> => {
+  return apiRequest<ReceiptsList200>(getReceiptsListUrl(id, params), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getSoportesUploadUrl = (id: number) => {
+export const getReceiptsUploadUrl = (id: number) => {
   return `/api/v2/transactions/${id}/receipts`;
 };
 
-export const soportesUpload = async (
+export const receiptsUpload = async (
   id: number,
-  soportesUploadBody: SoportesUploadBody,
+  receiptsUploadBody: ReceiptsUploadBody,
   options?: Parameters<typeof apiRequest>[1],
-): Promise<SoportesUpload201> => {
+): Promise<ReceiptsUpload201> => {
   const formData = new FormData();
-  soportesUploadBody.files.forEach((value) => formData.append(`files`, value));
+  receiptsUploadBody.files.forEach((value) => formData.append(`files`, value));
 
-  return apiRequest<SoportesUpload201>(getSoportesUploadUrl(id), {
+  return apiRequest<ReceiptsUpload201>(getReceiptsUploadUrl(id), {
     ...options,
     method: 'POST',
     body: formData,
   });
 };
 
-export const getSoportesRemoveUrl = (id: number, receiptId: number) => {
+export const getReceiptsRemoveUrl = (id: number, receiptId: number) => {
   return `/api/v2/transactions/${id}/receipts/${receiptId}`;
 };
 
-export const soportesRemove = async (
+export const receiptsRemove = async (
   id: number,
   receiptId: number,
   options?: Parameters<typeof apiRequest>[1],
 ): Promise<void> => {
-  return apiRequest<void>(getSoportesRemoveUrl(id, receiptId), {
+  return apiRequest<void>(getReceiptsRemoveUrl(id, receiptId), {
     ...options,
     method: 'DELETE',
   });
 };
 
-export const getSoportesDownloadUrl = (id: number, receiptId: number) => {
+export const getReceiptsDownloadUrl = (id: number, receiptId: number) => {
   return `/api/v2/transactions/${id}/receipts/${receiptId}`;
 };
 
 /**
  * The file opens inline, is never cached and runs nothing.
  */
-export const soportesDownload = async (
+export const receiptsDownload = async (
   id: number,
   receiptId: number,
   options?: Parameters<typeof apiRequest>[1],
 ): Promise<Blob> => {
-  return apiRequest<Blob>(getSoportesDownloadUrl(id, receiptId), {
+  return apiRequest<Blob>(getReceiptsDownloadUrl(id, receiptId), {
     ...options,
     method: 'GET',
   });

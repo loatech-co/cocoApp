@@ -54,9 +54,6 @@
   "frontend/public": {
     "file:fondo-login.webp": 1
   },
-  "frontend/src/features/transactions/api": {
-    "interpretacionInterpret": 1
-  },
   "frontend/src/features/transactions/model": {
     "diccionario": 1,
     "historial": 1,

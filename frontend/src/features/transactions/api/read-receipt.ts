@@ -1,5 +1,5 @@
 import { ApiClientError } from '@/shared/api/api-client';
-import { interpretacionInterpret } from '@/shared/api/generated/interpretacion-v2/interpretacion-v2';
+import { interpretationInterpret } from '@/shared/api/generated/interpretation-v2/interpretation-v2';
 import type { ClassificationSource, Interpretation } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { loadPdfjs } from '@/shared/lib/pdf';
@@ -231,7 +231,7 @@ async function interpretText(
   period: string | undefined,
 ): Promise<Interpretation> {
   try {
-    const response = await interpretacionInterpret({
+    const response = await interpretationInterpret({
       text,
       fileName: file.name.replace(/\.[a-z0-9]+$/i, ''),
       ...(period === undefined ? {} : { period }),

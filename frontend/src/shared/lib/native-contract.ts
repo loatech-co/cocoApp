@@ -89,7 +89,7 @@ export interface AppNotices {
 // ─── Receipts ────────────────────────────────────────────────────────────────
 
 /**
- * The receipts upload, as both clients do it (generated `soportesUpload` on
+ * The receipts upload, as both clients do it (generated `receiptsUpload` on
  * the web).
  *
  * Recommended size is what the web does before uploading
