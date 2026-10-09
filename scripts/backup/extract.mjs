@@ -1,7 +1,9 @@
 // Pulls everything a full backup needs out of production, READ-ONLY, into a
 // local staging folder that backup.sh then encrypts (step R-1c).
 //
-//   <out>/db.dump        pg_dump custom format of the `public` and `auth` schemas
+//   <out>/db.dump        pg_dump custom format of the `public`, `auth` and
+//                        `app_private` schemas (the last holds the helpers the
+//                        row-level security policies call, ADR 0024)
 //   <out>/conteos.tsv    "schema.table<TAB>rows" for every table in both schemas
 //   <out>/soportes/…     every object of the private `soportes` bucket
 //   <out>/sumas.sha256   sha256 of every downloaded object (shasum -c format)
@@ -70,6 +72,7 @@ function dump(snapshot, file) {
         '--format=custom',
         '--schema=public',
         '--schema=auth',
+        '--schema=app_private',
         '--no-owner',
         '--no-privileges',
         `--file=${file}`,
@@ -208,7 +211,7 @@ const manifest = {
   created: new Date(started).toISOString(),
   source: new URL(supabaseUrl).host,
   postgres: serverVersion,
-  schemas: ['public', 'auth'],
+  schemas: ['public', 'auth', 'app_private'],
   tables: tables.length,
   rows: counts.reduce((sum, [, n]) => sum + Number(n), 0),
   bucket: { name: bucket, objects: sums.length, bytes, withoutRow: orphans },

@@ -148,7 +148,8 @@ START=$SECONDS
 PG_RESTORE=(pg_restore --no-owner --no-privileges --exit-on-error -d "$CONNECTION")
 if [ -n "$TARGET" ] && [ $IS_SUPABASE = 1 ]; then
   "${PG_RESTORE[@]}" --schema=auth --data-only "$FOLDER/db.dump"
-  "${PG_RESTORE[@]}" --schema=public --clean --if-exists "$FOLDER/db.dump"
+  # app_private first: the policies of `public` call its functions.
+  "${PG_RESTORE[@]}" --schema=app_private --schema=public --clean --if-exists "$FOLDER/db.dump"
 else
   "${PG_RESTORE[@]}" --clean --if-exists "$FOLDER/db.dump"
 fi
