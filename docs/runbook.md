@@ -389,6 +389,7 @@ crossed off here.
 | Approve or reject the backup retention and its two delete candidates                                                            | "Retention — PROPOSAL, not in force"                                                  |
 | Delete `.env.before-rls` on the server after a week without RLS incidents                                                       | "Row-level security", "Undo, from the cheapest"                                       |
 | Decide on statement imports (`import_*`) and on how iOS shares the document reader                                              | plan, 8.6; [ADR 0031](adr/0031-import-tables-stay-until-the-owner-decides.md)         |
+| Drop LiteSpeed's second `Content-Security-Policy` (hPanel's Force HTTPS adds it); keep the HTTP to HTTPS redirect               | "Hosting traps", "LiteSpeed adds a second CSP"                                        |
 
 Why here and not in the handoffs: the handoffs are deleted when a phase
 closes, and an owner action that only lived in one was lost with it.
@@ -636,6 +637,15 @@ binaries), find the zombie and `kill` it with the builtin.
 **`lsnode` is not `node`.** `/proc/<pid>/exe` of the app is LiteSpeed's
 launcher; to run Node on the server, find it under CloudLinux's paths and
 check it with `--version` first. A command run with the wrong binary hangs.
+
+**LiteSpeed adds a second CSP.** The app sends one `Content-Security-Policy`
+(helmet, `bootstrap.ts`; `spa-fallback.e2e-spec.ts` counts it). Hostinger's
+Force HTTPS appends `Content-Security-Policy: upgrade-insecure-requests` to
+every response, including the 301 on plain HTTP. Two policies are both
+enforced, and this one only repeats a directive ours already has, so it is
+harmless; but it is not the app's, and a scanner reads two. Removing it is an
+hPanel change (owner action), and only if the HTTP to HTTPS redirect stays,
+by LiteSpeed or by the app.
 
 **The `restart.txt` that counts is in `tmp/` of the app root.**
 

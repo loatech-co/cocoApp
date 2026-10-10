@@ -23,6 +23,25 @@ import { join, resolve } from 'node:path';
  * In development this does not switch on: the Vite server is in charge there,
  * with hot reload, and the API only serves /api/v2.
  */
+/**
+ * Paths that never fall back to index.html. A real file under them is still
+ * served (the exclusion only skips the fallback); anything else reaches the
+ * router and gets the API's 404 problem document.
+ *
+ * - `/api`: the API.
+ * - `/problems`: the `type` URIs of the problem documents. Answering them with
+ *   the SPA said "200, this exists" for a page that does not.
+ * - `/openapi.v2.json`: the contract is not published (see main.ts).
+ * - `/assets`: a missing hashed bundle after a deployment must fail as a 404,
+ *   not load HTML as JavaScript.
+ */
+const NOT_SPA_ROUTES = [
+  '/api{/*rest}',
+  '/problems{/*rest}',
+  '/openapi.v2.json',
+  '/assets{/*rest}',
+] as const;
+
 @Module({})
 export class SpaModule {
   static forRoot(): DynamicModule {
@@ -43,7 +62,7 @@ export class SpaModule {
           // Any path that is not the API's falls back to index.html and React
           // Router resolves it. Without this, reloading on /movimientos would
           // give a 404: that file does not exist on disk.
-          exclude: ['/api/{*ruta}'],
+          exclude: [...NOT_SPA_ROUTES],
           serveStaticOptions: {
             // Asset names carry a hash, so their content is immutable and can
             // be cached for a year. Not index.html: it is what points at the

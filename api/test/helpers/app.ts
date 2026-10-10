@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AbstractLoader, ExpressLoader } from '@nestjs/serve-static';
 import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import type { ThrottlerStorageRecord } from '@nestjs/throttler/dist/throttler-storage-record.interface';
@@ -119,6 +120,11 @@ export async function startApp(
   // Supabase Auth is replaced by an in-memory double. Talking to the real
   // project would create real accounts on every run —there is no test project
   // on the free plan— and tie the tests to the network.
+  // A testing module resolves its providers before the HTTP adapter exists,
+  // so `ServeStaticModule` would pick its no-op loader and the SPA would never
+  // be served. Production (`NestFactory.create`) gets the Express one.
+  constructor.overrideProvider(AbstractLoader).useValue(new ExpressLoader());
+
   const supabase = new SupabaseAuthFake();
   constructor.overrideProvider(SupabaseAuthService).useValue(supabase);
 

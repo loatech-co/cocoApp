@@ -2,6 +2,7 @@ import { VersioningType, type INestApplication } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
+import type { RequestHandler } from 'express';
 import helmet from 'helmet';
 
 import { requestContext } from './common/logging/request-context';
@@ -10,6 +11,17 @@ import { FieldValidationPipe } from './common/validation/field-validation.pipe';
 
 /** Every API route lives under `/api/v<version>`. */
 const API_ROOT = 'api';
+
+/** Browser features: only what the SPA uses, and only for itself. */
+export const PERMISSIONS_POLICY = [
+  'camera=(self)',
+  'clipboard-read=(self)',
+  'microphone=()',
+  'geolocation=()',
+  'payment=()',
+  'usb=()',
+  'browsing-topics=()',
+].join(', ');
 
 /**
  * Versioned by URI (7.2: a breaking change opens a new version, never an
@@ -52,7 +64,43 @@ export function configureApp(
   // El refresh token viaja en una cookie httpOnly; sin esto no se puede leer.
   app.use(cookieParser());
 
-  app.use(
+  app.use(...securityHeaders());
+
+  app.enableCors({
+    origin: parseOrigins(config),
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key'],
+    // The browser must be able to send the refresh cookie. It is safe because
+    // the origin is on an exact allowlist: with `credentials: true` a wildcard
+    // in `origin` would be a breach, and that is why one is never used here.
+    credentials: true,
+  });
+
+  app.useGlobalPipes(
+    new FieldValidationPipe({
+      // Drops properties not declared in the DTO...
+      whitelist: true,
+      // ...and also rejects the request if they came. So if someone tries to
+      // slip a `userId` into the body, it dies here and never reaches the service.
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+}
+
+/**
+ * Helmet plus the one header it does not send, `Permissions-Policy`: the
+ * camera captures receipts and the clipboard pastes screenshots, both from
+ * our own pages only; everything else the app never asks for is switched off
+ * so an injected script cannot ask either.
+ */
+function securityHeaders(): RequestHandler[] {
+  const permissionsPolicy: RequestHandler = (_request, response, next) => {
+    response.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
+    next();
+  };
+
+  return [
     helmet({
       hsts: { maxAge: 63_072_000, includeSubDomains: true, preload: true },
       referrerPolicy: { policy: 'no-referrer' },
@@ -88,28 +136,8 @@ export function configureApp(
         },
       },
     }),
-  );
-
-  app.enableCors({
-    origin: parseOrigins(config),
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key'],
-    // The browser must be able to send the refresh cookie. It is safe because
-    // the origin is on an exact allowlist: with `credentials: true` a wildcard
-    // in `origin` would be a breach, and that is why one is never used here.
-    credentials: true,
-  });
-
-  app.useGlobalPipes(
-    new FieldValidationPipe({
-      // Drops properties not declared in the DTO...
-      whitelist: true,
-      // ...and also rejects the request if they came. So if someone tries to
-      // slip a `userId` into the body, it dies here and never reaches the service.
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+    permissionsPolicy,
+  ];
 }
 
 /** Origins allowed by CORS. An exact list, no wildcards, ever. */
