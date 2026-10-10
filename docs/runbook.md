@@ -175,9 +175,9 @@ public.users TO coco_app`, and delete the four `2026100600*` rows of
 
 ### Local and CI
 
-- Once per machine: `ADMIN_DATABASE_URL=postgresql://localhost:5432/postgres
-COCO_APP_DB_PASSWORD=<local, ≥16> MIGRATION_ROLE=coco_migrate bash scripts/db/create-app-role.sh`.
-  Then `api/.env` and `api/.env.test`: `DATABASE_URL` as `coco_app`,
+- Once per machine: `bash scripts/setup-local-db.sh` (README, «Install»). It
+  runs `scripts/db/create-app-role.sh` with `MIGRATION_ROLE=coco_migrate` and
+  writes `api/.env` and `api/.env.test` with `DATABASE_URL` as `coco_app` and
   `DIRECT_URL` as `coco_migrate`.
 - The journeys run the API as `coco_app` when `E2E_APP_DATABASE_URL` is set
   (CI sets it); `api-bench.mjs` does with `COCO_BENCH_APP_DATABASE_URL`.
