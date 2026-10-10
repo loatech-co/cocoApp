@@ -27,7 +27,7 @@ persona hace. Lo que usan varias features sin ser de ninguna va a `Core/`
 | `Coco/Features/Reminders` | Notificaciones locales y el aviso de que la firma caduca |
 | `Coco/Features/Onboarding` | La guía para crear las dos automatizaciones de Atajos |
 | `Coco/Features/Settings` | Más y Ajustes |
-| `Coco/Core/Networking` | `APIClient`, peticiones, errores tipados, contratos (espejo de `@coco/types`) y `Connectivity` |
+| `Coco/Core/Networking` | `APIClient`, peticiones, errores tipados, contratos (espejo de `api/openapi.v2.json`) y `Connectivity` |
 | `Coco/Core/Storage` | Lo que se guarda en disco: la cola y el árbol |
 | `Coco/Core/Keychain` | El Keychain del sistema y su doble en memoria |
 | `Coco/Core/Background` | `BGTaskScheduler`: renovar el token y vaciar la cola |
@@ -116,16 +116,19 @@ La app lee `CocoAPIBaseURL` de su Info.plist. `project.yml` lo escribe como
     -derivedDataPath /tmp/dd-coco build
   ```
 
-La API local arranca contra cocoApp-dev con `ALLOW_DESTRUCTIVE_AUTH=si`
-solo en local. ATS permite red local sin TLS únicamente por
-`NSAllowsLocalNetworking`; cualquier otro host sigue exigiendo HTTPS. El
-usuario de desarrollo y su contraseña están en `api/.env.supabase-dev` (nunca
-en git).
+La API local es la del [README](../README.md#install): Postgres local
+(`bash scripts/setup-local-db.sh`) y autenticación local (`npm run dev:auth`,
+en `127.0.0.1:9999`). No hay Supabase de desarrollo y el de producción guarda
+cuentas reales, así que nunca se arranca contra él: `ALLOW_DESTRUCTIVE_AUTH`
+no se usa. ATS permite red local sin TLS únicamente por
+`NSAllowsLocalNetworking`; cualquier otro host sigue exigiendo HTTPS.
 
 ## Humo en el simulador contra la API local
 
-1. API: `cd api && npm run start` (usa `api/.env`: Postgres local en 5432,
-   Supabase dev, puerto 3000). Sirve la SPA desde `frontend/dist` si existe
+1. Autenticación y API, desde la raíz: `npm run dev:auth` y `npm run dev:api`
+   (usan `api/.env`: Postgres local en 5432, la autenticación local en 9999,
+   puerto 3000). La primera vez, crear la cuenta `admin@local.coco` como dice
+   el [README](../README.md#the-first-user). Sirve la SPA desde `frontend/dist` si existe
    (`npm run build` en `frontend` si no). Comprobar: `curl -s -o /dev/null -w
    '%{http_code}' http://localhost:3000/` → 200.
 2. Simulador y app:
@@ -147,7 +150,7 @@ en git).
    /usr/bin/log stream --info --predicate 'subsystem == "co.loatech.coco"' --style compact
    ```
 
-4. Entrar con el usuario de `api/.env.supabase-dev`. Después: Inicio carga la
+4. Entrar con `admin@local.coco` y la contraseña que se le dio al crearla. Después: Inicio carga la
    web sin techo ni barra; Registrar guarda con la API apagada y Capturas
    enseña «1 pendiente»; Más → Centros de costos abre la ruta en el mismo
    webview; Más → Cerrar sesión vuelve a la ficha de entrar.
@@ -157,7 +160,7 @@ en git).
    tocar «Abrir». En la bitácora aparece `onOpenURL coco://…` y `ir
    formularioRapido(...)`.
 6. Capturas: `xcrun simctl io booted screenshot ruta.png`.
-7. Apagar: `pkill -f "nest start"`, `xcrun simctl shutdown "iPhone 17"`.
+7. Apagar: Ctrl-C en `dev:api` y en `dev:auth`, `xcrun simctl shutdown "iPhone 17"`.
 
 Avisos del humo en Xcode 27: la ventana del simulador la dibuja
 `DeviceHub.app` (en `Xcode.app/Contents/Applications`), y cerrarla APAGA el
