@@ -157,9 +157,9 @@ describe('Knowing whether this is production', () => {
 /**
  * The real-accounts lock.
  *
- * The database is already separate; authentication is not, because there is
- * no development Supabase Auth. Signing in is tolerated. Creating, deleting,
- * changing the password and closing every session are not.
+ * The database is already separate; authentication is too only when
+ * `SUPABASE_URL` is local. Against a remote one, signing in is tolerated.
+ * Creating, deleting, changing the password and closing every session are not.
  */
 describe('Not touching real accounts from a local session', () => {
   it('stays out of production', () => {
@@ -173,6 +173,18 @@ describe('Not touching real accounts from a local session', () => {
   it('and says that signing in still works', () => {
     // Without it, the message would read as «authentication is broken».
     expect(whyNotTouchRealAccounts({})).toContain('entrar sigue funcionando');
+  });
+
+  it('does not apply to a local auth server, which holds no real account', () => {
+    for (const url of ['http://127.0.0.1:9999', 'http://localhost:9999']) {
+      expect(whyNotTouchRealAccounts({ NODE_ENV: 'development', SUPABASE_URL: url })).toBeNull();
+    }
+    expect(
+      whyNotTouchRealAccounts({
+        NODE_ENV: 'development',
+        SUPABASE_URL: 'https://abcdefgh.supabase.co',
+      }),
+    ).not.toBeNull();
   });
 
   it('can be lifted, by saying so out loud', () => {

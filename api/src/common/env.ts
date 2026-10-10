@@ -192,9 +192,11 @@ export const ALLOW_DESTRUCTIVE_AUTH = 'ALLOW_DESTRUCTIVE_AUTH';
  * Why this session may NOT touch real accounts, or `null` if it may.
  *
  * ── What this prevents ───────────────────────────────────────────────────────
- * The database is already separate, but AUTHENTICATION is not: development
- * still talks to the production Supabase Auth, because there is no other.
- * Signing in is tolerable —it writes a session row and little else—, but four
+ * The database is already separate. AUTHENTICATION is separate only when
+ * `SUPABASE_URL` points at this machine —the local auth server of
+ * `npm run dev:auth`, or the fake the journeys start—; a `.env` that still
+ * points at the production Supabase Auth reaches real accounts. Signing in is
+ * tolerable —it writes a session row and little else—, but four
  * operations are not, because they reach real accounts from a local session:
  *
  *   · create a user             → a real account, born from a test
@@ -214,6 +216,9 @@ export const ALLOW_DESTRUCTIVE_AUTH = 'ALLOW_DESTRUCTIVE_AUTH';
 export function whyNotTouchRealAccounts(env: NodeJS.ProcessEnv = process.env): string | null {
   if (isProduction(env)) return null;
   if (readEnv(ALLOW_DESTRUCTIVE_AUTH, env)?.toLowerCase() === 'si') return null;
+  // A local auth server holds no real account: there is nothing to protect.
+  const authHost = databaseHost(env.SUPABASE_URL ?? '');
+  if (authHost !== null && HOSTS_LOCALES.has(authHost)) return null;
 
   return (
     `Esta operación cambia una cuenta REAL en Supabase Auth, y NODE_ENV no es ` +

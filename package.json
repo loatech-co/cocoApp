@@ -24,6 +24,7 @@
     "e2e": "playwright test -c e2e",
     "dev:api": "npm run dev --workspace api",
     "dev:web": "npm run dev --workspace frontend",
+    "dev:auth": "node scripts/dev-auth.mjs",
     "prepare:ocr": "node scripts/prepare-tesseract.mjs",
     "seed:local": "dotenv -e api/.env.migrate -- tsx scripts/seed-local.mjs",
     "sql": "dotenv -e api/.env.migrate -- tsx scripts/sql.mjs",

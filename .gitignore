@@ -19,6 +19,8 @@ node_modules/
 # navegador, así que por definición ahí no puede haber un secreto. Versionarlo
 # es lo que hace que el build de producción sea reproducible.
 !frontend/.env.production
+# The local auth server's key and accounts (`npm run dev:auth`).
+api/.dev-auth.json
 *.key
 *.pem
 *.p12

@@ -32,42 +32,61 @@ docs/               architecture, ADRs, runbook, standards
 
 - Node.js ≥ 22.12 and npm (Prisma 7, ADR 0020).
 - PostgreSQL 17 locally: `brew install postgresql@17 && brew services start postgresql@17`.
+  Homebrew's server lets your OS user in as superuser, which is what the setup script uses.
+- For the Playwright journeys: Ghostscript (`brew install ghostscript`).
 - For iOS: Xcode 16+, XcodeGen, an Apple ID (free personal team is enough).
 - `gh` (GitHub CLI) to open PRs and integrate.
 
 ## Install
 
-```sql
--- One role with CREATEDB: Prisma creates and drops a shadow database on every diff (P3014 otherwise).
-CREATE ROLE coco_migrate LOGIN PASSWORD '<secret>' CREATEDB;
-```
+Everything runs on this machine. Nothing below reads or writes production:
+the database is the local Postgres and authentication is a local auth server.
 
 ```bash
-createdb -O coco_migrate coco_dev
-createdb -O coco_migrate coco_dev_shadow
-createdb -O coco_migrate coco_test
-
-cp api/.env.example         api/.env
-cp api/.env.migrate.example api/.env.migrate
-cp frontend/.env.example    frontend/.env
-
-npm install                                   # also prepares Tesseract and builds @coco/receipt-parser
-npm run prisma:migrate:dev --workspace api    # creates the schema
-npm run seed:local                            # idempotent seed: user, template, recurring concepts
+npm install                                   # also prepares Tesseract and builds the packages
+bash scripts/setup-local-db.sh                # roles, databases and env files (idempotent)
+npm run prisma:migrate:dev --workspace api    # creates the schema in coco_dev
+npm run db:test:push --workspace api          # and in coco_test, for the API e2e suite
 ```
 
-Fill the `__CAMBIAR__` values. `api/.env` points at the local database and at
-the **development** Supabase project, never at production: the API refuses to
-start outside production against a non-local database. Anything prefixed
-`VITE_` ships in the browser bundle, so no secret goes there.
+`scripts/setup-local-db.sh` creates:
 
-The account registered with `BOOTSTRAP_ADMIN_EMAIL` is born admin and
-active; every other account is born pending until an admin approves it.
+| What                                                             | Why                                                                                         |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Role `coco_migrate` (CREATEDB, BYPASSRLS)                        | Owns the schema and runs the migrations; Prisma creates and drops a shadow database (P3014) |
+| Role `coco_app` (LOGIN, no BYPASSRLS)                            | The API connects as it, under row-level security, as in production (ADR 0019)               |
+| `coco_dev`, `coco_dev_shadow`, `coco_test`                       | Development, Prisma's shadow, and the API e2e suite (which empties its tables)              |
+| `api/.env`, `api/.env.migrate`, `api/.env.test`, `frontend/.env` | From the `*.example` templates, with the local values filled in                             |
+
+The passwords are local-only (`local-only-migrate-password`,
+`local-only-coco-app-password`), the same ones the templates carry. A role
+that already exists keeps its password and an env file that already exists is
+kept; if your roles have other passwords, edit the env files. A Postgres on
+another port: `ADMIN_DATABASE_URL=postgresql://$USER@127.0.0.1:5433/postgres
+bash scripts/setup-local-db.sh`, and the env files take that port.
+
+The API refuses to start outside production against a non-local database.
+Anything prefixed `VITE_` ships in the browser bundle, so no secret goes there.
+
+### The first user
+
+There is no Supabase project for development, and the production one holds
+real accounts. So locally `SUPABASE_URL` points at `npm run dev:auth`: the
+fake GoTrue the Playwright journeys use, on `127.0.0.1:9999`, which keeps its
+accounts in `api/.dev-auth.json` (ignored by git). Against it, sign-up works;
+against a remote `SUPABASE_URL` it is refused unless `ALLOW_DESTRUCTIVE_AUTH=si`.
+
+1. Start the three processes (see [Run](#run)).
+2. Open `http://localhost:5173` and sign up with `admin@local.coco`, the
+   `BOOTSTRAP_ADMIN_EMAIL` of the local `api/.env`: that account is born admin
+   and active. Every other account is born pending until an admin approves it.
+3. Seed it: `npm run seed:local` (idempotent: template, recurring concepts).
 
 ## Run
 
 | Part | Command                                          | Where                                |
 | ---- | ------------------------------------------------ | ------------------------------------ |
+| Auth | `npm run dev:auth`                               | `http://127.0.0.1:9999`              |
 | API  | `npm run dev:api`                                | `http://localhost:3000/api/v2`       |
 | Web  | `npm run dev:web`                                | `http://localhost:5173`              |
 | iOS  | `cd ios && xcodegen generate`, then Run in Xcode | see [`ios/README.md`](ios/README.md) |
@@ -77,16 +96,38 @@ only through `scripts/pull-data-to-local.sh` (see the runbook).
 
 ## Test
 
+The same checks CI runs:
+
 ```bash
 npm run typecheck
 npm run lint
 npx prettier --check .
 npx knip
-npm test                              # unit tests, every workspace
-npm run test:e2e --workspace api      # Supertest against coco_test
+npm run depcruise
+npm test                                         # unit tests, every workspace
+npm run test:coverage --workspace frontend       # web coverage thresholds
+npm run test:cov --workspace api                 # API unit + e2e coverage, as coco_app on coco_test
+npm run test:e2e --workspace api                 # the API e2e suite alone
 npm run build
-bash scripts/verify-clean-install.sh  # installs like the server does
+npx size-limit                                   # bundle budget, after the build
+npm run build-storybook --workspace frontend
+bash scripts/verify-clean-install.sh             # installs like the server does
 ```
+
+The Playwright journeys build the API and the web, and run them against a
+fake GoTrue and their own `coco_e2e_pw_test` database, which they create and
+empty:
+
+```bash
+npx playwright install chromium
+export E2E_DATABASE_URL=postgresql://coco_migrate:local-only-migrate-password@127.0.0.1:5432/coco_e2e_pw_test
+export E2E_APP_DATABASE_URL=postgresql://coco_app:local-only-coco-app-password@127.0.0.1:5432/coco_e2e_pw_test
+npm run e2e:build
+npm run e2e
+```
+
+Old journey databases pile up across worktrees:
+`bash scripts/setup-local-db.sh --clean` drops every `coco_e2e_*_test`.
 
 iOS: `xcodebuild test` (details in [`ios/README.md`](ios/README.md)).
 

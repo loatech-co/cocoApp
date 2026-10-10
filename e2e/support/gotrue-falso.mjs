@@ -1,6 +1,7 @@
 // @ts-check
-import { SignJWT, exportJWK, generateKeyPair } from 'jose';
+import { SignJWT, exportJWK, generateKeyPair, importJWK } from 'jose';
 import { randomUUID } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 
 /**
@@ -15,16 +16,35 @@ import { createServer } from 'node:http';
  * token is NOT burnt when used: every journey restores its session from the
  * same cookie, and rotation is already covered by the API's own e2e suite.
  *
- * @param {{ port: number }} options
+ * `stateFile` is for local development (`npm run dev:auth`): the signing key
+ * and the accounts are kept in that file, so an account survives a restart and
+ * the JWKS the API cached stays valid. The journeys pass none and start empty.
+ *
+ * @param {{ port: number, stateFile?: string }} options
  * @returns {Promise<{ url: string, close: () => Promise<void> }>}
  */
-export async function startFakeGoTrue({ port }) {
-  const { privateKey, publicKey } = await generateKeyPair('ES256');
+export async function startFakeGoTrue({ port, stateFile }) {
+  /** @type {{ key?: import('jose').JWK, accounts?: [string, { email: string, password: string }][] }} */
+  const saved =
+    stateFile && existsSync(stateFile) ? JSON.parse(readFileSync(stateFile, 'utf8')) : {};
+  const { privateKey, publicKey } = saved.key
+    ? {
+        privateKey: await importJWK(saved.key, 'ES256'),
+        publicKey: await importJWK(publicPart(saved.key), 'ES256'),
+      }
+    : await generateKeyPair('ES256', { extractable: Boolean(stateFile) });
   const jwk = { ...(await exportJWK(publicKey)), kid: 'e2e', alg: 'ES256', use: 'sig' };
   const issuer = `http://127.0.0.1:${port}/auth/v1`;
 
   /** @type {Map<string, { email: string, password: string }>} */
-  const accounts = new Map();
+  const accounts = new Map(saved.accounts ?? []);
+  const privateJwk = stateFile ? (saved.key ?? (await exportJWK(privateKey))) : undefined;
+  const persist = () => {
+    if (!stateFile) return;
+    const state = { key: privateJwk, accounts: [...accounts] };
+    writeFileSync(stateFile, JSON.stringify(state), { mode: 0o600 });
+  };
+  persist();
   /** @type {Map<string, string>} refresh token → auth id */
   const refreshTokens = new Map();
 
@@ -94,6 +114,7 @@ export async function startFakeGoTrue({ port }) {
       }
       const id = randomUUID();
       accounts.set(id, { email, password: String(body.password) });
+      persist();
       return [200, { id, email }];
     }
 
@@ -107,10 +128,12 @@ export async function startFakeGoTrue({ port }) {
       const account = accounts.get(id);
       if (method === 'PUT' && account) {
         accounts.set(id, { ...account, password: String(body.password ?? account.password) });
+        persist();
         return [200, { id, email: account.email }];
       }
       if (method === 'DELETE') {
         accounts.delete(id);
+        persist();
         return [200, {}];
       }
     }
@@ -156,4 +179,15 @@ function parseBody(raw) {
   } catch {
     return {};
   }
+}
+
+/**
+ * A private JWK without its private part.
+ *
+ * @param {import('jose').JWK} key
+ * @returns {import('jose').JWK}
+ */
+function publicPart(key) {
+  const { kty, crv, x, y } = key;
+  return { kty, crv, x, y };
 }
