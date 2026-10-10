@@ -52,7 +52,9 @@ const buttonVariants = cva(
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/90',
         outline: 'border border-input bg-background hover:bg-muted hover:text-foreground',
         ghost: 'hover:bg-muted hover:text-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
+        // Underlined always: a link told apart only by its color is not
+        // seen as one, and a phone has no hover to discover it.
+        link: 'text-primary underline underline-offset-4',
         /** Red. Reserved for destructive actions — nothing else. */
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         /**

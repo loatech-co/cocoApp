@@ -177,4 +177,10 @@ describe('Button', () => {
     expect(link.className).toBe(buttonVariants({ variant: 'outline' }));
     expect(screen.queryByRole('button')).toBeNull();
   });
+
+  it('underlines the link variant at rest, not only on hover (WCAG 1.4.1)', () => {
+    const classes = buttonVariants({ variant: 'link' }).split(' ');
+    expect(classes).toContain('underline');
+    expect(classes).not.toContain('hover:underline');
+  });
 });

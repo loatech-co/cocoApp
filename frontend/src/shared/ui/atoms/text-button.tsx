@@ -18,15 +18,19 @@ import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
  * | `highlight` | An exit inside a dropdown, with the menu's highlight      |
  *
  * No `className`: whatever needs to be different is one more tone here.
+ *
+ * The two that read as a link are underlined ALWAYS, not on hover: told
+ * apart from the text around them only by color, they are not seen as
+ * something that can be pressed, and a phone has no hover to discover it.
  */
 const TONES = {
-  primary: 'rounded-sm font-medium text-primary hover:underline',
+  primary: 'rounded-sm font-medium text-primary underline underline-offset-2',
   // 24px high even though the text measures 12: it lives next to a field, and a target
   // of 16 falls below the touch minimum (WCAG 2.5.8). The text is centered
   // in that box, so visually it does not grow.
   subtle: cn(
     'inline-flex min-h-6 items-center',
-    'text-xs text-muted-foreground underline-offset-2 hover:underline',
+    'text-xs text-muted-foreground underline underline-offset-2',
   ),
   highlight: cn('rounded-md px-1.5 py-0.5', HIGHLIGHT),
 } as const;
