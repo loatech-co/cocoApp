@@ -72,7 +72,7 @@ export function configureApp(
           // open 'unsafe-eval' entirely because of WASM.
           scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
           // 'unsafe-inline' is required by the inline style Tailwind generates.
-          // fonts.googleapis.com serves the Montserrat and Lora stylesheet.
+          // fonts.googleapis.com serves the Geist, Instrument Serif and JetBrains Mono stylesheet.
           styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
           fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
           // blob: for the previews of the images being imported.

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "SPA de Coco App. Se compila a estáticos y se sirve desde cualquier lado: la carpeta del subdominio hoy, un CDN mañana.",
+  "description": "Coco App SPA. It builds to static files and can be served from anywhere: the subdomain folder today, a CDN tomorrow.",
   "license": "UNLICENSED",
   "scripts": {
     "dev": "vite",

@@ -2,7 +2,7 @@
   "name": "@coco/api",
   "version": "0.1.0",
   "private": true,
-  "description": "API NestJS de Coco App. Entry compilado: dist/main.js (Node.js Web App de Hostinger).",
+  "description": "Coco App NestJS API. Compiled entry: dist/main.js (Hostinger Node.js Web App).",
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",

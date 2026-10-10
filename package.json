@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Coco App — Finanzas personales. Monorepo: frontend (React 19 + Vite) + api (NestJS 11 + Prisma) + tipos compartidos.",
+  "description": "Coco App — personal finances. Monorepo: frontend (React 19 + Vite) + api (NestJS 11 + Prisma) + shared packages.",
   "license": "UNLICENSED",
   "workspaces": [
     "packages/*",
