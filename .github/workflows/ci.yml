@@ -23,7 +23,8 @@
 #   web   all, frontend/, packages/                             → coverage, build
 #   ui    all, frontend/src/shared/ui/, frontend/.storybook/, frontend/package.json
 #   e2e   all, api/, frontend/, packages/, e2e/, scripts/db/    → journeys
-#   prod  all, api/, frontend/, packages/, verify-clean-install → clean-install
+#   prod  all, api/, frontend/, packages/, verify-clean-install,
+#         prepare-tesseract (the server's postinstall)    → clean-install
 #   ios   NOT all: ios/, frontend/src/shared/lib/{native-contract,bridge}.ts,
 #         api/openapi.v2.json, this file, or a manual run          → ios (x10)
 #
@@ -97,7 +98,7 @@ jobs:
             flag web "$(count '^(frontend/|packages/)')"
             flag ui "$(count '^(frontend/src/shared/ui/|frontend/\.storybook/|frontend/package\.json$)')"
             flag e2e "$(count '^(api/|frontend/|packages/|e2e/|scripts/db/)')"
-            flag prod "$(count '^(api/|frontend/|packages/|scripts/verify-clean-install\.sh$)')"
+            flag prod "$(count '^(api/|frontend/|packages/|scripts/(verify-clean-install\.sh|prepare-tesseract\.mjs)$)')"
             # iOS does NOT follow `all`: a macOS minute bills as ten, and the
             # lockfile or another workflow changes nothing it reads. Only its
             # own files, what its tests copy from the web, its job, and a
@@ -114,10 +115,15 @@ jobs:
       # (security.yml); scanning it on every PR re-read the same past each time.
       - name: Secrets in the PR's commits (gitleaks)
         if: github.event_name == 'pull_request'
+        # Pinned by sha256, like the actions by SHA: a release asset can be
+        # replaced, and this binary reads every commit of the PR.
         env:
           GITLEAKS_VERSION: 8.28.0
+          GITLEAKS_SHA256: a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb
         run: |
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+          curl -sSfL -o /tmp/gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/gitleaks.tar.gz gitleaks
           ./gitleaks git --redact --no-banner --exit-code 1 --log-opts="${BASE_SHA}..${HEAD_SHA}" .
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -129,6 +135,13 @@ jobs:
       - name: Install
         if: github.event_name == 'pull_request'
         run: npm ci --no-audit --no-fund --ignore-scripts
+
+      # `verify` runs it within `npm run lint`, but `code` leaves out ios/, and
+      # it reads ios/ too: a PR that only touches Swift would never pass it.
+      # Seconds here, on Linux, instead of ten-fold minutes in the macOS job.
+      - name: Spanish identifiers, iOS included (lint:spanish)
+        if: github.event_name == 'pull_request' && steps.areas.outputs.code == 'false'
+        run: npm run lint:spanish
 
       - name: Commit messages (commitlint)
         if: github.event_name == 'pull_request'
@@ -423,12 +436,17 @@ jobs:
       - name: Xcode version
         run: xcodebuild -version
 
+      # The version comes from .swiftlint.yml and the sha256 from here: bumping
+      # one without the other fails the check, on purpose.
       - name: Install XcodeGen and the pinned SwiftLint
+        env:
+          SWIFTLINT_SHA256: c1e429b0599cf1b516f369a2d9ec04eaf0e436f3c12b637df8851fa52ff694d0 # 0.65.1
         run: |
           brew install xcodegen
           version="$(sed -n 's/^swiftlint_version: *//p' .swiftlint.yml)"
           curl -fsSL -o /tmp/swiftlint.zip \
             "https://github.com/realm/SwiftLint/releases/download/${version}/portable_swiftlint.zip"
+          echo "${SWIFTLINT_SHA256}  /tmp/swiftlint.zip" | shasum -a 256 -c -
           unzip -q /tmp/swiftlint.zip -d /tmp/swiftlint
           sudo install /tmp/swiftlint/swiftlint /usr/local/bin/swiftlint
           swiftlint version
