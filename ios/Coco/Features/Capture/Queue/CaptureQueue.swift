@@ -257,7 +257,7 @@ final actor CaptureQueue {
             if let result = Self.alreadyRegistered(capture, problem, at: clock()) {
                 return await finish(&capture, with: result)
             }
-            AppLog.queue.warning("Duplicado con foto sin movimiento conocido: captura sin confirmar")
+            AppLog.queue.warning("Duplicate with a photo and no known transaction: capture left unconfirmed")
             capture.phase = .unconfirmed(at: clock())
             capture.lastError = L10n.Queue.errorDuplicateWithPhoto
             output = .unconfirmed
@@ -270,7 +270,7 @@ final actor CaptureQueue {
         case .unreadableSuccess(let status):
             // The server created it: retrying it would depend on idempotency
             // not to duplicate the expense. It stays «hecha, revisar».
-            AppLog.queue.warning("Respuesta \(status, privacy: .public) ilegible: captura sin confirmar")
+            AppLog.queue.warning("Unreadable \(status, privacy: .public) response: capture left unconfirmed")
             capture.phase = .unconfirmed(at: clock())
             capture.lastError = nil
             output = .unconfirmed
@@ -369,7 +369,7 @@ extension CaptureQueue {
         if visible { diskError = true }
         let ns = error as NSError
         let what = String(describing: step)
-        AppLog.queue.error("No se pudo: \(what, privacy: .public) \(ns.domain, privacy: .public) \(ns.code)")
+        AppLog.queue.error("Failed: \(what, privacy: .public) \(ns.domain, privacy: .public) \(ns.code)")
     }
 
     /// Waits for `task` at most `limit`, without cancelling it: returns nil if

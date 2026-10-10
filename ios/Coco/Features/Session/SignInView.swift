@@ -77,11 +77,11 @@ struct SignInView: View {
         Task {
             do {
                 _ = try await session.signIn(email: email, password: password)
-                AppLog.session.info("Entró \(email, privacy: .private)")
+                AppLog.session.info("Signed in \(email, privacy: .private)")
                 // RootView removes the cover when it observes the state change.
             } catch {
                 self.error = Self.message(from: error)
-                AppLog.session.error("Login falló: \(self.error ?? "", privacy: .public)")
+                AppLog.session.error("Sign-in failed: \(self.error ?? "", privacy: .public)")
             }
             isSigningIn = false
         }

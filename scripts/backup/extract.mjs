@@ -50,7 +50,7 @@ const clean = (value) => value?.replace(/^['"]|['"]$/g, '');
 const supabaseUrl = clean(process.env.SUPABASE_URL)?.replace(/\/$/, '');
 const serviceKey = clean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 const databaseUrl = clean(process.env.DIRECT_URL);
-// RECEIPTS_BUCKET; SOPORTES_BUCKET is its old name, read until step 7.10.
+// RECEIPTS_BUCKET; SOPORTES_BUCKET is its old name, read until the contraction (plan 8.7).
 const bucket = process.env.RECEIPTS_BUCKET ?? process.env.SOPORTES_BUCKET ?? 'soportes';
 if (!supabaseUrl || !serviceKey || !databaseUrl) {
   console.error('SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY or DIRECT_URL is missing.');

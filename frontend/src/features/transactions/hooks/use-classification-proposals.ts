@@ -46,7 +46,7 @@ export function useClassificationProposals(
   },
 ) {
   const treeIndex = useMemo(() => indexTree(toSearchableNodes(tree ?? [])), [tree]);
-  const isProposing = isOpen && sheet.step === 'formulario' && sheet.isEditable;
+  const isProposing = isOpen && sheet.step === 'form' && sheet.isEditable;
 
   const historySuggestion = useCategorySuggestion(isProposing ? sheet.description : '');
   useOnChange([historySuggestion?.categoryId], () => {

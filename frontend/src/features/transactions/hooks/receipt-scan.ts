@@ -48,7 +48,7 @@ async function waitForReadingFloor(startedAt: number): Promise<void> {
  */
 export function makeReceiptScan(sheet: TransactionSheetState, tree: Category[] | undefined) {
   return async function scan(file: File): Promise<void> {
-    sheet.setStep('leyendo');
+    sheet.setStep('reading');
     sheet.setError(null);
     sheet.setPending([file]);
     const startedAt = Date.now();
@@ -88,7 +88,7 @@ export function makeReceiptScan(sheet: TransactionSheetState, tree: Category[] |
       // the sheet and not as the result of having tried to read the file.
       await waitForReadingFloor(startedAt);
       sheet.setReadingProgress(null);
-      sheet.setStep('formulario');
+      sheet.setStep('form');
     }
   };
 }

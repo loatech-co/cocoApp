@@ -36,7 +36,7 @@ interface PreviewProps {
    * «está tardando» from «no está», which call for different things.
    */
   error?: ReceiptFailure | undefined;
-  /** It only does something with `sin-cargar`: what is missing does not come back by retrying. */
+  /** It only does something with `not-loaded`: what is missing does not come back by retrying. */
   onRetry?: (() => void) | undefined;
   isImage: boolean;
   /**

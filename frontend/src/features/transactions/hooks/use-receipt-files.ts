@@ -45,7 +45,7 @@ export function useReceiptFiles(transactionId: number) {
   useOnChange([transactionId, list.length, attempt], () => {
     setFailures(
       Object.fromEntries(
-        list.filter((s) => !s.isAvailable).map((s) => [String(s.id), 'ausente' as const]),
+        list.filter((s) => !s.isAvailable).map((s) => [String(s.id), 'missing' as const]),
       ),
     );
   });
@@ -74,7 +74,7 @@ export function useReceiptFiles(transactionId: number) {
           // The abort does not count: we abort it ourselves on unmount or when switching
           // transactions, and that is not a failure of anything.
           if (cutoff.signal.aborted) return;
-          setFailures((previous) => ({ ...previous, [String(s.id)]: 'sin-cargar' }));
+          setFailures((previous) => ({ ...previous, [String(s.id)]: 'not-loaded' }));
         });
     }
 

@@ -5,7 +5,7 @@ import { Navigate, useLocation, type RouteObject } from 'react-router-dom';
  *
  * They stay alive as redirects because there are bookmarks and pasted links
  * pointing at them, and not breaking those over a rename is free. They go in
- * the 7.10 contract.
+ * the contraction (plan 8.7).
  *
  * `/entrar` is not here: it has had no screen of its own since the login is
  * drawn by `RequireAuth` wherever it is asked for, and it redirects to `/`.

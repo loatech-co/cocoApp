@@ -143,7 +143,7 @@ function useSheetStatus(opening: SheetOpening, discards: number) {
     the reading step still take over the sheet while they last, and come back
     to the form when they finish.
   */
-  const [step, setStep] = useState<'camara' | 'leyendo' | 'formulario'>('formulario');
+  const [step, setStep] = useState<'camera' | 'reading' | 'form'>('form');
 
   useOnChange([isOpen, transaction, payment, defaultType, discards], () => {
     if (!isOpen) return;
@@ -153,7 +153,7 @@ function useSheetStatus(opening: SheetOpening, discards: number) {
     setEditable(!transaction);
     // Always the form: a sheet left on the camera or mid-reading would reopen
     // there for the next transaction.
-    setStep('formulario');
+    setStep('form');
   });
 
   return {

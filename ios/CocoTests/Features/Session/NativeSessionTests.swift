@@ -148,7 +148,7 @@ final class NativeSessionTests: XCTestCase {
         ])
         do {
             _ = try await a.session.validAccessToken()
-            XCTFail("tenía que fallar")
+            XCTFail("it had to fail")
         } catch {
             XCTAssertEqual(error as? SessionError, .signedOut)
         }
@@ -161,13 +161,13 @@ final class NativeSessionTests: XCTestCase {
         let a = harness(replies: [.failure(URLError(.timedOut)), .failure(URLError(.networkConnectionLost))])
         do {
             _ = try await a.session.validAccessToken()
-            XCTFail("tenía que fallar")
+            XCTFail("it had to fail")
         } catch {
             XCTAssertEqual(error as? SessionError, .offline)
         }
         XCTAssertEqual(paths(a.transport), ["/api/v2/auth/refresh", "/api/v2/auth/refresh"])
         XCTAssertEqual(a.transport.received.map(body), [#"{"refreshToken":"r0"}"#, #"{"refreshToken":"r0"}"#])
-        XCTAssertEqual(a.keychain.values[.refreshToken], "r0", "un fallo de red nunca borra el Keychain")
+        XCTAssertEqual(a.keychain.values[.refreshToken], "r0", "a network failure never clears the Keychain")
         let state = await a.session.state
         XCTAssertEqual(state, .offline(last: nil))
     }
@@ -242,7 +242,7 @@ final class NativeSessionTests: XCTestCase {
             ])
         do {
             _ = try await a.session.signIn(email: "ana@coco.co", password: "mal")
-            XCTFail("tenía que fallar")
+            XCTFail("it had to fail")
         } catch {
             guard case .rejected(let problem)? = error as? APIError else { return XCTFail("\(error)") }
             XCTAssertEqual(problem.code, .invalidCredentials)

@@ -103,11 +103,11 @@ final class VisibleTextTests: XCTestCase {
             }
         }
         XCTAssertGreaterThan(scanned, 50)
-        XCTAssertEqual(violations, [], "Textos sueltos: pásalos a L10n y al catálogo, o añade una excepción")
+        XCTAssertEqual(violations, [], "Loose texts: move them to L10n and the catalog, or add an exception")
         let unused = Self.exceptions.indices.filter { !used.contains($0) }.map {
             "\(Self.exceptions[$0].file) «\(Self.exceptions[$0].text ?? "*")»"
         }
-        XCTAssertEqual(unused, [], "Excepciones que ya no hacen falta")
+        XCTAssertEqual(unused, [], "Exceptions that are no longer needed")
     }
 
     static func looksLikeText(_ value: String) -> Bool {

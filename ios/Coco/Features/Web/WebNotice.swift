@@ -26,7 +26,7 @@ extension WebBridge {
             _ = try await webView.evaluateJavaScript(Self.javascript(for: notice))
             return true
         } catch {
-            AppLog.navigation.warning("Aviso a la web sin entregar: \(notice.rawValue, privacy: .public)")
+            AppLog.navigation.warning("Notice to the web not delivered: \(notice.rawValue, privacy: .public)")
             return false
         }
     }

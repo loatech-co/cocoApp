@@ -99,7 +99,7 @@ final class Dependencies {
     func start() async {
         guard !started else { return }
         started = true
-        AppLog.app.info("Arranca contra \(self.configuration.base.absoluteString, privacy: .public)")
+        AppLog.app.info("Starting against \(self.configuration.base.absoluteString, privacy: .public)")
         connectivity.start()
         observe()
         bridge.loadHome()
@@ -170,7 +170,7 @@ final class Dependencies {
     }
 
     private func sessionChanged(_ state: SessionState) async {
-        AppLog.session.info("Sesión: \(Self.name(from: state), privacy: .public)")
+        AppLog.session.info("Session: \(Self.name(from: state), privacy: .public)")
         sessionState = state
         switch state {
         case .active:
@@ -222,12 +222,12 @@ final class Dependencies {
 
     private static func name(from state: SessionState) -> String {
         switch state {
-        case .loading: "cargando"
-        case .signedOut: "sin sesión"
+        case .loading: "loading"
+        case .signedOut: "signed out"
         // Without the email: the system log can be read by whoever has the
         // phone connected to a Mac, and a personal datum does not have to be there.
-        case .active: "activa"
-        case .offline: "sin conexión"
+        case .active: "active"
+        case .offline: "offline"
         }
     }
 }

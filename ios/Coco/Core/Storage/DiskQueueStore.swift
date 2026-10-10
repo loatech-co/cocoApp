@@ -123,7 +123,7 @@ struct DiskQueueStore: QueueStore {
             target = quarantine.appending(path: "\(UUID().uuidString)-\(url.lastPathComponent)")
         }
         try FileManager.default.moveItem(at: url, to: target)
-        AppLog.queue.error("Captura ilegible apartada a la cuarentena: \(url.lastPathComponent, privacy: .public)")
+        AppLog.queue.error("Unreadable capture moved to quarantine: \(url.lastPathComponent, privacy: .public)")
     }
 
     func delete(id: UUID) throws {

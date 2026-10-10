@@ -82,8 +82,8 @@ export function RegisterPage() {
  * decision. For a legitimate person nothing changes: in both cases they wait
  * for approval.
  */
-function RequestReceived({ status }: { status: 'pendiente' | 'lista' }) {
-  const isReady = status === 'lista';
+function RequestReceived({ status }: { status: 'pending' | 'ready' }) {
+  const isReady = status === 'ready';
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
@@ -201,7 +201,7 @@ function useRegisterForm(signUp: ReturnType<typeof useAuth>['signUp']) {
   const [error, setError] = useState<string | null>(null);
   const [problems, setProblems] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
-  const [submitted, setSubmitted] = useState<'pendiente' | 'lista' | null>(null);
+  const [submitted, setSubmitted] = useState<'pending' | 'ready' | null>(null);
 
   function onSubmit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -210,7 +210,7 @@ function useRegisterForm(signUp: ReturnType<typeof useAuth>['signUp']) {
     setIsSending(true);
 
     void signUp(email, password, name)
-      .then((response) => setSubmitted(response.pendingApproval ? 'pendiente' : 'lista'))
+      .then((response) => setSubmitted(response.pendingApproval ? 'pending' : 'ready'))
       .catch((cause: unknown) => {
         setError(authErrorMessage(cause));
         // The API says exactly what the password is missing; hiding it would

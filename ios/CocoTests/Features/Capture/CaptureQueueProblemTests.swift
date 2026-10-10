@@ -55,7 +55,7 @@ final class CaptureQueueProblemTests: XCTestCase {
             XCTAssertEqual(capture?.attempts, 0, code)
             try await c.discard(id: id)
         }
-        XCTAssertEqual(sender.requests.count, 3, "ninguna se reintenta")
+        XCTAssertEqual(sender.requests.count, 3, "none is retried")
         XCTAssertEqual(notifier.failures.count, 3)
         XCTAssertEqual(session.refreshes, 0)
     }
@@ -103,7 +103,7 @@ final class CaptureQueueProblemTests: XCTestCase {
         let summary = await c.process()
         XCTAssertEqual(summary.sent, 1)
         XCTAssertEqual(summary.failed, 0)
-        guard case .done(let result)? = await c.capture(id: id)?.phase else { return XCTFail("debería estar hecha") }
+        guard case .done(let result)? = await c.capture(id: id)?.phase else { return XCTFail("it should be done") }
         XCTAssertTrue(result.duplicate)
         XCTAssertEqual(notifier.isRegistered.map(\.duplicate), [true])
         XCTAssertEqual(notifier.failures, [])
@@ -121,7 +121,7 @@ final class CaptureQueueProblemTests: XCTestCase {
         XCTAssertEqual(summary.sent, 0)
         let stored = await c.capture(id: id)
         let capture = try XCTUnwrap(stored)
-        guard case .unconfirmed = capture.phase else { return XCTFail("debería quedar por revisar") }
+        guard case .unconfirmed = capture.phase else { return XCTFail("it should be left to review") }
         XCTAssertEqual(capture.lastError, L10n.Queue.errorDuplicateWithPhoto)
         let path = try XCTUnwrap(capture.photoPath)
         XCTAssertEqual(try store.photo(at: path), jpeg)
@@ -140,7 +140,7 @@ final class CaptureQueueProblemTests: XCTestCase {
         sender.replyToCapture(.ok)
         sender.replyToPhoto(problem(409, "duplicate"))
         await c.process()
-        guard case .done(let result)? = await c.capture(id: id)?.phase else { return XCTFail("debería estar hecha") }
+        guard case .done(let result)? = await c.capture(id: id)?.phase else { return XCTFail("it should be done") }
         XCTAssertNotEqual(result.transactionId, 0)
         XCTAssertEqual(sender.uploads.count, 1)
     }

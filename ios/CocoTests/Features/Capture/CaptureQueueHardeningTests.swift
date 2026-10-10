@@ -113,17 +113,17 @@ final class CaptureQueueHardeningTests: XCTestCase {
         XCTAssertEqual(summary.failed, 0)
         XCTAssertEqual(summary.pending, 0)
         guard case .unconfirmed = await q.capture(id: c.id)?.phase else {
-            return XCTFail("debía quedar sin confirmar")
+            return XCTFail("it should have stayed unconfirmed")
         }
         XCTAssertTrue(notifier.failures.isEmpty)
 
         await q.retryNow(id: c.id)
         await q.process()
-        XCTAssertEqual(sender.requests.count, 1, "una sin confirmar no se vuelve a mandar")
+        XCTAssertEqual(sender.requests.count, 1, "an unconfirmed one is not sent again")
 
         await q.purge(doneOlderThan: .zero)
         let kept = await q.capture(id: c.id)
-        XCTAssertNotNil(kept, "la purga no se lleva lo que falta revisar")
+        XCTAssertNotNil(kept, "the purge does not take what is still to review")
     }
 
     func testTheCapturerReportsUnconfirmed() async {
@@ -141,7 +141,7 @@ final class CaptureQueueHardeningTests: XCTestCase {
         let c = try await q.enqueue(body, source: .iosPhoto, photo: Data(repeating: 1, count: 64))
         let summary = await q.process()
         XCTAssertEqual(summary.sent, 1)
-        guard case .done = await q.capture(id: c.id)?.phase else { return XCTFail("debía quedar hecha") }
+        guard case .done = await q.capture(id: c.id)?.phase else { return XCTFail("it should have ended up done") }
     }
 
     // MARK: Disk errors

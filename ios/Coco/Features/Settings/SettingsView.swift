@@ -77,7 +77,7 @@ struct SettingsView: View {
         guard let url = validation.url else { return }
         APIConfiguration.save(base: url, defaults: d.defaults)
         saved = true
-        AppLog.app.info("URL de la API cambiada a \(url.absoluteString, privacy: .public)")
+        AppLog.app.info("API URL changed to \(url.absoluteString, privacy: .public)")
         Task { await d.signOut() }
     }
 

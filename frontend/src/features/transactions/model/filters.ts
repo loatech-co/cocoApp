@@ -268,7 +268,7 @@ function writeFilters(
 /*
   The Spanish names the filters had in the URL until 7.2-r1, and what each one
   is called now. They are still READ because there are bookmarks and pasted
-  links with them; they are never written. They go in the 7.10 contract.
+  links with them; they are never written. They go in the contraction (plan 8.7).
 
   Pairs and not an object on purpose: as keys they would be new Spanish
   declarations for `lint:spanish`, and they are data, not names.

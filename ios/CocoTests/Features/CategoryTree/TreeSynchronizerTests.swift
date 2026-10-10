@@ -66,7 +66,7 @@ final class TreeSynchronizerTests: XCTestCase {
         await s.refreshIfNeeded()
         let index = await s.index()
         XCTAssertEqual(index?.search("guardado").map(\.id), [20])
-        XCTAssertEqual(transport.received.count, 1, "lo intentó, falló, y se quedó con lo guardado")
+        XCTAssertEqual(transport.received.count, 1, "it tried, failed, and kept what was saved")
     }
 
     func testWithTenMinuteOldFileDoesNotCallTheAPI() async throws {
@@ -88,7 +88,7 @@ final class TreeSynchronizerTests: XCTestCase {
         XCTAssertEqual(transport.received.first?.value(forHTTPHeaderField: "Authorization"), "Bearer a1")
         XCTAssertEqual(
             transport.received.first?.url?.query(), "page=1&perPage=200",
-            "sin includeArchived: la API ya excluye lo archivado")
+            "without includeArchived: the API already excludes what is archived")
         let index = await s.index()
         XCTAssertEqual(index?.search("tuti").map(\.id), [100])
     }
@@ -110,7 +110,7 @@ final class TreeSynchronizerTests: XCTestCase {
         let s = synchronizer(transport)
         do {
             try await s.refreshNow()
-            XCTFail("tenía que fallar")
+            XCTFail("it had to fail")
         } catch {
             XCTAssertEqual(error as? APIError, .noNetwork(.notConnectedToInternet))
         }

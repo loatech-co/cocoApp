@@ -158,7 +158,7 @@ describe('Optional accounts (e2e)', () => {
         .set('Authorization', asAna)
         .expect(200);
       expect(response.body.data.accountsEnabled).toBe(false);
-      // The legacy row is left as it was: rewriting the leftovers is the 7.10 contract.
+      // The legacy row is left as it was: rewriting the leftovers is the contraction (plan 8.7).
       expect(await storedKeys()).toEqual([
         ['accounts_enabled', false],
         ['cuentas_habilitadas', true],

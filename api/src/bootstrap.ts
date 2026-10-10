@@ -61,7 +61,7 @@ export function configureApp(
 
   configureRouting(app);
 
-  // El refresh token viaja en una cookie httpOnly; sin esto no se puede leer.
+  // The refresh token travels in an httpOnly cookie; without this it cannot be read.
   app.use(cookieParser());
 
   app.use(...securityHeaders());

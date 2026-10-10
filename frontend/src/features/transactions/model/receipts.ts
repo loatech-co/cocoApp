@@ -3,14 +3,14 @@ import { t } from '@/shared/lib/i18n';
 /**
  * Why a receipt is not being shown. Two reasons, and they are not the same.
  *
- * ── `ausente` ───────────────────────────────────────────────────────────────
+ * ── `missing` ───────────────────────────────────────────────────────────────
  * The server looked at the disk and the file is not there. It is final: retrying
  * will not bring it. It happens because the database and the storage are two
  * different places —the records live in Postgres, the same for every environment,
  * and the files on disk, which is not—, so a receipt imported on one
  * machine and not synced to the other shows up in the list and is not there.
  *
- * ── `sin-cargar` ────────────────────────────────────────────────────────────
+ * ── `not-loaded` ────────────────────────────────────────────────────────────
  * The download failed and we know nothing more: a 500 from the server, an expired
  * session, the network cutting out halfway. The file may be
  * perfectly fine. It is transient, so it carries a retry.
@@ -19,7 +19,7 @@ import { t } from '@/shared/lib/i18n';
  * receipt that was there. It is the same mistake as the 415 that swallowed
  * resource exhaustion: taking as final what was only a failure.
  */
-export type ReceiptFailure = 'ausente' | 'sin-cargar';
+export type ReceiptFailure = 'missing' | 'not-loaded';
 
 /**
  * The text of the confirmation to delete a receipt, written once.

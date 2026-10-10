@@ -57,7 +57,7 @@ describe('The receipt attached when confirming a payment', () => {
     /*
       The floor of the wait: the reading always looks the same, however long it takes.
 
-      And inside `act`, which is not decoration. The `setStep('formulario')` that closes
+      And inside `act`, which is not decoration. The `setStep('form')` that closes
       the reading runs inside a FAKE timer, outside any
       React event; so React schedules it through its `Scheduler`, which in
       jsdom also uses `setTimeout`, and the test depended on the

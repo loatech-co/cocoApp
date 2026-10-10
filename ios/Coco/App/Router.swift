@@ -45,7 +45,7 @@ final class Router: Navigation {
     private(set) var formRequest = FormRequest(generation: 0, withCamera: false)
 
     func go(_ destination: Destination) {
-        AppLog.navigation.info("ir \(String(describing: destination), privacy: .public)")
+        AppLog.navigation.info("go to \(String(describing: destination), privacy: .public)")
         switch destination {
         case .quickForm(let withCamera):
             formRequest = FormRequest(generation: formRequest.generation + 1, withCamera: withCamera)
@@ -74,7 +74,7 @@ final class Router: Navigation {
     @discardableResult
     func open(url: URL) -> Bool {
         guard let destination = Self.destination(from: url) else {
-            AppLog.navigation.warning("URL desconocida \(url.absoluteString, privacy: .public)")
+            AppLog.navigation.warning("Unknown URL \(url.absoluteString, privacy: .public)")
             return false
         }
         go(destination)

@@ -67,7 +67,7 @@ export class SupabaseAuthService {
       });
 
       if (!payload.sub || typeof payload.iat !== 'number') {
-        throw new Error('el token no trae sub o iat');
+        throw new Error('the token carries no sub or iat');
       }
 
       return {
@@ -323,7 +323,7 @@ interface SupabaseReply {
 function requireSetting(config: ConfigService, key: string): string {
   const value = config.get<string>(key)?.trim();
   if (!value) {
-    throw new Error(`Falta ${key}. Sin ella la autenticación no puede funcionar.`);
+    throw new Error(`Missing ${key}. Authentication cannot work without it.`);
   }
   return value;
 }

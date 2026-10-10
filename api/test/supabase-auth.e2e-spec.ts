@@ -105,7 +105,7 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
 
   it('refuses to start without its configuration', () => {
     expect(() => new SupabaseAuthService(new ConfigService({ SUPABASE_URL: ' ' }))).toThrow(
-      /Falta SUPABASE_URL/,
+      /Missing SUPABASE_URL/,
     );
   });
 

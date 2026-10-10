@@ -48,7 +48,7 @@ function readOne(name: string, env: NodeJS.ProcessEnv): string | undefined {
  *
  * Renamed by expand and contract. The server's `.env` got the new names next
  * to the old ones, with the same values; until the old ones are removed there
- * (the contraction, step 7.10), `readEnv` asked for a new name falls back to
+ * (the contraction, plan 8.7), `readEnv` asked for a new name falls back to
  * its old one, and `renamedEnvWarnings` says so in the log at boot. Then this
  * table, the fallback and the warnings go.
  *

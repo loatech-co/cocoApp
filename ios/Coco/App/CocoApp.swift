@@ -19,7 +19,7 @@ struct CocoApp: App {
         // Composes everything —and registers intents and background tasks—
         // before launch finishes, which is when iOS demands it.
         d = Dependencies.shared
-        AppLog.app.info("Coco \(Brand.version, privacy: .public) arrancando")
+        AppLog.app.info("Coco \(Brand.version, privacy: .public) starting")
     }
 
     var body: some Scene {

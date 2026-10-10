@@ -149,7 +149,7 @@ final class TreeIndexTests: XCTestCase {
         XCTAssertEqual(TreeIndex.normalize("  Celsia (Energía) \n"), "celsia (energia)")
         XCTAssertEqual(
             TreeIndex.normalize("ÑANDÚ"), "nandu",
-            "NFD descompone la eñe y la tilde se va, igual que en firmas.ts")
+            "NFD decomposes the eñe and the accent goes, the same as in signatures.ts")
     }
 
     /// Where the web test has lived. 7.4 moved it from `lib/` to the
@@ -166,11 +166,11 @@ final class TreeIndexTests: XCTestCase {
         let root = URL(fileURLWithPath: #filePath)
         let repo = (0..<5).reduce(root) { url, _ in url.deletingLastPathComponent() }
         guard FileManager.default.fileExists(atPath: repo.appending(path: "frontend").path) else {
-            throw XCTSkip("No está el repo al lado: \(repo.path)")
+            throw XCTSkip("The repo is not alongside: \(repo.path)")
         }
         let found = Self.parityPaths.contains {
             FileManager.default.fileExists(atPath: repo.appending(path: $0).path)
         }
-        XCTAssertTrue(found, "La prueba de paridad de la web no está en \(Self.parityPaths)")
+        XCTAssertTrue(found, "The web parity test is not at \(Self.parityPaths)")
     }
 }

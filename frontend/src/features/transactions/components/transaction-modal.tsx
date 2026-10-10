@@ -136,13 +136,11 @@ function TransactionSteps({
 }) {
   const { sheet, scan } = transactionSheet;
 
-  if (sheet.step === 'camara') {
-    return (
-      <CameraCapture onCapture={(a) => void scan(a)} onClose={() => sheet.setStep('formulario')} />
-    );
+  if (sheet.step === 'camera') {
+    return <CameraCapture onCapture={(a) => void scan(a)} onClose={() => sheet.setStep('form')} />;
   }
 
-  if (sheet.step === 'leyendo') {
+  if (sheet.step === 'reading') {
     return <Scanning file={sheet.pending[0]} progress={sheet.readingProgress} />;
   }
 

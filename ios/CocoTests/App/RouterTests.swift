@@ -14,7 +14,7 @@ final class RouterTests: XCTestCase {
         XCTAssertEqual(Router.destination(from: try url("coco://captures")), .captures)
         XCTAssertEqual(
             Router.destination(from: try url(SystemNotifier.captureDestination)), .captures,
-            "el aviso de una captura lleva a la lista")
+            "a capture notification leads to the list")
     }
 
     func testUnknownURLsAreNotDestinations() throws {
@@ -37,7 +37,7 @@ final class RouterTests: XCTestCase {
 
         XCTAssertTrue(e.open(url: try url("coco://capture/manual")))
         XCTAssertFalse(e.formRequest.withCamera)
-        XCTAssertEqual(e.formRequest.generation, before + 2, "cada petición es un formulario nuevo")
+        XCTAssertEqual(e.formRequest.generation, before + 2, "every request is a new form")
 
         XCTAssertTrue(e.open(url: try url("coco://captures")))
         XCTAssertEqual(e.tab, .captures)
@@ -68,7 +68,7 @@ final class RouterTests: XCTestCase {
         e.go(.welcome)
         XCTAssertEqual(e.sheet, .welcome)
         e.go(.captures)
-        XCTAssertNil(e.sheet, "un destino de pestaña baja la hoja que hubiera")
+        XCTAssertNil(e.sheet, "a tab destination dismisses any open sheet")
         XCTAssertEqual(e.tab, .captures)
     }
 

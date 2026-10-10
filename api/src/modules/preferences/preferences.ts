@@ -26,7 +26,7 @@ export const ACCOUNTS_ENABLED = 'accounts_enabled';
  * The Spanish keys rows were stored under until 7.2-r1, and their current
  * name. They are READ, never written: a row saved before the rename keeps
  * working, and the next change saves the current key. When both rows exist
- * the current one wins, because it is the newer write. The 7.10 contract
+ * the current one wins, because it is the newer write. The contraction (plan 8.7)
  * rewrites the leftovers and drops this. A map and not an object, so the
  * legacy key stays a string and not a new Spanish declaration.
  */

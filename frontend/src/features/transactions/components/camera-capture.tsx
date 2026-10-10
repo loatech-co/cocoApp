@@ -50,7 +50,7 @@ export function CameraCapture({
         <Button
           type="button"
           onClick={() => captureFrame(video.current, onCapture)}
-          disabled={state !== 'lista'}
+          disabled={state !== 'ready'}
         >
           <Camera className="size-4" aria-hidden="true" />
           {t('transactions.camera.capture')}
@@ -60,13 +60,13 @@ export function CameraCapture({
   );
 }
 
-type CameraState = 'pidiendo' | 'lista' | 'sin-permiso' | 'sin-camara';
+type CameraState = 'requesting' | 'ready' | 'denied' | 'no-camera';
 
 /** Asks for the back camera on mount and releases it on unmount. */
 function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; state: CameraState } {
   const video = useRef<HTMLVideoElement>(null);
   const track = useRef<MediaStream | null>(null);
-  const [state, setState] = useState<CameraState>('pidiendo');
+  const [state, setState] = useState<CameraState>('requesting');
 
   useEffect(() => {
     let isAlive = true;
@@ -79,7 +79,7 @@ function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; state: 
       // library type says it is always there. The `as` widens the type.
       const devices = navigator.mediaDevices as Partial<MediaDevices> | undefined;
       if (!devices?.getUserMedia) {
-        setState('sin-camara');
+        setState('no-camera');
         return;
       }
 
@@ -96,11 +96,11 @@ function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; state: 
 
         track.current = stream;
         if (video.current) video.current.srcObject = stream;
-        setState('lista');
+        setState('ready');
       } catch (e) {
         if (!isStillAlive()) return;
         // `NotFoundError` means there is no camera; the rest, that permission was not given.
-        setState((e as Error).name === 'NotFoundError' ? 'sin-camara' : 'sin-permiso');
+        setState((e as Error).name === 'NotFoundError' ? 'no-camera' : 'denied');
       }
     })();
 
@@ -144,7 +144,7 @@ function Viewfinder({
 }) {
   return (
     <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-stage">
-      {state === 'lista' ? (
+      {state === 'ready' ? (
         <video
           ref={video}
           autoPlay
@@ -153,14 +153,12 @@ function Viewfinder({
           className="size-full object-cover"
           aria-label={t('transactions.camera.preview')}
         />
-      ) : state === 'pidiendo' ? (
+      ) : state === 'requesting' ? (
         <Loader2 className="size-6 animate-spin text-stage-ink/70" aria-hidden="true" />
       ) : (
         <p className="flex max-w-xs flex-col items-center gap-2 px-4 text-center text-sm text-stage-ink/80">
           <CameraOff className="size-6" aria-hidden="true" />
-          {state === 'sin-permiso'
-            ? t('transactions.camera.denied')
-            : t('transactions.camera.notFound')}
+          {state === 'denied' ? t('transactions.camera.denied') : t('transactions.camera.notFound')}
         </p>
       )}
     </div>

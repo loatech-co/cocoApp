@@ -63,7 +63,7 @@ enum AutomationSteps {
 /// Opens the Shortcuts app. `shortcuts` is in LSApplicationQueriesSchemes.
 enum ShortcutsLauncher {
     static let url: URL = {
-        guard let url = URL(string: "shortcuts://") else { preconditionFailure("shortcuts:// es una URL válida") }
+        guard let url = URL(string: "shortcuts://") else { preconditionFailure("shortcuts:// is a valid URL") }
         return url
     }()
 

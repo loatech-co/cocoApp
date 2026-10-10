@@ -11,7 +11,7 @@
 
 const url = process.env.SUPABASE_URL?.replace(/^['"]|['"]$/g, '').replace(/\/$/, '');
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^['"]|['"]$/g, '');
-// RECEIPTS_BUCKET; SOPORTES_BUCKET is its old name, read until step 7.10.
+// RECEIPTS_BUCKET; SOPORTES_BUCKET is its old name, read until the contraction (plan 8.7).
 const bucket = process.env.RECEIPTS_BUCKET ?? process.env.SOPORTES_BUCKET ?? 'soportes';
 
 if (!url || !key) {

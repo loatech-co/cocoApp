@@ -53,7 +53,7 @@ final class DependenciesTests: XCTestCase {
 
         let intents = try XCTUnwrap(registry.intents)
         XCTAssertTrue((intents.0 as AnyObject) is QueuedCapturer || intents.0 is QueuedCapturer)
-        XCTAssertTrue(intents.1 === d.router, "los intents navegan por el mismo enrutador que la interfaz")
+        XCTAssertTrue(intents.1 === d.router, "the intents navigate through the same router as the interface")
 
         let tasks = try XCTUnwrap(registry.tasks)
         XCTAssertTrue(tasks.session === d.session)
@@ -86,9 +86,9 @@ final class DependenciesTests: XCTestCase {
         XCTAssertNil(d.profile)
         XCTAssertEqual(
             transport.received.filter { $0.url?.path.hasPrefix("/api/v2") == true }, [],
-            "sin refresh no hay nada que renovar")
+            "without a refresh token there is nothing to renew")
         await d.start()
-        XCTAssertTrue(d.started, "arrancar dos veces no vuelve a hacer nada")
+        XCTAssertTrue(d.started, "starting twice does nothing the second time")
     }
 
     func testThePendingBadgeFollowsTheQueue() async throws {
@@ -101,7 +101,7 @@ final class DependenciesTests: XCTestCase {
             try await Task.sleep(for: .milliseconds(20))
         }
         XCTAssertEqual(d.pending, 1)
-        XCTAssertEqual(notifier.badges.last, 1, "el notificador real también recibe la cuenta")
+        XCTAssertEqual(notifier.badges.last, 1, "the real notifier also receives the count")
     }
 
     /// The web is told about each capture that reaches the API (`captured`), and
@@ -151,11 +151,11 @@ final class SettingsViewTests: XCTestCase {
         XCTAssertEqual(SettingsView.validate("http://localhost:3000/").url, URL(string: "http://localhost:3000"))
         XCTAssertEqual(
             SettingsView.validate("  https://dev-cocoapp.viteri.me ").url, URL(string: "https://dev-cocoapp.viteri.me"))
-        XCTAssertNil(SettingsView.validate("").reason, "vacía no es un error, solo no se puede guardar")
+        XCTAssertNil(SettingsView.validate("").reason, "empty is not an error, it just cannot be saved")
         XCTAssertNil(SettingsView.validate("").url)
         XCTAssertNotNil(SettingsView.validate("localhost").reason)
         XCTAssertNotNil(SettingsView.validate("ftp://x.y").reason)
-        XCTAssertNotNil(SettingsView.validate("https://x.y/api/v2").reason, "la app añade /api/v2")
+        XCTAssertNotNil(SettingsView.validate("https://x.y/api/v2").reason, "the app appends /api/v2")
     }
 
     func testExpiryText() throws {

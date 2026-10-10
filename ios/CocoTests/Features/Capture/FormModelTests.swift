@@ -173,7 +173,7 @@ final class FormModelTests: XCTestCase {
         XCTAssertEqual(m.concept?.id, 100)
         XCTAssertFalse(m.isConceptSuggested)
         XCTAssertEqual(m.date, Self.now)
-        XCTAssertEqual(m.merchant, "D1", "lo vacío sí se rellena")
+        XCTAssertEqual(m.merchant, "D1", "what is empty does get filled")
     }
 
     func testWithoutNetworkDoesNotCallInterpretAndFlagsIt() async throws {
@@ -182,7 +182,7 @@ final class FormModelTests: XCTestCase {
         await m.readPhoto(TestImage.square(10))
         XCTAssertTrue(m.noNetwork)
         XCTAssertTrue(transport.received.isEmpty)
-        XCTAssertEqual(m.readText, "D1\nTOTAL 45.000", "el OCR es local y el texto viaja igual")
+        XCTAssertEqual(m.readText, "D1\nTOTAL 45.000", "the OCR is local and the text travels anyway")
         XCTAssertEqual(m.amount, "")
         XCTAssertNotNil(m.photoJPEG)
     }
@@ -221,7 +221,7 @@ final class FormModelTests: XCTestCase {
         let m = try model()
         m.search("tuti")
         XCTAssertEqual(
-            m.results.map(\.readablePath), ["Educación › Costos fijos"], "ancestros, del más cercano al más lejano")
+            m.results.map(\.readablePath), ["Educación › Costos fijos"], "ancestors, from the nearest to the farthest")
         let withoutIndex = try model(index: nil)
         withoutIndex.search("tuti")
         XCTAssertEqual(withoutIndex.results, [])

@@ -119,7 +119,7 @@ final class CaptureQueueTests: XCTestCase {
         _ = try await sender.capture(PendingCapture(id: id, source: .wallet, body: body).request)
         let summary = await c.process()
         XCTAssertEqual(summary.sent, 1)
-        guard case .done(let r)? = await c.capture(id: id)?.phase else { return XCTFail("no quedó hecha") }
+        guard case .done(let r)? = await c.capture(id: id)?.phase else { return XCTFail("it did not end up done") }
         XCTAssertTrue(r.duplicate)
     }
 
@@ -132,7 +132,7 @@ final class CaptureQueueTests: XCTestCase {
         sender.replyToPhoto(.failure(APIError.noNetwork(.notConnectedToInternet)))
         await c.process()
         // Phase 1 arrived but could not be noted down: it is still .toSend on disk.
-        guard case .toSend? = await c.capture(id: id)?.phase else { return XCTFail("debería seguir porEnviar") }
+        guard case .toSend? = await c.capture(id: id)?.phase else { return XCTFail("it should still be porEnviar") }
 
         fragile.failsSave = false
         let second = queue(store: fragile)
@@ -201,7 +201,7 @@ final class CaptureQueueTests: XCTestCase {
             sender.replyToCapture(.failure(APIError.server(status: status)))
             await c.process()
             guard case .toSend? = await c.capture(id: id)?.phase else {
-                return XCTFail("\(status) debería seguir porEnviar")
+                return XCTFail("\(status) should still be porEnviar")
             }
             now.advance(4000)
         }
@@ -232,7 +232,7 @@ final class CaptureQueueTests: XCTestCase {
         XCTAssertEqual(session.refreshes, 1)
 
         await c.process()
-        XCTAssertEqual(sender.requests.count, 2, "esperando sesión no se reenvía")
+        XCTAssertEqual(sender.requests.count, 2, "waiting for a session is not resent")
 
         await c.sessionReturned()
         capture = await c.capture(id: id)
@@ -298,7 +298,7 @@ final class CaptureQueueTests: XCTestCase {
         XCTAssertEqual(try store.photoBytes(), 0)
         let capture = await c.capture(id: id)
         XCTAssertNil(capture?.photoPath)
-        guard case .done(let r)? = capture?.phase else { return XCTFail("la captura no quedó hecha") }
+        guard case .done(let r)? = capture?.phase else { return XCTFail("the capture did not end up done") }
         XCTAssertEqual(r.summary, "Gasto de 45000 en D1")
     }
 
@@ -314,9 +314,9 @@ final class CaptureQueueTests: XCTestCase {
 
         now.advance(10)
         await c.process()
-        XCTAssertEqual(sender.requests.count, 1, "la fase 1 no se repite")
+        XCTAssertEqual(sender.requests.count, 1, "phase 1 is not repeated")
         XCTAssertEqual(sender.uploads.count, 2)
-        guard case .done? = await c.capture(id: id)?.phase else { return XCTFail("la captura no quedó hecha") }
+        guard case .done? = await c.capture(id: id)?.phase else { return XCTFail("the capture did not end up done") }
     }
 
     func testWithPhotoLimitFullEnqueueWithPhotoThrowsAndWithoutPhotoGoesIn() async throws {
@@ -324,7 +324,7 @@ final class CaptureQueueTests: XCTestCase {
         try await c.enqueue(body, source: .iosPhoto, photo: photo)
         do {
             try await c.enqueue(body, source: .iosPhoto, photo: photo)
-            XCTFail("debería lanzar")
+            XCTFail("it should throw")
         } catch let e as QueueError {
             XCTAssertEqual(e, .photosFull)
         }
@@ -402,7 +402,7 @@ final class CaptureQueueTests: XCTestCase {
         await c.process()
         do {
             try await c.edit(id: done, body: CaptureBody(text: "x"))
-            XCTFail("una hecha no se edita")
+            XCTFail("a done one is not edited")
         } catch let e as QueueError {
             XCTAssertEqual(e, .notEditable(done))
         }

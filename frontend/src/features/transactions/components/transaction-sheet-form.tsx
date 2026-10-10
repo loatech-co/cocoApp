@@ -149,7 +149,7 @@ function PendingReceiptsColumn({
         sheet.setPending((p) => [...p, ...added]);
       }}
       onRemove={(i) => sheet.setPending((p) => p.filter((_, n) => n !== i))}
-      onTakePhoto={() => sheet.setStep('camara')}
+      onTakePhoto={() => sheet.setStep('camera')}
     />
   );
 }

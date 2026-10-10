@@ -17,7 +17,7 @@ final class BackgroundJobsTests: XCTestCase {
     func testSchedulesWithTheInfoPlistIdentifiers() {
         let permitted = BackgroundJobs.permittedIdentifiers()
         XCTAssertEqual(
-            Set(permitted), ["co.loatech.coco.refresh", "co.loatech.coco.queue"], "el Info.plist de la app los declara")
+            Set(permitted), ["co.loatech.coco.refresh", "co.loatech.coco.queue"], "the app's Info.plist declares them")
         let requests = BackgroundJobs.requests()
         XCTAssertEqual(Set(requests.map(\.identifier)), Set(permitted))
         XCTAssertTrue(requests.contains { $0 is BGAppRefreshTaskRequest && $0.identifier == BackgroundJobs.refresh })

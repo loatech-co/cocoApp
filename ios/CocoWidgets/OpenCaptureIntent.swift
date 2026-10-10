@@ -13,7 +13,7 @@ enum CaptureURL {
         // The destinations are fixed and made of letters: if this fails it is a programming
         // error, not something that comes from outside.
         guard let url = URL(string: "coco://capture/\(destination)") else {
-            preconditionFailure("URL de captura inválida para el destino «\(destination)»")
+            preconditionFailure("Invalid capture URL for the destination «\(destination)»")
         }
         return url
     }

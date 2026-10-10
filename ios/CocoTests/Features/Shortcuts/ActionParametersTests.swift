@@ -69,7 +69,7 @@ final class ActionParametersTests: XCTestCase {
         let capturer = CapturerDouble()
         do {
             _ = try await RecordSMSExpenseIntent.run(text: " ", sender: nil, capturer: capturer)
-            XCTFail("debería lanzar")
+            XCTFail("it should throw")
         } catch {}
         XCTAssertTrue(capturer.received.isEmpty)
     }
