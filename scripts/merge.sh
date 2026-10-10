@@ -60,6 +60,29 @@ while :; do
   WAITED=$((WAITED + CHECKS_APPEAR_INTERVAL))
 done
 
+# A job that `needs` another has no check until that one finishes: while
+# ci's `hygiene` runs, verify, clean-install and journeys are not listed at all,
+# and the moment it passes everything listed is green (step J-7). So the checks
+# are not trusted until every workflow run of the PR's head has COMPLETED.
+HEAD_SHA=$(git rev-parse "origin/$BRANCH")
+RUNS_TIMEOUT="${RUNS_TIMEOUT:-2400}" # seconds
+echo "▸ Waiting for every workflow run of ${HEAD_SHA:0:8} to complete…"
+WAITED=0
+while :; do
+  OPEN=$(gh run list --commit "$HEAD_SHA" --limit 50 --json status \
+    -q '[.[] | select(.status != "completed")] | length') || {
+    echo "Refusing: could not list the workflow runs of ${HEAD_SHA}." >&2
+    exit 1
+  }
+  [ "$OPEN" = 0 ] && break
+  if [ "$WAITED" -ge "$RUNS_TIMEOUT" ]; then
+    echo "Refusing: ${OPEN} workflow run(s) of ${HEAD_SHA:0:8} still open after ${RUNS_TIMEOUT}s." >&2
+    exit 1
+  fi
+  sleep 20
+  WAITED=$((WAITED + 20))
+done
+
 echo "▸ Waiting for the checks of PR #${PR}…"
 # The exit code of `gh pr checks --watch` is NOT trusted: on PR #14 it returned
 # 0 while two jobs had been CANCELLED (they never got a runner during a GitHub
