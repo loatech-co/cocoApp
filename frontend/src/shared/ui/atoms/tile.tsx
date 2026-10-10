@@ -18,7 +18,7 @@ export function tileClass(isArranging: boolean, isDragging: boolean): string {
     HIGHLIGHT,
     // The tile under the finger does not wiggle: the animation would override the
     // inline offset and it would stay still under the finger.
-    isArranging && !isDragging && 'animate-[baldosa-tiembla_.4s_ease-in-out_infinite]',
+    isArranging && !isDragging && 'animate-[tile-wiggle_.4s_ease-in-out_infinite]',
     isDragging && 'z-10 scale-105 shadow-[var(--floating-shadow)]',
   );
 }

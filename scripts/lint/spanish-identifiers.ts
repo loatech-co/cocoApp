@@ -5,9 +5,10 @@
  * What it reads: every name DECLARED in TypeScript/JavaScript under `api/`,
  * `frontend/`, `packages/`, `scripts/` and `e2e/`, and in Swift under `ios/`
  * (variables, parameters, functions, classes, types, members, object keys),
- * plus the `@custom-variant` names and `--*` custom properties of every
- * stylesheet, the custom properties code names (`var(--x)`, `'--x'`), and
- * every file and folder name there. A name is split into words
+ * plus the `@custom-variant`, `@utility` and `@keyframes` names and the `--*`
+ * custom properties of every stylesheet, the custom properties code names
+ * (`var(--x)`, `'--x'`), and every file and folder name there. A name is
+ * split into words
  * (camelCase, PascalCase, snake_case, kebab-case), accents are stripped
  * (`categoría` → `categoria`) and it fails if a word is in SPANISH_WORDS.
  *
@@ -226,6 +227,13 @@ function swiftNames(text: string): { name: string; line: number }[] {
  */
 const CSS_VARIANT = /@custom-variant\s+([\w-]+)/g;
 
+/**
+ * The utilities and animations a stylesheet declares (`@utility pb-safe`,
+ * `@keyframes sweep`): a utility is a class every call writes, and a keyframe
+ * is named from `animate-[…]` in code.
+ */
+const CSS_AT_NAME = /@(?:utility|keyframes)\s+([\w-]+)/g;
+
 /** Every custom property a stylesheet declares or reads (`--bar-gap`). */
 const CSS_PROPERTY = /(?<![\w-])--([a-z][\w-]*)/gi;
 
@@ -244,7 +252,11 @@ function matchedNames(text: string, pattern: RegExp): { name: string; line: numb
 }
 
 function cssNames(text: string): { name: string; line: number }[] {
-  return [...matchedNames(text, CSS_VARIANT), ...matchedNames(text, CSS_PROPERTY)];
+  return [
+    ...matchedNames(text, CSS_VARIANT),
+    ...matchedNames(text, CSS_AT_NAME),
+    ...matchedNames(text, CSS_PROPERTY),
+  ];
 }
 
 // ── The scan ────────────────────────────────────────────────────────────────

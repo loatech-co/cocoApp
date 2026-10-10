@@ -185,7 +185,7 @@ falla también si una entrada ya no la usa nadie. El suelo táctil
 
 Un `var(--token)` no es arbitrario —lee el tema— y un escalón de la escala
 tampoco: `min-h-55` son 220px y `size-4.5` son 18. Lo que el tema no tiene se
-añade en `index.css` con su razón (`leading-hero`, `pb-seguro`).
+añade en `index.css` con su razón (`leading-hero`, `pb-safe`).
 
 ## Inventario de `shared/ui`
 

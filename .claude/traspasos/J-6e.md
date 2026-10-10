@@ -25,5 +25,5 @@ sus utilidades (`text-stage-ink`, `leading-hero`). El CSS tiene las mismas
 reglas una a una; cambian el orden y la fusión de selectores del minificador,
 porque Tailwind ordena por nombre. `lint:spanish` lee las `--*` de las hojas y
 las que nombra el código (`var(--x)`, `'--x'`); comprobado con `--velo`.
-Pendiente: la utilidad `pb-seguro` (`@utility`) sigue en español y el lint no
-lee `@utility`. Borrado: base `coco_e2e_j6e_test`.
+Tercer PR: `@utility` y `@keyframes` en inglés (`pb-safe`, `sweep`, `reveal`,
+`tile-wiggle`…), leídos por el lint. Nada pendiente. Borrado: `coco_e2e_j6e_test`.

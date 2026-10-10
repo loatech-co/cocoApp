@@ -200,7 +200,7 @@ function SheetOverlay({
           `CabeceraDeModal` already set.
         */
         'p-6',
-        'se-revela sm:items-center sm:p-4',
+        'reveal sm:items-center sm:p-4',
       )}
       // `onMouseDown` on the scrim, and not `onClick` anywhere.
       //

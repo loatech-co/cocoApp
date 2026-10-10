@@ -98,7 +98,7 @@ export function Modal({
           `ModalHeader` already set.
         */
         'p-6',
-        'se-revela sm:items-center sm:p-4',
+        'reveal sm:items-center sm:p-4',
       )}
     >
       <div

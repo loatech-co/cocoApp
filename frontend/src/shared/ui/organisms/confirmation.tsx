@@ -78,7 +78,7 @@ export function Confirmation({
         'fixed inset-0 z-[60] flex items-center justify-center bg-[var(--scrim)] backdrop-blur-sm',
         // 24 to the edge on the phone, the same as the rest of the modals.
         'p-6 sm:p-4',
-        'se-revela',
+        'reveal',
       )}
     >
       <div

@@ -26,7 +26,7 @@ const BAR_CLASSES = cn(
   // a sibling of the top bar. The two bars never overlap —one is on top
   // and the other at the foot—, so nothing is lost.
   'z-[15]',
-  'bg-sidebar pb-seguro',
+  'bg-sidebar pb-safe',
   // The bottom padding, and no taller: the bar's row measures exactly 60
   // and the phone's safe area is dead space below, which is exactly what
   // that gap is.

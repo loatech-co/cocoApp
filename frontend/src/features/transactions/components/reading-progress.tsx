@@ -81,14 +81,14 @@ function ScanSweep() {
       */}
       <span
         aria-hidden="true"
-        className="deja-rastro pointer-events-none absolute inset-0 bg-accent/25"
+        className="leave-trail pointer-events-none absolute inset-0 bg-accent/25"
       />
 
       {/* The band, with its bright leading edge. */}
       <span
         aria-hidden="true"
         className={cn(
-          'barre pointer-events-none absolute inset-y-0 left-0 w-1/4',
+          'sweep pointer-events-none absolute inset-y-0 left-0 w-1/4',
           'bg-gradient-to-r from-transparent via-accent-ink/30 to-transparent',
         )}
       >

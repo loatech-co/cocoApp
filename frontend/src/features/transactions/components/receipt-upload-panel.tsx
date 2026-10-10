@@ -59,7 +59,7 @@ export function UploadPanel({
         'fixed inset-0 z-[60] flex items-end justify-center bg-[var(--scrim)] backdrop-blur-sm',
         // 24 to the edge of the screen, like every sheet on the phone.
         'p-6',
-        'se-revela sm:items-center sm:p-4',
+        'reveal sm:items-center sm:p-4',
       )}
       // `onMouseDown` and not `onClick`: with click, dragging from inside the
       // panel to the scrim —which is exactly what dropping a

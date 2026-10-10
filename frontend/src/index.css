@@ -713,7 +713,7 @@
    the fact you need if what came out does not add up.
 
    ── Two layers, and each says something ──────────────────────────────────
-   · `barre` is the band: a gradient that goes from transparent to the accent
+   · `sweep` is the band: a gradient that goes from transparent to the accent
      and back to transparent, with a bright line on its leading edge.
    · `se-revela-al-paso` is the trail: what has already been swept stays a
      little lighter than what is left, so the band does not look like a stray
@@ -727,15 +727,15 @@
 
 /* The phone's safe edge —the system bar, the notch at the bottom— as
    padding. What sticks to the bottom reserves it so as not to end up under it. */
-@utility pb-seguro {
+@utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-@utility barre {
-  animation: barrer 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+@utility sweep {
+  animation: sweep 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes barrer {
+@keyframes sweep {
   0% {
     transform: translateX(-100%);
     opacity: 0;
@@ -753,11 +753,11 @@
 }
 
 /* The trail: it grows from left to right at the same pace as the band. */
-@utility deja-rastro {
-  animation: rastro 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+@utility leave-trail {
+  animation: trail 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes rastro {
+@keyframes trail {
   0% {
     clip-path: inset(0 100% 0 0);
   }
@@ -770,12 +770,12 @@
    one point eight seconds. The document stays still, and the progress bar
    keeps saying things are moving. */
 @media (prefers-reduced-motion: reduce) {
-  .barre,
-  .deja-rastro {
+  .sweep,
+  .leave-trail {
     animation: none;
   }
 
-  .barre {
+  .sweep {
     opacity: 0;
   }
 }
@@ -954,7 +954,7 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @utility surge {
-  animation: surgir 120ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: surge 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* A sheet does not EMERGE from a button: it arrives. It rises 12px and grows
@@ -962,16 +962,16 @@
    phone— without seeming to bounce. And 160ms instead of 120: it is a big
    surface, and at a dropdown's speed a half-screen panel jerks. */
 @utility emerge {
-  animation: emerger 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: emerge 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* The scrim only fades. Any movement of it would read as the page behind
    moving, and the page behind has not moved. */
-@utility se-revela {
-  animation: revelar 160ms ease-out;
+@utility reveal {
+  animation: reveal 160ms ease-out;
 }
 
-@keyframes surgir {
+@keyframes surge {
   from {
     opacity: 0;
     transform: scale(0.96);
@@ -982,7 +982,7 @@
   }
 }
 
-@keyframes emerger {
+@keyframes emerge {
   from {
     opacity: 0;
     transform: translateY(12px) scale(0.98);
@@ -993,7 +993,7 @@
   }
 }
 
-@keyframes revelar {
+@keyframes reveal {
   from {
     opacity: 0;
   }
@@ -1005,7 +1005,7 @@
 /* Whoever asks for less motion gets the appearance without the journey —not
    losing it entirely—: the fade still says something arrived. */
 @media (prefers-reduced-motion: reduce) {
-  @keyframes surgir {
+  @keyframes surge {
     from {
       opacity: 0;
     }
@@ -1014,7 +1014,7 @@
     }
   }
 
-  @keyframes emerger {
+  @keyframes emerge {
     from {
       opacity: 0;
     }
@@ -1122,7 +1122,7 @@
 
 /* A panel's content enters on EXISTING: the body is replaced whole on every
    fill, so there is nothing to trigger. */
-@keyframes panel-entra-el-contenido {
+@keyframes panel-content-enters {
   from {
     opacity: 0;
     transform: translateY(4px);
@@ -1134,13 +1134,13 @@
 }
 
 [data-superficie='panel'] [data-cuerpo] > * {
-  animation: panel-entra-el-contenido 0.18s ease both;
+  animation: panel-content-enters 0.18s ease both;
 }
 
 /* The tiles tremble while being arranged: it says they can be moved without
    spending a line of text saying so, and that what is shown is not the usual.
    Very little angle —0.6 degrees—, since more looks like a painting glitch. */
-@keyframes baldosa-tiembla {
+@keyframes tile-wiggle {
   0%,
   100% {
     transform: rotate(-0.6deg);

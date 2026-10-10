@@ -8,9 +8,9 @@ afterEach(cleanup);
 
 describe('tileClass', () => {
   it('shakes while arranging, and lifts the one in the hand', () => {
-    expect(tileClass(false, false)).not.toContain('baldosa-tiembla');
-    expect(tileClass(true, false)).toContain('baldosa-tiembla');
-    expect(tileClass(true, true)).not.toContain('baldosa-tiembla');
+    expect(tileClass(false, false)).not.toContain('tile-wiggle');
+    expect(tileClass(true, false)).toContain('tile-wiggle');
+    expect(tileClass(true, true)).not.toContain('tile-wiggle');
     expect(tileClass(true, true)).toContain('--floating-shadow');
   });
 });
