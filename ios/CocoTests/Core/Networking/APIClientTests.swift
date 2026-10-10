@@ -68,8 +68,8 @@ final class APIClientTests: XCTestCase {
         XCTAssertEqual(timeout, .timedOut)
     }
 
-    /// Un 2xx ilegible NO es lo mismo que un error ilegible: el servidor ya
-    /// hizo lo que se pidió, y la cola no debe repetirlo.
+    /// An unreadable 2xx is NOT the same as an unreadable error: the server already
+    /// did what was asked, and the queue must not repeat it.
     func testUnreadableBody() async {
         let html = await error(FakeTransport([.http(200, "<html>")]))
         XCTAssertEqual(html, .unreadableSuccess(status: 200))
@@ -111,14 +111,14 @@ final class APIClientTests: XCTestCase {
         XCTAssertEqual(r.value(forHTTPHeaderField: "Authorization"), "Bearer tok")
     }
 
-    // MARK: v2 de punta a punta, con la red de mentira
+    // MARK: v2 end to end, with the fake network
 
     private static func node(_ id: Int) -> String {
         #"{"id":\#(id),"name":"C\#(id)","parentId":null,"keywords":[],"isArchived":false,"isStatic":false,"children":[]}"#
     }
 
-    /// El árbol de la v2 se pagina por centros de costos: se piden páginas
-    /// hasta juntar `meta.total`.
+    /// The v2 tree is paginated by cost centers: pages are requested
+    /// until `meta.total` is gathered.
     func testTheTreeIsDownloadedPageByPage() async throws {
         let t = FakeTransport([
             .http(200, #"{"data":[\#(Self.node(1)),\#(Self.node(2))],"meta":{"page":1,"perPage":2,"total":3}}"#),
@@ -140,8 +140,8 @@ final class APIClientTests: XCTestCase {
         #"{"data":{"transaction":{"id":42,"date":"2026-10-03","amount":"45000.00","categoryId":7,"description":null,"merchant":"D1","source":"ios_manual","needsReview":false},"classification":{"certainty":"high","source":null,"conceptId":7,"categoryId":3,"name":"Mercado","candidates":[],"reason":"m"},"summary":"Registrado","isDuplicate":\#(duplicate),"isMerged":false},"meta":{}}"#
     }
 
-    /// Reenviar la misma captura manda el mismo `externalRef`: la API contesta
-    /// la transacción ya registrada con `isDuplicate`, no una segunda.
+    /// Resending the same capture sends the same `externalRef`: the API answers
+    /// with the transaction already recorded with `isDuplicate`, not a second one.
     func testARetriedCaptureKeepsItsExternalRefAndReadsTheDuplicate() async throws {
         let t = FakeTransport([
             .http(200, Self.captureJSON(duplicate: false)), .http(200, Self.captureJSON(duplicate: true)),

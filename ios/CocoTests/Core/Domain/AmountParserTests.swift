@@ -21,7 +21,7 @@ final class AmountParserTests: XCTestCase {
         XCTAssertNil(AmountParser.normalize(""))
         XCTAssertNil(AmountParser.normalize(nil))
         XCTAssertNil(AmountParser.normalize("abc"))
-        // Más de dos decimales no cumple el DTO.
+        // More than two decimals does not meet the DTO.
         XCTAssertNil(AmountParser.normalize("12.345,678"))
     }
 

@@ -1,16 +1,16 @@
 import Foundation
 
-/// A qué API habla la app. La base sale de `CocoAPIBaseURL` en Info.plist y
-/// se puede pisar desde Ajustes (UserDefaults) para apuntar a la API local.
+/// Which API the app talks to. The base comes from `CocoAPIBaseURL` in Info.plist and
+/// can be overridden from Settings (UserDefaults) to point to the local API.
 struct APIConfiguration: Sendable, Equatable {
     static let defaultsKey = "api-base-url"
     static let plistKey = "CocoAPIBaseURL"
 
-    /// Sin `/api/v2` y sin barra final.
+    /// Without `/api/v2` and without a trailing slash.
     let base: URL
 
     init(base: URL) {
-        // Se quita la barra final para que `apiV2` nunca dé `//api/v2`.
+        // The trailing slash is removed so that `apiV2` never gives `//api/v2`.
         var text = base.absoluteString
         while text.hasSuffix("/") { text.removeLast() }
         self.base = URL(string: text) ?? base
@@ -18,8 +18,8 @@ struct APIConfiguration: Sendable, Equatable {
 
     var apiV2: URL { base.appending(path: "api/v2") }
 
-    /// El override de UserDefaults manda; si no hay, el plist; si ni eso, la
-    /// de desarrollo, para que la app nunca arranque sin destino.
+    /// The UserDefaults override wins; if there is none, the plist; if not even that, the
+    /// development one, so that the app never starts without a destination.
     static func current(bundle: Bundle = .main, defaults: UserDefaults = .standard) -> APIConfiguration {
         if let text = defaults.string(forKey: defaultsKey), let url = URL(string: text), url.host() != nil {
             return APIConfiguration(base: url)

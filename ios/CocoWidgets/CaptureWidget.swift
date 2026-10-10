@@ -1,11 +1,11 @@
 import SwiftUI
 import WidgetKit
 
-/// El widget de iOS 17: pantalla de inicio (`systemSmall`, `systemMedium`) y
-/// pantalla bloqueada (`accessoryCircular`, `accessoryRectangular`, donde en
-/// iOS 17 no hay controles). Solo abre la app por URL: sin App Group no puede
-/// leer la cola, así que no enseña el contador de pendientes; ese número vive
-/// dentro de la app y en la insignia del icono.
+/// The iOS 17 widget: home screen (`systemSmall`, `systemMedium`) and
+/// lock screen (`accessoryCircular`, `accessoryRectangular`, where on
+/// iOS 17 there are no controls). It only opens the app by URL: without an App Group it cannot
+/// read the queue, so it does not show the pending counter; that number lives
+/// inside the app and in the icon badge.
 struct CaptureWidget: Widget {
     static let kind = "co.loatech.coco.widget.capture"
 
@@ -19,8 +19,8 @@ struct CaptureWidget: Widget {
     }
 }
 
-/// No hay nada que refrescar: el widget es un botón. Una sola entrada, para
-/// siempre.
+/// There is nothing to refresh: the widget is a button. A single entry, for
+/// good.
 struct FixedEntry: TimelineEntry {
     let date: Date
 }
@@ -39,8 +39,8 @@ struct FixedProvider: TimelineProvider {
     }
 }
 
-/// Una vista por familia. Las de una sola acción usan `widgetURL`; la mediana
-/// lleva dos `Link`, porque un widget con dos zonas no puede usar `widgetURL`.
+/// One view per family. The single-action ones use `widgetURL`; the medium one
+/// carries two `Link`s, because a widget with two zones cannot use `widgetURL`.
 struct CaptureWidgetView: View {
     @Environment(\.widgetFamily) private var family
 
@@ -77,7 +77,7 @@ struct CaptureWidgetView: View {
     }
 }
 
-/// Un icono grande y su rótulo, para la pantalla de inicio.
+/// A large icon and its label, for the home screen.
 private struct WidgetActionButton: View {
     let title: String
     let symbol: String

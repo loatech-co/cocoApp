@@ -1,8 +1,8 @@
 import Foundation
 import Observation
 
-/// Las cuatro pestañas de la barra nativa. Inicio es la web; las otras tres
-/// son pantallas nativas.
+/// The four tabs of the native bar. Home is the web; the other three
+/// are native screens.
 enum AppTab: Hashable, CaseIterable {
     case home
     case register
@@ -10,7 +10,7 @@ enum AppTab: Hashable, CaseIterable {
     case more
 }
 
-/// Lo que sube como hoja encima de la pestaña activa.
+/// What rises as a sheet on top of the active tab.
 enum Sheet: Identifiable, Equatable {
     case welcome
     case settings
@@ -23,14 +23,14 @@ enum Sheet: Identifiable, Equatable {
     }
 }
 
-/// La ÚNICA fuente de la pestaña y la hoja activas. Lo usan los intents, las
-/// notificaciones, las URLs `coco://` y el puente con la web. Si no hay
-/// sesión, `RootView` cubre todo con `SignInView` y el destino queda puesto
-/// para cuando se entre.
+/// The ONLY source of the active tab and sheet. It is used by the intents, the
+/// notifications, the `coco://` URLs and the bridge with the web. If there is no
+/// session, `RootView` covers everything with `SignInView` and the destination stays set
+/// for when the user signs in.
 @Observable @MainActor
 final class Router: Navigation {
-    /// Cada petición de abrir el formulario (deep link, intent, puente) es una
-    /// generación nueva: la vista se recrea limpia y con la cámara si se pidió.
+    /// Each request to open the form (deep link, intent, bridge) is a
+    /// new generation: the view is recreated clean, and with the camera if it was asked for.
     struct FormRequest: Equatable, Sendable {
         let generation: Int
         let withCamera: Bool
@@ -38,9 +38,9 @@ final class Router: Navigation {
 
     var tab: AppTab = .home
     var sheet: Sheet?
-    /// Ruta que la pestaña Inicio tiene que abrir en la web en cuanto se vea.
+    /// Route the Home tab has to open in the web as soon as it is shown.
     var pendingWebPath: String?
-    /// La web tiene que abrir su hoja de búsqueda en cuanto se vea.
+    /// The web has to open its search sheet as soon as it is shown.
     var searchPending = false
     private(set) var formRequest = FormRequest(generation: 0, withCamera: false)
 
@@ -70,7 +70,7 @@ final class Router: Navigation {
     }
 
     /// `coco://capture/manual`, `coco://capture/photo`, `coco://captures`.
-    /// Devuelve `false` si la URL no es de la app.
+    /// Returns `false` if the URL is not the app's.
     @discardableResult
     func open(url: URL) -> Bool {
         guard let destination = Self.destination(from: url) else {
@@ -81,7 +81,7 @@ final class Router: Navigation {
         return true
     }
 
-    /// Pura: qué destino nombra una URL `coco://`.
+    /// Pure: which destination a `coco://` URL names.
     nonisolated static func destination(from url: URL) -> Destination? {
         guard url.scheme?.lowercased() == "coco" else { return nil }
         let host = url.host()?.lowercased() ?? ""

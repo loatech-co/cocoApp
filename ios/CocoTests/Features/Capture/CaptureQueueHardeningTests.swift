@@ -2,10 +2,10 @@ import XCTest
 
 @testable import Coco
 
-/// Lo que la revisión externa pidió de la cola: que la cancelación y el
-/// presupuesto lleguen a la petición en vuelo, que un 2xx ilegible no se
-/// repita, que el disco no se trague errores y que un archivo ilegible no se
-/// pierda.
+/// What the external review asked of the queue: that cancellation and the
+/// budget reach the in-flight request, that an unreadable 2xx is not
+/// repeated, that the disk does not swallow errors and that an unreadable file is not
+/// lost.
 final class CaptureQueueHardeningTests: XCTestCase {
     private var root: URL = URL(fileURLWithPath: "/")
     private var sender = SenderDouble()
@@ -29,10 +29,10 @@ final class CaptureQueueHardeningTests: XCTestCase {
 
     private let body = CaptureBody(merchant: "D1", amount: "45000", date: "2026-10-05")
 
-    // MARK: Cancelación y presupuesto
+    // MARK: Cancellation and budget
 
-    /// Una petición que tarda más que el presupuesto se corta al vencerlo, y la
-    /// captura queda en la cola como estaba: ni intento ni error.
+    /// A request that takes longer than the budget is cut when it runs out, and the
+    /// capture stays in the queue as it was: neither an attempt nor an error.
     func testTheBudgetCutsARequestInFlightAndLeavesTheCaptureQueued() async throws {
         sender.replyToCapture(.hang)
         let q = queue()
@@ -47,13 +47,13 @@ final class CaptureQueueHardeningTests: XCTestCase {
         XCTAssertEqual(after?.attempts, 0)
         XCTAssertNil(after?.lastError)
 
-        // La siguiente corrida la manda.
+        // The next run sends it.
         let next = await q.process(budget: .seconds(5))
         XCTAssertEqual(next.sent, 1)
     }
 
-    /// Cancelar a quien llama (iOS recoge la tarea de fondo o el intent) corta
-    /// el envío igual que el presupuesto.
+    /// Cancelling the caller (iOS takes back the background task or the intent) cuts
+    /// the sending just like the budget.
     func testCancellingTheCallerCancelsTheRun() async throws {
         sender.replyToCapture(.hang)
         let q = queue()
@@ -70,8 +70,8 @@ final class CaptureQueueHardeningTests: XCTestCase {
         XCTAssertEqual(after?.attempts, 0)
     }
 
-    /// Con la foto a medias: la fase 1 ya quedó en disco y la cancelación no
-    /// la deshace.
+    /// With the photo halfway: phase 1 is already on disk and the cancellation does not
+    /// undo it.
     func testCancellingDuringThePhotoKeepsPhase1() async throws {
         sender.replyToPhoto(.hang)
         let q = queue()
@@ -82,8 +82,8 @@ final class CaptureQueueHardeningTests: XCTestCase {
         XCTAssertNotNil(after?.photoPath)
     }
 
-    /// Un intent que llega con otra corrida en marcha no hereda su espera: sale
-    /// dentro de SU presupuesto con la captura a salvo en la cola.
+    /// An intent that arrives with another run under way does not inherit its wait: it leaves
+    /// within ITS budget with the capture safe in the queue.
     func testACallerThatJoinsARunWaitsOnlyItsOwnBudget() async throws {
         sender.replyToCapture(.hang)
         let q = queue()
@@ -100,10 +100,10 @@ final class CaptureQueueHardeningTests: XCTestCase {
         _ = await foreground.value
     }
 
-    // MARK: 2xx ilegible
+    // MARK: Unreadable 2xx
 
-    /// El servidor la creó: queda «hecha, revisar», no se reintenta sola, no
-    /// cuenta como pendiente ni como fallida.
+    /// The server created it: it stays «hecha, revisar», it is not retried by itself, it does not
+    /// count as pending nor as failed.
     func testAnUnreadable2xxIsUnconfirmedAndNeverResent() async throws {
         sender.replyToCapture(.failure(APIError.unreadableSuccess(status: 201)))
         let q = queue()
@@ -134,7 +134,7 @@ final class CaptureQueueHardeningTests: XCTestCase {
         XCTAssertFalse(ActionParameters.dialogText(result).isEmpty)
     }
 
-    /// Un 2xx ilegible al subir la foto: la foto llegó y la captura termina.
+    /// An unreadable 2xx when uploading the photo: the photo arrived and the capture ends.
     func testAnUnreadable2xxOnThePhotoFinishesTheCapture() async throws {
         sender.replyToPhoto(.failure(APIError.unreadableSuccess(status: 201)))
         let q = queue()
@@ -144,10 +144,10 @@ final class CaptureQueueHardeningTests: XCTestCase {
         guard case .done = await q.capture(id: c.id)?.phase else { return XCTFail("debía quedar hecha") }
     }
 
-    // MARK: Errores del disco
+    // MARK: Disk errors
 
-    /// Si el disco no deja escribir, se ve: la cola lo publica en vez de
-    /// tragárselo, y una escritura buena lo despeja.
+    /// If the disk does not allow writing, it shows: the queue publishes it instead of
+    /// swallowing it, and a good write clears it.
     func testAFailedWriteIsVisibleInTheSnapshot() async throws {
         let failing = FailingStore(real: DiskQueueStore(root: root))
         sender.replyToCapture(.failure(APIError.server(status: 503)))
@@ -166,7 +166,7 @@ final class CaptureQueueHardeningTests: XCTestCase {
         XCTAssertFalse(healed.diskError)
     }
 
-    /// Una lectura que falla no deja la insignia en 0: vale lo último leído.
+    /// A read that fails does not leave the badge at 0: the last read value holds.
     func testAFailedReadKeepsTheLastCount() async throws {
         let flaky = FlakyReadStore(real: DiskQueueStore(root: root))
         let q = queue(store: flaky)
@@ -180,7 +180,7 @@ final class CaptureQueueHardeningTests: XCTestCase {
         XCTAssertTrue(snapshot.diskError)
     }
 
-    // MARK: Formato y cuarentena
+    // MARK: Format and quarantine
 
     func testEveryCaptureIsWrittenWithTheFormatVersion() async throws {
         let c = try await queue().enqueue(body, source: .wallet, photo: nil)
@@ -189,8 +189,8 @@ final class CaptureQueueHardeningTests: XCTestCase {
         XCTAssertEqual(json["version"] as? Int, PendingCapture.formatVersion)
     }
 
-    /// Un archivo corrupto y otro de una versión desconocida no tumban la
-    /// cola, no se borran y se cuentan para la pantalla de capturas.
+    /// A corrupt file and another from an unknown version do not bring down the
+    /// queue, are not deleted and are counted for the captures screen.
     func testUnreadableFilesGoToQuarantineIntactAndAreCounted() async throws {
         let q = queue()
         let good = try await q.enqueue(body, source: .wallet, photo: nil)
@@ -230,9 +230,9 @@ final class CaptureQueueHardeningTests: XCTestCase {
     }
 }
 
-/// Un almacén cuya lectura falla cuando se le pide: el disco aún bloqueado.
-/// `@unchecked Sendable`: doble de pruebas; `failsRead` lo escribe la prueba
-/// entre llamadas, nunca a la vez que la cola lee.
+/// A store whose read fails when asked to: the disk still locked.
+/// `@unchecked Sendable`: a test double; `failsRead` is written by the test
+/// between calls, never at the same time the queue reads.
 private final class FlakyReadStore: QueueStore, @unchecked Sendable {
     let real: DiskQueueStore
     var failsRead = false

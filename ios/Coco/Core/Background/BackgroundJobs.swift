@@ -2,31 +2,31 @@ import BackgroundTasks
 import Foundation
 import os
 
-/// Lo que iOS concede en segundo plano: una renovación corta (sesión tibia y
-/// árbol fresco) y un procesado de la cola con red. Son una ayuda, no una
-/// garantía: la cola también se dispara en primer plano, al volver la red,
-/// tras cada encolado y tras cada login. Si iOS nunca las concede, nada se
-/// pierde; solo tarda más en enviarse.
+/// What iOS grants in the background: a short refresh (warm session and
+/// fresh tree) and a processing of the queue with network. They are a help, not a
+/// guarantee: the queue also fires in the foreground, when the network comes back,
+/// after each enqueue and after each login. If iOS never grants them, nothing is
+/// lost; it only takes longer to send.
 enum BackgroundJobs {
     /// BGAppRefreshTask.
     static let refresh = "co.loatech.coco.refresh"
-    /// BGProcessingTask, con red.
+    /// BGProcessingTask, with network.
     static let queue = "co.loatech.coco.queue"
 
-    /// Lo que declara `BGTaskSchedulerPermittedIdentifiers` en el Info.plist:
-    /// si una tarea se programa con un identificador que no está ahí, iOS
-    /// la rechaza en silencio.
+    /// What `BGTaskSchedulerPermittedIdentifiers` declares in the Info.plist:
+    /// if a task is scheduled with an identifier that is not there, iOS
+    /// rejects it silently.
     static func permittedIdentifiers(in bundle: Bundle = .main) -> [String] {
         bundle.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String] ?? []
     }
 
-    /// `submit` sin un handler registrado no lanza un error: lanza una
-    /// excepción de Objective-C que tumba la app. Por eso se recuerda si
-    /// `register` ya pasó y `schedule` no hace nada antes.
+    /// `submit` without a registered handler does not throw an error: it raises an
+    /// Objective-C exception that brings the app down. That is why it remembers whether
+    /// `register` already happened, and `schedule` does nothing before it.
     private static let registry = OSAllocatedUnfairLock(initialState: false)
     static var isRegistered: Bool { registry.withLock { $0 } }
 
-    /// Antes de que termine `didFinishLaunching`; después iOS ya no deja.
+    /// Before `didFinishLaunching` finishes; afterwards iOS no longer allows it.
     @MainActor
     static func register(
         session: Session, queue: CaptureQueue, tree: TreeSynchronizer, notifier: Notifier,
@@ -45,9 +45,9 @@ enum BackgroundJobs {
         }
     }
 
-    /// Al pasar a segundo plano y al terminar cada tarea. Si el sistema
-    /// rechaza la solicitud —simulador, identificador sin registrar— se
-    /// ignora: la corrección nunca depende de esto.
+    /// On moving to the background and at the end of each task. If the system
+    /// rejects the request —simulator, unregistered identifier— it is
+    /// ignored: correctness never depends on this.
     static func schedule(scheduler: BGTaskScheduler = .shared) {
         guard isRegistered else { return }
         for request in requests() {
@@ -55,8 +55,8 @@ enum BackgroundJobs {
         }
     }
 
-    /// Puro: las dos solicitudes, para comprobar sus identificadores sin
-    /// tocar el `BGTaskScheduler` real.
+    /// Pure: the two requests, to check their identifiers without
+    /// touching the real `BGTaskScheduler`.
     static func requests(now: Date = .now) -> [BGTaskRequest] {
         let refreshRequest = BGAppRefreshTaskRequest(identifier: refresh)
         refreshRequest.earliestBeginDate = now.addingTimeInterval(15 * 60)
@@ -67,35 +67,35 @@ enum BackgroundJobs {
         return [refreshRequest, processingRequest]
     }
 
-    /// `validAccessToken()` renueva si el token está por vencer (y es la
-    /// única vía de renovación, para no competir con los intents); el árbol
-    /// solo se baja si pasó su edad máxima.
+    /// `validAccessToken()` refreshes if the token is about to expire (and it is the
+    /// only refresh path, so as not to compete with the intents); the tree
+    /// is only downloaded if it is past its maximum age.
     static func runRefresh(session: Session, tree: TreeSynchronizer) async {
         _ = try? await session.validAccessToken()
         await tree.refreshIfNeeded()
     }
 
-    /// Procesa dentro del presupuesto y devuelve cuántas se enviaron. El
-    /// aviso «Se enviaron N capturas pendientes» lo emite la propia cola al
-    /// terminar su pasada; repetirlo aquí sería avisar dos veces.
+    /// Processes within the budget and returns how many were sent. The
+    /// notice «Se enviaron N capturas pendientes» is issued by the queue itself when
+    /// it finishes its pass; repeating it here would notify twice.
     static func runQueue(queue: CaptureQueue, notifier: Notifier, budget: Duration) async -> Int {
         let summary = await queue.process(budget: budget)
         await notifier.setBadge(summary.pending)
         return summary.sent
     }
 
-    /// `BGTask` no es `Sendable`, pero lo único que se hace con él fuera del
-    /// hilo donde llega —`setTaskCompleted` y `expirationHandler`— lo admite
-    /// desde cualquier hilo (documentación de BackgroundTasks). Esta caja solo
-    /// le deja cruzar al `Task` que hace el trabajo.
+    /// `BGTask` is not `Sendable`, but the only things done with it outside the
+    /// thread where it arrives —`setTaskCompleted` and `expirationHandler`— allow it
+    /// from any thread (BackgroundTasks documentation). This box only
+    /// lets it cross to the `Task` that does the work.
     private struct TaskHandle: @unchecked Sendable {
         let task: BGTask
         let scheduler: BGTaskScheduler
     }
 
-    /// El trabajo corre en un `Task` que iOS cancela al expirar la tarea: la
-    /// cancelación llega a la cola (`withTaskCancellationHandler`), que corta
-    /// la petición en vuelo y deja la captura en disco tal como estaba.
+    /// The work runs in a `Task` that iOS cancels when the task expires: the
+    /// cancellation reaches the queue (`withTaskCancellationHandler`), which cuts
+    /// the in-flight request and leaves the capture on disk just as it was.
     private static func runTask(
         _ task: BGTask, scheduler: BGTaskScheduler, _ work: @escaping @Sendable () async -> Void
     ) {
@@ -105,8 +105,8 @@ enum BackgroundJobs {
             handle.task.setTaskCompleted(success: !Task.isCancelled)
             schedule(scheduler: handle.scheduler)
         }
-        // Al expirar se cancela el trabajo; el propio `Task` cierra la tarea
-        // una sola vez al salir.
+        // On expiry the work is cancelled; the `Task` itself closes the task
+        // only once when it exits.
         task.expirationHandler = { execution.cancel() }
     }
 }

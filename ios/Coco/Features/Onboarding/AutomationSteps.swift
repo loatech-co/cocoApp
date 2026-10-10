@@ -1,17 +1,17 @@
 import Foundation
 import UIKit
 
-/// Un paso de la guía. Son datos, no vista: la pantalla los recorre y las
-/// pruebas los leen sin montar nada.
+/// A step of the guide. They are data, not a view: the screen walks through them and the
+/// tests read them without mounting anything.
 struct AutomationStep: Identifiable, Equatable {
     let id: Int
     let title: String
     let detail: String
-    /// Nombre de SF Symbols.
+    /// SF Symbols name.
     let symbol: String
 }
 
-/// Las dos automatizaciones de Atajos que alimentan a Coco, y los accesos.
+/// The two Shortcuts automations that feed Coco, and the shortcuts.
 enum AutomationSteps {
     /// Wallet → «Registrar gasto de Wallet».
     static let transaction: [AutomationStep] = [
@@ -30,7 +30,7 @@ enum AutomationSteps {
             symbol: "arrow.right.circle"),
     ]
 
-    /// Mensajes del banco → «Registrar gasto de SMS».
+    /// Bank messages → «Registrar gasto de SMS».
     static let message: [AutomationStep] = [
         .init(
             id: 1, title: L10n.Onboarding.messageStep1Title,
@@ -46,7 +46,7 @@ enum AutomationSteps {
             detail: L10n.Onboarding.messageStep4Detail, symbol: "arrow.right.circle"),
     ]
 
-    /// Botón de acción, Centro de control y widget.
+    /// Action button, Control Center and widget.
     static let accessPoints: [AutomationStep] = [
         .init(
             id: 1, title: L10n.Onboarding.accessActionButtonTitle,
@@ -60,7 +60,7 @@ enum AutomationSteps {
     ]
 }
 
-/// Abre la app Atajos. `shortcuts` está en LSApplicationQueriesSchemes.
+/// Opens the Shortcuts app. `shortcuts` is in LSApplicationQueriesSchemes.
 enum ShortcutsLauncher {
     static let url: URL = {
         guard let url = URL(string: "shortcuts://") else { preconditionFailure("shortcuts:// es una URL válida") }

@@ -1,8 +1,8 @@
 import Foundation
 
-/// Mantiene el árbol del teléfono al día con `GET /categories` y sirve el
-/// índice a quien busque. Quién lo llama (arranque, primer plano, login,
-/// captura enviada) es cosa de la app; aquí solo se decide si hace falta.
+/// Keeps the phone's tree up to date with `GET /categories` and serves the
+/// index to whoever searches. Who calls it (launch, foreground, login,
+/// capture sent) is the app's business; here it is only decided whether it is needed.
 final actor TreeSynchronizer {
     private let api: APIClient
     private let session: Session
@@ -12,8 +12,8 @@ final actor TreeSynchronizer {
     private var saved: SavedTree?
     private var cachedIndex: TreeIndex?
     private var loadedFromDisk = false
-    /// Dos refrescos a la vez son dos descargas del mismo árbol: el segundo
-    /// espera al primero.
+    /// Two refreshes at once are two downloads of the same tree: the second one
+    /// waits for the first.
     private var refreshInFlight: Task<Void, Error>?
 
     init(api: APIClient, session: Session, store: TreeStore, clock: @Sendable @escaping () -> Date = Date.init) {
@@ -23,14 +23,14 @@ final actor TreeSynchronizer {
         self.clock = clock
     }
 
-    /// Lo guardado, sin tocar la red. `nil` si nunca se bajó nada.
+    /// What is saved, without touching the network. `nil` if nothing was ever downloaded.
     func index() async -> TreeIndex? {
         loadFromDiskIfNeeded()
         return cachedIndex
     }
 
-    /// Baja el árbol si lo guardado tiene más de `maxAge` o no hay nada. Los
-    /// errores —de red, de sesión— se tragan: sin red se usa lo guardado.
+    /// Downloads the tree if what is saved is older than `maxAge` or there is nothing. The
+    /// errors —network, session— are swallowed: without network what is saved is used.
     func refreshIfNeeded(maxAge: Duration = .seconds(3600)) async {
         loadFromDiskIfNeeded()
         if let saved {
@@ -41,7 +41,7 @@ final actor TreeSynchronizer {
         try? await refreshNow()
     }
 
-    /// `GET /categories` ahora mismo, se tenga lo que se tenga guardado.
+    /// `GET /categories` right now, whatever is saved.
     func refreshNow() async throws {
         if let inFlight = refreshInFlight {
             return try await inFlight.value
@@ -56,8 +56,8 @@ final actor TreeSynchronizer {
         let token = try await session.validAccessToken()
         let roots: [TreeNode] = try await api.sendAllPages(RequestBuilder.categories(page:), token: token)
         let newTree = SavedTree(roots: roots, downloadedAt: clock())
-        // Si el disco falla el índice sirve igual en esta ejecución; la
-        // siguiente vuelve a bajarlo.
+        // If the disk fails the index works all the same in this run; the
+        // next one downloads it again.
         try? store.save(newTree)
         saved = newTree
         cachedIndex = TreeIndex(roots: roots)
@@ -67,7 +67,7 @@ final actor TreeSynchronizer {
     private func loadFromDiskIfNeeded() {
         guard !loadedFromDisk else { return }
         loadedFromDisk = true
-        // Un archivo corrupto cuenta como que no hay nada: se vuelve a bajar.
+        // A corrupt file counts as there being nothing: it is downloaded again.
         guard let loaded = try? store.load() else { return }
         saved = loaded
         cachedIndex = TreeIndex(roots: loaded.roots)

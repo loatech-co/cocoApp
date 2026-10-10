@@ -1,10 +1,10 @@
-# Especificación del proyecto de Xcode. El .xcodeproj se GENERA de aquí:
+# Xcode project specification. The .xcodeproj is GENERATED from here:
 #
 #   brew install xcodegen && xcodegen generate
 #
-# y se versiona también, para que abrir el proyecto no exija nada instalado.
-# Si se edita el .xcodeproj a mano, el siguiente `xcodegen generate` lo pisa:
-# lo que se quiera conservar va aquí.
+# and it is versioned too, so that opening the project does not require anything installed.
+# If the .xcodeproj is edited by hand, the next `xcodegen generate` overwrites it:
+# whatever is meant to be kept goes here.
 name: Coco
 options:
   bundleIdPrefix: co.loatech
@@ -12,32 +12,32 @@ options:
     iOS: "17.0"
   xcodeVersion: "16.0"
   generateEmptyDirectories: true
-  # Los textos están en español (Localizable.xcstrings): es la lengua base.
+  # The texts are in Spanish (Localizable.xcstrings): it is the base language.
   developmentLanguage: es
-# La firma (equipo, estilo, identidad, perfil) NO va en `settings`: lo que
-# está aquí acaba escrito en el .xcodeproj y pisa cualquier xcconfig. Va en
-# Signing.xcconfig, que incluye de forma opcional un Local.xcconfig ignorado
-# por git con el Team ID de cada quien (ver Local.xcconfig.example). Así
-# regenerar no borra la firma, y sin ese archivo el simulador sigue
-# compilando.
+# Signing (team, style, identity, profile) does NOT go in `settings`: whatever
+# is here ends up written into the .xcodeproj and overrides any xcconfig. It goes in
+# Signing.xcconfig, which optionally includes a git-ignored Local.xcconfig
+# with each person's Team ID (see Local.xcconfig.example). That way
+# regenerating does not erase the signing, and without that file the simulator still
+# builds.
 configFiles:
   Debug: Signing.xcconfig
   Release: Signing.xcconfig
 settings:
   base:
-    # Modo de lenguaje 6: la concurrencia estricta es un error de compilación,
-    # no un aviso. Un `@unchecked Sendable` lleva escrito por qué es seguro.
+    # Language mode 6: strict concurrency is a compile error,
+    # not a warning. An `@unchecked Sendable` has why it is safe written down.
     SWIFT_VERSION: "6.0"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
-    # La API a la que habla la app; el Info.plist la lee de aquí. Se pisa
-    # desde la línea de órdenes para el humo contra la API local:
+    # The API the app talks to; the Info.plist reads it from here. It is overridden
+    # from the command line for the smoke test against the local API:
     #   xcodebuild ... COCO_API_BASE_URL=http://localhost:3000
     COCO_API_BASE_URL: https://dev-cocoapp.viteri.me
-    # Los catálogos (Localizable.xcstrings) se escriben a mano, con claves en
-    # inglés. Sin esto, Xcode les añade solo cada literal que encuentra —un
-    # `Text("$")`, los títulos de los intents— y el catálogo deja de ser la
-    # lista de lo que pide `L10n`.
+    # The catalogs (Localizable.xcstrings) are written by hand, with keys in
+    # English. Without this, Xcode adds to them by itself every literal it finds —a
+    # `Text("$")`, the intent titles— and the catalog stops being the
+    # list of what `L10n` asks for.
     SWIFT_EMIT_LOC_STRINGS: NO
 targets:
   Coco:
@@ -46,7 +46,7 @@ targets:
     sources:
       - path: Coco
     dependencies:
-      # La extensión de accesos rápidos (M13) va dentro del .app.
+      # The quick-access extension (M13) goes inside the .app.
       - target: CocoWidgets
         embed: true
     info:
@@ -57,41 +57,41 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        # Esquema propio: los avisos, el widget y el control abren la app por aquí.
+        # Our own scheme: the notifications, the widget and the control open the app through here.
         CFBundleURLTypes:
           - CFBundleURLName: co.loatech.coco
             CFBundleURLSchemes: [coco]
-        # Renovar el token tibio y vaciar la cola cuando iOS lo concede.
+        # Refresh the warm token and empty the queue when iOS grants it.
         UIBackgroundModes: [fetch, processing]
         BGTaskSchedulerPermittedIdentifiers: [co.loatech.coco.refresh, co.loatech.coco.queue]
-        # Para poder abrir la app Atajos desde Bienvenida.
+        # To be able to open the Shortcuts app from Welcome.
         LSApplicationQueriesSchemes: [shortcuts]
         NSCameraUsageDescription: Para fotografiar un recibo y leerlo.
         NSPhotoLibraryUsageDescription: Para adjuntar la foto de un recibo cuando no hay cámara.
         NSFaceIDUsageDescription: Para proteger tu sesión.
-        # Solo red local sin TLS (la API en localhost desde el simulador); el
-        # resto sigue exigiendo HTTPS.
+        # Only local network without TLS (the API on localhost from the simulator); the
+        # rest still demands HTTPS.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         ITSAppUsesNonExemptEncryption: false
-        # La API a la que habla la app (ver COCO_API_BASE_URL arriba). Se
-        # puede cambiar en Ajustes dentro de la app.
+        # The API the app talks to (see COCO_API_BASE_URL above). It
+        # can be changed in Settings inside the app.
         CocoAPIBaseURL: $(COCO_API_BASE_URL)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco
         TARGETED_DEVICE_FAMILY: "1"
         ENABLE_PREVIEWS: YES
-  # Accesos rápidos (M13): el control del Centro de control / pantalla
-  # bloqueada / botón de acción (iOS 18) y el widget de inicio + accesorios de
-  # pantalla bloqueada (iOS 17). Solo abren la app por coco://, así que no
-  # lleva entitlements (nada de App Groups: el equipo personal gratuito no los
-  # garantiza). Consume el segundo App ID de los 10 por semana del equipo
-  # personal.
+  # Quick access (M13): the Control Center / lock screen / action button
+  # control (iOS 18) and the home widget + lock screen
+  # accessories (iOS 17). They only open the app through coco://, so it
+  # carries no entitlements (no App Groups: the free personal team does not
+  # guarantee them). It uses the second App ID of the team's 10 per week
+  # (personal team).
   #
-  # Si Xcode se niega a firmar la extensión con el equipo personal, se quita
-  # este target y la dependencia de arriba: el botón de acción sigue
-  # funcionando por los App Shortcuts de la app.
+  # If Xcode refuses to sign the extension with the personal team, remove
+  # this target and the dependency above: the action button keeps
+  # working through the app's App Shortcuts.
   CocoWidgets:
     type: app-extension
     platform: iOS
@@ -110,8 +110,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco.widgets
         TARGETED_DEVICE_FAMILY: "1"
-        # Su propio catálogo con el mismo color de marca que la app: la
-        # extensión no ve los recursos del .app.
+        # Its own catalog with the same brand color as the app: the
+        # extension does not see the .app's resources.
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SKIP_INSTALL: YES
   CocoTests:
@@ -119,9 +119,9 @@ targets:
     platform: iOS
     sources:
       - path: CocoTests
-      # VisibleTextTests lee el código de la app y de la extensión. El
-      # simulador no puede leerlo donde está (Documentos está protegido), así
-      # que va copiado dentro del paquete de pruebas como carpeta.
+      # VisibleTextTests reads the code of the app and of the extension. The
+      # simulator cannot read it where it is (Documents is protected), so
+      # it is copied inside the test bundle as a folder.
       - path: Coco
         type: folder
         buildPhase: resources
@@ -130,8 +130,8 @@ targets:
         buildPhase: resources
     dependencies:
       - target: Coco
-    # La mitad web del puente y el contrato v2, por el mismo motivo:
-    # ContractsTests y WebBridgeSmokeTests los leen desde el paquete.
+    # The web half of the bridge and the v2 contract, for the same reason:
+    # ContractsTests and WebBridgeSmokeTests read them from the bundle.
     postCompileScripts:
       - name: Copiar la web para las pruebas del puente
         script: bash "$SRCROOT/scripts/copy-web-for-tests.sh"
@@ -139,13 +139,13 @@ targets:
     info:
       path: CocoTests/Info.plist
       properties:
-        # Una base distinta a la de la app, para probar que se lee del bundle
-        # que se pide y no del de la app.
+        # A base different from the app's, to test that it reads from the bundle
+        # it asks for and not from the app's.
         CocoAPIBaseURL: https://pruebas.coco.invalid
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco.tests
-        # El script de arriba lee `frontend/`, fuera de lo que declara.
+        # The script above reads `frontend/`, outside what it declares.
         ENABLE_USER_SCRIPT_SANDBOXING: NO
 schemes:
   Coco:

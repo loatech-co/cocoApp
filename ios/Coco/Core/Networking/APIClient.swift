@@ -1,7 +1,7 @@
 import Foundation
 
-/// La única puerta de red. Construye la petición, la manda por el transporte
-/// y traduce la respuesta a un tipo o a un `APIError`.
+/// The only network door. It builds the request, sends it through the transport
+/// and translates the response into a type or an `APIError`.
 struct APIClient: Sendable {
     let configuration: APIConfiguration
     let transport: Transport
@@ -23,9 +23,9 @@ struct APIClient: Sendable {
         }
     }
 
-    /// Una lista paginada de la v2 entera: pide página tras página hasta
-    /// juntar `meta.total`. Una página vacía corta el bucle, por si el total
-    /// cambia mientras se baja.
+    /// A whole paginated v2 list: asks page after page until it has
+    /// gathered `meta.total`. An empty page cuts the loop, in case the total
+    /// changes while it is being downloaded.
     func sendAllPages<T: Decodable>(_ page: (Int) -> APIRequest, token: String?) async throws -> [T] {
         var items: [T] = []
         var number = 1
@@ -43,14 +43,14 @@ struct APIClient: Sendable {
         }
     }
 
-    /// Para un 204: no intenta leer nada.
+    /// For a 204: it does not try to read anything.
     func sendWithoutBody(_ p: APIRequest, token: String?) async throws {
         _ = try await run(p, token: token)
     }
 
-    /// El cuerpo tal cual llegó, sin decodificar. Lo usa la sesión, que
-    /// necesita el `user` byte a byte para entregárselo a la web sin
-    /// reescribir ni una clave.
+    /// The body just as it arrived, undecoded. The session uses it, since it
+    /// needs the `user` byte for byte to hand it to the web without
+    /// rewriting a single key.
     func sendRaw(_ p: APIRequest, token: String?) async throws -> Data {
         try await run(p, token: token).0
     }

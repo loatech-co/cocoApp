@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Lo que no cabe en las otras tres pestañas. Las entradas de la web abren
-/// la ruta en el mismo webview de Inicio; el resto es nativo.
+/// What does not fit in the other three tabs. The web entries open
+/// the route in the same Home webview; the rest is native.
 struct MoreView: View {
     let d: Dependencies
 

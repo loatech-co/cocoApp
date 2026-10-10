@@ -2,10 +2,10 @@ import Foundation
 
 @testable import Coco
 
-/// Un transporte programable: responde lo que se le diga y recuerda lo que
-/// recibió. Lo comparten las pruebas de red, sesión y cola.
-/// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-/// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+/// A programmable transport: it answers whatever it is told and remembers what it
+/// received. The network, session and queue tests share it.
+/// `@unchecked Sendable`: a test double. What changes while the test
+/// runs goes under `lock`; what is configured is written before using it.
 final class FakeTransport: Transport, @unchecked Sendable {
     enum Reply {
         case http(Int, String)

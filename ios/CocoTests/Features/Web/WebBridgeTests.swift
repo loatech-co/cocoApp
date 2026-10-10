@@ -8,7 +8,7 @@ final class WebBridgeTests: XCTestCase {
     private let base = URL(string: "https://dev-cocoapp.viteri.me")!
     private let local = URL(string: "http://localhost:3000")!
 
-    // MARK: Origen permitido
+    // MARK: Allowed origin
 
     func testAcceptsTheExactOriginWithImplicitPort() {
         XCTAssertTrue(
@@ -44,7 +44,7 @@ final class WebBridgeTests: XCTestCase {
                 originProtocol: "http", host: "localhost", port: 3001, base: local, isMainFrame: true))
     }
 
-    // MARK: Puros
+    // MARK: Pure
 
     func testBootScriptDefinesCocoAppWithTheVersion() {
         let js = BootScript.source(version: "0.1.0")
@@ -84,10 +84,10 @@ final class WebBridgeTests: XCTestCase {
         XCTAssertNil(WebEvent(message: "signOut"))
     }
 
-    // MARK: Handler de sesión
+    // MARK: Session handler
 
-    /// Un reloj que avanza 31 s en cada lectura: cada entrega cae fuera de la
-    /// ventana de la anterior.
+    /// A clock that advances 31 s on each read: each delivery falls outside the
+    /// window of the previous one.
     final class JumpingClock: Sendable {
         private let t = OSAllocatedUnfairLock(initialState: Date(timeIntervalSince1970: 1_800_000_000))
         func read() -> Date {
@@ -106,7 +106,7 @@ final class WebBridgeTests: XCTestCase {
             clock: { clock.read() }, openExternal: { _ in })
     }
 
-    // MARK: Avisos hacia la web
+    // MARK: Notices towards the web
 
     func testNoticesUseTheContractNamesAndNeverFailOnAnOldWeb() {
         XCTAssertEqual(WebNotice.captured.rawValue, "captured")
@@ -116,8 +116,8 @@ final class WebBridgeTests: XCTestCase {
         }
     }
 
-    /// En un WKWebView de verdad: sin `__coco` (sin sesión), con un `__coco`
-    /// viejo que no conoce los avisos, y con uno que sí.
+    /// In a real WKWebView: without `__coco` (without a session), with an old `__coco`
+    /// that does not know the notices, and with one that does.
     @MainActor
     func testNoticesReachTheWebAndAreHarmlessWithoutIt() async throws {
         let p = bridge(session: SessionDouble())

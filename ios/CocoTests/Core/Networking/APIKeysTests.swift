@@ -2,10 +2,10 @@ import XCTest
 
 @testable import Coco
 
-/// Las claves JSON del contrato `v2` con la API (`api/openapi.v2.json`), en los
-/// dos sentidos: lo que la app manda y lo que lee. Cambiar una aquí rompe las
-/// capturas contra la API desplegada: las cadenas de esta prueba son el
-/// contrato y no se tocan para que pase (ADR 0021).
+/// The JSON keys of the `v2` contract with the API (`api/openapi.v2.json`), in
+/// both directions: what the app sends and what it reads. Changing one here breaks the
+/// captures against the deployed API: the strings in this test are the
+/// contract and are not touched to make it pass (ADR 0021).
 final class APIKeysTests: XCTestCase {
     private func json<T: Encodable>(_ value: T) throws -> String {
         let jsonEncoder = JSONEncoder()
@@ -22,8 +22,8 @@ final class APIKeysTests: XCTestCase {
         text: "t", merchant: "c", amount: "1", date: "2026-01-02", period: "2026-01", fileName: "f.jpg",
         categoryId: 3, note: "n")
 
-    /// `CaptureInput`: el cuerpo aplanado junto a `source`, `externalRef` y
-    /// `capturedAt`, con `categoryId` como cadena de dígitos.
+    /// `CaptureInput`: the flattened body next to `source`, `externalRef` and
+    /// `capturedAt`, with `categoryId` as a string of digits.
     func testTheCaptureRequestUsesTheV2Keys() throws {
         let request = CaptureRequest(source: .sms, externalRef: "x", capturedAt: "2026", body: Self.body)
         XCTAssertEqual(
@@ -32,7 +32,7 @@ final class APIKeysTests: XCTestCase {
         )
     }
 
-    /// `InterpretInput`: sin `categoryId` ni `note`, que la v2 no acepta ahí.
+    /// `InterpretInput`: without `categoryId` or `note`, which the v2 does not accept there.
     func testTheInterpretRequestUsesTheV2Keys() throws {
         XCTAssertEqual(
             try json(InterpretRequest(body: Self.body)),
@@ -113,7 +113,7 @@ final class APIKeysTests: XCTestCase {
         XCTAssertEqual(session.user.createdAt, "c")
     }
 
-    /// Las listas de la v2 traen `meta.{page, perPage, total}`.
+    /// The v2 lists carry `meta.{page, perPage, total}`.
     func testAPageCarriesItsMeta() throws {
         let page = try JSONDecoder().decode(
             Page<TreeNode>.self,

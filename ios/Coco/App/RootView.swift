@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// La barra nativa con sus cuatro pestañas, la ficha de entrar encima cuando
-/// no hay sesión y las hojas (Bienvenida, Ajustes) que pide el enrutador.
+/// The native bar with its four tabs, the sign-in sheet on top when
+/// there is no session, and the sheets (Welcome, Settings) the router asks for.
 struct RootView: View {
     let d: Dependencies
 
@@ -33,7 +33,7 @@ struct RootView: View {
         .sheet(item: $router.sheet, content: sheetContent)
         .onChange(of: router.pendingWebPath, initial: true) { _, _ in consumePending() }
         .onChange(of: router.searchPending) { _, _ in consumePending() }
-        // Volver a la pestaña de la web es volver a primer plano para ella.
+        // Going back to the web tab is going back to the foreground for it.
         .onChange(of: router.tab) { old, new in
             if new == .home, old != .home { Task { await d.bridge.notify(.foreground) } }
         }
@@ -74,7 +74,7 @@ struct RootView: View {
         )
     }
 
-    /// Lo que el enrutador dejó para la web, en cuanto la pestaña Inicio manda.
+    /// What the router left for the web, as soon as the Home tab takes over.
     private func consumePending() {
         if let path = d.router.pendingWebPath {
             d.router.pendingWebPath = nil
@@ -87,8 +87,8 @@ struct RootView: View {
     }
 }
 
-/// La pestaña Registrar: un formulario nuevo por cada petición del
-/// enrutador (deep link, intent, puente), con la cámara abierta si se pidió.
+/// The Record tab: a new form for each request from the
+/// router (deep link, intent, bridge), with the camera open if it was asked for.
 private struct RecordExpenseView: View {
     let d: Dependencies
 
@@ -99,8 +99,8 @@ private struct RecordExpenseView: View {
         Group {
             if let model {
                 QuickFormView(model: model, opensCameraOnAppear: d.router.formRequest.withCamera) {
-                    // Guardar ya encoló; cerrar es volver a Inicio con un
-                    // formulario limpio para la próxima.
+                    // Saving already enqueued; closing is going back to Home with a
+                    // clean form for the next one.
                     closedCount += 1
                     d.router.tab = .home
                 }

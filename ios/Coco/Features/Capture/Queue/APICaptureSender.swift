@@ -1,8 +1,8 @@
 import Foundation
 
-/// El enviador real: pide el token vigente a la sesión y habla con la API.
-/// Lo que la sesión no puede dar se traduce a `APIError` para que la cola
-/// decida con una sola familia de errores.
+/// The real sender: it asks the session for the current token and talks to the API.
+/// What the session cannot give is translated into an `APIError` so that the queue
+/// decides with a single family of errors.
 struct APICaptureSender: CaptureSender {
     let api: APIClient
     let session: Session

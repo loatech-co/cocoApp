@@ -64,7 +64,7 @@ final class QueuedCapturerTests: XCTestCase {
         XCTAssertEqual(reduced.size.width * reduced.scale, 1600)
         XCTAssertEqual(reduced.size.height * reduced.scale, 1000)
         XCTAssertLessThan(jpeg.count, png.count)
-        // Lo que no es imagen pasa tal cual.
+        // What is not an image passes as is.
         XCTAssertEqual(PhotoReducer.jpeg(Data([1, 2, 3])), Data([1, 2, 3]))
     }
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// La guía para crear las dos automatizaciones y los accesos. Se marca como
-/// vista en UserDefaults y se puede reabrir desde Más y desde Capturas.
+/// The guide to create the two automations and the shortcuts. It is marked as
+/// seen in UserDefaults and can be reopened from More and from Captures.
 struct WelcomeView: View {
     nonisolated static let key = "welcome-seen"
 

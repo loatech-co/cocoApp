@@ -1,11 +1,11 @@
 import Foundation
 
-// Espejo de los esquemas de `api/openapi.v2.json`. Cada clave de la API se
-// escribe en su `CodingKeys`, a la vista, aunque coincida con la propiedad:
-// una diferencia con la API se ve ahí, no en un `keyDecodingStrategy` que la
-// esconda. `APIKeysTests` falla si una clave cambia.
+// Mirror of the schemas of `api/openapi.v2.json`. Each API key is
+// written in its `CodingKeys`, in plain sight, even if it matches the property:
+// a difference with the API shows there, not in a `keyDecodingStrategy` that
+// hides it. `APIKeysTests` fails if a key changes.
 
-/// Lo único que la API cuenta de un usuario (`Profile` de la v2).
+/// The only thing the API tells about a user (`Profile` of the v2).
 struct PublicProfile: Codable, Equatable, Sendable {
     let id: Int
     let email: String
@@ -19,8 +19,8 @@ struct PublicProfile: Codable, Equatable, Sendable {
     }
 }
 
-/// Respuesta de `/auth/login` y `/auth/refresh` (`Session` de la v2). El
-/// `refreshToken` solo llega con la cabecera de cliente nativo.
+/// Response of `/auth/login` and `/auth/refresh` (`Session` of the v2). The
+/// `refreshToken` only arrives with the native client header.
 struct SessionResponse: Decodable, Sendable {
     let accessToken: String
     let expiresIn: Int
@@ -32,8 +32,8 @@ struct SessionResponse: Decodable, Sendable {
     }
 }
 
-/// `Classification` de la v2. `confidence` llega como `high`, `medium` o
-/// `none`; se guarda como cadena para que un valor nuevo no tumbe la lectura.
+/// `Classification` of the v2. `confidence` arrives as `high`, `medium` or
+/// `none`; it is kept as a string so that a new value does not break the read.
 struct ProposedClassification: Codable, Equatable, Sendable {
     let confidence: String
     let source: String?
@@ -55,7 +55,7 @@ struct ProposedClassification: Codable, Equatable, Sendable {
     }
 }
 
-/// Lo que `POST /transactions/interpret` entiende. Sin efectos.
+/// What `POST /transactions/interpret` understands. No side effects.
 struct Interpretation: Codable, Equatable, Sendable {
     let amount: String?
     let date: String?
@@ -69,7 +69,7 @@ struct Interpretation: Codable, Equatable, Sendable {
     }
 }
 
-/// Lo que la app necesita de un `Transaction`; el resto se ignora al decodificar.
+/// What the app needs from a `Transaction`; the rest is ignored when decoding.
 struct TransactionSummary: Codable, Equatable, Sendable {
     let id: Int
     let date: String
@@ -85,7 +85,7 @@ struct TransactionSummary: Codable, Equatable, Sendable {
     }
 }
 
-/// Lo que devuelve `POST /transactions/capture` (`Capture` de la v2).
+/// What `POST /transactions/capture` returns (`Capture` of the v2).
 struct CaptureResponse: Codable, Equatable, Sendable {
     let transaction: TransactionSummary
     let classification: ProposedClassification
@@ -100,7 +100,7 @@ struct CaptureResponse: Codable, Equatable, Sendable {
     }
 }
 
-/// La ficha de un soporte, no el archivo (`Receipt` de la v2).
+/// The record of a receipt, not the file (`Receipt` of the v2).
 struct Attachment: Codable, Equatable, Sendable {
     let id: Int
     let order: Int
@@ -117,9 +117,9 @@ struct Attachment: Codable, Equatable, Sendable {
     }
 }
 
-/// Un nodo de `GET /categories` con sus hijos (`CategoryNode` recortado). Se
-/// guarda en disco con estas mismas claves: es una copia del servidor, y si
-/// no se deja leer se vuelve a bajar.
+/// A node of `GET /categories` with its children (`CategoryNode`, trimmed). It is
+/// saved on disk with these same keys: it is a copy of the server's, and if
+/// it cannot be read it is downloaded again.
 struct TreeNode: Codable, Equatable, Sendable {
     let id: Int
     let name: String
@@ -133,8 +133,8 @@ struct TreeNode: Codable, Equatable, Sendable {
         case id, name, children, parentId, keywords, isArchived, isStatic
     }
 
-    // `keywords` puede faltar en respuestas viejas: se toma vacío en vez
-    // de tumbar el árbol entero.
+    // `keywords` may be missing in old responses: it is taken as empty instead
+    // of breaking the whole tree.
     init(
         id: Int, name: String, parentId: Int?, keywords: [String] = [], isArchived: Bool = false,
         isStatic: Bool = false, children: [TreeNode]? = nil
@@ -160,12 +160,12 @@ struct TreeNode: Codable, Equatable, Sendable {
     }
 }
 
-/// El sobre `{data, meta}` que arma el TransformInterceptor.
+/// The `{data, meta}` envelope the TransformInterceptor builds.
 struct Envelope<T: Decodable>: Decodable {
     let data: T
 }
 
-/// Una página de una lista de la v2: `meta.{page, perPage, total}`.
+/// A page of a v2 list: `meta.{page, perPage, total}`.
 struct Page<T: Decodable>: Decodable {
     struct Meta: Decodable {
         let page: Int
@@ -176,8 +176,8 @@ struct Page<T: Decodable>: Decodable {
     let meta: Meta
 }
 
-/// `source` de `CaptureInput`, sin `web`: por ahí no entra nada desde el
-/// teléfono. La cola guarda en disco estos mismos valores.
+/// `source` of `CaptureInput`, without `web`: nothing comes in that way from the
+/// phone. The queue saves these same values on disk.
 enum CaptureSource: String, Codable, Sendable {
     case wallet
     case sms
@@ -185,7 +185,7 @@ enum CaptureSource: String, Codable, Sendable {
     case iosPhoto = "ios_photo"
 }
 
-/// Fuera del tipo para no anidar tres niveles (SwiftLint `nesting`).
+/// Outside the type so as not to nest three levels (SwiftLint `nesting`).
 extension ProposedClassification.Candidate {
     enum CodingKeys: String, CodingKey {
         case id, name, path

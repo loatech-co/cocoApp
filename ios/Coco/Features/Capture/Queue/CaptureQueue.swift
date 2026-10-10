@@ -1,9 +1,9 @@
 import Foundation
 
-/// La columna vertebral: toda captura se escribe en disco ANTES de tocar la
-/// red, y de ahí sale de una en una, FIFO, con reintentos. Nada se pierde:
-/// lo que la API rechaza queda `.failed` con su motivo, visible, no borrado; lo
-/// que el disco no deja leer o escribir se registra y se enseña en Capturas.
+/// The backbone: every capture is written to disk BEFORE touching the
+/// network, and from there it goes out one at a time, FIFO, with retries. Nothing is lost:
+/// what the API rejects stays `.failed` with its reason, visible, not deleted; what
+/// the disk does not allow to read or write is logged and shown in Captures.
 final actor CaptureQueue {
     let store: QueueStore
     private let sender: CaptureSender
@@ -15,16 +15,16 @@ final actor CaptureQueue {
     private let photoBytesLimit: Int
     private let shrinkPhoto: @Sendable (Data) -> Data
 
-    /// Publica la cola entera tras cada transición; quien escucha saca de ahí
-    /// el número de pendientes.
+    /// Publishes the whole queue after each transition; whoever listens takes from there
+    /// the number of pending items.
     nonisolated let changes: AsyncStream<QueueSnapshot>
     private let continuation: AsyncStream<QueueSnapshot>.Continuation
 
     private var inFlight: Task<SendSummary, Never>?
     private var lastSend: ContinuousClock.Instant?
-    /// Lo último que se pudo leer: si el disco falla, la insignia no cae a 0.
+    /// The last thing that could be read: if the disk fails, the badge does not drop to 0.
     private var lastRead: [PendingCapture] = []
-    /// Una lectura o escritura falló y ninguna escritura ha ido bien después.
+    /// A read or write failed and no write has gone well since.
     private var diskError = false
 
     init(
@@ -52,10 +52,10 @@ final actor CaptureQueue {
         self.continuation = continuation
     }
 
-    // MARK: Entrada
+    // MARK: Input
 
-    /// Idempotente por `id`: encolar dos veces la misma deja una. Persiste
-    /// antes de devolver; si el disco falla, lanza y el que llama lo sabe.
+    /// Idempotent by `id`: enqueuing the same one twice leaves one. It persists
+    /// before returning; if the disk fails, it throws and the caller knows.
     @discardableResult
     func enqueue(
         _ body: CaptureBody, source: CaptureSource, photo: Data?, id: UUID = UUID(), capturedAt: Date = .now
@@ -64,8 +64,8 @@ final actor CaptureQueue {
         var capture = PendingCapture(id: id, createdAt: capturedAt, source: source, body: body)
         if let photo {
             let jpeg = shrinkPhoto(photo)
-            // Con el tope lleno no se escribe: una foto que no cabe no puede
-            // dejar sin sitio al JSON de la captura siguiente.
+            // With the cap full nothing is written: a photo that does not fit cannot
+            // leave the next capture's JSON without room.
             guard try store.photoBytes() + jpeg.count <= photoBytesLimit else { throw QueueError.photosFull }
             capture.photoPath = try store.savePhoto(jpeg, id: id)
         }
@@ -74,15 +74,15 @@ final actor CaptureQueue {
         return capture
     }
 
-    // MARK: Envío
+    // MARK: Sending
 
-    /// Una sola corrida en vuelo. El presupuesto es un TOPE, no una pista: al
-    /// vencer se cancela lo que esté en vuelo —también una petición a mitad— y
-    /// la captura se queda en la cola tal como estaba en disco. Cancelar a
-    /// quien llama hace lo mismo (`withTaskCancellationHandler`).
+    /// A single run in flight. The budget is a CAP, not a hint: when it
+    /// runs out whatever is in flight is cancelled —a request halfway, too— and
+    /// the capture stays in the queue just as it was on disk. Cancelling
+    /// the caller does the same (`withTaskCancellationHandler`).
     ///
-    /// Quien llega con otra corrida en marcha la espera, pero solo hasta SU
-    /// presupuesto: un intent de 10 s no hereda los 25 s del primer plano.
+    /// Whoever arrives with another run under way waits for it, but only up to THEIR
+    /// budget: a 10 s intent does not inherit the 25 s of the foreground.
     @discardableResult
     func process(budget: Duration = .seconds(25)) async -> SendSummary {
         if let inFlight {
@@ -129,9 +129,9 @@ final actor CaptureQueue {
             case .retry:
                 continue
             case .noNetwork, .cancelled:
-                // Sin red no tiene sentido seguir con las demás: cada una
-                // esperaría su propio timeout para decir lo mismo. Cancelada,
-                // la corrida termina aquí y lo demás espera a la siguiente.
+                // Without network there is no point going on with the rest: each one
+                // would wait for its own timeout to say the same thing. Cancelled,
+                // the run ends here and the rest waits for the next one.
                 break loop
             }
         }
@@ -146,8 +146,8 @@ final actor CaptureQueue {
         case failed, unconfirmed, retry, noNetwork, cancelled
     }
 
-    /// Fase 1 (texto) y fase 2 (foto) sobre una captura. Cada transición se
-    /// escribe en disco antes de seguir, así un reinicio a mitad no duplica.
+    /// Phase 1 (text) and phase 2 (photo) on a capture. Each transition is
+    /// written to disk before going on, so a restart halfway does not duplicate.
     private func send(_ original: PendingCapture) async -> SendOutcome {
         var capture = original
         if case .toSend = capture.phase {
@@ -184,7 +184,7 @@ final actor CaptureQueue {
                 guard let path = capture.photoPath else { return await finish(&capture, with: result) }
                 jpeg = try store.photo(at: path)
             } catch {
-                // Sin archivo no hay nada que subir: el texto ya está registrado.
+                // Without a file there is nothing to upload: the text is already recorded.
                 report(.readPhoto, error, visible: false)
                 return await finish(&capture, with: result)
             }
@@ -194,7 +194,7 @@ final actor CaptureQueue {
                 }
                 return await finish(&capture, with: result)
             } catch {
-                // Un 2xx ilegible al subir la foto: la foto llegó.
+                // An unreadable 2xx when uploading the photo: the photo arrived.
                 if case .unreadableSuccess = APIError.from(error) { return await finish(&capture, with: result) }
                 return await handleFailure(&capture, error: error)
             }
@@ -202,9 +202,9 @@ final actor CaptureQueue {
         return .retry
     }
 
-    /// Un 401 pide UNA renovación y reintenta de inmediato; si sigue en 401,
-    /// la captura espera a que la persona vuelva a entrar. Cancelada a mitad
-    /// de la renovación, es una cancelación y no una sesión caída.
+    /// A 401 asks for ONE refresh and retries right away; if it is still 401,
+    /// the capture waits for the person to sign in again. Cancelled halfway
+    /// through the refresh, it is a cancellation and not a dropped session.
     private func withRefreshIfNeeded<T>(_ operation: () async throws -> T) async throws -> T {
         do {
             return try await operation()
@@ -237,23 +237,23 @@ final actor CaptureQueue {
         let output: SendOutcome
         switch api {
         case .cancelled:
-            // Ni intento ni error: la captura sigue en disco como estaba y la
-            // próxima corrida la retoma.
+            // Neither an attempt nor an error: the capture stays on disk as it was and the
+            // next run picks it up.
             return .cancelled
         case .unauthenticated, .sessionRevoked:
-            // Sin crecer la espera: no es culpa de la red, es de la sesión.
-            // Revocada, renovar no sirve: se cierra aquí y la captura espera
-            // a que la persona vuelva a entrar.
+            // Without growing the wait: it is not the network's fault, it is the session's.
+            // Revoked, refreshing does not help: it is closed here and the capture waits
+            // for the person to sign in again.
             let revoked = api == .sessionRevoked
             if revoked { await session.discard() }
             capture.phase = .awaitingSession
             capture.lastError = revoked ? L10n.Problem.sessionRevoked : L10n.Queue.errorSessionExpired
             output = .retry
         case .duplicate(let problem):
-            // Ya estaba registrada (un reenvío): cuenta como hecha, salvo si
-            // queda una foto sin saber a qué movimiento va. La API no deja
-            // buscarlo por `externalRef`, así que la foto se conserva y la
-            // captura queda «Por revisar», visible en Capturas.
+            // It was already recorded (a resend): it counts as done, unless
+            // a photo is left without knowing which transaction it goes to. The API does not allow
+            // looking it up by `externalRef`, so the photo is kept and the
+            // capture stays «Por revisar», visible in Captures.
             if let result = Self.alreadyRegistered(capture, problem, at: clock()) {
                 return await finish(&capture, with: result)
             }
@@ -268,8 +268,8 @@ final actor CaptureQueue {
             await notifier.captureFailed(reason: message)
             output = .failed
         case .unreadableSuccess(let status):
-            // El servidor la creó: reintentarla dependería de la idempotencia
-            // para no duplicar el gasto. Queda «hecha, revisar».
+            // The server created it: retrying it would depend on idempotency
+            // not to duplicate the expense. It stays «hecha, revisar».
             AppLog.queue.warning("Respuesta \(status, privacy: .public) ilegible: captura sin confirmar")
             capture.phase = .unconfirmed(at: clock())
             capture.lastError = nil
@@ -300,7 +300,7 @@ final actor CaptureQueue {
         lastSend = .now
     }
 
-    /// Lo que toca enviar ahora, en el orden en que se capturó.
+    /// What is due to be sent now, in the order it was captured.
     private func ready(at now: Date) -> [PendingCapture] {
         load()
             .filter { c in
@@ -313,10 +313,10 @@ final actor CaptureQueue {
     }
 }
 
-// MARK: Disco y lectura
+// MARK: Disk and reading
 
-// Lo comparten el envío y las acciones de la persona
-// (`CaptureQueue+Actions.swift`); fuera de la cola no se llama.
+// Shared by sending and the person's actions
+// (`CaptureQueue+Actions.swift`); it is not called from outside the queue.
 extension CaptureQueue {
     func search(_ id: UUID) -> PendingCapture? {
         load().first { $0.id == id }
@@ -339,10 +339,10 @@ extension CaptureQueue {
         await notifier.setBadge(snapshot.captures.filter(\.isPending).count)
     }
 
-    // MARK: Disco
+    // MARK: Disk
 
-    /// Lo que hay en disco; si no se deja leer, lo último que se leyó —y el
-    /// fallo queda registrado y a la vista—, no una cola vacía.
+    /// What is on disk; if it cannot be read, the last thing that was read —and the
+    /// failure stays logged and in sight—, not an empty queue.
     @discardableResult
     func load() -> [PendingCapture] {
         do {
@@ -362,9 +362,9 @@ extension CaptureQueue {
         }
     }
 
-    /// Qué paso falló y el tipo de error, nunca el contenido de la captura.
-    /// `visible`: si Capturas tiene que avisar. Una foto que sobra en disco no
-    /// cambia nada de lo que la persona ve.
+    /// Which step failed and the error type, never the content of the capture.
+    /// `visible`: whether Captures has to warn. A photo left over on disk does not
+    /// change anything the person sees.
     func report(_ step: DiskStep, _ error: Error, visible: Bool = true) {
         if visible { diskError = true }
         let ns = error as NSError
@@ -372,7 +372,7 @@ extension CaptureQueue {
         AppLog.queue.error("No se pudo: \(what, privacy: .public) \(ns.domain, privacy: .public) \(ns.code)")
     }
 
-    /// Espera a `task` como mucho `limit`, sin cancelarla: devuelve nil si
-    /// vence el plazo o si se cancela a quien espera. La corrida sigue y lo que
-    /// consiga queda en disco.
+    /// Waits for `task` at most `limit`, without cancelling it: returns nil if
+    /// the deadline passes or if the waiter is cancelled. The run goes on and whatever
+    /// it achieves stays on disk.
 }

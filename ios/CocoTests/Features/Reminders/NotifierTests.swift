@@ -3,8 +3,8 @@ import XCTest
 
 @testable import Coco
 
-// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+// `@unchecked Sendable`: a test double. What changes while the test
+// runs goes under `lock`; what is configured is written before using it.
 final class FakeNotificationCenter: NotificationCenterClient, @unchecked Sendable {
     private let lock = NSLock()
     private var requests: [UNNotificationRequest] = []
@@ -16,7 +16,7 @@ final class FakeNotificationCenter: NotificationCenterClient, @unchecked Sendabl
     func addRequest(_ request: UNNotificationRequest) async throws {
         save(request)
     }
-    /// Como el centro real: el mismo id reemplaza.
+    /// Like the real center: the same id replaces.
     private func save(_ request: UNNotificationRequest) {
         lock.withLock {
             requests.removeAll { $0.identifier == request.identifier }

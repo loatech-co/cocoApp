@@ -1,11 +1,11 @@
 import Foundation
 
-/// El árbol de categorías tal como se guarda en disco, con cuándo se bajó
-/// para saber si está viejo.
+/// The category tree as it is saved on disk, with when it was downloaded
+/// to know whether it is stale.
 struct SavedTree: Codable, Equatable, Sendable {
     let roots: [TreeNode]
     let downloadedAt: Date
-    // En disco con las claves sintetizadas; cada nodo lleva las de la API
-    // (`TreeNode` es el mismo tipo que llega de `/categories`). Las fija
-    // `StoredFormatTests`.
+    // On disk with the synthesized keys; each node carries the API's
+    // (`TreeNode` is the same type that arrives from `/categories`).
+    // `StoredFormatTests` pins them.
 }

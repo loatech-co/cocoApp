@@ -1,13 +1,13 @@
 import Foundation
 
-/// Los textos que ve el usuario, con su clave en `Localizable.xcstrings`.
-/// Ninguna vista escribe un texto suelto: lo pide aquí, y el valor en español
-/// vive en el catálogo (CONTRIBUTING.md, «iOS»). `LocalizationTests` comprueba
-/// que cada clave existe y conserva el texto de siempre.
+/// The texts the user sees, with their key in `Localizable.xcstrings`.
+/// No view writes a loose text: it asks for it here, and the Spanish value
+/// lives in the catalog (CONTRIBUTING.md, «iOS»). `LocalizationTests` checks
+/// that each key exists and keeps its usual text.
 ///
-/// La extensión no ve los recursos del .app: lleva su propio catálogo.
-/// `displayName` y `description` de un control piden un recurso, no un texto:
-/// por eso hay variantes `…Resource`.
+/// The extension does not see the .app's resources: it carries its own catalog.
+/// The `displayName` and `description` of a control ask for a resource, not a text:
+/// that is why there are `…Resource` variants.
 enum L10n {
     enum Widget {
         static var captureDescription: String { text("widget.capture.description") }
@@ -18,8 +18,8 @@ enum L10n {
         static var captureTitleResource: LocalizedStringResource { "widget.capture.title" }
     }
 
-    /// El valor del catálogo; si falta la clave, `Bundle` devuelve la clave
-    /// misma y la prueba lo caza.
+    /// The catalog value; if the key is missing, `Bundle` returns the key
+    /// itself and the test catches it.
     static func text(_ key: String) -> String {
         Bundle.main.localizedString(forKey: key, value: nil, table: nil)
     }

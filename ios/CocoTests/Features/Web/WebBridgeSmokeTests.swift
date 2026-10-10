@@ -3,16 +3,16 @@ import XCTest
 
 @testable import Coco
 
-/// El puente de punta a punta: la web construida (`frontend/dist`) dentro del
-/// `WebBridge` real, servida en local.
+/// The bridge end to end: the built web (`frontend/dist`) inside the
+/// real `WebBridge`, served locally.
 ///
-/// Comprueba lo que ninguna prueba de una sola mitad ve: que la web embebida
-/// pide la sesión por `cocoSession`, la acepta y publica en `window.__coco`
-/// justo lo que la app llama; y que un aviso de la app (`captured`) llega y
-/// hace que la web vuelva a pedir sus datos.
+/// It checks what no test of a single half sees: that the embedded web
+/// asks for the session through `cocoSession`, accepts it and publishes in `window.__coco`
+/// exactly what the app calls; and that a notice from the app (`captured`) arrives and
+/// makes the web ask for its data again.
 ///
-/// Sin la web construida se salta (`npm run build --workspace frontend`); la
-/// copia la hace `scripts/copy-web-for-tests.sh`.
+/// Without the built web it is skipped (`npm run build --workspace frontend`); the
+/// copy is made by `scripts/copy-web-for-tests.sh`.
 @MainActor
 final class WebBridgeSmokeTests: XCTestCase {
     func testTheBuiltWebGreetsTheAppAndHearsItsNotices() async throws {
@@ -30,8 +30,8 @@ final class WebBridgeSmokeTests: XCTestCase {
             version: "0.1.0", openExternal: { _ in })
         bridge.loadHome()
 
-        // El saludo: la web pide la sesión, la guarda y monta el armazón, que
-        // es quien publica `window.__coco`.
+        // The handshake: the web asks for the session, keeps it and mounts the shell, which
+        // is what publishes `window.__coco`.
         let members = try await poll(seconds: 20) {
             let js = "window.__coco ? Object.keys(window.__coco).sort().join(',') : ''"
             let keys = try? await bridge.webView.evaluateJavaScript(js) as? String
@@ -41,8 +41,8 @@ final class WebBridgeSmokeTests: XCTestCase {
         XCTAssertEqual(members?.split(separator: ",").map(String.init), expected)
         XCTAssertGreaterThan(session.tokenReads, 0, "la sesión salió de la app")
 
-        // El aviso: lo que la web pidió hasta ahora, y lo que vuelve a pedir
-        // después de `captured`.
+        // The notice: what the web asked for so far, and what it asks for again
+        // after `captured`.
         let before = try await settledCount(server)
         XCTAssertGreaterThan(before, 0, "la web pidió sus datos con la sesión de la app")
         let delivered = await bridge.notify(.captured)
@@ -51,7 +51,7 @@ final class WebBridgeSmokeTests: XCTestCase {
         XCTAssertNotNil(after, "después de `captured` la web volvió a pedir sus datos")
     }
 
-    /// Repite `probe` cada 100 ms hasta que devuelve algo, o hasta `seconds`.
+    /// Repeats `probe` every 100 ms until it returns something, or until `seconds`.
     private func poll<T>(seconds: Double, _ probe: () async throws -> T?) async throws -> T? {
         let deadline = Date().addingTimeInterval(seconds)
         while Date() < deadline {
@@ -61,7 +61,7 @@ final class WebBridgeSmokeTests: XCTestCase {
         return nil
     }
 
-    /// Cuántas peticiones a la API hubo, cuando deja de crecer durante 1 s.
+    /// How many requests to the API there were, once it stops growing for 1 s.
     private func settledCount(_ server: StaticWebServer) async throws -> Int {
         var count = -1
         for _ in 0..<20 where server.apiRequests.count != count {

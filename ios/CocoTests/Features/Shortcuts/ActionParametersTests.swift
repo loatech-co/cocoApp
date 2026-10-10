@@ -3,7 +3,7 @@ import XCTest
 @testable import Coco
 
 final class ActionParametersTests: XCTestCase {
-    /// 2026-10-04 04:30 UTC == 2026-10-03 23:30 en Bogotá.
+    /// 2026-10-04 04:30 UTC == 2026-10-03 23:30 in Bogotá.
     private let bogotaNight = Date(timeIntervalSince1970: 1_791_088_200)
 
     func testWalletWithEverything() {

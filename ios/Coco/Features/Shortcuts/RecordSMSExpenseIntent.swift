@@ -1,8 +1,8 @@
 import AppIntents
 import Foundation
 
-/// Lo lanza la automatización «Mensaje» de Atajos con el SMS del banco. En
-/// segundo plano, como el de Wallet. Un texto vacío falla aquí y no se encola.
+/// Launched by the Shortcuts «Mensaje» automation with the bank's SMS. In
+/// the background, like the Wallet one. An empty text fails here and is not enqueued.
 struct RecordSMSExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Registrar gasto de SMS"
     static let description = IntentDescription("Registra en Coco el gasto que anuncia un SMS del banco.")

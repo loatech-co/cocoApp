@@ -1,8 +1,8 @@
 import SwiftUI
 import WebKit
 
-/// Solo presenta el webview del puente. No lo crea ni lo configura: por eso
-/// cambiar de pestaña no pierde el documento.
+/// It only presents the bridge's webview. It neither creates nor configures it: that is why
+/// switching tabs does not lose the document.
 struct WebViewRepresentable: UIViewRepresentable {
     let bridge: WebBridge
 

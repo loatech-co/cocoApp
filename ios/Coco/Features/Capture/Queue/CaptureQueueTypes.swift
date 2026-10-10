@@ -1,27 +1,27 @@
 import Foundation
 import os
 
-/// Lo que dejó una corrida de `process()`.
+/// What a run of `process()` left.
 struct SendSummary: Equatable, Sendable {
     var sent: Int = 0
     var failed: Int = 0
-    /// Llegaron, pero la respuesta no se pudo leer: «hecha, revisar».
+    /// They arrived, but the response could not be read: «hecha, revisar».
     var unconfirmed: Int = 0
     var pending: Int = 0
     var results: [SavedResult] = []
 }
 
-/// Lo que la pantalla de capturas necesita saber de la cola: las capturas,
-/// cuántos archivos se apartaron por ilegibles y si el disco está fallando.
+/// What the captures screen needs to know about the queue: the captures,
+/// how many files were set aside as unreadable and whether the disk is failing.
 struct QueueSnapshot: Equatable, Sendable {
-    /// De la más nueva a la más vieja.
+    /// From the newest to the oldest.
     var captures: [PendingCapture] = []
     var unreadable = 0
     var diskError = false
 }
 
-/// El paso de disco que falló, para el registro: nombra la operación y nunca
-/// lleva el contenido de la captura.
+/// The disk step that failed, for the log: it names the operation and never
+/// carries the content of the capture.
 enum DiskStep {
     case savePhotoPhase, readPhoto, deleteSentPhoto, saveDone, saveFailure, saveRetry, deleteDiscardedPhoto
     case discard, saveSessionReturned, purge, countQuarantine, readQueue
@@ -32,10 +32,10 @@ extension CaptureQueue {
         Double(d.components.seconds) + Double(d.components.attoseconds) / 1e18
     }
 
-    /// El resultado de un 409 `duplicate`: el de su texto si ya lo tenía (el
-    /// duplicado fue la foto); si no hay foto, uno sin transacción conocida.
-    /// `nil` si queda una foto sin movimiento al que adjuntarla: cerrarla
-    /// como hecha borraría el recibo.
+    /// The result of a 409 `duplicate`: the one from its text if it already had it (the
+    /// duplicate was the photo); if there is no photo, one with no known transaction.
+    /// `nil` if a photo is left with no transaction to attach it to: closing it
+    /// as done would delete the receipt.
     static func alreadyRegistered(_ capture: PendingCapture, _ problem: APIProblem, at date: Date) -> SavedResult? {
         if let result = capture.textResult { return result }
         guard capture.photoPath == nil else { return nil }
@@ -70,8 +70,8 @@ extension CaptureQueue {
     }
 }
 
-/// Una continuación que se reanuda una sola vez, gane quien gane: el
-/// resultado, el plazo o la cancelación.
+/// A continuation that is resumed only once, whoever wins: the
+/// result, the deadline or the cancellation.
 private final class Gate: Sendable {
     private enum State: Sendable {
         case idle

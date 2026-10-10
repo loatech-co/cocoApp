@@ -5,14 +5,14 @@ enum ParameterError: Error, Equatable {
     case emptyText
 }
 
-/// Lo que Atajos entrega, convertido a un `CaptureBody`. Puro: ni red ni
-/// cola, para probarlo con fechas y textos fijos.
+/// What Shortcuts hands over, converted into a `CaptureBody`. Pure: neither network nor
+/// queue, to test it with fixed dates and texts.
 enum ActionParameters {
     static let queuedText = L10n.Shortcuts.dialogQueued
 
-    /// Wallet: el comercio manda; si falta, el «nombre» de la transacción. El
-    /// texto nunca queda vacío —«Wallet · <tarjeta> · <nombre>»— porque la
-    /// API devuelve 422 ante una captura sin texto ni comercio.
+    /// Wallet: the merchant wins; if it is missing, the transaction's «name». The
+    /// text is never left empty —«Wallet · <tarjeta> · <nombre>»— because the
+    /// API returns 422 for a capture without text or merchant.
     static func walletBody(merchant: String?, amount: String?, card: String?, name: String?, now: Date)
         -> CaptureBody
     {
@@ -27,8 +27,8 @@ enum ActionParameters {
         )
     }
 
-    /// SMS: el texto va íntegro —es lo que la API sabe leer— y el remitente en
-    /// la nota, para no contaminar la interpretación. Vacío no se encola.
+    /// SMS: the text goes in full —it is what the API knows how to read— and the sender in
+    /// the note, so as not to contaminate the interpretation. Empty is not enqueued.
     static func smsBody(text: String, sender: String?, now: Date) throws -> CaptureBody {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { throw ParameterError.emptyText }
@@ -39,8 +39,8 @@ enum ActionParameters {
         )
     }
 
-    /// Lo que dice el diálogo del atajo: el resumen de la API tal cual, o que
-    /// quedó guardado.
+    /// What the shortcut's dialog says: the API's summary as is, or that
+    /// it was saved.
     static func dialogText(_ r: CaptureResult) -> String {
         switch r {
         case .sent(let g):

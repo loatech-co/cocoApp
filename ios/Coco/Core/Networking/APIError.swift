@@ -1,31 +1,31 @@
 import Foundation
 
-/// Todo lo que puede salir mal al hablar con la API, ya clasificado para que
-/// la cola decida sin mirar códigos HTTP. Se decide por el `code` del
-/// problema y, si no lo hay o no se conoce, por el status.
+/// Everything that can go wrong when talking to the API, already classified so that
+/// the queue decides without looking at HTTP codes. It is decided by the problem's
+/// `code` and, if there is none or it is unknown, by the status.
 enum APIError: Error, Equatable {
     case noNetwork(URLError.Code)
     case timedOut
-    /// 401 que se arregla renovando: `session_expired`, `invalid_token`,
-    /// `unauthenticated`, o un 401 sin código conocido.
+    /// 401 that is fixed by refreshing: `session_expired`, `invalid_token`,
+    /// `unauthenticated`, or a 401 without a known code.
     case unauthenticated
-    /// 401 `session_revoked`: renovar no sirve, la sesión se cierra.
+    /// 401 `session_revoked`: refreshing does not help, the session is closed.
     case sessionRevoked
-    /// 409 `duplicate`: lo que se mandaba ya existe; cuenta como hecho.
+    /// 409 `duplicate`: what was being sent already exists; it counts as done.
     case duplicate(APIProblem)
-    /// El resto de 4xx (validación, ajeno, credenciales, cuenta): la petición
-    /// está mal y repetirla no ayuda.
+    /// The rest of 4xx (validation, someone else's, credentials, account): the request
+    /// is wrong and repeating it does not help.
     case rejected(APIProblem)
-    /// 5xx, 408 y 429: el servidor no pudo ahora; más tarde sí.
+    /// 5xx, 408 and 429: the server could not right now; later it will.
     case server(status: Int)
-    /// Una respuesta de error (no 2xx) que no tiene la forma de la API: un
-    /// HTML de un proxy, un cuerpo vacío.
+    /// An error response (not 2xx) that does not have the API's shape: an
+    /// HTML page from a proxy, an empty body.
     case unreadableResponse
-    /// Un 2xx cuyo cuerpo no se deja leer: el servidor HIZO lo que se pidió y
-    /// lo que no se sabe es el resultado. Repetirlo podría hacerlo dos veces.
+    /// A 2xx whose body cannot be read: the server DID what was asked and
+    /// what is not known is the result. Repeating it could do it twice.
     case unreadableSuccess(status: Int)
-    /// Se canceló quien esperaba —venció el presupuesto o iOS recogió la
-    /// tarea—. No es un fallo de la petición y no cuenta como intento.
+    /// Whoever was waiting was cancelled —the budget ran out or iOS took back the
+    /// task—. It is not a failure of the request and does not count as an attempt.
     case cancelled
 
     var isRetryable: Bool {
@@ -44,8 +44,8 @@ enum APIError: Error, Equatable {
         }
     }
 
-    /// Una respuesta que no es 2xx, clasificada. El código manda; el status
-    /// decide cuando no lo hay o la app no lo conoce.
+    /// A response that is not 2xx, classified. The code wins; the status
+    /// decides when there is none or the app does not know it.
     static func from(status: Int, body: Data) -> APIError {
         let problem = APIProblem.decode(body, status: status)
         if let problem, let decided = byCode(problem) { return decided }
@@ -56,7 +56,7 @@ enum APIError: Error, Equatable {
         }
     }
 
-    /// Los códigos que deciden por sí mismos, sin mirar el status.
+    /// The codes that decide by themselves, without looking at the status.
     private static func byCode(_ problem: APIProblem) -> APIError? {
         switch problem.code {
         case .sessionRevoked: .sessionRevoked
@@ -68,7 +68,7 @@ enum APIError: Error, Equatable {
         }
     }
 
-    /// Un `URLError` del transporte, clasificado.
+    /// A `URLError` from the transport, classified.
     static func from(_ error: Error) -> APIError {
         if let api = error as? APIError { return api }
         if error is CancellationError { return .cancelled }

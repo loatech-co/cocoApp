@@ -1,9 +1,9 @@
 import Foundation
 
-/// Cuándo y con qué palabras avisar de que la instalación caduca.
+/// When, and with what words, to warn that the installation expires.
 enum ExpiryReminder {
-    /// La víspera a las 09:00 locales; si faltan menos de 24 h, en un minuto;
-    /// si ya venció, nil (eso se dice con un cartel, no con un aviso).
+    /// The day before at 09:00 local time; if less than 24 h remain, in a minute;
+    /// if it already expired, nil (that is said with a banner, not with a notification).
     static func reminderDate(expiresAt: Date, now: Date, calendar: Calendar = .current) -> Date? {
         guard expiresAt > now else { return nil }
         let inOneMinute = now.addingTimeInterval(60)
@@ -11,8 +11,8 @@ enum ExpiryReminder {
         guard let dayBefore = calendar.date(byAdding: .day, value: -1, to: expiresAt),
             let atNine = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: dayBefore)
         else { return inOneMinute }
-        // La víspera a las 09:00 puede haber pasado ya (vence mañana de
-        // madrugada): entonces no se espera.
+        // The day before at 09:00 may already have passed (it expires tomorrow in the
+        // small hours): then there is no waiting.
         return atNine > now ? atNine : inOneMinute
     }
 
@@ -28,8 +28,8 @@ enum ExpiryReminder {
         return (L10n.Reminders.expiryTitle(when), L10n.Reminders.expiryBody)
     }
 
-    /// Días de calendario entre hoy y el día del vencimiento: a las 23:50 con
-    /// vencimiento a las 00:30 queda 1, no 0.
+    /// Calendar days between today and the expiry day: at 23:50 with
+    /// expiry at 00:30 it is 1, not 0.
     static func daysLeft(expiresAt: Date, now: Date, calendar: Calendar = .current) -> Int {
         let start = calendar.startOfDay(for: now)
         let end = calendar.startOfDay(for: expiresAt)

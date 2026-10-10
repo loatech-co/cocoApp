@@ -1,8 +1,8 @@
 import AppIntents
 import Foundation
 
-/// Los tres intents publicados como App Shortcuts: aparecen en la app Atajos
-/// sin configurar nada y el botón de acción de iOS 17 puede lanzarlos.
+/// The three intents published as App Shortcuts: they show up in the Shortcuts app
+/// without configuring anything and the iOS 17 action button can launch them.
 struct CocoShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(

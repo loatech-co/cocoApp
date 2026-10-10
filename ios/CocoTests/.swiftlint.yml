@@ -1,10 +1,10 @@
-# Las pruebas heredan ../.swiftlint.yml. Solo se relaja lo que en una prueba
-# es datos y no código:
-# - line_length: los JSON de ejemplo van en una línea, tal como los devuelve
-#   la API. swift-format ya parte el código a 120; lo único que queda largo
-#   son esas cadenas.
-# - type_body_length y file_length: una clase de pruebas es una lista de
-#   casos; partirla por tamaño separa casos que se leen juntos.
+# The tests inherit ../.swiftlint.yml. Only what in a test
+# is data and not code is relaxed:
+# - line_length: the sample JSONs go on one line, just as the API
+#   returns them. swift-format already wraps the code at 120; the only thing left long
+#   is those strings.
+# - type_body_length and file_length: a test class is a list of
+#   cases; splitting it by size separates cases that are read together.
 disabled_rules:
   - line_length
 type_body_length:

@@ -3,13 +3,13 @@ import os
 
 @testable import Coco
 
-/// La composición se construye sin red ni disco de la app y deja registrado
-/// lo que los intents y las tareas de fondo necesitan.
+/// The composition is built without the app's network or disk and leaves registered
+/// what the intents and the background tasks need.
 @MainActor
 final class DependenciesTests: XCTestCase {
     private var root: URL = URL(fileURLWithPath: "/")
 
-    // `async`: así corren en el actor principal, como la clase.
+    // `async`: that way they run on the main actor, like the class.
     override func setUp() async throws {
         root = try TemporaryDirectory.directory()
     }
@@ -77,7 +77,7 @@ final class DependenciesTests: XCTestCase {
         XCTAssertEqual(d.sessionState, .loading)
         await d.start()
         XCTAssertTrue(d.started)
-        // El estado llega por el flujo de cambios del actor.
+        // The state arrives through the actor's change stream.
         for _ in 0..<50 where d.sessionState == .loading {
             try await Task.sleep(for: .milliseconds(20))
         }
@@ -104,8 +104,8 @@ final class DependenciesTests: XCTestCase {
         XCTAssertEqual(notifier.badges.last, 1, "el notificador real también recibe la cuenta")
     }
 
-    /// Cada captura que llega a la API se le avisa a la web (`captured`), y
-    /// el aviso al sistema sigue saliendo.
+    /// The web is told about each capture that reaches the API (`captured`), and
+    /// the system notification still goes out.
     func testASavedCaptureNotifiesTheWeb() async {
         let real = NotifierDouble()
         let counter = PendingCounter(notifier: real)
@@ -172,7 +172,7 @@ final class SettingsViewTests: XCTestCase {
     }
 }
 
-/// Las piezas que la app entrega al registrar las tareas de fondo.
+/// The pieces the app hands over when registering the background tasks.
 struct RegisteredTasks {
     let session: Session
     let queue: CaptureQueue

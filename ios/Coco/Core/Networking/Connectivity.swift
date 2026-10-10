@@ -2,8 +2,8 @@ import Foundation
 import Network
 import Observation
 
-/// Si hay red o no, según `NWPathMonitor`. Lo lee la interfaz (`isOnline`) y
-/// lo escucha la cola (`cambios`) para reintentar en cuanto vuelve.
+/// Whether there is network or not, according to `NWPathMonitor`. The interface reads it (`isOnline`) and
+/// the queue listens to it (`changes`) to retry as soon as it comes back.
 @Observable @MainActor
 final class Connectivity {
     private(set) var isOnline: Bool = true
@@ -30,7 +30,7 @@ final class Connectivity {
         monitor.start(queue: DispatchQueue(label: "co.loatech.coco.network"))
     }
 
-    /// Solo publica cuando cambia: la cola no debe despertarse por repeticiones.
+    /// It only publishes when it changes: the queue must not wake up for repeats.
     func update(_ online: Bool) {
         guard online != isOnline else { return }
         isOnline = online

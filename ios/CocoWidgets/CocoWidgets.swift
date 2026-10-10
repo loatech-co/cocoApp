@@ -1,9 +1,9 @@
 import SwiftUI
 import WidgetKit
 
-/// La extensión de accesos rápidos. Registra el widget (iOS 17) y, solo donde
-/// existe, el control (iOS 18). El botón de acción de iOS 17 no pasa por aquí:
-/// lo cubre el App Shortcut «Registrar gasto en Coco» de la app.
+/// The quick-access extension. It registers the widget (iOS 17) and, only where
+/// it exists, the control (iOS 18). The iOS 17 action button does not go through here:
+/// the app's «Registrar gasto en Coco» App Shortcut covers it.
 @main
 struct CocoWidgets: WidgetBundle {
     var body: some Widget {

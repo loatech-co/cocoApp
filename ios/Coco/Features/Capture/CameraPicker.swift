@@ -2,8 +2,8 @@ import PhotosUI
 import SwiftUI
 import UIKit
 
-/// La cámara si la hay; si no —el simulador—, el selector de fotos del
-/// sistema, para que la prueba de humo pueda adjuntar un recibo igual.
+/// The camera if there is one; if not —the simulator—, the system photo
+/// picker, so that the smoke test can attach a receipt all the same.
 struct CameraPicker: UIViewControllerRepresentable {
     let onCapture: @MainActor (UIImage) -> Void
     let onCancel: @MainActor () -> Void

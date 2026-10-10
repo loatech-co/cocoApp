@@ -6,11 +6,11 @@ enum KeychainError: Error, Equatable {
     case unreadableValue
 }
 
-/// El Keychain de iOS. `kSecClassGenericPassword`, servicio `co.loatech.coco`,
-/// cuenta = la clave. `AfterFirstUnlockThisDeviceOnly`: un App Intent puede
-/// leerlo con el teléfono bloqueado (tras el primer desbloqueo desde el
-/// arranque) y el token nunca viaja en una copia de seguridad ni a otro
-/// dispositivo.
+/// The iOS Keychain. `kSecClassGenericPassword`, service `co.loatech.coco`,
+/// account = the key. `AfterFirstUnlockThisDeviceOnly`: an App Intent can
+/// read it with the phone locked (after the first unlock since
+/// boot) and the token never travels in a backup or to another
+/// device.
 struct SystemKeychain: KeychainStore {
     let service: String
 
@@ -41,8 +41,8 @@ struct SystemKeychain: KeychainStore {
 
     func write(_ value: String, for key: KeychainKey) throws {
         let data = Data(value.utf8)
-        // Primero actualizar: es el caso corriente (cada renovación rota el
-        // refresh). Solo si no existe se añade.
+        // Update first: it is the usual case (every refresh rotates the
+        // refresh token). Only if it does not exist is it added.
         let changes: [String: Any] = [
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
@@ -58,7 +58,7 @@ struct SystemKeychain: KeychainStore {
 
     func delete(_ key: KeychainKey) throws {
         let state = SecItemDelete(base(key) as CFDictionary)
-        // Borrar lo que no está no es un error: es el estado que se quería.
+        // Deleting what is not there is not an error: it is the state that was wanted.
         guard state == errSecSuccess || state == errSecItemNotFound else {
             throw KeychainError.system(state)
         }
@@ -73,5 +73,5 @@ struct SystemKeychain: KeychainStore {
     }
 }
 
-/// El nombre que usa el plan de la fase; el del diseño es `SystemKeychain`.
+/// The name the phase plan uses; the design's is `SystemKeychain`.
 typealias DeviceKeychain = SystemKeychain

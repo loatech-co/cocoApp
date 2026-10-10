@@ -3,15 +3,15 @@ import os
 
 @testable import Coco
 
-/// Para las pruebas. Recuerda cada escritura en orden: así una prueba puede
-/// comprobar que el refresh nuevo se guardó ANTES de publicar el access. Vive
-/// en las pruebas y no en la app: un doble no se compila dentro de lo que se
-/// instala.
+/// For the tests. It remembers each write in order: that way a test can
+/// check that the new refresh token was saved BEFORE the access token was published. It lives
+/// in the tests and not in the app: a double is not compiled into what gets
+/// installed.
 final class InMemoryKeychain: KeychainStore {
     private struct State {
         var values: [KeychainKey: String]
         var writes: [(KeychainKey, String)] = []
-        /// Si se pone, toda operación falla con él: simula un Keychain roto.
+        /// If set, every operation fails with it: it simulates a broken Keychain.
         var failure: Error?
     }
 

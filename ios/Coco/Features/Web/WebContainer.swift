@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// La web con sus dos estados nativos encima: sin red antes de cargar y la
-/// sesión web atascada. Con documento, la falta de red es una franja fina.
+/// The web with its two native states on top: no network before loading, and the
+/// web session stuck. With a document, the lack of network is a thin strip.
 struct WebContainer: View {
     let bridge: WebBridge
     let connectivity: Connectivity

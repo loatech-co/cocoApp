@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Coco
 
-/// Paridad con `buscar-en-arbol.test.ts` de la web (ver `parityPaths`): mismo
-/// fixture, mismos resultados. Si una prueba cambia allí, cambia aquí.
+/// Parity with the web's `search-in-tree.test.ts` (see `parityPaths`): same
+/// fixture, same results. If a test changes there, it changes here.
 final class TreeIndexTests: XCTestCase {
     private static let tree: [TreeNode] = [
         TreeNode(
@@ -39,7 +39,7 @@ final class TreeIndexTests: XCTestCase {
 
     private let index = TreeIndex(roots: tree)
 
-    // MARK: Indexar
+    // MARK: Indexing
 
     func testFlattensTheThreeLevelsWithTheirPath() throws {
         let market = try XCTUnwrap(index.entry(id: 200))
@@ -61,8 +61,8 @@ final class TreeIndexTests: XCTestCase {
     }
 
     func testChoosingAConceptFillsCategoryAndCenterAndTellsIfStatic() throws {
-        // Elegir «Celsia» tiene que dejar listos categoría y centro sin otra
-        // búsqueda, y avisar de que el centro es estático.
+        // Choosing «Celsia» has to leave category and center ready without another
+        // search, and warn that the center is static.
         let celsia = try XCTUnwrap(index.entry(id: 100))
         XCTAssertEqual(celsia.categoryId, 10)
         XCTAssertEqual(celsia.centerId, 1)
@@ -90,7 +90,7 @@ final class TreeIndexTests: XCTestCase {
         XCTAssertEqual(withArchived.entries.map(\.id), [1, 10, 101])
     }
 
-    // MARK: Buscar
+    // MARK: Searching
 
     func testFindsByNameIgnoringAccentsAndCase() {
         XCTAssertEqual(index.search("educacion").map(\.name), ["Educación"])
@@ -98,8 +98,8 @@ final class TreeIndexTests: XCTestCase {
     }
 
     func testFindsByKeyword() {
-        // Es la razón de que exista: lo que dice el recibo no es el nombre del
-        // concepto, es lo que alguien escribió como palabra clave.
+        // It is the reason it exists: what the receipt says is not the name of the
+        // concept, it is what someone wrote as a keyword.
         XCTAssertEqual(index.search("d1").map(\.id), [200])
         XCTAssertEqual(index.search("koba").map(\.id), [200])
     }
@@ -142,7 +142,7 @@ final class TreeIndexTests: XCTestCase {
         XCTAssertEqual(index.search("a", limit: 2).count, 2)
     }
 
-    // MARK: Normalizar
+    // MARK: Normalizing
 
     func testNormalizeMatchesSignatures() {
         XCTAssertEqual(TreeIndex.normalize("Alimentación  Básica"), "alimentacion basica")
@@ -152,16 +152,16 @@ final class TreeIndexTests: XCTestCase {
             "NFD descompone la eñe y la tilde se va, igual que en firmas.ts")
     }
 
-    /// Dónde ha vivido la prueba de la web. La 7.4 la movió de `lib/` a la
-    /// feature de movimientos; se aceptan las dos mientras convivan ramas.
+    /// Where the web test has lived. 7.4 moved it from `lib/` to the
+    /// transactions feature; both are accepted while branches coexist.
     static let parityPaths = [
         "frontend/src/features/transactions/model/search-in-tree.test.ts",
         "frontend/src/features/transactions/model/buscar-en-arbol.test.ts",
         "frontend/src/lib/buscar-en-arbol.test.ts",
     ]
 
-    /// Si la prueba de la web se mueve o se renombra, esta paridad se quedaría
-    /// apuntando a la nada sin que nadie lo notara.
+    /// If the web test moves or is renamed, this parity would be left
+    /// pointing at nothing without anyone noticing.
     func testTheWebParityTestStillExists() throws {
         let root = URL(fileURLWithPath: #filePath)
         let repo = (0..<5).reduce(root) { url, _ in url.deletingLastPathComponent() }

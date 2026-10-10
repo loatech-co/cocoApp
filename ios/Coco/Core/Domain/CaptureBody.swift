@@ -1,12 +1,12 @@
 import Foundation
 
-/// Lo que la persona (o Atajos) aporta a una captura, sin `source`,
-/// `externalRef` ni `capturedAt`, que los pone la cola.
+/// What the person (or Shortcuts) contributes to a capture, without `source`,
+/// `externalRef` or `capturedAt`, which the queue sets.
 ///
-/// Es un tipo de la app, no del contrato: se guarda en disco con sus claves
-/// sintetizadas y NUNCA se manda tal cual. Lo que viaja lo arman
-/// `CaptureRequest` e `InterpretRequest`, que escriben a mano las claves de la
-/// `/api/v2`; así un cambio de contrato no obliga a migrar la cola.
+/// It is an app type, not a contract one: it is saved on disk with its
+/// synthesized keys and is NEVER sent as is. What travels is built by
+/// `CaptureRequest` and `InterpretRequest`, which write the `/api/v2` keys
+/// by hand; that way a contract change does not force migrating the queue.
 struct CaptureBody: Codable, Equatable, Sendable {
     var text: String?
     var merchant: String?
@@ -31,14 +31,14 @@ struct CaptureBody: Codable, Equatable, Sendable {
         self.note = note
     }
 
-    /// La API acepta texto, comercio, o un concepto elegido con su monto.
+    /// The API accepts text, merchant, or a chosen concept with its amount.
     var isSendable: Bool {
         (text?.isEmpty == false) || (merchant?.isEmpty == false) || (categoryId != nil && amount != nil)
     }
 }
 
-/// Lo que viaja a `POST /transactions/capture` (`CaptureInput` de la v2). El
-/// cuerpo se APLANA al codificar: la API recibe un solo objeto.
+/// What travels to `POST /transactions/capture` (`CaptureInput` of the v2). The
+/// body is FLATTENED when encoding: the API receives a single object.
 struct CaptureRequest: Encodable, Equatable, Sendable {
     let source: CaptureSource
     let externalRef: String
@@ -61,15 +61,15 @@ struct CaptureRequest: Encodable, Equatable, Sendable {
         try c.encodeIfPresent(body.date, forKey: .date)
         try c.encodeIfPresent(body.period, forKey: .period)
         try c.encodeIfPresent(body.fileName, forKey: .fileName)
-        // La v2 lo pide como cadena de dígitos (`categoryId: string`).
+        // The v2 asks for it as a string of digits (`categoryId: string`).
         try c.encodeIfPresent(body.categoryId.map(String.init), forKey: .categoryId)
         try c.encodeIfPresent(body.note, forKey: .note)
     }
 }
 
-/// Lo que viaja a `POST /transactions/interpret` (`InterpretInput` de la v2).
-/// Solo lo que la API sabe leer: el concepto elegido y la nota son de la
-/// captura, no de la interpretación.
+/// What travels to `POST /transactions/interpret` (`InterpretInput` of the v2).
+/// Only what the API knows how to read: the chosen concept and the note belong to the
+/// capture, not to the interpretation.
 struct InterpretRequest: Encodable, Equatable, Sendable {
     let body: CaptureBody
 

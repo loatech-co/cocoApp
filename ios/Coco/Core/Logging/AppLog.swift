@@ -1,13 +1,13 @@
 import os
 
-/// Registro unificado de la app. Se lee con
+/// Unified logging of the app. It is read with
 /// `log stream --predicate 'subsystem == "co.loatech.coco"'`.
 enum AppLog {
     static let subsystem = "co.loatech.coco"
     static let app = Logger(subsystem: subsystem, category: "app")
     static let navigation = Logger(subsystem: subsystem, category: "navigation")
     static let session = Logger(subsystem: subsystem, category: "session")
-    /// La cola de capturas. Nunca el contenido de una captura —importes,
-    /// comercios, notas—: solo qué paso falló y el tipo de error.
+    /// The captures queue. Never the content of a capture —amounts,
+    /// merchants, notes—: only which step failed and the error type.
     static let queue = Logger(subsystem: subsystem, category: "queue")
 }

@@ -1,14 +1,14 @@
 import Foundation
 
-/// Convierte lo que Atajos entrega como texto de moneda («$45.000», «COP
-/// 1.200.000», «45,5») al formato del DTO: `^\d+([.,]\d{1,2})?$`, con punto
-/// decimal. Lo que no se entiende devuelve nil: mejor una captura sin monto
-/// —queda por revisar— que una con el monto equivocado.
+/// Converts what Shortcuts hands over as currency text («$45.000», «COP
+/// 1.200.000», «45,5») to the DTO format: `^\d+([.,]\d{1,2})?$`, with a decimal
+/// point. What is not understood returns nil: better a capture without an amount
+/// —it is left for review— than one with the wrong amount.
 enum AmountParser {
     static func normalize(_ text: String?) -> String? {
         guard let text else { return nil }
-        // Solo cuentan dígitos y separadores; el símbolo, el código y los
-        // espacios son decoración.
+        // Only digits and separators count; the symbol, the code and the
+        // spaces are decoration.
         let cleaned = text.filter { $0.isNumber || $0 == "." || $0 == "," }
         guard cleaned.contains(where: \.isNumber) else { return nil }
 
@@ -25,8 +25,8 @@ enum AmountParser {
         return base
     }
 
-    /// Separa la parte entera de la decimal según cuántos separadores hay y
-    /// cuáles. nil si la forma no es la de un monto.
+    /// Splits the integer part from the decimal one according to how many separators there are and
+    /// which ones. nil if the shape is not that of an amount.
     private static func splitParts(_ groups: [String], separators: String) -> (integer: String, decimal: String?)? {
         var integer = ""
         var decimal: String?
@@ -37,8 +37,8 @@ enum AmountParser {
         case 1:
             let last = groups[1]
             if last.count == 3 {
-                // «45.000» y «1,200»: un solo separador con tres cifras detrás
-                // es de miles en los dos idiomas.
+                // «45.000» and «1,200»: a single separator with three digits after it
+                // is a thousands separator in both languages.
                 integer = groups[0] + last
             } else if (1...2).contains(last.count) {
                 integer = groups[0]
@@ -50,16 +50,16 @@ enum AmountParser {
             let first = separators.first
             let last = separators.last
             if first == last {
-                // «1.200.000»: el mismo separador repetido solo puede ser de miles.
+                // «1.200.000»: the same separator repeated can only be thousands.
                 guard groups.dropFirst().allSatisfy({ $0.count == 3 }) else { return nil }
                 integer = groups.joined()
             } else {
-                // Dos separadores distintos: el último es el decimal
+                // Two different separators: the last one is the decimal
                 // («45.000,50», «1,200.50»).
                 guard let tail = groups.last, (1...2).contains(tail.count) else { return nil }
                 let thousands = groups.dropLast()
                 guard thousands.dropFirst().allSatisfy({ $0.count == 3 }) else { return nil }
-                // Un separador de miles no puede aparecer después del decimal.
+                // A thousands separator cannot appear after the decimal one.
                 guard separators.dropLast().allSatisfy({ $0 == first }) else { return nil }
                 integer = thousands.joined()
                 decimal = tail

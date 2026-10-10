@@ -3,8 +3,8 @@ import XCTest
 @testable import Coco
 
 final class NativeSessionTests: XCTestCase {
-    // El `user` tal cual lo manda la API, con claves en un orden que no es el
-    // alfabético: si la sesión lo reescribiera, se notaría.
+    // The `user` just as the API sends it, with keys in an order that is not
+    // alphabetical: if the session rewrote it, it would show.
     private static let userJSON =
         #"{"id":7,"email":"ana@coco.co","displayName":null,"role":"owner","status":"active","createdAt":"2026-01-01T00:00:00Z"}"#
     private static func sessionJSON(access: String, refresh: String?, expiresIn: Int = 3600) -> String {
@@ -16,9 +16,9 @@ final class NativeSessionTests: XCTestCase {
         id: 7, email: "ana@coco.co", displayName: nil, role: "owner", status: "active",
         createdAt: "2026-01-01T00:00:00Z")
 
-    /// Un reloj que las pruebas mueven a mano.
-    /// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-    /// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+    /// A clock the tests move by hand.
+    /// `@unchecked Sendable`: a test double. What changes while the test
+    /// runs goes under `lock`; what is configured is written before using it.
     private final class TestClock: @unchecked Sendable {
         private let lock = NSLock()
         private var _now = Date(timeIntervalSince1970: 1_800_000_000)
@@ -29,10 +29,10 @@ final class NativeSessionTests: XCTestCase {
         func advance(_ s: TimeInterval) { now = now.addingTimeInterval(s) }
     }
 
-    /// Apuntes en orden de lo que pasó: «red» cuando el transporte responde,
-    /// «llavero:<valor>» cuando se escribe el refresh.
-    /// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-    /// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+    /// Notes, in order, of what happened: «red» when the transport answers,
+    /// «llavero:<value>» when the refresh token is written.
+    /// `@unchecked Sendable`: a test double. What changes while the test
+    /// runs goes under `lock`; what is configured is written before using it.
     private final class AppLog: @unchecked Sendable {
         private let lock = NSLock()
         private var _lines: [String] = []
@@ -48,8 +48,8 @@ final class NativeSessionTests: XCTestCase {
             self.log = log
         }
         func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
-            // Un respiro para que las llamadas concurrentes lleguen mientras
-            // esta sigue en vuelo.
+            // A breather so that the concurrent calls arrive while
+            // this one is still in flight.
             try await Task.sleep(for: .milliseconds(30))
             log.record("red")
             return try await inner.data(for: request)
@@ -101,7 +101,7 @@ final class NativeSessionTests: XCTestCase {
         t.received.compactMap { $0.url?.path() }
     }
 
-    // MARK: Single-flight y orden
+    // MARK: Single-flight and order
 
     func testTenConcurrentCallsWithAnExpiredTokenMakeASingleRefresh() async throws {
         let a = harness(replies: [.http(200, Self.sessionJSON(access: "a1", refresh: "r1"))])
@@ -119,9 +119,9 @@ final class NativeSessionTests: XCTestCase {
         let a = harness(replies: [.http(200, Self.sessionJSON(access: "a1", refresh: "r1"))])
         let access = try await a.session.validAccessToken()
         XCTAssertEqual(access, "a1")
-        // Al devolver, el llavero ya tiene el nuevo, y lo tuvo justo después
-        // de que la red respondiera: no hay instante en que se use un access
-        // cuyo refresh no esté guardado.
+        // On returning, the keychain already has the new one, and it had it right after
+        // the network answered: there is no instant in which an access token is used
+        // whose refresh token is not saved.
         XCTAssertEqual(a.keychain.values[.refreshToken], "r1")
         XCTAssertEqual(a.log.lines, ["red", "llavero:r1"])
         let state = await a.session.state
@@ -137,7 +137,7 @@ final class NativeSessionTests: XCTestCase {
         XCTAssertNil(r.value(forHTTPHeaderField: "Authorization"))
     }
 
-    // MARK: Qué borra el llavero y qué no
+    // MARK: What wipes the keychain and what does not
 
     func testA401OnRefreshClearsTheKeychainAndSignsOut() async {
         let a = harness(replies: [
@@ -188,7 +188,7 @@ final class NativeSessionTests: XCTestCase {
             .failure(URLError(.timedOut)), .failure(URLError(.timedOut)),
         ])
         _ = try await a.session.validAccessToken()
-        a.clock.advance(250)  // quedan 50 s: hay que renovar
+        a.clock.advance(250)  // 50 s left: it has to refresh
         _ = try? await a.session.validAccessToken()
         let state = await a.session.state
         XCTAssertEqual(state, .offline(last: Self.profile))
@@ -225,7 +225,7 @@ final class NativeSessionTests: XCTestCase {
         XCTAssertEqual(a.keychain.writes.map(\.1), ["r1"])
         let state = await a.session.state
         XCTAssertEqual(state, .active(Self.profile))
-        // Y el access ya sirve sin tocar la red otra vez.
+        // And the access token already works without touching the network again.
         let access = try await a.session.validAccessToken()
         XCTAssertEqual(access, "a1")
         XCTAssertEqual(a.transport.received.count, 1)
@@ -261,7 +261,7 @@ final class NativeSessionTests: XCTestCase {
         XCTAssertEqual(r.value(forHTTPHeaderField: "Authorization"), "Bearer a1")
     }
 
-    // MARK: Para la web
+    // MARK: For the web
 
     func testWebSessionHasNoRefreshAndTheUserIsByteForByteWhatArrived() async throws {
         let a = harness(replies: [.http(200, Self.sessionJSON(access: "a1", refresh: "r1", expiresIn: 3600))])
@@ -275,14 +275,14 @@ final class NativeSessionTests: XCTestCase {
         let dict = try s.asDictionary()
         XCTAssertNil(dict["refresh_token"])
         XCTAssertEqual(Set(dict.keys), ["accessToken", "expiresIn", "user"])
-        // El perfil le llega a la web tal cual lo dio la API.
+        // The profile reaches the web just as the API gave it.
         let user = try XCTUnwrap(dict["user"] as? [String: Any])
         XCTAssertEqual(user["createdAt"] as? String, "2026-01-01T00:00:00Z")
         XCTAssertNil(user["created_at"])
         XCTAssertEqual(a.transport.received.count, 1)
     }
 
-    // MARK: Margen
+    // MARK: Margin
 
     func testWithOneHundredSecondsLeftRefreshesAndWithOneHundredThirtyDoesNot() async throws {
         let a = harness(replies: [
@@ -313,7 +313,7 @@ final class NativeSessionTests: XCTestCase {
         XCTAssertEqual(a.transport.received.count, 2)
     }
 
-    // MARK: Salir
+    // MARK: Signing out
 
     func testSignOutCallsLogoutWithTheRefreshAndClearsTheKeychainEvenIfTheNetworkFails() async {
         let a = harness(replies: [.failure(URLError(.notConnectedToInternet))])
@@ -352,7 +352,7 @@ final class NativeSessionTests: XCTestCase {
         XCTAssertEqual(seen, [.active(Self.profile), .signedOut])
     }
 
-    // MARK: El recorte del JSON
+    // MARK: Cutting the JSON
 
     func testJSONSlicingRespectsStringsWithBraces() {
         let json =

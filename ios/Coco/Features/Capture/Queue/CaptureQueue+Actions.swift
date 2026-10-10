@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: Acciones de la persona
+// MARK: The person's actions
 
 extension CaptureQueue {
 
@@ -9,7 +9,7 @@ extension CaptureQueue {
         switch capture.phase {
         case .failed, .awaitingSession: capture.phase = .toSend
         case .toSend, .photoToUpload: break
-        // Una sin confirmar ya llegó: se revisa, no se repite.
+        // An unconfirmed one already arrived: it is reviewed, not repeated.
         case .done, .unconfirmed: return
         }
         capture.nextAttempt = .distantPast
@@ -17,8 +17,8 @@ extension CaptureQueue {
         await publish()
     }
 
-    /// Solo lo que aún no llegó a la API: editar algo ya registrado sería
-    /// mentir sobre lo que se envió.
+    /// Only what has not reached the API yet: editing something already recorded would be
+    /// lying about what was sent.
     func edit(id: UUID, body: CaptureBody) async throws {
         guard var capture = search(id) else { throw QueueError.notFound(id) }
         switch capture.phase {
@@ -52,7 +52,7 @@ extension CaptureQueue {
         await publish()
     }
 
-    /// Tras un login: lo que esperaba sesión vuelve a la fila.
+    /// After a login: what was waiting for a session goes back to the line.
     func sessionReturned() async {
         for var capture in load() where capture.phase == .awaitingSession {
             capture.phase = .toSend
@@ -62,8 +62,8 @@ extension CaptureQueue {
         await publish()
     }
 
-    /// Las hechas de hace más de `age`. Las sin confirmar no: esas las quita
-    /// la persona cuando las ha revisado.
+    /// The done ones older than `age`. Not the unconfirmed ones: those are removed by
+    /// the person once they have reviewed them.
     func purge(doneOlderThan age: Duration = .seconds(30 * 86_400)) async {
         let now = clock()
         let seconds = TimeInterval(age.components.seconds)
@@ -75,7 +75,7 @@ extension CaptureQueue {
         await publish()
     }
 
-    // MARK: Lectura
+    // MARK: Reading
 
     func pending() async -> Int { countPending() }
 

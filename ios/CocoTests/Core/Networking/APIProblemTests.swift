@@ -2,10 +2,10 @@ import XCTest
 
 @testable import Coco
 
-/// Los errores de la v2 (`application/problem+json`) y los de la v1
-/// (`{error:{…}}`), leídos y clasificados por su `code`.
+/// The v2 errors (`application/problem+json`) and the v1 ones
+/// (`{error:{…}}`), read and classified by their `code`.
 final class APIProblemTests: XCTestCase {
-    /// Un problema de la v2 tal como lo manda la API (#53).
+    /// A v2 problem just as the API sends it (#53).
     static func problem(_ status: Int, _ code: String, detail: String = "Frase de la API", errors: String? = nil)
         -> String
     {
@@ -27,7 +27,7 @@ final class APIProblemTests: XCTestCase {
         }
     }
 
-    // MARK: Lectura
+    // MARK: Reading
 
     func testReadsAProblemWithItsFieldErrors() throws {
         let body = Self.problem(
@@ -46,7 +46,7 @@ final class APIProblemTests: XCTestCase {
             ])
     }
 
-    /// La forma de la v1 retirada (`{error:{…}}`) ya no es un problema.
+    /// The shape of the retired v1 (`{error:{…}}`) is no longer a problem.
     func testTheRetiredShapeIsNotAProblem() {
         let body = #"{"error":{"code":"VALIDACION","message":"Falta el monto","details":[]}}"#
         XCTAssertNil(APIProblem.decode(Data(body.utf8), status: 422))
@@ -63,7 +63,7 @@ final class APIProblemTests: XCTestCase {
         XCTAssertEqual(ProblemCode("amount_breaks_splits"), .amountBreaksSplits)
     }
 
-    // MARK: Familias
+    // MARK: Families
 
     func testSessionCodesRenewAndARevokedSessionDoesNot() async {
         for code in ["session_expired", "invalid_token", "unauthenticated"] {
@@ -75,7 +75,7 @@ final class APIProblemTests: XCTestCase {
         XCTAssertEqual(revoked?.isRetryable, false)
     }
 
-    /// Las credenciales malas son un 401, pero no de sesión: renovar no sirve.
+    /// Bad credentials are a 401, but not a session one: refreshing does not help.
     func testBadCredentialsAreRejectedNotRenewed() async {
         let e = await error(401, Self.problem(401, "invalid_credentials"))
         guard case .rejected(let p) = e else { return XCTFail("\(String(describing: e))") }
@@ -120,8 +120,8 @@ final class APIProblemTests: XCTestCase {
         }
     }
 
-    /// Un proxy que contesta HTML no rompe nada: un 5xx sigue siendo
-    /// reintentable y un 4xx cae en el error genérico.
+    /// A proxy that answers HTML breaks nothing: a 5xx is still
+    /// retryable and a 4xx falls into the generic error.
     func testAnHTMLErrorFallsBackByStatus() async {
         let html = "<html><body>Error</body></html>"
         let bad = await error(502, html)
@@ -132,7 +132,7 @@ final class APIProblemTests: XCTestCase {
         XCTAssertEqual(unauthorized, .unauthenticated)
     }
 
-    // MARK: Lo que ve la persona
+    // MARK: What the person sees
 
     func testTheMessageIsTheDetailOrTheCatalogText() {
         func message(_ code: ProblemCode, detail: String = "Frase de la API", title: String = "") -> String {

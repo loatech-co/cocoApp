@@ -1,8 +1,8 @@
 import Foundation
 
-/// Lo que la persona ya tiene escrito en el formulario, reducido a lo que la
-/// interpretación puede tocar. `fecha` en nil significa «no la ha cambiado»:
-/// el campo nunca está vacío —arranca en hoy—, pero hoy no es una decisión.
+/// What the person already has written in the form, reduced to what the
+/// interpretation can touch. A nil `date` means «has not changed it»:
+/// the field is never empty —it starts at today—, but today is not a decision.
 struct FormFields: Equatable, Sendable {
     var amount: String = ""
     var date: String?
@@ -10,17 +10,17 @@ struct FormFields: Equatable, Sendable {
     var conceptId: Int?
 }
 
-/// Cómo una `Interpretation` de la API entra en el formulario: rellena lo
-/// VACÍO y no pisa nada. La persona pudo escribir el monto mientras la foto
-/// se leía, y lo que escribió a mano vale más que lo que leyó una máquina.
+/// How an `Interpretation` from the API enters the form: it fills what is
+/// EMPTY and overwrites nothing. The person may have typed the amount while the photo
+/// was being read, and what they typed by hand is worth more than what a machine read.
 enum FormPrefill {
     struct Outcome: Equatable, Sendable {
         var fields: FormFields
-        /// El concepto vino de la interpretación: se enseña como «sugerido»
-        /// para que se revise antes de confirmar.
+        /// The concept came from the interpretation: it is shown as «sugerido»
+        /// so that it is reviewed before confirming.
         var isConceptSuggested: Bool
-        /// Con certeza media la API no se atreve: se abre el buscador con
-        /// estos arriba y decide la persona.
+        /// With medium confidence the API does not dare: the search opens with
+        /// these on top and the person decides.
         var candidates: [ProposedClassification.Candidate]
     }
 
@@ -30,8 +30,8 @@ enum FormPrefill {
         var candidates: [ProposedClassification.Candidate] = []
 
         if isBlank(fields.amount), let amount = i.amount, AmountParser.normalize(amount) != nil {
-            // Se enseña como se escribe en Colombia —«45.000»—, que es lo que
-            // `AmountParser` vuelve a leer al confirmar.
+            // It is shown as it is written in Colombia —«45.000»—, which is what
+            // `AmountParser` reads again when confirming.
             output.amount = String(PesoFormat.format(amount).dropFirst())
         }
         if fields.date == nil, let date = i.date, !date.isEmpty {

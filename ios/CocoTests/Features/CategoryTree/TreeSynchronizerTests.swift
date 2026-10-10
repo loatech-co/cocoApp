@@ -3,7 +3,7 @@ import XCTest
 @testable import Coco
 
 final class TreeSynchronizerTests: XCTestCase {
-    /// Una sesión que siempre tiene token: aquí se prueba el árbol, no la sesión.
+    /// A session that always has a token: here the tree is tested, not the session.
     private final class FixedSession: Session {
         var state: SessionState { .signedOut }
         let changes: AsyncStream<SessionState> = AsyncStream { $0.finish() }

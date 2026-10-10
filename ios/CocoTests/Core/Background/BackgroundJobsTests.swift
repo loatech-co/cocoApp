@@ -27,10 +27,10 @@ final class BackgroundJobsTests: XCTestCase {
     }
 
     func testScheduleWithoutRegistrationDoesNotTouchTheScheduler() throws {
-        // `submit` sin registro es una excepción de ObjC, no un `throws`:
-        // programar tiene que saltárselo en vez de reventar. La app
-        // anfitriona registra al arrancar (M9), así que dentro de ella la
-        // prueba no tiene el caso que quiere probar.
+        // `submit` without registration is an ObjC exception, not a `throws`:
+        // scheduling has to skip it instead of blowing up. The host app
+        // registers at launch (M9), so inside it the
+        // test does not have the case it wants to test.
         try XCTSkipIf(BackgroundJobs.isRegistered, "la app anfitriona ya registró las tareas al arrancar")
         BackgroundJobs.schedule()
     }
@@ -41,7 +41,7 @@ final class BackgroundJobsTests: XCTestCase {
         let queue = CaptureQueue(
             store: store, sender: SenderDouble(), session: SessionDouble(), notifier: notifier,
             spacing: .zero, shrinkPhoto: { $0 })
-        // Dos capturas que ya fallaron una vez: lo que se encuentra en fondo.
+        // Two captures that already failed once: what is found in the background.
         for i in 1...2 {
             try store.save(
                 PendingCapture(

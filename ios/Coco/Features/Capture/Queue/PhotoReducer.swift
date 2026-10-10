@@ -1,10 +1,10 @@
 import Foundation
 import UIKit
 
-/// Lo que recomienda `CONTRATO_DE_SOPORTES`: lado mayor a 1600 px y JPEG al
-/// 0,85. Una foto de doce megapíxeles pesa 4 MB y el OCR no lee mejor; a
-/// 1600 px pesa 300 KB. Si los bytes no son una imagen se devuelven tal cual:
-/// la cola no decide qué es un soporte, solo lo achica.
+/// What `CONTRATO_DE_SOPORTES` recommends: long side at 1600 px and JPEG at
+/// 0.85. A twelve-megapixel photo weighs 4 MB and the OCR does not read better; at
+/// 1600 px it weighs 300 KB. If the bytes are not an image they are returned as is:
+/// the queue does not decide what a receipt is, it only shrinks it.
 enum PhotoReducer {
     static let maxSide: CGFloat = 1600
     static let quality: CGFloat = 0.85

@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Coco
 
-/// Qué hace la cola con cada familia de problemas de la v2: se decide por el
-/// `code`, leído de un cuerpo `problem+json` como el que manda la API.
+/// What the queue does with each family of v2 problems: it is decided by the
+/// `code`, read from a `problem+json` body like the one the API sends.
 final class CaptureQueueProblemTests: XCTestCase {
     private var root: URL = URL(fileURLWithPath: "/")
     private var store: DiskQueueStore = .init(root: URL(fileURLWithPath: "/"))
@@ -32,7 +32,7 @@ final class CaptureQueueProblemTests: XCTestCase {
             clock: { clock.read() }, spacing: .zero, shrinkPhoto: { $0 })
     }
 
-    /// El error que daría el cliente con esa respuesta.
+    /// The error the client would give with that response.
     private func problem(_ status: Int, _ code: String, detail: String = "No cuadra") -> SenderDouble.Reply {
         .failure(APIError.from(status: status, body: Data(APIProblemTests.problem(status, code, detail: detail).utf8)))
     }
@@ -109,9 +109,9 @@ final class CaptureQueueProblemTests: XCTestCase {
         XCTAssertEqual(notifier.failures, [])
     }
 
-    /// Un duplicado en el texto con una foto pendiente: no se sabe a qué
-    /// movimiento va, así que NO se cierra como hecha (borraría el recibo).
-    /// Queda «Por revisar», con la foto en disco y el motivo visible.
+    /// A duplicate on the text with a pending photo: it is not known which
+    /// transaction it goes to, so it is NOT closed as done (it would delete the receipt).
+    /// It stays «Por revisar», with the photo on disk and the reason visible.
     func testADuplicateWithAPendingPhotoKeepsThePhotoForReview() async throws {
         let jpeg = Data(repeating: 0xAB, count: 64)
         let (c, id) = try await enqueued(photo: jpeg)
@@ -128,13 +128,13 @@ final class CaptureQueueProblemTests: XCTestCase {
         XCTAssertEqual(sender.uploads.count, 0)
         XCTAssertEqual(notifier.isRegistered, [])
 
-        // Una corrida más no la reenvía.
+        // One more run does not resend it.
         await c.process()
         XCTAssertEqual(sender.requests.count, 1)
     }
 
-    /// Un duplicado al subir la foto: la foto ya estaba, la captura queda hecha
-    /// con el resultado del texto.
+    /// A duplicate when uploading the photo: the photo was already there, the capture ends done
+    /// with the result of the text.
     func testADuplicatePhotoKeepsTheTextResult() async throws {
         let (c, id) = try await enqueued(photo: Data(repeating: 0xAB, count: 64))
         sender.replyToCapture(.ok)

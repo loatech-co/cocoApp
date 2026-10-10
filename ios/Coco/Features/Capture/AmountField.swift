@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// El monto como se escribe en Colombia: «45.000». Debajo, lo que Coco
-/// entendió —«$45.000»— o que no lo entendió, antes de que se pulse guardar.
+/// The amount as it is written in Colombia: «45.000». Below it, what Coco
+/// understood —«$45.000»— or that it did not understand it, before save is tapped.
 struct AmountField: View {
     @Binding var text: String
 

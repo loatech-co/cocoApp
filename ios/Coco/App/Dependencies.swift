@@ -2,9 +2,9 @@ import Foundation
 import Observation
 import os
 
-/// La composición de la app, hecha UNA vez. Todo lo que cruza módulos nace
-/// aquí y se pasa por el constructor: nadie más llama a `.shared` ni a un
-/// `.standard` escondido. Las pruebas la construyen con dobles y sin red.
+/// The app's composition, done ONCE. Everything that crosses modules is born
+/// here and is passed through the initializer: nobody else calls `.shared` or a
+/// hidden `.standard`. The tests build it with doubles and no network.
 @Observable @MainActor
 final class Dependencies {
     static let shared = Dependencies()
@@ -24,9 +24,9 @@ final class Dependencies {
     let router: Router
     let defaults: UserDefaults
 
-    /// Espejo del estado del actor de sesión, para que las vistas lo observen.
+    /// Mirror of the session actor's state, so that the views observe it.
     private(set) var sessionState: SessionState = .loading
-    /// Capturas que aún no llegaron a la API: la insignia de la pestaña.
+    /// Captures that have not reached the API yet: the tab's badge.
     private(set) var pending = 0
     private(set) var started = false
     private(set) var registeredIntents = false
@@ -60,8 +60,8 @@ final class Dependencies {
         let router = Router()
         self.router = router
 
-        // La cola cuenta sus pendientes cada vez que cambia y se lo dice al
-        // notificador (insignia del icono); se intercepta ahí para la pestaña.
+        // The queue counts its pending items every time it changes and tells the
+        // notifier (icon badge); it is intercepted there for the tab.
         let counter = PendingCounter(notifier: notifier)
         self.notifier = counter
 
@@ -85,17 +85,17 @@ final class Dependencies {
             Task { await self.bridge.notify(.captured) }
         }
 
-        // Antes de que iOS pueda lanzar un intent o una tarea de fondo: en el
-        // init de la App, no después.
+        // Before iOS can launch an intent or a background task: in the
+        // App's init, not later.
         registerIntents(capturer, router)
         registeredIntents = true
         registerTasks(session, queue, tree, counter)
         registeredTasks = true
     }
 
-    // MARK: Ciclo de vida
+    // MARK: Lifecycle
 
-    /// Una vez, cuando aparece la raíz: red, observadores, web, sesión, cola.
+    /// Once, when the root appears: network, observers, web, session, queue.
     func start() async {
         guard !started else { return }
         started = true
@@ -109,7 +109,7 @@ final class Dependencies {
         Task { _ = await self.queue.process() }
     }
 
-    /// Al volver a primer plano: árbol si toca y cola.
+    /// On returning to the foreground: the tree if it is due, and the queue.
     func returnedToForeground() {
         guard started else { return }
         Task { await self.bridge.notify(.foreground) }
@@ -119,13 +119,13 @@ final class Dependencies {
         }
     }
 
-    /// Cerrar sesión desde Más: logout nativo con el refresh y Keychain
-    /// limpio; la web se entera por el observador de cambios.
+    /// Signing out from More: native logout with the refresh token and a clean
+    /// Keychain; the web finds out through the change observer.
     func signOut() async {
         await session.signOut()
     }
 
-    /// Un formulario nuevo con el árbol que haya en el teléfono.
+    /// A new form with whatever tree is on the phone.
     func newFormModel() async -> FormModel {
         FormModel(
             index: await tree.index(), api: api, session: session, capturer: capturer, connectivity: connectivity)
@@ -148,7 +148,7 @@ final class Dependencies {
         }
     }
 
-    // MARK: Observadores
+    // MARK: Observers
 
     private func observe() {
         observers.append(
@@ -174,8 +174,8 @@ final class Dependencies {
         sessionState = state
         switch state {
         case .active:
-            // Con documento cargado, la web recibe la sesión sin recargar; sin
-            // él, la pedirá ella por el puente al arrancar.
+            // With a document loaded, the web receives the session without reloading;
+            // without one, it will ask for it itself through the bridge when it starts.
             if bridge.hasDocument { await bridge.pushSession() }
             await queue.sessionReturned()
             Task { _ = await self.queue.process() }
@@ -199,8 +199,8 @@ final class Dependencies {
         _ = await notifier.requestPermission()
     }
 
-    /// El aviso de que la firma del equipo personal caduca. Sin perfil
-    /// embebido —simulador— no hay nada que programar.
+    /// The notice that the personal team's signature expires. With no embedded
+    /// profile —simulator— there is nothing to schedule.
     private func scheduleExpiry() async {
         guard let expiresAt = ProvisioningProfileReader.fromBundle() else { return }
         let fireDate = ExpiryReminder.reminderDate(expiresAt: expiresAt, now: .now) ?? .now
@@ -208,10 +208,10 @@ final class Dependencies {
             expiresAt, text: ExpiryReminder.text(expiresAt: expiresAt, now: fireDate).body)
     }
 
-    // MARK: Por defecto
+    // MARK: Defaults
 
-    /// Siempre en `Application Support`. Si el disco falla, la cola lo dice
-    /// en Capturas en vez de esconderse en el temporal, que iOS vacía.
+    /// Always in `Application Support`. If the disk fails, the queue says so
+    /// in Captures instead of hiding in the temporary folder, which iOS empties.
     private static func defaultQueueStore() -> QueueStore {
         DiskQueueStore(root: DiskQueueStore.defaultRoot)
     }
@@ -224,16 +224,16 @@ final class Dependencies {
         switch state {
         case .loading: "cargando"
         case .signedOut: "sin sesión"
-        // Sin el correo: el registro del sistema lo puede leer quien tenga el
-        // teléfono conectado a un Mac, y un dato personal no tiene que estar.
+        // Without the email: the system log can be read by whoever has the
+        // phone connected to a Mac, and a personal datum does not have to be there.
         case .active: "activa"
         case .offline: "sin conexión"
         }
     }
 }
 
-/// Reenvía todo al notificador real y, de paso, cuenta lo que la cola dice
-/// que está pendiente cada vez que actualiza la insignia del icono.
+/// Forwards everything to the real notifier and, along the way, counts what the
+/// queue says is pending every time it updates the icon badge.
 final class PendingCounter: Notifier {
     private let real: Notifier
     private let onCountLock = OSAllocatedUnfairLock<(@MainActor @Sendable (Int) -> Void)?>(initialState: nil)
@@ -245,8 +245,8 @@ final class PendingCounter: Notifier {
 
     private let onSavedLock = OSAllocatedUnfairLock<(@MainActor @Sendable () -> Void)?>(initialState: nil)
 
-    /// Una captura llegó a la API: la web tiene que volver a pedir lo que
-    /// cambia con un movimiento nuevo.
+    /// A capture reached the API: the web has to ask again for what
+    /// changes with a new transaction.
     var onSaved: (@MainActor @Sendable () -> Void)? {
         get { onSavedLock.withLock { $0 } }
         set { onSavedLock.withLock { $0 = newValue } }

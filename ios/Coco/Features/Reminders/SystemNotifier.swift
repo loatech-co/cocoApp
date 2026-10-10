@@ -1,8 +1,8 @@
 import Foundation
 import UserNotifications
 
-/// Lo que el notificador necesita del centro de notificaciones: así se prueba
-/// con un centro falso, porque `UNUserNotificationCenter` no se puede crear.
+/// What the notifier needs from the notification center: that way it is tested
+/// with a fake center, because `UNUserNotificationCenter` cannot be created.
 protocol NotificationCenterClient: Sendable {
     func askAuthorization() async throws -> Bool
     func register(categories: Set<UNNotificationCategory>)
@@ -23,13 +23,13 @@ extension UNUserNotificationCenter: NotificationCenterClient {
     func setBadge(_ n: Int) async throws { try await setBadgeCount(n) }
 }
 
-/// Avisos locales. Solo locales: el equipo personal no permite APNs y no hace
-/// falta, todo lo que hay que contar pasa en el propio teléfono.
+/// Local notifications. Only local: the personal team does not allow APNs and it is not
+/// needed, everything that has to be told happens on the phone itself.
 struct SystemNotifier: Notifier {
     static let expiryId = "signature-expiry"
     static let captureCategory = "capture"
     static let openAction = "open"
-    /// A dónde lleva el aviso de una captura; lo lee el enrutador.
+    /// Where a capture's notification leads; the router reads it.
     static let captureDestination = "coco://captures"
 
     let center: NotificationCenterClient
@@ -43,7 +43,7 @@ struct SystemNotifier: Notifier {
         self.clock = clock
     }
 
-    /// Puro: lo que se lee de reojo. El resumen lo escribe la API.
+    /// Pure: what is read at a glance. The summary is written by the API.
     static func captureText(_ r: SavedResult) -> (title: String, body: String) {
         let title: String
         if r.duplicate {
@@ -86,7 +86,7 @@ struct SystemNotifier: Notifier {
             id: "queue-sent", title: L10n.Notifications.queueTitle, body: body, category: Self.captureCategory)
     }
 
-    /// Un solo aviso con id fijo: programarlo dos veces lo reemplaza.
+    /// A single notification with a fixed id: scheduling it twice replaces it.
     func scheduleExpiry(_ expiresAt: Date, text: String) async {
         center.removePending(ids: [Self.expiryId])
         let now = clock()

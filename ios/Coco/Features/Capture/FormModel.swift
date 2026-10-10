@@ -2,12 +2,12 @@ import Foundation
 import Observation
 import UIKit
 
-/// El estado del formulario rápido: una sola pantalla con monto, concepto,
-/// nota y foto. Es `@MainActor` porque lo lee la interfaz; lo que hace
-/// trabajo —OCR, red, cola— se espera con `await` y vuelve aquí.
+/// The state of the quick form: a single screen with amount, concept,
+/// note and photo. It is `@MainActor` because the interface reads it; whatever does
+/// work —OCR, network, queue— is awaited with `await` and comes back here.
 @Observable @MainActor
 final class FormModel {
-    /// Se puede reemplazar cuando el árbol termina de descargarse.
+    /// It can be replaced when the tree finishes downloading.
     var index: TreeIndex?
     private let api: APIClient
     private let session: Session
@@ -21,7 +21,7 @@ final class FormModel {
     var concept: IndexEntry?
     var note: String = ""
     var date: Date
-    /// La persona tocó la fecha: la interpretación ya no la cambia.
+    /// The person touched the date: the interpretation no longer changes it.
     private(set) var isDateEdited = false
     var merchant: String?
 
@@ -29,11 +29,11 @@ final class FormModel {
     var photoJPEG: Data?
     var readText: String?
     var proposal: Interpretation?
-    /// El concepto lo puso la interpretación, no la persona.
+    /// The concept was set by the interpretation, not by the person.
     private(set) var isConceptSuggested = false
-    /// Con certeza media: lo que la API propone, arriba del buscador.
+    /// With medium confidence: what the API proposes, above the search.
     private(set) var candidates: [IndexEntry] = []
-    /// Pide a la vista abrir el buscador (la vista lo vuelve a false).
+    /// Asks the view to open the search (the view sets it back to false).
     var showsSearch = false
 
     var query: String = ""
@@ -65,17 +65,17 @@ final class FormModel {
         self.results = recentConcepts()
     }
 
-    // MARK: Lectura
+    // MARK: Reading
 
     var normalizedAmount: String? { AmountParser.normalize(amount) }
 
-    /// Monto válido y algo que clasifique: un concepto elegido o el texto del
-    /// recibo, que la API sabe interpretar.
+    /// A valid amount and something that classifies: a chosen concept or the
+    /// receipt text, which the API knows how to interpret.
     var canConfirm: Bool {
         normalizedAmount != nil && (concept != nil || !(readText ?? "").isEmpty)
     }
 
-    // MARK: Concepto
+    // MARK: Concept
 
     func search(_ query: String) {
         self.query = query
@@ -101,11 +101,11 @@ final class FormModel {
         isDateEdited = true
     }
 
-    // MARK: Foto
+    // MARK: Photo
 
-    /// Encoger → Vision → `/interpret` → rellenar lo vacío. El OCR corre
-    /// siempre (es local y el texto viaja con la captura); la interpretación
-    /// solo con red, y sin red se avisa y la persona escribe.
+    /// Shrink → Vision → `/interpret` → fill in what is empty. OCR always
+    /// runs (it is local and the text travels with the capture); the interpretation
+    /// only with network, and without network the person is told and types it.
     func readPhoto(_ image: UIImage) async {
         photo = image
         photoJPEG = PhotoShrinker.jpeg(image)
@@ -161,7 +161,7 @@ final class FormModel {
         if isConceptSuggested { clearConcept() }
     }
 
-    /// Rellena lo vacío con lo interpretado; puro en `FormPrefill`.
+    /// Fills in what is empty with what was interpreted; pure in `FormPrefill`.
     func apply(_ interpretation: Interpretation) {
         proposal = interpretation
         let before = FormFields(
@@ -184,10 +184,10 @@ final class FormModel {
         if concept == nil, !candidates.isEmpty { showsSearch = true }
     }
 
-    // MARK: Confirmar
+    // MARK: Confirming
 
-    /// Puro: lo que viaja a la API, con el monto normalizado y la fecha en
-    /// Bogotá, que es donde se gasta la plata.
+    /// Pure: what travels to the API, with the amount normalized and the date in
+    /// Bogotá, which is where the money is spent.
     func captureBody() -> CaptureBody {
         CaptureBody(
             text: readText,
@@ -201,9 +201,9 @@ final class FormModel {
         )
     }
 
-    /// Toma la foto del estado, limpia el formulario y encola. La captura ya
-    /// está a salvo en disco en cuanto `capturar` arranca; lo que devuelve es
-    /// solo qué pasó dentro del presupuesto, y la vista no tiene que esperarlo.
+    /// Takes the photo from the state, clears the form and enqueues. The capture is already
+    /// safe on disk as soon as `capture` starts; what it returns is
+    /// only what happened within the budget, and the view does not have to wait for it.
     func confirm() async -> CaptureResult {
         let body = captureBody()
         let photo = photoJPEG
@@ -236,7 +236,7 @@ final class FormModel {
         isReading = false
     }
 
-    // MARK: Ayudas
+    // MARK: Helpers
 
     private func recentConcepts() -> [IndexEntry] {
         guard let index else { return [] }
@@ -248,8 +248,8 @@ final class FormModel {
         return cleaned.isEmpty ? nil : cleaned
     }
 
-    /// «2026-10-04» → el mediodía de ese día en Bogotá, para que ninguna zona
-    /// horaria lo mueva de día al volver a formatearlo.
+    /// «2026-10-04» → noon of that day in Bogotá, so that no time
+    /// zone moves it to another day when it is formatted again.
     static func instant(fromDay day: String) -> Date? {
         let parts = day.split(separator: "-").compactMap { Int($0) }
         guard parts.count == 3 else { return nil }

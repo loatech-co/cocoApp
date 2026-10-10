@@ -1,11 +1,11 @@
 import Foundation
 
-/// Lee la fecha de vencimiento del perfil de aprovisionamiento embebido. Con
-/// un equipo personal gratuito el certificado dura 7 días; saberlo es lo que
-/// permite avisar un día antes.
+/// Reads the expiry date of the embedded provisioning profile. With
+/// a free personal team the certificate lasts 7 days; knowing it is what
+/// makes it possible to warn a day in advance.
 enum ProvisioningProfileReader {
-    /// El .mobileprovision es un CMS con un plist XML dentro: se recorta de
-    /// `<?xml` a `</plist>` sin tocar la firma.
+    /// The .mobileprovision is a CMS with an XML plist inside: it is cut from
+    /// `<?xml` to `</plist>` without touching the signature.
     static func expirationDate(in data: Data) -> Date? {
         guard let start = data.range(of: Data("<?xml".utf8)),
             let end = data.range(of: Data("</plist>".utf8), in: start.lowerBound..<data.endIndex)
@@ -17,7 +17,7 @@ enum ProvisioningProfileReader {
         return dict["ExpirationDate"] as? Date
     }
 
-    /// En el simulador no hay perfil: nil, sin error.
+    /// In the simulator there is no profile: nil, without an error.
     static func fromBundle(_ bundle: Bundle = .main) -> Date? {
         guard let url = bundle.url(forResource: "embedded", withExtension: "mobileprovision"),
             let data = try? Data(contentsOf: url)

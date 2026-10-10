@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class FormModelTests: XCTestCase {
-    /// 2026-10-05 03:00 UTC: en Bogotá todavía es 4 de octubre.
+    /// 2026-10-05 03:00 UTC: in Bogotá it is still October 4.
     private nonisolated static let now = Date(timeIntervalSince1970: 1_791_169_200)
 
     private nonisolated static let tree = [
@@ -37,7 +37,7 @@ final class FormModelTests: XCTestCase {
     private var connectivity = Connectivity()
     private var reader = FakeReceiptReader(text: "D1\nTOTAL 45.000")
 
-    // `async`: así corre en el actor principal, como la clase.
+    // `async`: that way it runs on the main actor, like the class.
     override func setUp() async throws {
         transport = FakeTransport()
         capturer = CapturerDouble()
@@ -59,7 +59,7 @@ final class FormModelTests: XCTestCase {
         try XCTUnwrap(TreeIndex(roots: Self.tree).entry(id: id))
     }
 
-    // MARK: cuerpo()
+    // MARK: captureBody()
 
     func testTheBodyNormalizesTheAmountAndPutsTheDateInBogota() throws {
         let m = try model()
@@ -90,7 +90,7 @@ final class FormModelTests: XCTestCase {
         XCTAssertFalse(m.canConfirm)
     }
 
-    // MARK: confirmar()
+    // MARK: confirm()
 
     func testConfirmWithoutPhotoIsManualAndWithPhotoIsPhoto() async throws {
         let m = try model()
@@ -141,7 +141,7 @@ final class FormModelTests: XCTestCase {
         XCTAssertEqual(m.results.map(\.id), [200])
     }
 
-    // MARK: leerFoto()
+    // MARK: readPhoto()
 
     func testReadPhotoFillsTheBlanksWithTheInterpretation() async throws {
         transport.reply(.http(200, Self.interpretationJSON))

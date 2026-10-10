@@ -1,14 +1,14 @@
 import Foundation
 
-/// La única dueña del refresh token y el ÚNICO rotador de la familia de
-/// Supabase en el teléfono. La cola, el webview, los intents y la tarea de
-/// fondo pasan todos por aquí; dos `/auth/refresh` a la vez dispararían la
-/// detección de reuso de GoTrue y matarían la familia entera.
+/// The only owner of the refresh token and the ONLY rotator of the Supabase
+/// family on the phone. The queue, the webview, the intents and the background
+/// task all go through here; two `/auth/refresh` at once would trigger
+/// GoTrue's reuse detection and kill the whole family.
 final actor NativeSession: Session {
     private struct TokenPair {
         var access: String
         var expiresAt: Date
-        /// El `user` tal como llegó: la web lo recibe sin reescribir una clave.
+        /// The `user` just as it arrived: the web receives it without a single key rewritten.
         var userJSON: Data
         var profile: PublicProfile
     }
@@ -16,13 +16,13 @@ final actor NativeSession: Session {
     private let api: APIClient
     private let keychain: KeychainStore
     private let clock: @Sendable () -> Date
-    /// Mayor que los 60 s de la web: lo que la web recibe por el puente no
-    /// debe disparar nunca su propio bucle de renovación.
+    /// Greater than the web's 60 s: what the web receives through the bridge must
+    /// never trigger its own refresh loop.
     private let margin: TimeInterval
 
     private var tokens: TokenPair?
-    /// El single-flight: quien llegue mientras hay una renovación en vuelo
-    /// espera a ESA, no abre otra.
+    /// The single-flight: whoever arrives while a refresh is in flight
+    /// waits for THAT one, it does not open another.
     private var refreshInFlight: Task<TokenPair, Error>?
     private(set) var currentState: SessionState = .loading
 
@@ -44,16 +44,16 @@ final actor NativeSession: Session {
 
     var state: SessionState { currentState }
 
-    // MARK: Entrar y restaurar
+    // MARK: Signing in and restoring
 
-    /// Al arrancar: si hay refresh en el Keychain se renueva; si no, no hay
-    /// sesión. Un fallo de red deja el Keychain intacto y pasa a sin conexión.
+    /// At launch: if there is a refresh token in the Keychain it is refreshed; if not, there is no
+    /// session. A network failure leaves the Keychain intact and goes offline.
     func restore() async {
         guard let refresh = try? keychain.read(.refreshToken), !refresh.isEmpty else {
             publish(.signedOut)
             return
         }
-        // Los errores ya dejaron el estado que toca (sinSesion o sinConexion).
+        // The errors already left the state where it belongs (signedOut or offline).
         _ = try? await sharedRefresh()
     }
 
@@ -74,7 +74,7 @@ final actor NativeSession: Session {
         return try await sharedRefresh().access
     }
 
-    /// Tras un 401 inesperado: renueva aunque al reloj le parezca vigente.
+    /// After an unexpected 401: refreshes even if the clock thinks it is still valid.
     func refreshNow() async throws {
         _ = try await sharedRefresh()
     }
@@ -86,10 +86,10 @@ final actor NativeSession: Session {
         return WebSession(accessToken: access, expiresIn: remaining, userJSON: tokens.userJSON)
     }
 
-    // MARK: Salir
+    // MARK: Signing out
 
-    /// Avisa al servidor con el refresh y borra el Keychain pase lo que pase:
-    /// quien pulsó «salir» no vuelve a ver su sesión por un fallo de red.
+    /// Tells the server with the refresh token and wipes the Keychain no matter what:
+    /// whoever tapped «salir» does not see their session again because of a network failure.
     func signOut() async {
         refreshInFlight?.cancel()
         if let refresh = try? keychain.read(.refreshToken), !refresh.isEmpty {
@@ -98,13 +98,13 @@ final actor NativeSession: Session {
         closeLocally()
     }
 
-    /// Solo local: la web avisó que el servidor ya cerró la familia.
+    /// Local only: the web reported that the server already closed the family.
     func discard() async {
         refreshInFlight?.cancel()
         closeLocally()
     }
 
-    // MARK: Renovación
+    // MARK: Refresh
 
     private func sharedRefresh() async throws -> TokenPair {
         if let inFlight = refreshInFlight {
@@ -116,11 +116,11 @@ final actor NativeSession: Session {
         return try await task.value
     }
 
-    /// Orden: llamada → escribir el refresh nuevo en el llavero → publicar.
-    /// Un `URLError` NUNCA borra el Keychain: reintenta una vez con el mismo
-    /// refresh (dentro del intervalo de reuso de GoTrue devuelve la misma
-    /// sesión) y, si vuelve a fallar, conserva todo y pasa a sin conexión.
-    /// SOLO un 401 real borra el Keychain.
+    /// Order: call → write the new refresh token to the keychain → publish.
+    /// A `URLError` NEVER wipes the Keychain: it retries once with the same
+    /// refresh token (within GoTrue's reuse interval it returns the same
+    /// session) and, if it fails again, keeps everything and goes offline.
+    /// ONLY a real 401 wipes the Keychain.
     private func refresh(retryingNetwork: Bool) async throws -> TokenPair {
         guard let refresh = try? keychain.read(.refreshToken), !refresh.isEmpty else {
             closeLocally()
@@ -133,8 +133,8 @@ final actor NativeSession: Session {
                 let data = try await api.sendRaw(
                     RequestBuilder.refresh(refreshToken: refresh), token: nil)
                 let (response, userJSON) = try Self.decodeSession(data)
-                // Si por lo que sea no vino refresh, el anterior sigue siendo
-                // el último conocido: no se pisa con nada.
+                // If for whatever reason no refresh token came, the previous one is still
+                // the last one known: it is not overwritten with anything.
                 if let newRefresh = response.refreshToken {
                     try keychain.write(newRefresh, for: .refreshToken)
                 }
@@ -147,8 +147,8 @@ final actor NativeSession: Session {
             } catch let error as APIError where error.isNetworkError && attempts > 0 {
                 continue
             } catch {
-                // Red (ya reintentada), servidor caído o respuesta rara: nada
-                // de eso dice que la sesión murió. Se conserva el Keychain.
+                // Network (already retried), server down or an odd response: none
+                // of that says the session died. The Keychain is kept.
                 publish(.offline(last: tokens?.profile))
                 throw SessionError.offline
             }
@@ -176,7 +176,7 @@ final actor NativeSession: Session {
         continuation.yield(state)
     }
 
-    // MARK: Lectura de la respuesta
+    // MARK: Reading the response
 
     private static func tokens(from r: SessionResponse, userJSON: Data, now: Date) -> TokenPair {
         TokenPair(
@@ -184,9 +184,9 @@ final actor NativeSession: Session {
             profile: r.user)
     }
 
-    /// Decodifica el sobre y, aparte, recorta el `user` crudo del cuerpo. Si
-    /// el recorte no encuentra el objeto, se vuelve a serializar lo decodificado
-    /// por `JSONSerialization`: mismas claves, mismos valores.
+    /// Decodes the envelope and, separately, cuts the raw `user` out of the body. If
+    /// the cut does not find the object, what was decoded is serialized again
+    /// with `JSONSerialization`: same keys, same values.
     private static func decodeSession(_ data: Data) throws -> (SessionResponse, Data) {
         let response: SessionResponse
         do {
@@ -206,12 +206,12 @@ final actor NativeSession: Session {
     }
 }
 
-/// Recorta, byte a byte, el valor-objeto de una clave dentro de otro objeto
-/// de un JSON. No interpreta nada: solo cuenta llaves y respeta las cadenas.
+/// Cuts out, byte by byte, the object value of a key inside another object
+/// of a JSON. It interprets nothing: it only counts braces and respects strings.
 enum JSONSlicer {
-    // Un escáner de bytes: un caso por carácter estructural y un estado que
-    // cruza todos. Partirlo en funciones obliga a pasar ese estado de mano en
-    // mano y se lee peor que el bucle entero.
+    // A byte scanner: one case per structural character and a state that
+    // crosses them all. Splitting it into functions forces passing that state from hand
+    // to hand and reads worse than the whole loop.
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     static func object(key: String, inside parent: String, at data: Data) -> Data? {
         let bytes = [UInt8](data)
@@ -230,7 +230,7 @@ enum JSONSlicer {
             case UInt8(ascii: "\""):
                 guard let end = endOfString(bytes, from: i) else { return nil }
                 let content = Array(bytes[(i + 1)..<end])
-                // Una cadena seguida de ':' es una clave; si no, es un valor.
+                // A string followed by ':' is a key; if not, it is a value.
                 var j = end + 1
                 while j < bytes.count, isBlankByte(bytes[j]) { j += 1 }
                 if j < bytes.count, bytes[j] == UInt8(ascii: ":") {
@@ -277,7 +277,7 @@ enum JSONSlicer {
         b == 0x20 || b == 0x0A || b == 0x0D || b == 0x09
     }
 
-    /// Índice de la comilla que cierra la cadena abierta en `desde`.
+    /// Index of the quote that closes the string opened at `from`.
     private static func endOfString(_ bytes: [UInt8], from: Int) -> Int? {
         var i = from + 1
         while i < bytes.count {
@@ -291,7 +291,7 @@ enum JSONSlicer {
         return nil
     }
 
-    /// Índice de la llave que cierra el objeto abierto en `desde`.
+    /// Index of the brace that closes the object opened at `from`.
     private static func endOfObject(_ bytes: [UInt8], from: Int) -> Int? {
         var i = from
         var level = 0

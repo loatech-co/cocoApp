@@ -1,13 +1,13 @@
 import Foundation
 import Network
 
-/// Un servidor HTTP mínimo en `127.0.0.1` para cargar la web construida en un
-/// `WKWebView` de verdad.
+/// A minimal HTTP server on `127.0.0.1` to load the built web in a
+/// real `WKWebView`.
 ///
-/// Sirve los archivos de `root` y, como el servidor real, `index.html` para
-/// cualquier ruta que no sea un archivo. Lo que va a `/api/` no existe aquí:
-/// responde 404 y queda anotado, para que una prueba vea qué pidió la web.
-/// Una petición por conexión (`Connection: close`): no hace falta más.
+/// It serves the files of `root` and, like the real server, `index.html` for
+/// any route that is not a file. What goes to `/api/` does not exist here:
+/// it answers 404 and is noted down, so that a test sees what the web asked for.
+/// One request per connection (`Connection: close`): nothing more is needed.
 final class StaticWebServer: @unchecked Sendable {
     private let root: URL
     private let listener: NWListener
@@ -22,10 +22,10 @@ final class StaticWebServer: @unchecked Sendable {
         listener = try NWListener(using: parameters)
     }
 
-    /// Lo que la web pidió a la API, en orden.
+    /// What the web asked the API for, in order.
     var apiRequests: [String] { lock.withLock { apiPaths } }
 
-    /// Arranca y devuelve la base (`http://127.0.0.1:<puerto>`).
+    /// Starts and returns the base (`http://127.0.0.1:<port>`).
     func start() async throws -> URL {
         listener.newConnectionHandler = { [weak self] connection in self?.serve(connection) }
         let port: UInt16 = try await withCheckedThrowingContinuation { continuation in
@@ -97,7 +97,7 @@ final class StaticWebServer: @unchecked Sendable {
     }
 }
 
-/// Se activa una sola vez: la continuación de `start()` no se puede reanudar dos.
+/// It fires only once: the continuation of `start()` cannot be resumed twice.
 private final class OnceFlag: @unchecked Sendable {
     private let lock = NSLock()
     private var isSet = false

@@ -1,31 +1,31 @@
 import Foundation
 
-/// Una petición a la API, todavía sin base, token ni User-Agent: lo que la
-/// distingue de las demás y nada más.
+/// A request to the API, still without base, token or User-Agent: what
+/// sets it apart from the others and nothing else.
 struct APIRequest: Sendable {
     var method: String
     /// Relativa a `/api/v2`: "/auth/login".
     var path: String
-    /// La consulta, aparte de la ruta: `appending(path:)` escaparía el `?`.
+    /// The query, apart from the path: `appending(path:)` would escape the `?`.
     var query: [URLQueryItem] = []
     var jsonBody: Data?
     var headers: [String: String] = [:]
-    /// Solo `/auth/login`, `/auth/refresh` y `/auth/logout` llevan
-    /// `X-Coco-Client: native`; es lo que hace que el refresh viaje en el
-    /// cuerpo y no en una cookie.
+    /// Only `/auth/login`, `/auth/refresh` and `/auth/logout` carry
+    /// `X-Coco-Client: native`; it is what makes the refresh token travel in the
+    /// body and not in a cookie.
     var nativeClient: Bool = false
     var timeout: Duration = .seconds(15)
 }
 
 struct MultipartPart: Sendable {
-    /// "files": el campo multipart de `/transactions/:id/receipts`.
+    /// "files": the multipart field of `/transactions/:id/receipts`.
     let fieldName: String
     let fileName: String
     let mime: String
     let data: Data
 }
 
-/// Construye peticiones. Puro: se prueba sin transporte.
+/// Builds requests. Pure: it is tested without a transport.
 enum RequestBuilder {
     static let nativeClientHeader = "X-Coco-Client"
     static let nativeClient = "native"
@@ -48,8 +48,8 @@ enum RequestBuilder {
         }
         for (key, value) in p.headers { r.setValue(value, forHTTPHeaderField: key) }
         if p.nativeClient { r.setValue(nativeClient, forHTTPHeaderField: nativeClientHeader) }
-        // El token va en la cabecera y nunca en la URL: una query con
-        // credenciales acaba en bitácoras y en el historial.
+        // The token goes in the header and never in the URL: a query with
+        // credentials ends up in logs and in the history.
         if let token { r.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
         return r
     }
@@ -83,11 +83,11 @@ enum RequestBuilder {
         )
     }
 
-    /// El tope de la v2 por página. El árbol se pagina por centros de costos,
-    /// así que casi siempre cabe en una.
+    /// The v2 cap per page. The tree is paginated by cost centers,
+    /// so it almost always fits in one.
     static let maxPerPage = 200
 
-    /// Una página del árbol: `data` son centros de costos con sus hijos.
+    /// A page of the tree: `data` are cost centers with their children.
     static func categories(page: Int) -> APIRequest {
         APIRequest(
             method: "GET", path: "/categories",
@@ -100,7 +100,7 @@ enum RequestBuilder {
         "/transactions/\(transactionId)/receipts"
     }
 
-    /// `multipart/form-data` armado a mano: URLSession no lo hace.
+    /// `multipart/form-data` built by hand: URLSession does not do it.
     static func multipart(path: String, parts: [MultipartPart], boundary: String) -> APIRequest {
         var body = Data()
         for part in parts {

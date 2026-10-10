@@ -1,10 +1,10 @@
 import Foundation
 
-/// Los `code` de la v2 sobre los que la app decide algo. Son estables: la API
-/// no los renombra una vez publicados (`api/src/common/errors/problem-codes.ts`).
-/// El resto llega como `.other` y se decide por el status.
+/// The v2 `code`s the app decides something on. They are stable: the API
+/// does not rename them once published (`api/src/common/errors/problem-codes.ts`).
+/// The rest arrive as `.other` and are decided by the status.
 enum ProblemCode: Equatable, Sendable {
-    // Sesión
+    // Session
     case unauthenticated, invalidToken, sessionExpired, sessionRevoked
     case invalidCredentials, wrongCurrentPassword
     // Cuenta
@@ -12,9 +12,9 @@ enum ProblemCode: Equatable, Sendable {
     // Captura
     case duplicate, validationFailed, invalidFields, splitsUnbalanced, amountBreaksSplits
     case accountNotOwned, categoryNotOwned, conceptArchived, costCenterCannotClassify
-    // Lo que se reintenta
+    // What gets retried
     case rateLimited, serviceUnavailable, internalError
-    /// Un código que la app no conoce.
+    /// A code the app does not know.
     case other(String)
 
     private static let known: [String: ProblemCode] = [
@@ -36,15 +36,15 @@ enum ProblemCode: Equatable, Sendable {
     }
 }
 
-/// Un error de la API leído (RFC 9457, `application/problem+json`).
+/// An API error, read (RFC 9457, `application/problem+json`).
 ///
-/// Acepta DOS formas mientras la v2 desplegada no sea la del #53: la nueva
-/// (`{type,title,status,detail,code,errors}`) y la vieja
-/// (`{error:{code,message,details}}`). Lo que no es ninguna de las dos —una
-/// página HTML de un proxy— no se decodifica y queda en `nil`.
+/// It accepts TWO shapes while the deployed v2 is not the one from #53: the new one
+/// (`{type,title,status,detail,code,errors}`) and the old one
+/// (`{error:{code,message,details}}`). What is neither of the two —an
+/// HTML page from a proxy— is not decoded and stays `nil`.
 struct APIProblem: Equatable, Sendable {
     struct FieldError: Equatable, Sendable, Decodable {
-        /// La ruta del campo (`splits.0.amount`); sin ella es un problema suelto.
+        /// The field path (`splits.0.amount`); without it, it is a standalone problem.
         let field: String?
         let message: String
     }
@@ -52,7 +52,7 @@ struct APIProblem: Equatable, Sendable {
     let status: Int
     let code: ProblemCode
     let title: String
-    /// La frase para la persona, en español. Puede cambiar libremente.
+    /// The sentence for the person, in Spanish. It may change freely.
     let detail: String
     let errors: [FieldError]
 
@@ -64,7 +64,7 @@ struct APIProblem: Equatable, Sendable {
         self.errors = errors
     }
 
-    /// `status` es el de la respuesta HTTP: manda sobre el del cuerpo.
+    /// `status` is the HTTP response's: it wins over the body's.
     static func decode(_ data: Data, status: Int) -> APIProblem? {
         let decoder = JSONDecoder()
         if let p = try? decoder.decode(ProblemBody.self, from: data) {
@@ -75,8 +75,8 @@ struct APIProblem: Equatable, Sendable {
         return nil
     }
 
-    /// Lo que se le enseña a la persona: un texto propio para los códigos que
-    /// piden decir qué hacer; si no, la frase de la API; si no, `fallback`.
+    /// What the person is shown: our own text for the codes that
+    /// call for saying what to do; otherwise, the API's sentence; otherwise, `fallback`.
     func userMessage(fallback: String = L10n.Queue.errorGeneric) -> String {
         switch code {
         case .sessionExpired, .invalidToken, .unauthenticated: return L10n.Problem.sessionExpired
@@ -93,8 +93,8 @@ struct APIProblem: Equatable, Sendable {
     }
 }
 
-/// El cuerpo `problem+json` tal como llega. `code` es lo único obligatorio:
-/// sin él no hay forma de decidir y no se trata como un problema de la v2.
+/// The `problem+json` body as it arrives. `code` is the only mandatory thing:
+/// without it there is no way to decide and it is not treated as a v2 problem.
 private struct ProblemBody: Decodable {
     let code: String
     let title: String?

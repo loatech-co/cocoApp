@@ -7,13 +7,13 @@ enum LoadState: Equatable {
     case loading
     case ready
     case failure(URLError.Code)
-    /// La web pidió sesión otra vez después de dos entregas seguidas: algo
-    /// del lado web no la acepta y sondear no lo arregla.
+    /// The web asked for a session again after two deliveries in a row: something
+    /// on the web side does not accept it and polling does not fix it.
     case webSessionStuck
 }
 
-/// Lo que la web cuenta por `cocoEvents`, sin respuesta. Cada caso se llama
-/// como el `type` de `BridgeEvent` en `frontend/src/shared/lib/native-contract.ts`.
+/// What the web reports through `cocoEvents`, with no reply. Each case is named
+/// like the `type` of `BridgeEvent` in `frontend/src/shared/lib/native-contract.ts`.
 enum WebEvent: String, CaseIterable, Equatable {
     case signOut
     case sessionClosed
@@ -26,8 +26,8 @@ enum WebEvent: String, CaseIterable, Equatable {
     }
 }
 
-/// Lo que la app llama en `window.__coco`, además de los avisos (`WebNotice`).
-/// Cada caso se llama como un miembro de `WebBridge` en
+/// What the app calls in `window.__coco`, besides the notices (`WebNotice`).
+/// Each case is named like a member of `WebBridge` in
 /// `frontend/src/shared/lib/bridge.ts`.
 enum WebFunction: String, CaseIterable {
     case navigate
@@ -36,9 +36,9 @@ enum WebFunction: String, CaseIterable {
     case sessionClosed
 }
 
-/// Dueño del ÚNICO `WKWebView` de la app, y los dos extremos del puente con
-/// la web. Nunca mete una credencial en la URL ni en una cookie: la sesión
-/// viaja por `replyHandler`, dentro del proceso, cuando la web la pide.
+/// Owner of the app's ONLY `WKWebView`, and both ends of the bridge with
+/// the web. It never puts a credential in the URL or in a cookie: the session
+/// travels through `replyHandler`, inside the process, when the web asks for it.
 @Observable @MainActor
 final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessageHandler, WKNavigationDelegate,
     WKUIDelegate
@@ -50,10 +50,10 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     let webView: WKWebView
     private(set) var loadState: LoadState = .loading
-    /// Hubo al menos una carga completa: con documento, un fallo de red se
-    /// enseña como franja y no como pantalla entera.
+    /// There was at least one complete load: with a document, a network failure is
+    /// shown as a strip and not as a whole screen.
     private(set) var hasDocument = false
-    /// La web pidió sesión mientras no había red: se entrega al volver.
+    /// The web asked for a session while there was no network: it is delivered when it comes back.
     private(set) var deliveryPending = false
 
     private let session: Session
@@ -80,11 +80,11 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         self.openExternal = openExternal
 
         let config = WKWebViewConfiguration()
-        // Mismo prefijo que `USER_AGENT_APP`: la web lo exige junto con el
-        // puente para saberse embebida.
+        // Same prefix as `USER_AGENT_APP`: the web demands it, together with the
+        // bridge, to know it is embedded.
         config.applicationNameForUserAgent = Brand.userAgentApp + version
-        // Persistente para la caché de los assets con hash; jamás tendrá la
-        // cookie de refresh, porque la web embebida nunca pasa por ese camino.
+        // Persistent for the cache of the hashed assets; it will never have the
+        // refresh cookie, because the embedded web never goes down that path.
         config.websiteDataStore = .default()
         config.allowsInlineMediaPlayback = true
         let script = WKUserScript(
@@ -94,8 +94,8 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         webView = WKWebView(frame: .zero, configuration: config)
         super.init()
 
-        // El webView vive lo que la app, así que el ciclo webView → handler →
-        // self no se rompe nunca y no hace falta un intermediario débil.
+        // The webView lives as long as the app, so the webView → handler →
+        // self cycle never breaks and a weak intermediary is not needed.
         config.userContentController.addScriptMessageHandler(self, contentWorld: .page, name: Self.sessionHandler)
         config.userContentController.add(self, contentWorld: .page, name: Self.eventsHandler)
         webView.navigationDelegate = self
@@ -106,15 +106,15 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         webView.backgroundColor = .systemBackground
     }
 
-    // MARK: Navegación
+    // MARK: Navigation
 
-    /// `GET <base>/`: URL limpia, la SPA sirve `index.html`.
+    /// `GET <base>/`: clean URL, the SPA serves `index.html`.
     func loadHome() {
         loadState = .loading
         webView.load(URLRequest(url: configuration.base.appending(path: "/")))
     }
 
-    /// Sin recargar si la web ya montó `window.__coco`; si no, carga la ruta.
+    /// Without reloading if the web already mounted `window.__coco`; if not, it loads the route.
     func go(to path: String) {
         let js = Self.javascriptToGo(path)
         webView.evaluateJavaScript(js) { [weak self] result, _ in
@@ -133,8 +133,8 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         if webView.url == nil { loadHome() } else { webView.reload() }
     }
 
-    /// Al volver la red: recarga lo que no cargó y entrega la sesión que quedó
-    /// pendiente.
+    /// When the network comes back: reloads what did not load and delivers the session that was left
+    /// pending.
     func connectivityReturned() async {
         if case .failure = loadState { reload() }
         if deliveryPending { await pushSession() }
@@ -145,9 +145,9 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         webView.load(URLRequest(url: configuration.base.appending(path: trimmed)))
     }
 
-    // MARK: Sesión hacia la web
+    // MARK: Session towards the web
 
-    /// `window.__coco.receiveSession({...})` como mucho una vez cada 30 s.
+    /// `window.__coco.receiveSession({...})` at most once every 30 s.
     func pushSession() async {
         let now = clock()
         guard Self.shouldDeliver(last: lastDelivery, now: now, consecutiveDeliveries: consecutiveDeliveries) else {
@@ -179,7 +179,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     // MARK: Handlers
 
-    /// `cocoSession`: responde solo al frame principal del origen de la API.
+    /// `cocoSession`: answers only the main frame of the API's origin.
     func userContentController(
         _ c: WKUserContentController, didReceive m: WKScriptMessage,
         replyHandler: @escaping @MainActor (Any?, String?) -> Void
@@ -193,8 +193,8 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         }
     }
 
-    /// La parte del handler que se puede probar: `WKScriptMessage` no se deja
-    /// construir fuera de WebKit.
+    /// The part of the handler that can be tested: `WKScriptMessage` cannot be
+    /// built outside WebKit.
     func answerSessionRequest(isMainFrame: Bool, originProtocol: String, host: String, port: Int) async -> (
         Any?, String?
     ) {
@@ -216,7 +216,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         }
     }
 
-    /// `cocoEvents`: lo que la web cuenta sin esperar respuesta.
+    /// `cocoEvents`: what the web reports without waiting for a reply.
     func userContentController(_ c: WKUserContentController, didReceive m: WKScriptMessage) {
         let source = m.frameInfo.securityOrigin
         guard
@@ -231,12 +231,12 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     func receive(_ event: WebEvent) async {
         switch event {
         case .signOut:
-            // La web limpia su memoria sin llamar a /auth/logout; el logout
-            // real, con el refresh, lo hace la app.
+            // The web clears its memory without calling /auth/logout; the real
+            // logout, with the refresh token, is done by the app.
             await session.signOut()
         case .sessionClosed:
-            // El servidor ya mató la familia (cambio de contraseña, salir de
-            // todos los dispositivos): solo queda olvidar lo local.
+            // The server already killed the family (password change, signing out of
+            // all devices): all that is left is to forget what is local.
             await session.discard()
         case .noSession:
             await pushSession()
@@ -270,7 +270,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
         hasDocument = true
         loadState = .ready
-        // Documento nuevo: la cuenta de entregas seguidas vuelve a cero.
+        // New document: the count of deliveries in a row goes back to zero.
         consecutiveDeliveries = 0
     }
 
@@ -283,21 +283,21 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     }
 
     private func loadFailed(_ code: URLError.Code) {
-        // Cancelada es lo que WebKit dice cuando se pide otra carga encima:
-        // no es un fallo de red.
+        // Cancelled is what WebKit says when another load is requested on top:
+        // it is not a network failure.
         guard code != .cancelled else { return }
         loadState = .failure(code)
     }
 
-    /// WebKit mató el proceso de contenido (memoria): la SPA vuelve a arrancar
-    /// y pide la sesión al puente, así que recargar es instantáneo.
+    /// WebKit killed the content process (memory): the SPA starts again
+    /// and asks the bridge for the session, so reloading is instant.
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         reload()
     }
 
     // MARK: WKUIDelegate
 
-    /// `window.open` y `target="_blank"`: nunca un segundo webview; a Safari.
+    /// `window.open` and `target="_blank"`: never a second webview; to Safari.
     func webView(
         _ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for action: WKNavigationAction,
         windowFeatures: WKWindowFeatures
@@ -306,17 +306,17 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         return nil
     }
 
-    // MARK: Puros
+    // MARK: Pure
 
-    /// En el hilo principal: `WKSecurityOrigin` solo se lee ahí.
+    /// On the main thread: `WKSecurityOrigin` is only read there.
     static func isOriginAllowed(_ source: WKSecurityOrigin, base: URL, isMainFrame: Bool) -> Bool {
         isOriginAllowed(
             originProtocol: source.protocol, host: source.host, port: source.port, base: base,
             isMainFrame: isMainFrame)
     }
 
-    /// Protocolo, host y puerto iguales a los de la API, y solo el frame
-    /// principal. `puerto` 0 es «el de siempre» del protocolo.
+    /// Protocol, host and port equal to the API's, and only the main
+    /// frame. `port` 0 is the protocol's «usual one».
     nonisolated static func isOriginAllowed(
         originProtocol: String, host: String, port: Int, base: URL, isMainFrame: Bool
     ) -> Bool {
@@ -333,15 +333,15 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         return scheme.lowercased() == "https" ? 443 : 80
     }
 
-    /// `window.__coco.navigate(path)` si existe; devuelve `true` si navegó.
+    /// `window.__coco.navigate(path)` if it exists; returns `true` if it navigated.
     nonisolated static func javascriptToGo(_ path: String) -> String {
         let name = WebFunction.navigate.rawValue
         let call = "window.__coco.\(name)(\(jsonString(path)))"
         return "(typeof window.__coco?.\(name) === 'function') ? (\(call), true) : false;"
     }
 
-    /// Una cadena como literal de JavaScript: por JSON, que ya escapa comillas,
-    /// barras y saltos de línea.
+    /// A string as a JavaScript literal: through JSON, which already escapes quotes,
+    /// backslashes and line breaks.
     nonisolated static func jsonString(_ text: String) -> String {
         guard
             let data = try? JSONSerialization.data(
@@ -351,7 +351,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         return string
     }
 
-    /// Solo el host de la API (y `about:blank`, que WebKit usa por dentro).
+    /// Only the API's host (and `about:blank`, which WebKit uses internally).
     nonisolated static func isNavigationAllowed(_ url: URL, base: URL) -> Bool {
         guard let scheme = url.scheme?.lowercased() else { return false }
         if scheme == "about" { return true }
@@ -360,8 +360,8 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
             originProtocol: scheme, host: host, port: url.port ?? 0, base: base, isMainFrame: true)
     }
 
-    /// Una entrega cada 30 s y nunca más de dos seguidas sin que cambie el
-    /// documento.
+    /// One delivery every 30 s and never more than two in a row without the
+    /// document changing.
     nonisolated static func shouldDeliver(last: Date?, now: Date, consecutiveDeliveries: Int) -> Bool {
         guard consecutiveDeliveries < maxConsecutiveDeliveries else { return false }
         guard let last else { return true }

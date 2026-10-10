@@ -1,25 +1,25 @@
 import Foundation
 
-/// Lo que la app le avisa a la web, por su nombre en `AppNotices`.
+/// What the app notifies the web of, by its name in `AppNotices`.
 enum WebNotice: String, CaseIterable, Sendable {
-    /// Una captura de la cola llegó a la API (2xx): movimientos, cuentas y
-    /// resumen cambiaron.
+    /// A capture from the queue reached the API (2xx): transactions, accounts and
+    /// summary changed.
     case captured
-    /// La app o la pestaña de la web volvió a primer plano: un `WKWebView` no
-    /// recibe el foco de ventana, así que la web no sabría que pasó tiempo.
+    /// The app or the web tab came back to the foreground: a `WKWebView` does not
+    /// receive window focus, so the web would not know that time passed.
     case foreground
 }
 
 extension WebBridge {
-    /// `AppNotices` en `frontend/src/shared/lib/native-contract.ts`. Con
-    /// `?.` dos veces: sin sesión no hay `window.__coco`, y una web anterior a
-    /// estos avisos no tiene la función; en los dos casos no pasa nada.
+    /// `AppNotices` in `frontend/src/shared/lib/native-contract.ts`. With
+    /// `?.` twice: without a session there is no `window.__coco`, and a web older than
+    /// these notices does not have the function; in both cases nothing happens.
     nonisolated static func javascript(for notice: WebNotice) -> String {
         "window.__coco?.\(notice.rawValue)?.(); true;"
     }
 
-    /// Devuelve si el script corrió sin error (una web vieja también cuenta
-    /// como bien: el aviso, simplemente, no hace nada).
+    /// Returns whether the script ran without an error (an old web also counts
+    /// as fine: the notice simply does nothing).
     @discardableResult
     func notify(_ notice: WebNotice) async -> Bool {
         do {

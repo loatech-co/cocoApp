@@ -23,7 +23,7 @@ final class ReceiptReaderTests: XCTestCase {
         XCTAssertEqual(text, "D1\nLeche\nTOTAL 45.000")
     }
 
-    /// El doble que usa el formulario en pruebas: responde lo que se le diga.
+    /// The double the form uses in tests: it answers whatever it is told.
     func testTheDoubleConformsToTheProtocol() async throws {
         let reader = FakeReceiptReader(text: "D1\nTOTAL 45.000")
         let image = try XCTUnwrap(TestImage.square(10).cgImage)
@@ -33,8 +33,8 @@ final class ReceiptReaderTests: XCTestCase {
     }
 }
 
-// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+// `@unchecked Sendable`: a test double. What changes while the test
+// runs goes under `lock`; what is configured is written before using it.
 final class FakeReceiptReader: ReceiptTextReader, @unchecked Sendable {
     private let lock = NSLock()
     private(set) var reads = 0

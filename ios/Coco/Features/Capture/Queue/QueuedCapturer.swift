@@ -1,12 +1,12 @@
 import Foundation
 
-/// La fachada de los intents y del formulario: encola (ya está a salvo),
-/// intenta enviar dentro del presupuesto y cuenta qué pasó. Las notificaciones
-/// las emite la cola al cambiar de fase; aquí solo se avisa lo que la cola no
-/// llega a ver: que ni siquiera se pudo guardar.
+/// The facade of the intents and the form: it enqueues (it is already safe),
+/// tries to send within the budget and tells what happened. The notifications
+/// are issued by the queue when it changes phase; here the only thing reported is what the queue never
+/// gets to see: that it could not even be saved.
 ///
-/// El presupuesto es el que iOS da a quien llama —10 s a un intent—, y cuenta
-/// desde que se llama: lo que tarde el disco se descuenta del envío.
+/// The budget is the one iOS gives the caller —10 s to an intent—, and it counts
+/// from the call: whatever the disk takes is deducted from the sending.
 struct QueuedCapturer: Capturer {
     let queue: CaptureQueue
     let notifier: Notifier

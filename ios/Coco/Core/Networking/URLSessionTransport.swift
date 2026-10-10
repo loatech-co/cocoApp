@@ -1,7 +1,7 @@
 import Foundation
 
-/// El transporte real. Sesión efímera: sin caché ni cookies en disco, porque
-/// la única credencial de larga vida vive en el Keychain y no aquí.
+/// The real transport. Ephemeral session: no cache or cookies on disk, because
+/// the only long-lived credential lives in the Keychain and not here.
 struct URLSessionTransport: Transport {
     let session: URLSession
 
@@ -11,7 +11,7 @@ struct URLSessionTransport: Transport {
 
     static func defaultSession() -> URLSession {
         let c = URLSessionConfiguration.ephemeral
-        // La espera por red la gobierna la cola con sus reintentos, no URLSession.
+        // Waiting for the network is governed by the queue with its retries, not by URLSession.
         c.waitsForConnectivity = false
         return URLSession(configuration: c)
     }

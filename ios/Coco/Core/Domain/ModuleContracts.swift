@@ -1,9 +1,9 @@
 import Foundation
 
-// Lo que cruza módulos. Cada módulo compila contra estos protocolos y se
-// prueba con dobles, sin esperar a los demás.
+// What crosses modules. Each module compiles against these protocols and is
+// tested with doubles, without waiting for the others.
 
-// MARK: Sesión
+// MARK: Session
 
 enum SessionState: Equatable, Sendable {
     case loading
@@ -12,9 +12,9 @@ enum SessionState: Equatable, Sendable {
     case offline(last: PublicProfile?)
 }
 
-/// Lo que el puente entrega a la web: `BridgeSession` de
-/// `frontend/src/shared/lib/native-contract.ts`, la sesión de la v2 sin el
-/// refresh. El perfil va como JSON crudo: viaja tal cual llegó de la API.
+/// What the bridge hands to the web: `BridgeSession` from
+/// `frontend/src/shared/lib/native-contract.ts`, the v2 session without the
+/// refresh token. The profile goes as raw JSON: it travels just as it came from the API.
 struct WebSession: Sendable {
     let accessToken: String
     let expiresIn: Int
@@ -36,22 +36,22 @@ protocol Session: AnyObject, Sendable {
     var changes: AsyncStream<SessionState> { get }
     func restore() async
     func signIn(email: String, password: String) async throws -> PublicProfile
-    /// Renueva si quedan <120 s; una sola renovación en vuelo (single-flight).
+    /// Refreshes if <120 s remain; a single refresh in flight (single-flight).
     func validAccessToken() async throws -> String
-    /// Tras un 401 inesperado.
+    /// After an unexpected 401.
     func refreshNow() async throws
     func webSession() async throws -> WebSession
     func signOut() async
     func discard() async
 }
 
-// MARK: Red
+// MARK: Network
 
 protocol Transport: Sendable {
     func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse)
 }
 
-// MARK: Capturas
+// MARK: Captures
 
 struct SavedResult: Codable, Equatable, Sendable {
     let transactionId: Int
@@ -60,14 +60,14 @@ struct SavedResult: Codable, Equatable, Sendable {
     let merged: Bool
     let needsReview: Bool
     let finishedAt: Date
-    // Se guarda en disco dentro de la cola con las claves sintetizadas (los
-    // nombres de las propiedades). Las fija `StoredFormatTests`.
+    // It is saved on disk inside the queue with the synthesized keys (the
+    // property names). `StoredFormatTests` pins them.
 }
 
 enum CaptureResult: Equatable, Sendable {
     case sent(SavedResult)
     case queued(pending: Int)
-    /// Llegó a la API, pero su respuesta no se pudo leer: hay que revisarla.
+    /// It reached the API, but its response could not be read: it has to be reviewed.
     case unconfirmed
     case failed(reason: String)
 }
@@ -85,7 +85,7 @@ protocol QueueStore: Sendable {
     func photo(at path: String) throws -> Data
     func deletePhoto(at path: String) throws
     func photoBytes() throws -> Int
-    /// Cuántos archivos de la cola se apartaron por no poder leerse.
+    /// How many queue files were set aside because they could not be read.
     func quarantined() throws -> Int
 }
 
@@ -96,7 +96,7 @@ protocol CaptureSender: Sendable {
     func uploadPhoto(_ jpeg: Data, name: String, to transactionId: Int) async throws -> [Attachment]
 }
 
-// MARK: Avisos
+// MARK: Notices
 
 protocol Notifier: Sendable {
     func requestPermission() async -> Bool
@@ -107,7 +107,7 @@ protocol Notifier: Sendable {
     func setBadge(_ n: Int) async
 }
 
-// MARK: Navegación
+// MARK: Navigation
 
 enum Destination: Equatable, Sendable {
     case quickForm(withCamera: Bool)
@@ -122,7 +122,7 @@ protocol Navigation: AnyObject, Sendable {
     @MainActor func go(_ destination: Destination)
 }
 
-// MARK: Árbol
+// MARK: Tree
 
 protocol TreeStore: Sendable {
     func load() throws -> SavedTree?

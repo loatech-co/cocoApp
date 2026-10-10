@@ -2,22 +2,22 @@ import Foundation
 
 @testable import Coco
 
-// Dobles de los protocolos de Dominio para la cola, los intents y el puente.
-// Con nombres propios («Doble») para no chocar con los que escriben las
-// pruebas de la sesión real.
+// Doubles of the Domain protocols for the queue, the intents and the bridge.
+// With their own names («Double») so as not to clash with the ones the
+// tests of the real session write.
 
-// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+// `@unchecked Sendable`: a test double. What changes while the test
+// runs goes under `lock`; what is configured is written before using it.
 final class SessionDouble: Session, @unchecked Sendable {
     private let lock = NSLock()
     private var _state: SessionState
     private var _token: String?
     private(set) var refreshes = 0
-    /// Cuántas veces se pidió un token vigente (lo que renueva en fondo).
+    /// How many times a valid token was asked for (what refreshes in the background).
     private(set) var tokenReads = 0
     private(set) var signOuts = 0
     private(set) var discards = 0
-    /// Lo que devuelve `refreshNow()`: nil es éxito.
+    /// What `refreshNow()` returns: nil is success.
     var refreshError: Error?
     let changes: AsyncStream<SessionState>
 
@@ -76,8 +76,8 @@ final class SessionDouble: Session, @unchecked Sendable {
     }
 }
 
-// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+// `@unchecked Sendable`: a test double. What changes while the test
+// runs goes under `lock`; what is configured is written before using it.
 final class NotifierDouble: Notifier, @unchecked Sendable {
     private let lock = NSLock()
     private(set) var isRegistered: [SavedResult] = []
@@ -95,16 +95,16 @@ final class NotifierDouble: Notifier, @unchecked Sendable {
     func setBadge(_ n: Int) async { lock.withLock { badges.append(n) } }
 }
 
-/// Un enviador programable: una lista de respuestas por llamada, en orden, y
-/// el registro de todo lo que recibió.
-/// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-/// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+/// A programmable sender: a list of responses per call, in order, and
+/// the record of everything it received.
+/// `@unchecked Sendable`: a test double. What changes while the test
+/// runs goes under `lock`; what is configured is written before using it.
 final class SenderDouble: CaptureSender, @unchecked Sendable {
     enum Reply {
         case ok
         case failure(Error)
-        /// Una petición que no contesta: espera un minuto, o hasta que la
-        /// cancelen —como `URLSession`—.
+        /// A request that does not answer: it waits a minute, or until it is
+        /// cancelled —like `URLSession`—.
         case hang
     }
 
@@ -168,8 +168,8 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
     }
 }
 
-// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+// `@unchecked Sendable`: a test double. What changes while the test
+// runs goes under `lock`; what is configured is written before using it.
 final class CapturerDouble: Capturer, @unchecked Sendable {
     private let lock = NSLock()
     private(set) var received: [(body: CaptureBody, source: CaptureSource)] = []
@@ -183,17 +183,17 @@ final class CapturerDouble: Capturer, @unchecked Sendable {
     }
 }
 
-// `@unchecked Sendable`: doble de pruebas. `destinations` solo se escribe
-// desde `go`, que corre en el actor principal.
+// `@unchecked Sendable`: a test double. `destinations` is only written
+// from `go`, which runs on the main actor.
 final class NavigationDouble: Navigation, @unchecked Sendable {
     private(set) var destinations: [Destination] = []
     @MainActor func go(_ destination: Destination) { destinations.append(destination) }
 }
 
-/// Un almacén que falla cuando se le pide: para simular el disco muriendo
-/// entre la fase 1 y la 2.
-/// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-/// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+/// A store that fails when asked to: to simulate the disk dying
+/// between phase 1 and phase 2.
+/// `@unchecked Sendable`: a test double. What changes while the test
+/// runs goes under `lock`; what is configured is written before using it.
 final class FailingStore: QueueStore, @unchecked Sendable {
     let real: DiskQueueStore
     var failsSave = false

@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// Lo que se capturó desde el teléfono: pendientes (con cuenta), esperando
-/// sesión, por revisar, fallidas y hechas de los últimos 30 días. Se lee de la
-/// cola local, así que tiene contenido sin red. Arriba, si los hay, los dos
-/// avisos que la cola no puede resolver sola: archivos que no se pudieron leer
-/// y un disco que no deja escribir.
+/// What was captured from the phone: pending (with a count), waiting for
+/// a session, to review, failed and done in the last 30 days. It is read from the
+/// local queue, so it has content without network. At the top, if there are any, the two
+/// notices the queue cannot resolve by itself: files that could not be read
+/// and a disk that does not allow writing.
 struct CapturesView: View {
     private let queue: CaptureQueue
     private let navigation: any Navigation
@@ -118,8 +118,8 @@ struct CapturesView: View {
                     CaptureRow(capture: capture)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             if capture.isUnconfirmed {
-                                // Solo quita el aviso del teléfono: el gasto
-                                // ya está en la API.
+                                // It only removes the notice from the phone: the expense
+                                // is already in the API.
                                 Button(L10n.Captures.rowReviewed) {
                                     Task { try? await queue.discard(id: capture.id) }
                                 }

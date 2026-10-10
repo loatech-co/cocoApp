@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Una pantalla: monto, concepto, nota y foto. Guardar encola y cierra sin
-/// esperar a la red; lo que pase después lo cuenta la cola por aviso.
+/// One screen: amount, concept, note and photo. Saving enqueues and closes without
+/// waiting for the network; whatever happens next the queue tells by a notice.
 struct QuickFormView: View {
     @Bindable var model: FormModel
     let opensCameraOnAppear: Bool
@@ -67,7 +67,7 @@ struct QuickFormView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L10n.Capture.formSave) {
-                        // Encola y cierra: la cola avisa cuando se envíe.
+                        // Enqueues and closes: the queue notifies when it is sent.
                         Task { await model.confirm() }
                         onClose()
                     }

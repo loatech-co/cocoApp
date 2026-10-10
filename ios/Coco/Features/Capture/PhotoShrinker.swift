@@ -1,14 +1,14 @@
 import Foundation
 import UIKit
 
-/// La foto que toma la cámara, al tamaño que recomienda
-/// `CONTRATO_DE_SOPORTES`: lado mayor a 1600 px y JPEG al 0,85. Igual que
-/// `PhotoReducer`, pero desde un `UIImage` y corrigiendo la orientación
-/// EXIF: dibujar la imagen la deja en `.up`, así que el OCR y la API reciben
-/// el recibo derecho aunque el teléfono estuviera girado.
+/// The photo the camera takes, at the size recommended by
+/// `CONTRATO_DE_SOPORTES`: long side at 1600 px and JPEG at 0.85. Same as
+/// `PhotoReducer`, but from a `UIImage` and correcting the EXIF
+/// orientation: drawing the image leaves it at `.up`, so the OCR and the API receive
+/// the receipt upright even if the phone was rotated.
 enum PhotoShrinker {
     static func jpeg(_ image: UIImage, maxSide: CGFloat = 1600, quality: CGFloat = 0.85) -> Data? {
-        // `size` ya viene en puntos y orientada; `scale` la pasa a píxeles.
+        // `size` already comes in points and oriented; `scale` turns it into pixels.
         let destination = targetSize(
             width: image.size.width * image.scale, height: image.size.height * image.scale, maxSide: maxSide)
         guard destination.width >= 1, destination.height >= 1 else { return nil }
@@ -20,7 +20,7 @@ enum PhotoShrinker {
         return rendered.jpegData(compressionQuality: quality)
     }
 
-    /// Puro: encoge proporcionalmente y nunca agranda.
+    /// Pure: shrinks proportionally and never enlarges.
     static func targetSize(width: CGFloat, height: CGFloat, maxSide: CGFloat) -> CGSize {
         let longSide = max(width, height)
         let factor = longSide > maxSide ? maxSide / longSide : 1

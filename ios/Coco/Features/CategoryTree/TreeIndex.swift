@@ -1,9 +1,9 @@
 import Foundation
 
-/// Réplica de `packages/lectura/src/buscar.ts`: el mismo índice, la misma
-/// puntuación y el mismo orden. «mercado» tiene que encontrar lo mismo en el
-/// teléfono que en la web, o la misma plata acaba en sitios distintos según
-/// por dónde se capture.
+/// Replica of `packages/receipt-parser/src/search.ts`: the same index, the same
+/// scoring and the same order. «mercado» has to find the same thing on the
+/// phone as on the web, or the same money ends up in different places depending on
+/// where it is captured from.
 
 enum TreeLevel: Sendable {
     case center
@@ -11,19 +11,19 @@ enum TreeLevel: Sendable {
     case concept
 }
 
-/// Un nodo del árbol, aplanado y listo para comparar.
+/// A node of the tree, flattened and ready to compare.
 struct IndexEntry: Identifiable, Hashable, Sendable {
     let id: Int
     let level: TreeLevel
     let name: String
-    /// De dónde cuelga, del más cercano al más lejano: concepto →
-    /// `[categoría, centro]`; categoría → `[centro]`; centro → `[]`.
+    /// What it hangs from, from the nearest to the farthest: concept →
+    /// `[category, center]`; category → `[center]`; center → `[]`.
     let path: [String]
     let centerId: Int
     let categoryId: Int?
-    /// El del centro: en uno estático no se reclasifica desde el formulario.
+    /// The center's: in a static one nothing is reclassified from the form.
     let isStatic: Bool
-    /// Normalizados una vez, al indexar, y no en cada tecla.
+    /// Normalized once, when indexing, and not on every keystroke.
     let normalizedName: String
     let normalizedKeywords: [String]
 
@@ -33,7 +33,7 @@ struct IndexEntry: Identifiable, Hashable, Sendable {
 struct TreeIndex: Sendable {
     let entries: [IndexEntry]
 
-    /// Aplana los tres niveles. Lo archivado no entra, ni lo que cuelga de ello.
+    /// Flattens the three levels. What is archived does not go in, nor what hangs from it.
     init(roots: [TreeNode]) {
         var entries: [IndexEntry] = []
         for center in roots where !center.isArchived {
@@ -48,8 +48,8 @@ struct TreeIndex: Sendable {
         self.entries = entries
     }
 
-    /// `categoria` solo para un concepto: es de donde cuelga. El camino va del
-    /// más cercano al más lejano, y un centro no cuelga de nada.
+    /// `category` only for a concept: it is what it hangs from. The path goes from the
+    /// nearest to the farthest, and a center hangs from nothing.
     private static func makeEntry(
         _ node: TreeNode, level: TreeLevel, center: TreeNode, category: TreeNode? = nil
     ) -> IndexEntry {
@@ -67,9 +67,9 @@ struct TreeIndex: Sendable {
         )
     }
 
-    /// Vacío devuelve vacío: lo que se enseña con el buscador en blanco lo
-    /// decide quien llama. Los centros no salen por defecto: elegir uno no
-    /// clasifica nada.
+    /// Empty returns empty: what is shown with the search blank is
+    /// decided by the caller. Centers do not come out by default: choosing one
+    /// classifies nothing.
     func search(_ query: String, levels: Set<TreeLevel> = [.concept, .category], limit: Int = 20)
         -> [IndexEntry]
     {
@@ -84,8 +84,8 @@ struct TreeIndex: Sendable {
             .filter { $0.1 > 0 }
             .sorted { a, b in
                 if a.1 != b.1 { return a.1 > b.1 }
-                // A igual parecido, el concepto antes que la categoría: es lo
-                // que clasifica del todo.
+                // With equal likeness, the concept before the category: it is what
+                // classifies all the way.
                 if a.0.level.weight != b.0.level.weight { return a.0.level.weight > b.0.level.weight }
                 let order = a.0.name.compare(b.0.name, locale: locale)
                 if order != .orderedSame { return order == .orderedAscending }
@@ -99,9 +99,9 @@ struct TreeIndex: Sendable {
         entries.first { $0.id == id }
     }
 
-    /// Cuánto se parece una entrada a lo escrito. El orden importa más que el
-    /// número: exacto 4 > empieza 3 > contiene 2 > palabra clave 1. Todos los
-    /// tokens tienen que hallarse: «mercado d1» no trae todo lo que diga
+    /// How much an entry resembles what was typed. The order matters more than the
+    /// number: exact 4 > starts with 3 > contains 2 > keyword 1. Every
+    /// token has to be found: «mercado d1» does not bring everything that says
     /// «mercado».
     private static func score(_ e: IndexEntry, tokens: [String]) -> Int {
         var total = 0
@@ -123,8 +123,8 @@ struct TreeIndex: Sendable {
         return total
     }
 
-    /// La de `firmas.ts`: NFD, sin diacríticos, minúsculas, espacios
-    /// colapsados y recortado.
+    /// The one from `signatures.ts`: NFD, without diacritics, lowercase, spaces
+    /// collapsed and trimmed.
     static func normalize(_ s: String) -> String {
         let withoutAccents = String(
             String.UnicodeScalarView(

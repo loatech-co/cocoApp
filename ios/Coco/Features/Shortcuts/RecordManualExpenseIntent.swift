@@ -1,8 +1,8 @@
 import AppIntents
 import Foundation
 
-/// «Registrar gasto»: abre la app en el formulario rápido. Es el que se asigna
-/// al botón de acción en iOS 17. No captura nada por sí mismo.
+/// «Registrar gasto»: opens the app on the quick form. It is the one assigned
+/// to the action button on iOS 17. It does not capture anything by itself.
 struct RecordManualExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Registrar gasto"
     static let description = IntentDescription("Abre Coco listo para anotar un gasto.")

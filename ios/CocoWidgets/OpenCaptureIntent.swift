@@ -1,17 +1,17 @@
 import AppIntents
 import Foundation
 
-/// Las URLs con las que los accesos abren la app. La app las resuelve en
-/// `onOpenURL` (si no hay sesión, primero entrar y después el destino).
+/// The URLs with which the shortcuts open the app. The app resolves them in
+/// `onOpenURL` (if there is no session, first sign in and then the destination).
 enum CaptureURL {
-    /// El formulario rápido.
+    /// The quick form.
     static let manual = url(destination: "manual")
-    /// El formulario con la cámara ya levantada.
+    /// The form with the camera already up.
     static let photo = url(destination: "photo")
 
     static func url(destination: String) -> URL {
-        // Los destinos son fijos y de letras: si esto falla es un error de
-        // programación, no algo que llegue de fuera.
+        // The destinations are fixed and made of letters: if this fails it is a programming
+        // error, not something that comes from outside.
         guard let url = URL(string: "coco://capture/\(destination)") else {
             preconditionFailure("URL de captura inválida para el destino «\(destination)»")
         }
@@ -19,21 +19,21 @@ enum CaptureURL {
     }
 }
 
-/// Abre Coco en el formulario rápido. Lo ejecuta el control de iOS 18.
+/// Opens Coco on the quick form. The iOS 18 control runs it.
 ///
-/// Vive en la extensión, y no en la app, porque un control del Centro de
-/// control solo puede ejecutar intents de su propio binario. No lee la cola ni
-/// la sesión: solo lanza la app por `coco://capture/<destination>`.
+/// It lives in the extension, and not in the app, because a Control
+/// Center control can only run intents from its own binary. It reads neither the queue nor
+/// the session: it only launches the app through `coco://capture/<destination>`.
 ///
-/// Es iOS 18 porque `OpenURLIntent` lo es; en iOS 17 el widget abre la app con
-/// `widgetURL` y `Link`, que no pasan por un intent.
+/// It is iOS 18 because `OpenURLIntent` is; on iOS 17 the widget opens the app with
+/// `widgetURL` and `Link`, which do not go through an intent.
 @available(iOS 18.0, *)
 struct OpenCaptureIntent: AppIntent {
     static let title: LocalizedStringResource = "Registrar gasto"
     static let description = IntentDescription("Abre Coco en el formulario rápido.")
     static let openAppWhenRun = true
 
-    /// `manual` abre el formulario; `foto`, el formulario con la cámara levantada.
+    /// `manual` opens the form; `photo`, the form with the camera up.
     @Parameter(title: "Destino", default: "manual")
     var destination: String
 

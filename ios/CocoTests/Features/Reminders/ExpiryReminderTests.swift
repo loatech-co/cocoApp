@@ -29,7 +29,7 @@ final class ExpiryReminderTests: XCTestCase {
     }
 
     func testDayBeforeAlreadyPassedRemindsInOneMinute() throws {
-        // Vence mañana a las 02:00; la víspera a las 09:00 ya quedó atrás.
+        // It expires tomorrow at 02:00; the day before at 09:00 is already behind.
         let now = try date(2026, 10, 5, 20)
         let expiresAt = try date(2026, 10, 6, 2)
         XCTAssertEqual(

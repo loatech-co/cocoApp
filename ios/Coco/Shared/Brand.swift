@@ -1,17 +1,17 @@
 import Foundation
 
-/// Cómo se presenta la app ante la API y ante la web embebida.
+/// How the app presents itself to the API and to the embedded web.
 enum Brand {
-    /// Mismo valor que `USER_AGENT_APP` en @coco/types; una prueba lo vigila.
+    /// Same value as `USER_AGENT_APP` in `frontend/src/shared/lib/native-contract.ts`; a test watches it.
     static let userAgentApp = "CocoiOS/"
 
-    /// La versión del bundle (`MARKETING_VERSION`). Sin bundle —pruebas
-    /// sueltas— vale `0.0.0` en vez de fallar.
+    /// The bundle version (`MARKETING_VERSION`). Without a bundle —standalone
+    /// tests— it is `0.0.0` instead of failing.
     static var version: String {
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "0.0.0"
     }
 
-    /// `CocoiOS/0.1.0 (iOS 17.0)`: lo que va en `User-Agent` de cada petición.
+    /// `CocoiOS/0.1.0 (iOS 17.0)`: what goes in the `User-Agent` of each request.
     static func userAgent(
         version: String = Brand.version, system: String = ProcessInfo.processInfo.operatingSystemVersionString
     ) -> String {

@@ -1,9 +1,9 @@
 import SwiftUI
 import WidgetKit
 
-/// El control de iOS 18: Centro de control, pantalla bloqueada y botón de
-/// acción (Ajustes → Botón de acción → Controles). Un solo botón que abre la
-/// app en el formulario rápido.
+/// The iOS 18 control: Control Center, lock screen and action
+/// button (Settings → Action Button → Controls). A single button that opens the
+/// app on the quick form.
 @available(iOS 18.0, *)
 struct CaptureControl: ControlWidget {
     static let kind = "co.loatech.coco.control.capture"

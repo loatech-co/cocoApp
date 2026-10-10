@@ -1,45 +1,45 @@
 import Foundation
 
 enum QueueError: Error, Equatable {
-    /// El tope de fotos en disco está lleno: se admite la captura sin foto o
-    /// se espera a que se vacíe la cola, pero no se escribe a ciegas.
+    /// The on-disk photo cap is full: the capture is accepted without the photo or
+    /// it waits for the queue to empty, but nothing is written blindly.
     case photosFull
     case notFound(UUID)
     case notEditable(UUID)
 }
 
-/// Un JSON por captura en `Application Support/Queue/<uuid>.json` y la foto en
-/// `Queue/Photos/<uuid>.jpg`. Escritura atómica: una captura o está entera en
-/// disco o no está; nunca a medias. Lo que no se deja leer se aparta a
-/// `Queue/Quarantine`, intacto, y se cuenta: nunca se pierde en silencio.
+/// One JSON per capture in `Application Support/Queue/<uuid>.json` and the photo in
+/// `Queue/Photos/<uuid>.jpg`. Atomic write: a capture is either whole on
+/// disk or not there; never half. What cannot be read is set aside in
+/// `Queue/Quarantine`, intact, and counted: it is never lost silently.
 struct DiskQueueStore: QueueStore {
     let root: URL
 
-    /// Legible tras el primer desbloqueo —un App Intent escribe con el
-    /// teléfono bloqueado— y nunca a medias.
+    /// Readable after the first unlock —an App Intent writes with the
+    /// phone locked— and never half-written.
     private static let options: Data.WritingOptions = [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
 
-    /// Dentro de `Application Support`. Fija su nombre `StoredFormatTests`.
+    /// Inside `Application Support`. `StoredFormatTests` pins its name.
     static let folderName = "Queue"
-    /// Dentro de la carpeta de la cola.
+    /// Inside the queue folder.
     static let photosFolderName = "Photos"
-    /// Dentro de la carpeta de la cola: los archivos que no se pudieron leer.
+    /// Inside the queue folder: the files that could not be read.
     static let quarantineFolderName = "Quarantine"
 
     init(root: URL) {
         self.root = root
     }
 
-    /// `Application Support/Queue`. No toca el disco, así que no falla: la
-    /// carpeta se crea —y se excluye de la copia de iCloud— al escribir. Nunca
-    /// el directorio temporal, que iOS vacía cuando quiere.
+    /// `Application Support/Queue`. It does not touch the disk, so it does not fail: the
+    /// folder is created —and excluded from the iCloud backup— when writing. Never
+    /// the temporary directory, which iOS empties whenever it wants.
     static var defaultRoot: URL {
         URL.applicationSupportDirectory.appending(path: folderName, directoryHint: .isDirectory)
     }
 
-    /// Crea la carpeta si falta y la excluye de la copia de iCloud: lo que hay
-    /// aquí se envía en minutos y restaurarlo en otro teléfono duplicaría
-    /// gastos.
+    /// Creates the folder if it is missing and excludes it from the iCloud backup: what is
+    /// here is sent within minutes, and restoring it on another phone would duplicate
+    /// expenses.
     private func prepareRoot() throws {
         guard !FileManager.default.fileExists(atPath: root.path(percentEncoded: false)) else { return }
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
@@ -56,9 +56,9 @@ struct DiskQueueStore: QueueStore {
         root.appending(path: "\(id.uuidString).json")
     }
 
-    // ISO 8601 CON fracción de segundo: la estrategia `.iso8601` de serie la
-    // tira, y una captura dejaría de ser igual a sí misma al volver del disco.
-    // Un `FormatStyle` y no un `ISO8601DateFormatter`: es `Sendable`.
+    // ISO 8601 WITH fractional seconds: the stock `.iso8601` strategy
+    // drops it, and a capture would stop being equal to itself when it comes back from disk.
+    // A `FormatStyle` and not an `ISO8601DateFormatter`: it is `Sendable`.
     private static let dateFormat = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
 
     private static let jsonEncoder: JSONEncoder = {
@@ -90,10 +90,10 @@ struct DiskQueueStore: QueueStore {
         try data.write(to: file(capture.id), options: Self.options)
     }
 
-    /// Lo que se lee y es de esta versión. Un archivo corrupto o de una versión
-    /// que esta app no conoce se mueve a la cuarentena con su contenido, y la
-    /// cola sigue con los demás. Si el DISCO no deja leer —el teléfono aún no
-    /// se ha desbloqueado—, lanza: eso no es un archivo malo.
+    /// What is read and belongs to this version. A corrupt file, or one from a version
+    /// this app does not know, is moved to quarantine with its content, and the
+    /// queue goes on with the rest. If the DISK cannot be read —the phone has not
+    /// been unlocked yet—, it throws: that is not a bad file.
     func all() throws -> [PendingCapture] {
         guard FileManager.default.fileExists(atPath: root.path(percentEncoded: false)) else { return [] }
         let urls = try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)

@@ -2,15 +2,15 @@ import XCTest
 
 @testable import Coco
 
-/// Las claves con las que se escriben en disco la cola y el árbol. La cola usa
-/// las sintetizadas —los nombres de las propiedades, en inglés—, `body`
-/// incluido: no depende del contrato con la API, que se traduce al enviar.
-/// El árbol es una copia del servidor y guarda las claves de `TreeNode`, que
-/// fija `APIKeysTests`.
+/// The keys with which the queue and the tree are written to disk. The queue uses
+/// the synthesized ones —the property names, in English—, `body`
+/// included: it does not depend on the contract with the API, which is translated when sending.
+/// The tree is a copy of the server's and keeps the keys of `TreeNode`, which
+/// `APIKeysTests` pins.
 ///
-/// Si un renombre del código cambia una clave, una captura que ya estaba en la
-/// cola deja de leerse al actualizar la app. Las cadenas de aquí son el
-/// formato: no se tocan para que una prueba pase.
+/// If a code rename changes a key, a capture that was already in the
+/// queue stops being readable when the app is updated. The strings here are the
+/// format: they are not touched to make a test pass.
 final class StoredFormatTests: XCTestCase {
     private func json<T: Encodable>(_ value: T) throws -> String {
         let jsonEncoder = JSONEncoder()
@@ -72,7 +72,7 @@ final class StoredFormatTests: XCTestCase {
         )
     }
 
-    /// Dónde vive cada cosa en el teléfono: el nombre es parte del formato.
+    /// Where each thing lives on the phone: the name is part of the format.
     func testTheStorageNamesDoNotChange() {
         XCTAssertEqual(KeychainKey.refreshToken.rawValue, "refresh_token")
         XCTAssertEqual(SystemKeychain.defaultService, "co.loatech.coco")

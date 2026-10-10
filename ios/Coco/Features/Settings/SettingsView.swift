@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// La URL de la API, la versión, cuándo caduca la firma y una prueba de los
-/// avisos. Vive como hoja: se llega desde Más y desde la ficha de entrar.
+/// The API URL, the version, when the signature expires and a test of the
+/// notifications. It lives as a sheet: it is reached from More and from the sign-in sheet.
 struct SettingsView: View {
     let d: Dependencies
 
@@ -71,7 +71,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: Acciones
+    // MARK: Actions
 
     private func save() {
         guard let url = validation.url else { return }
@@ -100,15 +100,15 @@ struct SettingsView: View {
         testNotificationResult = L10n.Settings.notificationsSent
     }
 
-    // MARK: Puros
+    // MARK: Pure
 
     struct Validation: Equatable {
         let url: URL?
         let reason: String?
     }
 
-    /// `http(s)://host[:puerto]`, sin ruta ni consulta: la base a la que la
-    /// app añade `/api/v2`.
+    /// `http(s)://host[:port]`, without path or query: the base to which the
+    /// app adds `/api/v2`.
     nonisolated static func validate(_ text: String) -> Validation {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return Validation(url: nil, reason: nil) }

@@ -1,8 +1,8 @@
 import Foundation
 
-/// Pinta un monto del DTO («45000», «45000.50») como pesos: «$45.000»,
-/// «$45.000,50». A mano y no con `NumberFormatter`, que en es-CO mete un
-/// espacio tras el símbolo y cambia con la versión de iOS.
+/// Renders a DTO amount («45000», «45000.50») as pesos: «$45.000»,
+/// «$45.000,50». By hand and not with `NumberFormatter`, which in es-CO adds a
+/// space after the symbol and changes with the iOS version.
 enum PesoFormat {
     static func format(_ amount: String) -> String {
         let parts = amount.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)

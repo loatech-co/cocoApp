@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Buscar un concepto por nombre o palabra clave en el árbol guardado. Con
-/// la caja vacía enseña los recientes; si el recibo trajo candidatos, van
-/// arriba. Cada fila muestra la ruta para distinguir «Mercado» de «Mercado
+/// Searching for a concept by name or keyword in the saved tree. With
+/// the box empty it shows the recent ones; if the receipt brought candidates, they go
+/// on top. Each row shows the path to tell «Mercado» from «Mercado
 /// de la oficina».
 struct ConceptSearchView: View {
     @Bindable var model: FormModel

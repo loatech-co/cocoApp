@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// El único login de la app. Habla con `/auth/login` como cliente nativo; la
-/// web embebida nunca enseña el suyo.
+/// The app's only login. It talks to `/auth/login` as a native client; the
+/// embedded web never shows its own.
 struct SignInView: View {
     private let session: Session
     private let onSettings: (() -> Void)?
@@ -78,7 +78,7 @@ struct SignInView: View {
             do {
                 _ = try await session.signIn(email: email, password: password)
                 AppLog.session.info("Entró \(email, privacy: .private)")
-                // RootView retira la cubierta al observar el cambio de estado.
+                // RootView removes the cover when it observes the state change.
             } catch {
                 self.error = Self.message(from: error)
                 AppLog.session.error("Login falló: \(self.error ?? "", privacy: .public)")
@@ -87,7 +87,7 @@ struct SignInView: View {
         }
     }
 
-    /// Un texto que diga qué hacer, no un código.
+    /// A text that says what to do, not a code.
     nonisolated static func message(from error: Error) -> String {
         switch APIError.from(error) {
         case .unauthenticated:

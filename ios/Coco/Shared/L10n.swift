@@ -1,12 +1,12 @@
 import Foundation
 
-/// Los textos que ve el usuario, con su clave en `Localizable.xcstrings`.
-/// Ninguna vista escribe un texto suelto: lo pide aquí, y el valor en español
-/// vive en el catálogo (CONTRIBUTING.md, «iOS»). `LocalizationTests` comprueba
-/// que cada clave existe y conserva el texto de siempre.
+/// The texts the user sees, with their key in `Localizable.xcstrings`.
+/// No view writes a loose text: it asks for it here, and the Spanish value
+/// lives in the catalog (CONTRIBUTING.md, «iOS»). `LocalizationTests` checks
+/// that each key exists and keeps its usual text.
 ///
-/// Los formatos llevan `%@` y reciben cadenas: `"\(n)"` da lo mismo que daba
-/// la interpolación, sin que el locale meta separadores de miles.
+/// The formats carry `%@` and receive strings: `"\(n)"` gives the same as
+/// the interpolation did, without the locale adding thousands separators.
 enum L10n {
     enum Capture {
         static var amountLabel: String { text("capture.amount.label") }
@@ -234,8 +234,8 @@ enum L10n {
         static var errorSessionNotOpened: String { text("web.error.sessionNotOpened") }
     }
 
-    /// El valor del catálogo; si falta la clave, `Bundle` devuelve la clave
-    /// misma y la prueba lo caza.
+    /// The catalog value; if the key is missing, `Bundle` returns the key
+    /// itself and the test catches it.
     static func text(_ key: String) -> String {
         Bundle.main.localizedString(forKey: key, value: nil, table: nil)
     }

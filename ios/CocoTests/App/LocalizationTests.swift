@@ -2,12 +2,12 @@ import XCTest
 
 @testable import Coco
 
-/// Los textos pasaron del código a `Localizable.xcstrings` sin cambiar ni un
-/// carácter. `localization-baseline.json` es la lista de ANTES: cada texto
-/// sacado del código de la rama base (el commit va en `base`, y cada entrada
-/// dice de qué línea salió), con sus interpolaciones como `%@`.
+/// The texts moved from the code to `Localizable.xcstrings` without changing a single
+/// character. `localization-baseline.json` is the BEFORE list: each text
+/// taken from the code of the base branch (the commit goes in `base`, and each entry
+/// says which line it came from), with its interpolations as `%@`.
 ///
-/// Si un texto cambia a propósito, se cambia aquí también y el diff lo enseña.
+/// If a text changes on purpose, it is changed here too and the diff shows it.
 final class LocalizationTests: XCTestCase {
     private struct Entry: Decodable {
         let key: String
@@ -48,8 +48,8 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
-    /// Ni claves de sobra en el catálogo ni claves que el código pida y no
-    /// estén. Se lee lo COMPILADO, que es lo que llega al teléfono.
+    /// Neither extra keys in the catalog nor keys the code asks for that are not
+    /// there. What is read is the COMPILED one, which is what reaches the phone.
     func testCatalogsHoldExactlyTheBaselineKeys() throws {
         let baseline = try baseline()
         for (bundle, isExtension) in [(Bundle.main, false), (try extensionBundle(), true)] {

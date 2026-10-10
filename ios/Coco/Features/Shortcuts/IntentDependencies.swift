@@ -1,17 +1,17 @@
 import AppIntents
 import Foundation
 
-/// Las claves con que la app registra lo que los intents necesitan. El tipo
-/// registrado tiene que ser EXACTAMENTE el existencial que pide `@Dependency`
-/// (`any Capturer`, `any Navigation`); si no coincide, el intent revienta
-/// en ejecución con «dependency not found».
+/// The keys with which the app registers what the intents need. The registered
+/// type has to be EXACTLY the existential that `@Dependency` asks for
+/// (`any Capturer`, `any Navigation`); if it does not match, the intent blows up
+/// at run time with «dependency not found».
 enum DependencyKeys {
     static let capturer = "co.loatech.coco.capturer"
     static let navigation = "co.loatech.coco.navigation"
 }
 
 enum IntentDependencies {
-    /// Lo llama M9 al componer la app, antes de que iOS pueda lanzar un intent.
+    /// M9 calls it when composing the app, before iOS can launch an intent.
     @MainActor
     static func register(capturer: any Capturer, navigation: any Navigation) {
         AppDependencyManager.shared.add(key: DependencyKeys.capturer, dependency: capturer)

@@ -8,11 +8,11 @@ final class CaptureQueueTests: XCTestCase {
     private var sender = SenderDouble()
     private var session = SessionDouble()
     private var notifier = NotifierDouble()
-    /// Reloj fijo que las pruebas mueven a mano.
+    /// A fixed clock the tests move by hand.
     private let now = ControlledNow()
 
-    // `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
-    // corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
+    // `@unchecked Sendable`: a test double. What changes while the test
+    // runs goes under `lock`; what is configured is written before using it.
     final class ControlledNow: @unchecked Sendable {
         private let lock = NSLock()
         private var value = Date(timeIntervalSince1970: 1_800_000_000)
@@ -52,7 +52,7 @@ final class CaptureQueueTests: XCTestCase {
     private let body = CaptureBody(merchant: "D1", amount: "45000", date: "2026-10-05")
     private let photo = Data(repeating: 0xAB, count: 1024)
 
-    // MARK: Persistencia
+    // MARK: Persistence
 
     func testEnqueuePersistsAndAnotherQueueOnTheSameDirectorySeesIt() async throws {
         let id = UUID()
@@ -71,10 +71,10 @@ final class CaptureQueueTests: XCTestCase {
         let id = UUID()
         let original = PendingCapture(id: id, source: .sms, body: body)
         try store.save(original)
-        // Lo que había en disco antes del intento (el Date vuelve con milisegundos).
+        // What was on disk before the attempt (the Date comes back with milliseconds).
         let onDisk = try store.all()
         XCTAssertEqual(onDisk.map(\.id), [id])
-        // Sin permiso de escritura el reemplazo falla a mitad de camino.
+        // Without write permission the replacement fails halfway.
         try FileManager.default.setAttributes(
             [.posixPermissions: 0o500], ofItemAtPath: root.path(percentEncoded: false))
         defer {
@@ -89,7 +89,7 @@ final class CaptureQueueTests: XCTestCase {
         XCTAssertEqual(try store.all(), onDisk)
     }
 
-    // MARK: Idempotencia
+    // MARK: Idempotency
 
     func testEnqueueingTheSameIdTwiceLeavesOne() async throws {
         let id = UUID()
@@ -115,7 +115,7 @@ final class CaptureQueueTests: XCTestCase {
         let c = queue()
         let id = UUID()
         try await c.enqueue(body, source: .wallet, photo: nil, id: id)
-        // El doble contesta isDuplicate:true cuando ya vio el externalRef.
+        // The double answers isDuplicate:true when it already saw the externalRef.
         _ = try await sender.capture(PendingCapture(id: id, source: .wallet, body: body).request)
         let summary = await c.process()
         XCTAssertEqual(summary.sent, 1)
@@ -131,7 +131,7 @@ final class CaptureQueueTests: XCTestCase {
         fragile.failsSave = true
         sender.replyToPhoto(.failure(APIError.noNetwork(.notConnectedToInternet)))
         await c.process()
-        // La fase 1 llegó pero no se pudo anotar: sigue .porEnviar en disco.
+        // Phase 1 arrived but could not be noted down: it is still .toSend on disk.
         guard case .toSend? = await c.capture(id: id)?.phase else { return XCTFail("debería seguir porEnviar") }
 
         fragile.failsSave = false
@@ -145,7 +145,7 @@ final class CaptureQueueTests: XCTestCase {
         XCTAssertEqual(try store.photoBytes(), 0)
     }
 
-    // MARK: Reintentos
+    // MARK: Retries
 
     func testTwoNetworkFailuresGrowTheDelayAndNothingIsSentEarly() async throws {
         let c = queue()
@@ -158,7 +158,7 @@ final class CaptureQueueTests: XCTestCase {
         XCTAssertEqual(capture?.attempts, 1)
         XCTAssertEqual(capture?.nextAttempt, now.read().addingTimeInterval(5))
 
-        // Antes de tiempo no se toca la red.
+        // Before its time the network is not touched.
         now.advance(4)
         await c.process()
         XCTAssertEqual(sender.requests.count, 1)
@@ -254,11 +254,11 @@ final class CaptureQueueTests: XCTestCase {
         XCTAssertEqual(notifier.failures, ["Falta el texto"])
         await c.process()
         XCTAssertEqual(sender.requests.count, 1)
-        // Sigue en disco: nada se pierde.
+        // It is still on disk: nothing is lost.
         XCTAssertEqual(try store.all().count, 1)
     }
 
-    // MARK: Orden y ritmo
+    // MARK: Order and pace
 
     func testFIFOByCreatedAt() async throws {
         let c = queue()
@@ -283,7 +283,7 @@ final class CaptureQueueTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(instants[1] - instants[0], .milliseconds(290))
     }
 
-    // MARK: Dos fases
+    // MARK: Two phases
 
     func testAfterUploadingThePhotoItIsDeletedFromDisk() async throws {
         let c = queue()
@@ -333,7 +333,7 @@ final class CaptureQueueTests: XCTestCase {
         XCTAssertEqual(count, 2)
     }
 
-    // MARK: Limpieza y estado
+    // MARK: Cleanup and state
 
     func testPurgesDoneOlderThan30Days() async throws {
         let c = queue()
@@ -366,7 +366,7 @@ final class CaptureQueueTests: XCTestCase {
         sender.replyToCapture(.failure(APIError.noNetwork(.notConnectedToInternet)))
         try await c.enqueue(body, source: .wallet, photo: nil)
         await c.process()
-        // La publicación va por un buffer de uno; se da tiempo al lector.
+        // The publication goes through a buffer of one; the reader is given time.
         try await Task.sleep(for: .milliseconds(50))
         await c.process()
         let pendingSeen = await reader.value

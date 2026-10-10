@@ -2,12 +2,12 @@ import BackgroundTasks
 import SwiftUI
 import UserNotifications
 
-/// La app del teléfono.
+/// The phone app.
 ///
-/// Es un capturador delgado con la web dentro: lo que se puede hacer con una
-/// mano en diez segundos —anotar un gasto, fotografiar un recibo, recibir lo
-/// que Wallet o un SMS traen— es nativo; todo lo demás es la misma web, en un
-/// `WKWebView`, con la misma sesión. Cada pantalla existe una sola vez.
+/// It is a thin capturer with the web inside: what can be done with one
+/// hand in ten seconds —jotting down an expense, photographing a receipt,
+/// receiving what Wallet or an SMS brings— is native; everything else is the
+/// same web, in a `WKWebView`, with the same session. Each screen exists only once.
 @main
 struct CocoApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
@@ -16,8 +16,8 @@ struct CocoApp: App {
     private let d: Dependencies
 
     init() {
-        // Compone todo —y registra intents y tareas de fondo— antes de que
-        // termine el arranque, que es cuando iOS lo exige.
+        // Composes everything —and registers intents and background tasks—
+        // before launch finishes, which is when iOS demands it.
         d = Dependencies.shared
         AppLog.app.info("Coco \(Brand.version, privacy: .public) arrancando")
     }
@@ -45,8 +45,8 @@ struct CocoApp: App {
     }
 }
 
-/// Lo que SwiftUI no cubre: ser el delegado de las notificaciones para
-/// enseñarlas con la app abierta y llevar al destino al tocarlas.
+/// What SwiftUI does not cover: being the notification delegate, to
+/// show them with the app open and go to the destination when tapped.
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(
         _ application: UIApplication,
@@ -56,8 +56,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         return true
     }
 
-    // `nonisolated`: el centro de notificaciones llama desde su propio hilo y
-    // lo que entrega no es `Sendable`; aquí solo se mira la URL de destino.
+    // `nonisolated`: the notification center calls from its own thread and
+    // what it hands over is not `Sendable`; here only the destination URL is looked at.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter, willPresent notification: UNNotification
     ) async

@@ -1,17 +1,17 @@
 import Foundation
 
-/// Las fechas de un gasto se escriben en el día de Bogotá, no en el del
-/// simulador ni en UTC: un pago a las 23:30 del día 3 es del día 3.
+/// The dates of an expense are written in Bogotá's day, not in the
+/// simulator's nor in UTC: a payment at 23:30 on the 3rd belongs to the 3rd.
 enum BogotaDate {
     static let timeZone = TimeZone(identifier: "America/Bogota") ?? TimeZone(secondsFromGMT: -5 * 3600) ?? .current
 
-    /// `YYYY-MM-DD` en America/Bogota.
+    /// `YYYY-MM-DD` in America/Bogota.
     static func day(_ instant: Date, calendar: Calendar = .init(identifier: .gregorian)) -> String {
         let parts = components(instant, calendar: calendar)
         return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
     }
 
-    /// `YYYY-MM` en America/Bogota.
+    /// `YYYY-MM` in America/Bogota.
     static func month(_ instant: Date, calendar: Calendar = .init(identifier: .gregorian)) -> String {
         let parts = components(instant, calendar: calendar)
         return String(format: "%04d-%02d", parts.year ?? 0, parts.month ?? 0)

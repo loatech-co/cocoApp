@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Lo que se ve cuando no hay red y la web no llegó a cargar. Lo importante
-/// es decir que capturar sigue funcionando.
+/// What is shown when there is no network and the web did not get to load. The important thing
+/// is to say that capturing still works.
 struct OfflineView: View {
     let pending: Int
     let retry: () -> Void

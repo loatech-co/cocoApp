@@ -2,7 +2,7 @@ import XCTest
 
 @testable import Coco
 
-/// Fixtures con la forma exacta de la `/api/v2` (`api/openapi.v2.json`).
+/// Fixtures with the exact shape of the `/api/v2` (`api/openapi.v2.json`).
 final class ContractsTests: XCTestCase {
     private func decode<T: Decodable>(_ kind: T.Type, _ json: String) throws -> T {
         try JSONDecoder().decode(Envelope<T>.self, from: Data(json.utf8)).data
@@ -93,10 +93,10 @@ final class ContractsTests: XCTestCase {
         XCTAssertTrue(CaptureBody(amount: "1", categoryId: 2).isSendable)
     }
 
-    /// Lee `native-contract.ts` y `api/openapi.v2.json` —copiados en el
-    /// paquete de pruebas por `scripts/copy-web-for-tests.sh`— y falla si la
-    /// marca, la cabecera nativa o el campo de los soportes se separan. Sin la
-    /// copia falla: no se salta.
+    /// Reads `native-contract.ts` and `api/openapi.v2.json` —copied into the
+    /// test bundle by `scripts/copy-web-for-tests.sh`— and fails if the
+    /// brand, the native header or the receipts field drift apart. Without the
+    /// copy it fails: it is not skipped.
     func testBrandMatchesCocoTypes() throws {
         let web = try XCTUnwrap(Bundle(for: Self.self).resourceURL).appending(path: "Web")
         let source = try String(contentsOf: web.appending(path: "native-contract.ts"), encoding: .utf8)
@@ -110,12 +110,12 @@ final class ContractsTests: XCTestCase {
         XCTAssertTrue(openAPI.contains(#""required": ["\#(RequestBuilder.attachmentsField)"]"#))
     }
 
-    /// Las dos mitades del puente con la web se llaman igual. Lee
-    /// `native-contract.ts` y `bridge.ts` —copiados en el paquete de pruebas
-    /// por `scripts/copy-web-for-tests.sh`— y falla si un nombre de un lado no
-    /// está en el otro: los dos manejadores, los avisos (`AppNotices`), lo
-    /// que la app llama en `window.__coco` y los eventos de `BridgeEvent`, en
-    /// los dos sentidos. Sin la copia falla: no se salta.
+    /// The two halves of the bridge with the web have the same names. It reads
+    /// `native-contract.ts` and `bridge.ts` —copied into the test bundle
+    /// by `scripts/copy-web-for-tests.sh`— and fails if a name on one side is not
+    /// on the other: the two handlers, the notices (`AppNotices`), what
+    /// the app calls in `window.__coco` and the `BridgeEvent` events, in
+    /// both directions. Without the copy it fails: it is not skipped.
     func testBridgeNamesMatchTheWeb() throws {
         let web = try XCTUnwrap(Bundle(for: Self.self).resourceURL).appending(path: "Web")
         let contract = try String(contentsOf: web.appending(path: "native-contract.ts"), encoding: .utf8)
@@ -136,14 +136,14 @@ final class ContractsTests: XCTestCase {
         XCTAssertEqual(Set(names), Set(WebEvent.allCases.map(\.rawValue)))
     }
 
-    /// Lo que va entre `header` y la llave que lo cierra.
+    /// What goes between `header` and the brace that closes it.
     private static func block(after header: String, in source: String) -> Substring? {
         guard let start = source.range(of: header) else { return nil }
         guard let end = source[start.upperBound...].range(of: "\n}") else { return nil }
         return source[start.upperBound..<end.lowerBound]
     }
 
-    /// Los nombres de los métodos de un bloque `interface`: `  name(...): void;`.
+    /// The method names of an `interface` block: `  name(...): void;`.
     private static func members(of block: Substring) -> Set<String> {
         Set(block.matches(of: #/\n  ([A-Za-z]+)\(/#).map { String($0.1) })
     }

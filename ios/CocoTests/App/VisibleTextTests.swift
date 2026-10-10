@@ -1,23 +1,23 @@
 import XCTest
 
-/// Ningún texto que vea el usuario se escribe suelto en el código: se pide a
-/// `L10n` y vive en `Localizable.xcstrings` (CONTRIBUTING.md, «iOS»).
+/// No text the user sees is written loose in the code: it is asked of
+/// `L10n` and lives in `Localizable.xcstrings` (CONTRIBUTING.md, «iOS»).
 ///
-/// Lee el código fuente de la app y de la extensión —copiado dentro del
-/// paquete de pruebas, porque el simulador no puede leer el repo—, saca cada
-/// literal de cadena y falla si alguno PARECE texto —lleva una letra con tilde o una
-/// eñe, dos palabras seguidas, o es una palabra con mayúscula inicial— y no
-/// está en las excepciones. En un sitio que se ve —`Text(`, `Button(`,
-/// `.accessibilityLabel(`, `prompt:`…— basta con que lleve una letra: ahí
-/// una palabra suelta en minúsculas («sugerido») también es texto. Los mensajes del registro (`.info(`, `.error(`…)
-/// no cuentan: no los ve el usuario.
+/// It reads the source code of the app and of the extension —copied inside the
+/// test bundle, because the simulator cannot read the repo—, takes out each
+/// string literal and fails if any LOOKS like text —it has an accented letter or an
+/// ñ, two words in a row, or it is a word with an initial capital— and it is not
+/// among the exceptions. In a place that is seen —`Text(`, `Button(`,
+/// `.accessibilityLabel(`, `prompt:`…— it is enough for it to have a letter: there
+/// a single lowercase word («sugerido») is text too. Log messages (`.info(`, `.error(`…)
+/// do not count: the user does not see them.
 ///
-/// Toda excepción va con su motivo, y una excepción que ya no se usa también
-/// falla: la lista no se pudre.
+/// Every exception comes with its reason, and an exception no longer used also
+/// fails: the list does not rot.
 final class VisibleTextTests: XCTestCase {
     private struct Exception {
         let file: String
-        /// `nil`: el archivo entero.
+        /// `nil`: the whole file.
         let text: String?
         let reason: String
     }
@@ -26,7 +26,7 @@ final class VisibleTextTests: XCTestCase {
         "App Intent: título, descripción y parámetros son lo que se ve en Atajos y Siri, escrito en el intent"
 
     private static let exceptions: [Exception] = [
-        // Texto de usuario de Atajos y Siri: va literal en el intent (ADR 0021).
+        // User text from Shortcuts and Siri: it goes literally in the intent (ADR 0021).
         .init(
             file: "Coco/Features/Shortcuts/CocoShortcuts.swift", text: nil,
             reason: "Frases y títulos de los App Shortcuts: lo que se dice a Siri y se ve en Atajos"),
@@ -34,7 +34,7 @@ final class VisibleTextTests: XCTestCase {
         .init(file: "Coco/Features/Shortcuts/RecordWalletExpenseIntent.swift", text: nil, reason: intentContract),
         .init(file: "Coco/Features/Shortcuts/RecordManualExpenseIntent.swift", text: nil, reason: intentContract),
         .init(file: "CocoWidgets/OpenCaptureIntent.swift", text: nil, reason: intentContract),
-        // No los ve el usuario.
+        // The user does not see them.
         .init(
             file: "Coco/App/Dependencies.swift", text: "sin sesión",
             reason: "Nombre del estado de la sesión para el registro"),
@@ -61,13 +61,13 @@ final class VisibleTextTests: XCTestCase {
             reason: "JavaScript que se evalúa en la web"),
     ]
 
-    // Calculada: un `Regex` no es `Sendable` y no puede ser una constante global.
+    // Computed: a `Regex` is not `Sendable` and cannot be a global constant.
     private static var logCall: Regex<(Substring, Substring)> { #/\.(debug|info|notice|warning|error|fault)\($/# }
 
-    /// Los sitios donde lo que se escribe lo ve (o lo oye) el usuario: las
-    /// vistas que reciben un título, los modificadores de accesibilidad y los
-    /// argumentos que son texto. `label:` no está: en SwiftUI es un cierre, y
-    /// fuera de él nombra colas.
+    /// The places where what is written is seen (or heard) by the user: the
+    /// views that receive a title, the accessibility modifiers and the
+    /// arguments that are text. `label:` is not there: in SwiftUI it is a closure, and
+    /// outside it, it names queues.
     private static var visibleSlot: Regex<Substring> {
         #/(?:^|[^A-Za-z0-9_.])(?:Text|Button|Label|Toggle|TextField|SecureField|LabeledContent|Section|DatePicker|Picker|Link|Menu|ProgressView|ContentUnavailableView)\($|\.(?:navigationTitle|accessibilityLabel|accessibilityHint|accessibilityValue|help|badge|alert|confirmationDialog)\($|(?:^|[^A-Za-z0-9_])(?:prompt|placeholder|title|message):$/#
     }
@@ -79,7 +79,7 @@ final class VisibleTextTests: XCTestCase {
     }
 
     func testNoVisibleTextOutsideTheCatalog() throws {
-        // Las carpetas van copiadas en el paquete de pruebas (project.yml).
+        // The folders are copied into the test bundle (project.yml).
         let ios = try XCTUnwrap(Bundle(for: Self.self).resourceURL)
         var violations: [String] = []
         var used = Set<Int>()
@@ -137,14 +137,14 @@ final class VisibleTextTests: XCTestCase {
     }
 }
 
-/// Un lector mínimo de literales de Swift: salta comentarios, entra en las
-/// interpolaciones (que se leen como `%@`) y entiende `"""` y las escapadas.
-/// Basta para estas pruebas; no es un analizador de Swift.
+/// A minimal reader of Swift literals: it skips comments, goes into the
+/// interpolations (which are read as `%@`) and understands `"""` and escapes.
+/// It is enough for these tests; it is not a Swift parser.
 enum SwiftLiterals {
     struct Literal: Equatable {
         let line: Int
         let value: String
-        /// Lo que hay justo antes, sin espacios: para reconocer una llamada.
+        /// What is right before, without spaces: to recognize a call.
         let preceding: String
     }
 
@@ -206,7 +206,7 @@ enum SwiftLiterals {
             }
         }
 
-        /// `\` y salto de línea, dentro de `"""`, parte la línea sin añadir nada.
+        /// `\` and a line break, inside `"""`, splits the line without adding anything.
         static func unescape(_ escaped: Character) -> String {
             switch escaped {
             case "n": "\n"

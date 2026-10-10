@@ -1,8 +1,8 @@
 import Foundation
 
-/// Lo que la web encuentra antes de su primer script: quién la aloja. Solo
-/// el frame principal y congelado, para que ninguna página incrustada pueda
-/// fingir ni cambiar la plataforma.
+/// What the web finds before its first script: who hosts it. Only
+/// the main frame and frozen, so that no embedded page can
+/// fake or change the platform.
 enum BootScript {
     static func source(version: String) -> String {
         let versionJSON = WebBridge.jsonString(version)
