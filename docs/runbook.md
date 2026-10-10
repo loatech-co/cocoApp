@@ -461,27 +461,59 @@ fix it.**
 
 ---
 
-## GitHub Actions minutes
+## CI minutes (Minutos de CI)
 
-The repo is private on the free plan: 2,000 Linux minutes a month, each job
-billed rounded UP to the minute (macOS counts 10x). If they run out, no check
-runs and `scripts/merge.sh` integrates nothing.
+The repo is private on the free plan: **2,000 Linux minutes a month**, each
+job billed rounded UP to the minute, a macOS minute counted as ten. If they run
+out, no check runs and `scripts/merge.sh` integrates nothing.
 
-- **What runs where.** On every PR: `hygiene` (gitleaks over the PR's
-  commits, commitlint, prettier over the changed files). On a PR that touches
-  anything outside `docs/`, `.claude/` and `*.md`: `ci` and `journeys` too.
-  Weekly and on demand: `security` (gitleaks over the whole history, audit).
-  Nothing runs on the push to `Dev`: merge.sh fast-forwards, so the SHA is the
-  one its PR already passed.
-- **Measure the month.** The billing endpoint needs the `user` scope
-  (`gh auth refresh -s user`, then
-  `gh api users/loatech-co/settings/billing/actions`). Without it, sum the
-  jobs of `gh api 'repos/loatech-co/cocoApp/actions/runs?created=>=YYYY-MM-01'`,
-  each rounded up to the minute.
-- **Running low.** Batch small docs changes into one PR, and do not re-push
-  a PR just to retrigger: `gh run rerun <id> --failed` re-runs only what
-  failed. Keep the spending limit at 0 USD so running out stops and never
-  bills.
+**Every job runs on every PR, and skips itself when its area did not change**
+(step J-7). `ci.yml` is one workflow: `hygiene` (gitleaks over the PR's
+commits, commitlint, prettier over the changed files) also decides the areas,
+and `verify`, `clean-install` and `journeys` depend on it with an `if:`. A
+skipped job reports `skipping`, which merge.sh accepts, and costs nothing; a
+workflow filtered out by `paths` would report no check at all. The areas and
+their paths are listed at the top of `ci.yml`: the lockfile, `package.json`,
+`.github/`, `scripts/ci/` or a root config runs everything. Inside `verify`,
+Postgres, the API e2e and the OpenAPI check need `api/` or `packages/`; the
+frontend coverage, its build and size-limit need `frontend/` or `packages/`.
+iOS is manual (`ios.yml`, x10).
+
+- **merge.sh waits for the RUNS, not only the checks.** A job that `needs`
+  another has no check until that one finishes: while `hygiene` runs, the
+  heavy jobs are not listed, and the moment it passes everything listed is
+  green. So merge.sh first waits for every workflow run of the PR head to be
+  `completed`, then reads the checks.
+- **Minutes per push** (billed, measured on real PRs, October 2026):
+
+  | PR touches                       | Before J-7 | After J-7 | Jobs that run (after)         |
+  | -------------------------------- | ---------: | --------: | ----------------------------- |
+  | Only docs, `.claude/`, `*.md`    |          1 |         1 | hygiene                       |
+  | Only `ios/`                      |         11 |         1 | hygiene (+ `ios.yml` by hand) |
+  | Only scripts (not `scripts/ci`)  |         11 |        ~4 | hygiene, verify (light)       |
+  | Web (`frontend/`)                |         11 |         9 | all four, verify without API  |
+  | API (`api/`)                     |         11 |        ~9 | all four, verify without web  |
+  | Everything (lockfile, workflows) |         11 |        10 | all four                      |
+
+  "Before" is the average of 15 PRs (120 runs): hygiene 1, verify 5.4,
+  clean-install 1.1, journeys 3.1, and journeys hit 5–6 whenever apt rebuilt
+  the man-db index (two minutes, now switched off). Each merge to `Dev` adds 1
+  for `release-please`. The weekly `security` is one job now: ~4 a month.
+
+- **How many PRs fit.** A code PR is pushed about three times: ~28 minutes,
+  plus 1 for the release. That is **~65 code PRs a month**, or ~1,000 docs
+  PRs. The limit is pushes, not PRs: on 9 October, a heavy day, 833 minutes
+  went in one day. Run the local checks before pushing, push once, and re-run
+  a flaky job with `gh run rerun <id> --failed` instead of pushing again.
+- **Measure the month.** `node scripts/ci/actions-minutes.mjs [YYYY-MM-DD]`
+  sums every job since that day (default: the 1st) the way GitHub bills it,
+  by workflow and job, with plain read access. GitHub's own figure needs the
+  `user` scope: `gh auth refresh -s user`, then
+  `gh api users/loatech-co/settings/billing/usage`.
+- **Spending limit: 0 USD — OWNER ACTION.** Settings → Billing and plans →
+  Budgets and alerts, Actions budget at 0 USD with "stop usage" on, so running
+  out stops and never bills. There is no API for a personal account's budget
+  that works without new scopes; it is set by hand.
 - **Actions are pinned by SHA** with the version in a comment; Dependabot
   (`github-actions`, monthly) proposes the bumps.
 

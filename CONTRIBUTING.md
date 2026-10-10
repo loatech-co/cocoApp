@@ -249,7 +249,7 @@ git commit --no-verify -m "wip"
 
 [Conventional Commits](https://www.conventionalcommits.org/), checked by
 commitlint (`commitlint.config.js`, `@commitlint/config-conventional`). The
-commit-msg hook checks each commit locally, and CI (the `hygiene` workflow,
+commit-msg hook checks each commit locally, and CI (the `hygiene` job of `ci.yml`,
 which runs on every pull request, docs-only ones included) checks every commit
 of a pull request. In
 English, imperative, lower case after the colon, no final period.
@@ -658,7 +658,7 @@ needs an ADR with the reason.
 of that schema, without values; what only the scripts read goes in
 `api/.env.migrate.example`. `gitleaks` scans what is staged on every commit
 (lefthook `pre-commit`), the commits of every pull request in CI
-(`hygiene.yml`) and the whole history weekly (`security.yml`).
+(the `hygiene` job of `ci.yml`) and the whole history weekly (`security.yml`).
 
 **Why.** A secret in the code or in a commit is a secret to rotate: removing
 it later does not remove it from the history. The pre-commit scan stops it
@@ -1048,8 +1048,9 @@ npm run e2e                      # all of them; `-- --project movil` for one vie
 - **Selectors are what a person sees**: roles and accessible names, never
   classes or file structure. A journey that breaks because a label changed is
   telling the truth.
-- CI runs them in the `journeys` workflow on every pull request that touches
-  more than docs; on failure
+- CI runs them in the `journeys` job of `ci.yml` on every pull request that
+  touches `api/`, `frontend/`, `packages/`, `e2e/` or `scripts/db/` (or the
+  lockfile, the workflows or a root config); on failure
   the HTML report and the traces are uploaded as an artifact.
 
 ## iOS
