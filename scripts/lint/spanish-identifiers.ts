@@ -5,8 +5,9 @@
  * What it reads: every name DECLARED in TypeScript/JavaScript under `api/`,
  * `frontend/`, `packages/`, `scripts/` and `e2e/`, and in Swift under `ios/`
  * (variables, parameters, functions, classes, types, members, object keys),
- * plus the `@custom-variant` names of every stylesheet and every file and
- * folder name there. A name is split into words
+ * plus the `@custom-variant` names and `--*` custom properties of every
+ * stylesheet, the custom properties code names (`var(--x)`, `'--x'`), and
+ * every file and folder name there. A name is split into words
  * (camelCase, PascalCase, snake_case, kebab-case), accents are stripped
  * (`categoría` → `categoria`) and it fails if a word is in SPANISH_WORDS.
  *
@@ -225,11 +226,25 @@ function swiftNames(text: string): { name: string; line: number }[] {
  */
 const CSS_VARIANT = /@custom-variant\s+([\w-]+)/g;
 
-function cssVariantNames(text: string): { name: string; line: number }[] {
-  return [...text.matchAll(CSS_VARIANT)].map((match) => ({
+/** Every custom property a stylesheet declares or reads (`--bar-gap`). */
+const CSS_PROPERTY = /(?<![\w-])--([a-z][\w-]*)/gi;
+
+/**
+ * A custom property named from code: `var(--x)`, `'--x'` in a `style`, the
+ * Tailwind forms `[--x:…]` and `pb-(--x)`. Only those openings, so a CLI flag
+ * in a comment is not taken for one.
+ */
+const CODE_PROPERTY = /(?:var\(|['"`[(])--([a-z][\w-]*)/gi;
+
+function matchedNames(text: string, pattern: RegExp): { name: string; line: number }[] {
+  return [...text.matchAll(pattern)].map((match) => ({
     name: match[1]!,
     line: text.slice(0, match.index).split('\n').length,
   }));
+}
+
+function cssNames(text: string): { name: string; line: number }[] {
+  return [...matchedNames(text, CSS_VARIANT), ...matchedNames(text, CSS_PROPERTY)];
 }
 
 // ── The scan ────────────────────────────────────────────────────────────────
@@ -281,10 +296,10 @@ function scan(): Hit[] {
       continue; // deleted in the working tree, not yet staged
     }
     const names = isCss
-      ? cssVariantNames(text)
+      ? cssNames(text)
       : isSwift
         ? swiftNames(text)
-        : declaredNames(file, text);
+        : [...declaredNames(file, text), ...matchedNames(text, CODE_PROPERTY)];
     for (const { name, line } of names) {
       if (spanishIn(name).length > 0) hits.push({ folder, entry: name, where: `${file}:${line}` });
     }
