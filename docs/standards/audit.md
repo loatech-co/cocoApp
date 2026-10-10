@@ -2,6 +2,8 @@
 
 Date: 2026-10-05. Branch `docs/phase-6-report` at `12245fa`. Nothing in the source tree was changed to produce this audit.
 
+**Closed on 2026-10-09.** This file is the photo of the day it was taken and is not updated. What became of each finding (done, postponed or dropped, with its reference) is in [`audit-closing.md`](./audit-closing.md).
+
 The targets here are the **default decisions** in `docs/plan-completo.md` §7.2–7.13. If Part A (`decisions.md`) changes a decision, the rows it affects get re-scored at the 7.1 stop.
 
 Gap legend:

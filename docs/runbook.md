@@ -372,6 +372,27 @@ value) and they used to win; changing them in hPanel does nothing now.
 Supabase Auth's signing keys rotate without a redeploy: the API verifies
 against the project's JWKS.
 
+## Owner actions (open at the close of phase 7)
+
+**These need the owner's accounts or production; no agent does them.** Each
+one, once done, is noted in `docs/registro-autonomo.md` with its date and
+crossed off here.
+
+| Action                                                                                                                          | Where it is explained                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Rotate the credentials that were ever stored in plain text in local tool configuration, then delete any local copy holding them | "Rotate secrets", above                                                               |
+| Apply `20261010003334_guard_users_insert` in production and check `migrate status`                                              | "Guard on `users` inserts (J-5)"                                                      |
+| Create `RELEASE_PLEASE_TOKEN` and set the variable `RELEASE_PLEASE_ENABLED=true`                                                | [ADR 0028](adr/0028-release-please-waits-for-the-owner.md), CONTRIBUTING "Versioning" |
+| Set the GitHub Actions budget to 0 USD (Settings, Billing, Budgets)                                                             | "CI minutes"                                                                          |
+| Switch the hPanel deploy branch to `main` and retire `Dev`                                                                      | [ADR 0009](adr/0009-trunk-based-with-dev-as-deploy-branch.md)                         |
+| Keep a copy of the backup key in the password manager, or replace it                                                            | "The encryption key — OWNER ACTION"                                                   |
+| Approve or reject the backup retention and its two delete candidates                                                            | "Retention — PROPOSAL, not in force"                                                  |
+| Delete `.env.before-rls` on the server after a week without RLS incidents                                                       | "Row-level security", "Undo, from the cheapest"                                       |
+| Decide on statement imports (`import_*`) and on how iOS shares the document reader                                              | plan, 8.6; [ADR 0031](adr/0031-import-tables-stay-until-the-owner-decides.md)         |
+
+Why here and not in the handoffs: the handoffs are deleted when a phase
+closes, and an owner action that only lived in one was lost with it.
+
 ## Environment variables renamed to English (7.2-r3)
 
 Five variables changed name, by expand and contract. Only the names: the
@@ -396,10 +417,11 @@ values stay (`si` is still `si`, the bucket is still `soportes`, ADR 0026).
   `deprecated name` warning is reading the new names.
 - **Local.** An `api/.env` with the old names still starts, with the
   warning. Rename the lines when convenient.
-- **Contraction (7.10).** Remove the old lines from the server `.env` (a
-  deletion on the server: backup first, per `CLAUDE.md`), then delete
-  `RENAMED_ENV`, the fallback, the warnings and the scripts' fallback, and
-  `.env.before-r3`.
+- **Contraction.** Its own step, with its trigger (14 days of `api.log`
+  without a `deprecated name` warning) and its safeguard (full backup and a
+  tested restore first, per `CLAUDE.md`): plan, 8.7. Then the code stops
+  reading the old names, and only after that deploy are the old lines and
+  `.env.before-r3` removed from the server.
 
 ## Renew the iOS build every 7 days
 
