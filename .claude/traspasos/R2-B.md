@@ -22,9 +22,7 @@
 - El historial público sigue teniendo el nombre y el dominio: reescritura aparte.
 - `ios/README.md` y otros docs en español quedan para el ejecutor de documentación.
 
-**Decisiones**
-
-- Un mensaje se traduce solo si ES el valor por defecto en inglés; el propio de un decorador
-  pasa intacto.
+**Decisiones**: un mensaje se traduce solo si ES el valor por defecto en inglés; el propio de un decorador
+pasa intacto.
 
 **Borrado**: la base `coco_e2e_r2b_test` y la de Playwright; `api/.env.test` local.
