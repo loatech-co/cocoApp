@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, render } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -107,14 +107,17 @@ describe('The shell below the breakpoint', () => {
     expect(top.querySelector('svg')).toBeTruthy();
   });
 
-  it('the bar (+) opens the sheet of a new transaction', () => {
+  it('the bar (+) opens the sheet of a new transaction', async () => {
     renderShell();
 
     expect(document.querySelector('[aria-label="Nuevo movimiento"]')).toBeNull();
     act(() => {
       document.querySelector<HTMLElement>('[aria-label="Registrar un gasto"]')!.click();
     });
-    expect(document.querySelector('[aria-label="Nuevo movimiento"]')).toBeTruthy();
+    // The sheet is its own chunk (`transaction-modal-on-demand.tsx`): it draws once it loads.
+    await waitFor(() => {
+      expect(document.querySelector('[aria-label="Nuevo movimiento"]')).toBeTruthy();
+    });
   });
 });
 

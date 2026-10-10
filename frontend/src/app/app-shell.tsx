@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
 import { SearchPanel } from '@/features/transactions/components/search-panel';
-import { TransactionModal } from '@/features/transactions/components/transaction-modal';
+import { TransactionModalOnDemand } from '@/features/transactions/components/transaction-modal-on-demand';
 import { useAuth } from '@/shared/api/auth-context';
 import { registerBridge } from '@/shared/api/native-bridge';
 import { invalidateDerived } from '@/shared/api/query-keys';
@@ -319,7 +319,7 @@ function SearchAndSheet({ shell }: { shell: ShellState }) {
           its own scrim's animation, which runs on existing—, and always
           mounted it would keep its queries alive on every phone screen. */}
       {shell.sheet !== undefined && (
-        <TransactionModal
+        <TransactionModalOnDemand
           isOpen
           transaction={shell.sheet}
           defaultType="expense"

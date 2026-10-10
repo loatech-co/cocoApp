@@ -3,7 +3,7 @@ import { DashboardKpis } from '@/features/transactions/components/dashboard-kpis
 import { DashboardSkeleton } from '@/features/transactions/components/dashboard-skeleton';
 import { DashboardTransactions } from '@/features/transactions/components/dashboard-transactions';
 import { ToolbarFilters } from '@/features/transactions/components/toolbar-filters';
-import { TransactionModal } from '@/features/transactions/components/transaction-modal';
+import { TransactionModalOnDemand } from '@/features/transactions/components/transaction-modal-on-demand';
 import { useDashboardPage } from '@/features/transactions/hooks/use-dashboard-page';
 import { ApiClientError } from '@/shared/api/api-client';
 import { useAuth } from '@/shared/api/auth-context';
@@ -70,7 +70,7 @@ export function DashboardPage() {
         </>
       )}
 
-      <TransactionModal
+      <TransactionModalOnDemand
         isOpen={sheet.editing !== undefined}
         transaction={sheet.editing}
         payment={sheet.confirming}
