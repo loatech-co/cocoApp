@@ -21,7 +21,7 @@ export interface ReceiptStore {
   /** Where it stores, for the start-up log line. Never a secret. */
   describe(): string;
   /** Whether the store is reachable/configured; logged at start-up. */
-  check(): Promise<{ ok: boolean; detail: string }>;
+  check(): Promise<{ isReady: boolean; detail: string }>;
   save(key: string, content: Buffer, mimeType: string): Promise<void>;
   /** The file, or null if the store does not have it. */
   open(key: string): Promise<Readable | null>;
@@ -55,10 +55,10 @@ class DiskReceiptStore implements ReceiptStore {
     return `disk ${diskStoreStatus().folder}`;
   }
 
-  check(): Promise<{ ok: boolean; detail: string }> {
+  check(): Promise<{ isReady: boolean; detail: string }> {
     const { folder, exists: doesExist } = diskStoreStatus();
     return Promise.resolve({
-      ok: doesExist,
+      isReady: doesExist,
       detail: doesExist
         ? folder
         : `${folder} does not exist — check RECEIPTS_DIR (mind the quotes)`,
@@ -110,14 +110,14 @@ export class SupabaseReceiptStore implements ReceiptStore {
     return `supabase bucket "${this.bucket}" at ${new URL(this.base).host}`;
   }
 
-  async check(): Promise<{ ok: boolean; detail: string }> {
+  async check(): Promise<{ isReady: boolean; detail: string }> {
     const response = await this.request('GET', `/bucket/${this.bucket}`);
     if (!response.ok)
-      return { ok: false, detail: `bucket "${this.bucket}": HTTP ${response.status}` };
+      return { isReady: false, detail: `bucket "${this.bucket}": HTTP ${response.status}` };
     const bucket = (await response.json()) as { public?: boolean };
     return bucket.public
-      ? { ok: false, detail: `bucket "${this.bucket}" is PUBLIC; receipts must be private` }
-      : { ok: true, detail: `bucket "${this.bucket}" (private)` };
+      ? { isReady: false, detail: `bucket "${this.bucket}" is PUBLIC; receipts must be private` }
+      : { isReady: true, detail: `bucket "${this.bucket}" (private)` };
   }
 
   async save(key: string, content: Buffer, mimeType: string): Promise<void> {

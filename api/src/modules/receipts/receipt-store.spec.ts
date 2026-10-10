@@ -36,7 +36,7 @@ describe('receipt store', () => {
       .mockResolvedValue(new Response(JSON.stringify({ public: true }), { status: 200 }));
     const store = new SupabaseReceiptStore('https://x.supabase.co', 'k', 'soportes');
 
-    expect((await store.check()).ok).toBe(false);
+    expect((await store.check()).isReady).toBe(false);
   });
 
   it('a missing object is a null stream, not an error', async () => {
@@ -57,9 +57,12 @@ describe('receipt store', () => {
 
     it('reports an unreachable bucket and accepts a private one', async () => {
       reply(null, 404);
-      expect(await store.check()).toEqual({ ok: false, detail: 'bucket "soportes": HTTP 404' });
+      expect(await store.check()).toEqual({
+        isReady: false,
+        detail: 'bucket "soportes": HTTP 404',
+      });
       reply(JSON.stringify({ public: false }), 200);
-      expect(await store.check()).toEqual({ ok: true, detail: 'bucket "soportes" (private)' });
+      expect(await store.check()).toEqual({ isReady: true, detail: 'bucket "soportes" (private)' });
     });
 
     it('never overwrites an object and fails when storage refuses it', async () => {

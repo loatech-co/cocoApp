@@ -65,8 +65,8 @@ export class ReceiptsService implements OnModuleInit {
    * `/proc/<pid>/environ`. This line would have said it at the first restart.
    */
   async onModuleInit(): Promise<void> {
-    const { ok: isReady, detail } = await this.store.check().catch((error: unknown) => ({
-      ok: false,
+    const { isReady, detail } = await this.store.check().catch((error: unknown) => ({
+      isReady: false,
       detail: error instanceof Error ? error.message : String(error),
     }));
 

@@ -48,7 +48,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -726,7 +726,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -944,7 +944,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1050,7 +1050,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1321,7 +1321,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2512,7 +2512,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2730,7 +2730,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2825,7 +2825,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3016,7 +3016,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3131,7 +3131,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3510,7 +3510,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3902,7 +3902,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4661,7 +4661,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5259,7 +5259,6 @@
               "credit_fields_on_non_credit",
               "category_cycle",
               "category_too_deep",
-              "category_has_children",
               "reassignment_required",
               "reassignment_target_inside",
               "template_requires_empty",

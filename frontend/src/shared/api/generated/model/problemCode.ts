@@ -63,7 +63,6 @@ export const ProblemCode = {
   credit_fields_on_non_credit: 'credit_fields_on_non_credit',
   category_cycle: 'category_cycle',
   category_too_deep: 'category_too_deep',
-  category_has_children: 'category_has_children',
   reassignment_required: 'reassignment_required',
   reassignment_target_inside: 'reassignment_target_inside',
   template_requires_empty: 'template_requires_empty',

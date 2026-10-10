@@ -71,7 +71,6 @@ export const PROBLEMS = {
   // ── Cost centers, categories and concepts ──────────────────────────────────
   category_cycle: { status: 422, title: 'Ciclo en el árbol' },
   category_too_deep: { status: 422, title: 'Demasiados niveles' },
-  category_has_children: { status: 409, title: 'Tiene subcategorías' },
   reassignment_required: { status: 409, title: 'Hay que decir a dónde pasan' },
   reassignment_target_inside: { status: 409, title: 'Destino dentro de lo que se borra' },
   template_requires_empty: { status: 409, title: 'La plantilla pide una cuenta vacía' },
