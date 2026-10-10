@@ -104,7 +104,7 @@ export function BarFab({ label, onClick }: { label: string; onClick: () => void 
       className={cn(
         'grid size-14 place-items-center rounded-full',
         '-mt-4',
-        'bg-sidebar-active text-sidebar-active-foreground shadow-[var(--sombra-flotante)]',
+        'bg-sidebar-active text-sidebar-active-foreground shadow-[var(--floating-shadow)]',
         'transition-transform duration-[120ms] active:translate-y-0.5',
       )}
     >

@@ -75,7 +75,7 @@ export function Confirmation({
       aria-label={title}
       onMouseDown={(e) => e.target === e.currentTarget && onCancel()}
       className={cn(
-        'fixed inset-0 z-[60] flex items-center justify-center bg-[var(--velo)] backdrop-blur-sm',
+        'fixed inset-0 z-[60] flex items-center justify-center bg-[var(--scrim)] backdrop-blur-sm',
         // 24 to the edge on the phone, the same as the rest of the modals.
         'p-6 sm:p-4',
         'se-revela',

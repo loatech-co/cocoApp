@@ -59,7 +59,7 @@ describe('The surface of what floats lives in a single place', () => {
       // The CLASS, not the mention: a comment explaining the difference
       // between what rests and what floats names the shadow without using it.
       .filter((filePath) =>
-        readFileSync(filePath, 'utf8').includes('shadow-[var(--sombra-flotante)]'),
+        readFileSync(filePath, 'utf8').includes('shadow-[var(--floating-shadow)]'),
       )
       .map(relativePath);
 
@@ -88,7 +88,7 @@ describe('The surface of what floats lives in a single place', () => {
     // the page's ink, which in another theme need not match.
     expect(FLOATING_SURFACE).toContain('bg-popover');
     expect(FLOATING_SURFACE).toContain('text-popover-foreground');
-    expect(FLOATING_SURFACE).toContain('--sombra-flotante');
+    expect(FLOATING_SURFACE).toContain('--floating-shadow');
     expect(FLOATING_SURFACE).toContain('ring-border');
   });
 });

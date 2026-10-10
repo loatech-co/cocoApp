@@ -92,7 +92,7 @@ export function WithTooltip({
           // low value —true when `--radius` was 1rem, false since it
           // is 0.625rem—, so the hand-written value is no longer needed.
           'rounded-sm bg-foreground px-2.5 py-1.5 text-xs font-normal text-background',
-          'shadow-[var(--sombra-flotante)] ring-1 ring-border',
+          'shadow-[var(--floating-shadow)] ring-1 ring-border',
         )}
       >
         {text}

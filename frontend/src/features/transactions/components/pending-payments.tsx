@@ -166,7 +166,7 @@ function PendingProgress({
           {t('transactions.pending.soFar', { amount: formatCOP(payment.paidAmount) })}
         </span>
         {hasAction && (
-          <span className="shrink-0 font-medium text-acento-tinta">
+          <span className="shrink-0 font-medium text-accent-ink">
             {t('transactions.sheet.registerAnother')}
           </span>
         )}

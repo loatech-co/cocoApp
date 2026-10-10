@@ -84,7 +84,7 @@ function ReadView({ type, name, value, currency, date, period, path }: ReadViewP
             36px and the same on every screen: it is the main fact, not
             the only one.
           */}
-          <p className="flex items-center gap-2 font-display text-4xl font-bold leading-none text-acento-tinta">
+          <p className="flex items-center gap-2 font-display text-4xl font-bold leading-none text-accent-ink">
             <ArrowUpRight
               className={cn('size-8 shrink-0 sm:size-10', type === 'income' && 'rotate-180')}
               strokeWidth={2.75}

@@ -32,7 +32,7 @@ export function ReceiptPager({
       >
         <ChevronLeft className="size-4" aria-hidden="true" />
       </OverlayButton>
-      <span className="tabular px-1 text-xs font-medium text-sala-tinta">
+      <span className="tabular px-1 text-xs font-medium text-stage-ink">
         {index + 1} / {total}
       </span>
       <OverlayButton

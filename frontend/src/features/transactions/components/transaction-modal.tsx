@@ -182,11 +182,11 @@ function SheetOverlay({
 }) {
   return (
     <div
-      // The shared scrim, `--velo`. There used to be a `bg-carbon-950/50` here
+      // The shared scrim, `--scrim`. There used to be a `bg-carbon-950/50` here
       // that painted nothing —`carbon` was not a color in any palette of this
       // project—, so the modal floated over the page with no scrim behind it.
       className={cn(
-        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] backdrop-blur-sm',
+        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--scrim)] backdrop-blur-sm',
         /*
           ── 24 to the edge of the screen, on the phone ────────────────────
           The sheet is not full-bleed. Stuck to three edges, it reads as another

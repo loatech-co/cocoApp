@@ -80,7 +80,7 @@ export function Option({
         'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
         'mobile:min-h-[42px]',
         isSelected ? cn('bg-muted font-medium', HIGHLIGHT) : HIGHLIGHT,
-        isActive && 'bg-acento-tinta/10 text-acento-tinta',
+        isActive && 'bg-accent-ink/10 text-accent-ink',
       )}
     >
       <span className="min-w-0 flex-1 truncate">{children}</span>

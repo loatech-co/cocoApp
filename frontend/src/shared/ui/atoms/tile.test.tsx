@@ -11,7 +11,7 @@ describe('tileClass', () => {
     expect(tileClass(false, false)).not.toContain('baldosa-tiembla');
     expect(tileClass(true, false)).toContain('baldosa-tiembla');
     expect(tileClass(true, true)).not.toContain('baldosa-tiembla');
-    expect(tileClass(true, true)).toContain('--sombra-flotante');
+    expect(tileClass(true, true)).toContain('--floating-shadow');
   });
 });
 

@@ -27,13 +27,13 @@ export function Card({ className, ...props }: ComponentProps<'div'>) {
         // dropdown the color of the material, open over a card of the
         // same color, has no other way of saying where it starts.
         //
-        // The shadow stays, and it only works in light: it is `--sombra-pegada`,
+        // The shadow stays, and it only works in light: it is `--docked-shadow`,
         // the theme's one for what RESTS on the page. On an almost black well
         // it casts nothing —dark on dark makes no shadow— and there
         // the step is the only thing that separates. In light it adds the half
         // millimeter of lift that the step alone does not give.
         'rounded-lg bg-card text-card-foreground',
-        'shadow-[var(--sombra-pegada)]',
+        'shadow-[var(--docked-shadow)]',
         className,
       )}
       {...props}

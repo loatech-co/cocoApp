@@ -22,7 +22,7 @@ import { Button } from '@/shared/ui/atoms/button';
  * control.
  */
 export function ControlSeparator() {
-  return <span aria-hidden="true" className="mx-0.5 h-4 w-px shrink-0 bg-sala-tinta/25" />;
+  return <span aria-hidden="true" className="mx-0.5 h-4 w-px shrink-0 bg-stage-ink/25" />;
 }
 
 /**
@@ -58,7 +58,7 @@ export function OverlayButton({
       disabled={isDisabled}
       aria-label={label}
       title={label}
-      className={cn('text-sala-tinta hover:bg-sala-tinta/10 hover:text-sala-tinta', className)}
+      className={cn('text-stage-ink hover:bg-stage-ink/10 hover:text-stage-ink', className)}
     >
       {children}
     </Button>
@@ -97,7 +97,7 @@ export function ControlReadout({
   onClick?: () => void;
   children: ReactNode;
 }) {
-  const classes = cn('tabular text-center font-medium text-sala-tinta', READOUT_WIDTHS[width]);
+  const classes = cn('tabular text-center font-medium text-stage-ink', READOUT_WIDTHS[width]);
   if (!onClick) return <span className={classes}>{children}</span>;
   return (
     <button type="button" onClick={onClick} title={title} className={classes}>

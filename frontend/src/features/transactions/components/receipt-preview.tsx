@@ -157,7 +157,7 @@ function PreviewZoom({
     <div
       data-zoom-controls=""
       hidden={!isVisible}
-      className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
+      className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-stage/75 p-0.5"
     >
       <OverlayButton
         label={t('transactions.supports.zoomOut')}
@@ -257,7 +257,7 @@ function PreviewActions({ onOpen, actions }: Pick<PreviewProps, 'onOpen' | 'acti
   return (
     <div
       data-zoom-controls=""
-      className="absolute right-2 top-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
+      className="absolute right-2 top-2 z-10 flex items-center gap-0.5 rounded-full bg-stage/75 p-0.5"
     >
       {actions}
       {onOpen && (

@@ -42,7 +42,7 @@ export function UnavailableReceipt({
     <span
       className={cn(
         'grid size-full place-items-center px-6 text-center',
-        isDark ? 'text-sala-tinta/70' : 'text-muted-foreground',
+        isDark ? 'text-stage-ink/70' : 'text-muted-foreground',
       )}
       role="status"
     >

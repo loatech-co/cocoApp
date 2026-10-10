@@ -89,10 +89,10 @@ function ScanSweep() {
         aria-hidden="true"
         className={cn(
           'barre pointer-events-none absolute inset-y-0 left-0 w-1/4',
-          'bg-gradient-to-r from-transparent via-acento-tinta/30 to-transparent',
+          'bg-gradient-to-r from-transparent via-accent-ink/30 to-transparent',
         )}
       >
-        <span className="absolute inset-y-0 right-0 w-px bg-acento-tinta shadow-[0_0_12px_2px_var(--acento-tinta)]" />
+        <span className="absolute inset-y-0 right-0 w-px bg-accent-ink shadow-[0_0_12px_2px_var(--accent-ink)]" />
       </span>
     </>
   );

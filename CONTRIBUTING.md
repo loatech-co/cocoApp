@@ -472,7 +472,7 @@ touch floor (`mobile:min-h-[42px]`) keeps its own registry in
 
 A `var(--token)` is not arbitrary (it reads the theme), and a step of the
 scale is not either: `min-h-55` is 220px, `size-4.5` is 18px. A value the theme
-does not have is added to `index.css` with its reason (`leading-portada`,
+does not have is added to `index.css` with its reason (`leading-hero`,
 `pb-seguro`).
 
 ```tsx

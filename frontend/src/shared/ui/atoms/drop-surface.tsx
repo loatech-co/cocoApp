@@ -45,7 +45,7 @@ export function DropSurface({
         isBusy
           ? 'cursor-wait border-border text-muted-foreground'
           : isOver
-            ? 'border-acento-tinta bg-accent text-accent-foreground'
+            ? 'border-accent-ink bg-accent text-accent-foreground'
             : cn('border-border text-muted-foreground', SURFACE_HIGHLIGHT),
       )}
     >

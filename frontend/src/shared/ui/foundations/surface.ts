@@ -23,7 +23,7 @@
  * pixel.
  */
 export const FLOATING_SURFACE =
-  'bg-popover text-popover-foreground shadow-[var(--sombra-flotante)] ring-1 ring-border';
+  'bg-popover text-popover-foreground shadow-[var(--floating-shadow)] ring-1 ring-border';
 
 /**
  * What appears all at once reads as a painting glitch.
@@ -52,11 +52,11 @@ export const SURGE = 'surge';
  * what is there» becomes one of degree and not of color, which is what they
  * are.
  *
- * `--acento-tinta` and not `--primary`: it is the same color in dark, but in
+ * `--accent-ink` and not `--primary`: it is the same color in dark, but in
  * light the primary is an almost-black green and this has to work as INK on
  * a light surface.
  */
-export const HIGHLIGHT = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
+export const HIGHLIGHT = 'hover:bg-accent-ink/10 hover:text-accent-ink';
 
 /**
  * The highlight of a LARGE surface that responds to the cursor: the slot for
@@ -65,7 +65,7 @@ export const HIGHLIGHT = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
  * ── A 10 % black, and not the accent ────────────────────────────────────────
  * What responds is tinted with the accent. Not here, and it is the exception
  * with the most history in the project: it was tried with the full
- * `bg-accent`, with a third and with 5 % of `--acento-tinta`, and all three
+ * `bg-accent`, with a third and with 5 % of `--accent-ink`, and all three
  * times the same thing showed —a GREEN rectangle switching on and off—.
  *
  * The reason is size. A color tint on 200 by 32 pixels is a hint; on a

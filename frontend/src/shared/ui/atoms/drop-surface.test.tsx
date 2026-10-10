@@ -31,7 +31,7 @@ describe('DropSurface', () => {
     const { frame } = box({ shape: 'full', isOver: true, isBusy: false });
 
     expect(frame.className).toContain('min-h-36');
-    expect(frame.className).toContain('border-acento-tinta');
+    expect(frame.className).toContain('border-accent-ink');
   });
 
   it('cannot be pressed while it uploads', () => {

@@ -8,18 +8,16 @@ import { IconChip } from './icon-chip';
 afterEach(cleanup);
 
 describe('IconChip', () => {
-  it.each([
-    ['expense', 'gasto'],
-    ['income', 'ingreso'],
-    ['budget', 'presupuesto'],
-    ['transactions', 'movimientos'],
-  ] as const)('takes the %s color and its ink from the theme, by role', (color, token) => {
-    const { container } = render(<IconChip Icon={Wallet} color={color} />);
+  it.each(['expense', 'income', 'budget', 'transactions'] as const)(
+    'takes the %s color and its ink from the theme, by role',
+    (color) => {
+      const { container } = render(<IconChip Icon={Wallet} color={color} />);
 
-    const chip = container.firstElementChild as HTMLElement;
-    expect(chip.style.backgroundColor).toBe(`var(--chip-${token})`);
-    expect(chip.style.color).toBe(`var(--chip-${token}-tinta)`);
-  });
+      const chip = container.firstElementChild as HTMLElement;
+      expect(chip.style.backgroundColor).toBe(`var(--chip-${color})`);
+      expect(chip.style.color).toBe(`var(--chip-${color}-ink)`);
+    },
+  );
 
   it('is decorative', () => {
     const { container } = render(<IconChip Icon={Wallet} color="expense" />);

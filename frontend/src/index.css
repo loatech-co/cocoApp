@@ -91,7 +91,7 @@
      touch the descenders above; `leading-tight` (1.25) separates them as if
      they were two sentences. It lived as `leading-[1.08]` on the screen,
      which is a measure nobody will know the origin of tomorrow. */
-  --leading-portada: 1.08;
+  --leading-hero: 1.08;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -190,7 +190,7 @@
 
   /* A toast, 24 from the bottom edge. On the phone the bar covers it, so
      there this same name is worth something else. */
-  --bajo-la-barra: 1.5rem;
+  --bar-clearance: 1.5rem;
 
   /* ── Surfaces and ink ─────────────────────────────────────────────────── */
   --background: #efede6;
@@ -236,7 +236,7 @@
     color but as bold text. Without this, every call would have to remember
     which of the two applies.
   */
-  --acento-tinta: #00633b;
+  --accent-ink: #00633b;
 
   /* ── Money ────────────────────────────────────────────────────────────── */
   /* Expense is the theme's `primary`: it is most of what this app shows, so
@@ -308,7 +308,7 @@
      its two series are what goes out and what comes in, and that already has
      a color in this app. Painted with the ramp, expense came out teal in the
      chart and pine in the table. The donut does have a ramp of its own,
-     `--dona-*`, because it paints AREAS and a color distinguishable as a 2px
+     `--donut-*`, because it paints AREAS and a color distinguishable as a 2px
      stroke can be invisible as a fill. */
   --chart-1: #00633b;
   --chart-2: #1a7a52;
@@ -319,16 +319,16 @@
   /* ── The donut slices ─────────────────────────────────────────────────────
      Each one with its INK, declared and not computed: on the pine, white
      reads; on the light ones it does NOT, and it has to go down to ink. */
-  --dona-1: #004225;
-  --dona-1-tinta: #ffffff;
-  --dona-2: #00734a;
-  --dona-2-tinta: #ffffff;
-  --dona-3: #1a7a52;
-  --dona-3-tinta: #ffffff;
-  --dona-4: #4fae86;
-  --dona-4-tinta: #06231a;
-  --dona-5: #8ecdb0;
-  --dona-5-tinta: #06231a;
+  --donut-1: #004225;
+  --donut-1-ink: #ffffff;
+  --donut-2: #00734a;
+  --donut-2-ink: #ffffff;
+  --donut-3: #1a7a52;
+  --donut-3-ink: #ffffff;
+  --donut-4: #4fae86;
+  --donut-4-ink: #06231a;
+  --donut-5: #8ecdb0;
+  --donut-5-ink: #06231a;
 
   /* ── The chip pastels ─────────────────────────────────────────────────────
      They are named by their ROLE —expense, income— and not by their color.
@@ -341,14 +341,14 @@
 
      And they leave the static @theme because they depend on the theme: these
      pastels work on a near-white background and would glare on a near-black one. */
-  --chip-gasto: #e4efe8;
-  --chip-gasto-tinta: #004225;
-  --chip-ingreso: #e0f2ec;
-  --chip-ingreso-tinta: #0a7a5f;
-  --chip-presupuesto: #dbeee7;
-  --chip-presupuesto-tinta: #00633b;
-  --chip-movimientos: #e2f2e8;
-  --chip-movimientos-tinta: #1a7a52;
+  --chip-expense: #e4efe8;
+  --chip-expense-ink: #004225;
+  --chip-income: #e0f2ec;
+  --chip-income-ink: #0a7a5f;
+  --chip-budget: #dbeee7;
+  --chip-budget-ink: #00633b;
+  --chip-transactions: #e2f2e8;
+  --chip-transactions-ink: #1a7a52;
 
   /* ── Sidebar ──────────────────────────────────────────────────────────── */
   --sidebar: #ffffff;
@@ -363,12 +363,12 @@
      The parameters are the theme's: ink #0f1f1d at 6 %, 4px of blur, −1px of
      spread, 1px downward. The floating one scales them, because a panel that
      lifts needs more than a card that rests. */
-  --sombra-flotante:
+  --floating-shadow:
     0 1px 4px -1px rgba(15, 31, 29, 0.06), 0 8px 20px -6px rgba(15, 31, 29, 0.12),
     0 24px 48px -20px rgba(15, 31, 29, 0.18);
 
-  --sombra-pegada: 0 1px 4px -1px rgba(15, 31, 29, 0.06), 0 1px 2px -1px rgba(15, 31, 29, 0.06);
-  --sombra-pegada-arriba:
+  --docked-shadow: 0 1px 4px -1px rgba(15, 31, 29, 0.06), 0 1px 2px -1px rgba(15, 31, 29, 0.06);
+  --docked-shadow-up:
     0 -1px 4px -1px rgba(15, 31, 29, 0.06), 0 -1px 2px -1px rgba(15, 31, 29, 0.06);
 
   /*
@@ -384,7 +384,7 @@
     to stay readable: the scrim says "this here is on pause", not "this here
     no longer exists". The blur does the rest of the work.
   */
-  --velo: rgba(0, 0, 0, 0.3);
+  --scrim: rgba(0, 0, 0, 0.3);
 
   /*
     ── The dark room ────────────────────────────────────────────────────────
@@ -407,8 +407,8 @@
     opacity: the camera needs the full background, the viewer 90 % and a
     thumbnail's scrim a little more than half.
   */
-  --sala: #000000;
-  --sala-tinta: #ffffff;
+  --stage: #000000;
+  --stage-ink: #ffffff;
 }
 
 .dark {
@@ -467,7 +467,7 @@
   --input: #23302c;
   --ring: #d3f24b;
 
-  --acento-tinta: #d3f24b;
+  --accent-ink: #d3f24b;
 
   /* In dark, expense CANNOT be the British green: a green of lightness 13 on
      a well of lightness 4 does not show. It gets this theme's `primary`,
@@ -500,25 +500,25 @@
 
   /* The first slice CANNOT be the card's color: it was `bosque-800` on a
      `bosque-900` card and the donut looked empty. */
-  --dona-1: #d3f24b;
-  --dona-1-tinta: #14230a;
-  --dona-2: #46c285;
-  --dona-2-tinta: #06120f;
-  --dona-3: #3fc9a8;
-  --dona-3-tinta: #06120f;
-  --dona-4: #86dfae;
-  --dona-4-tinta: #06120f;
-  --dona-5: #2a8f66;
-  --dona-5-tinta: #eafaf1;
+  --donut-1: #d3f24b;
+  --donut-1-ink: #14230a;
+  --donut-2: #46c285;
+  --donut-2-ink: #06120f;
+  --donut-3: #3fc9a8;
+  --donut-3-ink: #06120f;
+  --donut-4: #86dfae;
+  --donut-4-ink: #06120f;
+  --donut-5: #2a8f66;
+  --donut-5-ink: #eafaf1;
 
-  --chip-gasto: #242c12;
-  --chip-gasto-tinta: #d3f24b;
-  --chip-ingreso: #0e2a24;
-  --chip-ingreso-tinta: #3fc9a8;
-  --chip-presupuesto: #122a26;
-  --chip-presupuesto-tinta: #46c285;
-  --chip-movimientos: #12251c;
-  --chip-movimientos-tinta: #46c285;
+  --chip-expense: #242c12;
+  --chip-expense-ink: #d3f24b;
+  --chip-income: #0e2a24;
+  --chip-income-ink: #3fc9a8;
+  --chip-budget: #122a26;
+  --chip-budget-ink: #46c285;
+  --chip-transactions: #12251c;
+  --chip-transactions-ink: #46c285;
 
   /* Three steps: the sidebar is the DARKEST surface, the work area goes up
      one and the cards another. With two, the bar disappeared against the
@@ -535,14 +535,14 @@
 
   /* Black and deep: on a near-black background, the light theme's shadow
      separates nothing from the background. */
-  --sombra-flotante:
+  --floating-shadow:
     0 2px 8px rgba(0, 0, 0, 0.4), 0 14px 32px -8px rgba(0, 0, 0, 0.55),
     0 40px 72px -24px rgba(0, 0, 0, 0.7);
 
-  --sombra-pegada: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
-  --sombra-pegada-arriba: 0 -1px 3px rgba(0, 0, 0, 0.3), 0 -1px 2px -1px rgba(0, 0, 0, 0.3);
+  --docked-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --docked-shadow-up: 0 -1px 3px rgba(0, 0, 0, 0.3), 0 -1px 2px -1px rgba(0, 0, 0, 0.3);
 
-  --velo: rgba(0, 0, 0, 0.3);
+  --scrim: rgba(0, 0, 0, 0.3);
 }
 
 /* Exposes the tokens as Tailwind utilities (bg-background, text-income…). */
@@ -590,19 +590,19 @@
   --color-sidebar-hover: var(--sidebar-hover);
   --color-sidebar-border: var(--sidebar-border);
 
-  --color-acento-tinta: var(--acento-tinta);
+  --color-accent-ink: var(--accent-ink);
 
-  --color-sala: var(--sala);
-  --color-sala-tinta: var(--sala-tinta);
+  --color-stage: var(--stage);
+  --color-stage-ink: var(--stage-ink);
 
-  --color-chip-gasto: var(--chip-gasto);
-  --color-chip-gasto-tinta: var(--chip-gasto-tinta);
-  --color-chip-ingreso: var(--chip-ingreso);
-  --color-chip-ingreso-tinta: var(--chip-ingreso-tinta);
-  --color-chip-presupuesto: var(--chip-presupuesto);
-  --color-chip-presupuesto-tinta: var(--chip-presupuesto-tinta);
-  --color-chip-movimientos: var(--chip-movimientos);
-  --color-chip-movimientos-tinta: var(--chip-movimientos-tinta);
+  --color-chip-expense: var(--chip-expense);
+  --color-chip-expense-ink: var(--chip-expense-ink);
+  --color-chip-income: var(--chip-income);
+  --color-chip-income-ink: var(--chip-income-ink);
+  --color-chip-budget: var(--chip-budget);
+  --color-chip-budget-ink: var(--chip-budget-ink);
+  --color-chip-transactions: var(--chip-transactions);
+  --color-chip-transactions-ink: var(--chip-transactions-ink);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -1064,8 +1064,8 @@
      that ends right against the bar reads as cut off and not finished, and
      the phone's safe edge on top of everything. */
   :root {
-    --hueco-de-la-barra: calc(60px + 16px + 24px + env(safe-area-inset-bottom, 0px));
-    --bajo-la-barra: calc(60px + env(safe-area-inset-bottom, 0px) + 12px);
+    --bar-gap: calc(60px + 16px + 24px + env(safe-area-inset-bottom, 0px));
+    --bar-clearance: calc(60px + env(safe-area-inset-bottom, 0px) + 12px);
   }
 
   /* ── Inside the phone app ────────────────────────────────────────────────
@@ -1078,8 +1078,8 @@
      order in which Tailwind emits the two. An attribute selector beats
      `:root` on specificity, so it does not depend on where it is written. */
   html[data-embebido='si'] {
-    --hueco-de-la-barra: 0px;
-    --bajo-la-barra: 12px;
+    --bar-gap: 0px;
+    --bar-clearance: 12px;
   }
 
   /* ── The choreography ────────────────────────────────────────────────────

@@ -30,7 +30,7 @@ const BAR_CLASSES = cn(
   // The bottom padding, and no taller: the bar's row measures exactly 60
   // and the phone's safe area is dead space below, which is exactly what
   // that gap is.
-  'border-t border-sidebar-border shadow-[var(--sombra-pegada-arriba)]',
+  'border-t border-sidebar-border shadow-[var(--docked-shadow-up)]',
 );
 
 /**

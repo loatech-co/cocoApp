@@ -78,7 +78,7 @@ export function PdfPage({ url, page, scale, onPageCount }: PdfPageProps) {
 
   if (hasFailed) {
     return (
-      <p className="flex items-center gap-2 self-center text-sm text-sala-tinta/80">
+      <p className="flex items-center gap-2 self-center text-sm text-stage-ink/80">
         <FileWarning className="size-5" aria-hidden="true" />
         {t('ui.pdf.drawFailed')}
       </p>
@@ -89,7 +89,7 @@ export function PdfPage({ url, page, scale, onPageCount }: PdfPageProps) {
     <>
       {isPainting && (
         <Loader2
-          className="absolute size-6 animate-spin self-center text-sala-tinta/70"
+          className="absolute size-6 animate-spin self-center text-stage-ink/70"
           aria-hidden="true"
         />
       )}

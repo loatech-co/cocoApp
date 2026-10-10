@@ -143,7 +143,7 @@ function Viewfinder({
   state: CameraState;
 }) {
   return (
-    <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-sala">
+    <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-stage">
       {state === 'lista' ? (
         <video
           ref={video}
@@ -154,9 +154,9 @@ function Viewfinder({
           aria-label={t('transactions.camera.preview')}
         />
       ) : state === 'pidiendo' ? (
-        <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
+        <Loader2 className="size-6 animate-spin text-stage-ink/70" aria-hidden="true" />
       ) : (
-        <p className="flex max-w-xs flex-col items-center gap-2 px-4 text-center text-sm text-sala-tinta/80">
+        <p className="flex max-w-xs flex-col items-center gap-2 px-4 text-center text-sm text-stage-ink/80">
           <CameraOff className="size-6" aria-hidden="true" />
           {state === 'sin-permiso'
             ? t('transactions.camera.denied')

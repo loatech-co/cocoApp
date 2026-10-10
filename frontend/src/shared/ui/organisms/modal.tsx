@@ -84,7 +84,7 @@ export function Modal({
       // over the Tab key are a keyboard that does nothing.
       data-modal=""
       className={cn(
-        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] backdrop-blur-sm',
+        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--scrim)] backdrop-blur-sm',
         /*
           ── 24 to the edge of the screen, on the phone ────────────────────
           The modal is not full-bleed. Stuck to the three edges, it reads as

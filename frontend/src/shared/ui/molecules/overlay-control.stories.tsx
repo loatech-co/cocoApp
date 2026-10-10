@@ -12,7 +12,7 @@ type Story = StoryObj;
 /** The zoom of a preview: two buttons and the reading between them. */
 export const Zoom: Story = {
   render: () => (
-    <div className="flex w-fit items-center gap-0.5 rounded-full bg-sala/75 p-0.5">
+    <div className="flex w-fit items-center gap-0.5 rounded-full bg-stage/75 p-0.5">
       <OverlayButton label="Alejar" onClick={() => undefined}>
         <Minus className="size-4" aria-hidden="true" />
       </OverlayButton>

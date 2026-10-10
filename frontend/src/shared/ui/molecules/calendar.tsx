@@ -197,7 +197,7 @@ function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps
           // others: today's circle was there and could not be found.
           iso === today &&
             !isEdge &&
-            'font-semibold text-foreground ring-1 ring-inset ring-acento-tinta/50',
+            'font-semibold text-foreground ring-1 ring-inset ring-accent-ink/50',
         )}
       >
         {Number(iso.slice(8))}

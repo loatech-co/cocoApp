@@ -185,7 +185,7 @@ falla también si una entrada ya no la usa nadie. El suelo táctil
 
 Un `var(--token)` no es arbitrario —lee el tema— y un escalón de la escala
 tampoco: `min-h-55` son 220px y `size-4.5` son 18. Lo que el tema no tiene se
-añade en `index.css` con su razón (`leading-portada`, `pb-seguro`).
+añade en `index.css` con su razón (`leading-hero`, `pb-seguro`).
 
 ## Inventario de `shared/ui`
 
@@ -370,8 +370,8 @@ no da, se añade ahí con su razón.
 
 Y se nombran por lo que SIGNIFICAN, no por el color que tienen hoy. Los
 chips eran `violeta`, `turquesa`, `verde` y `lima`; al cambiar de tema el
-del gasto pasó a pino y el nombre se volvió mentira. Ahora son `gasto`,
-`ingreso`, `presupuesto` y `movimientos`, y un tema nuevo no obliga a
+del gasto pasó a pino y el nombre se volvió mentira. Ahora son `expense`,
+`income`, `budget` y `transactions`, y un tema nuevo no obliga a
 tocar ni una llamada.
 
 Sobre cualquier superficie de acento, la tinta es la que el tema declara

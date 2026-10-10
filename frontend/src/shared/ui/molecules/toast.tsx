@@ -188,7 +188,7 @@ export function ToastStack() {
     <div
       // Above the backdrop of a surface (50) and the bar (15): a toast that
       // answers something pressed INSIDE a panel has to show over the panel.
-      className="pointer-events-none fixed bottom-[var(--bajo-la-barra)] right-6 z-[60] flex flex-col gap-2 mobile:left-4 mobile:right-4"
+      className="pointer-events-none fixed bottom-[var(--bar-clearance)] right-6 z-[60] flex flex-col gap-2 mobile:left-4 mobile:right-4"
       role="status"
       aria-live="polite"
     >

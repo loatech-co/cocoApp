@@ -79,7 +79,7 @@ export function Lightbox(props: ViewerProps) {
       aria-label={receipt.fileName}
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
       // Above the transaction modal, which is at z-50.
-      className="fixed inset-0 z-[60] flex flex-col bg-sala/90 p-3 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[60] flex flex-col bg-stage/90 p-3 backdrop-blur-sm sm:p-6"
     >
       <ViewerHeader
         receipt={receipt}
@@ -170,14 +170,14 @@ function ViewerStage(props: ViewerStageProps) {
 
 function ViewerSheet({ receipt, url, error, onRetry, scale, page, onPages }: ViewerStageProps) {
   return (
-    <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-lg bg-sala/25 p-3 sm:p-6">
+    <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-lg bg-stage/25 p-3 sm:p-6">
       {error ? (
         <div className="flex w-full items-center justify-center">
           <UnavailableReceipt error={error} onRetry={onRetry} isDark />
         </div>
       ) : !url ? (
         <div className="flex w-full items-center justify-center">
-          <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
+          <Loader2 className="size-6 animate-spin text-stage-ink/70" aria-hidden="true" />
         </div>
       ) : receipt.mimeType.startsWith('image/') ? (
         <img

@@ -77,7 +77,7 @@ describe('The shell below the breakpoint', () => {
     expect(document.querySelector('[data-armazon="barra"]')).toBeTruthy();
 
     const body = container.querySelector('main')!;
-    expect(body.className).toContain('mobile:pb-[var(--hueco-de-la-barra)]');
+    expect(body.className).toContain('mobile:pb-[var(--bar-gap)]');
     // Clips, does not offer: `auto` would turn the whole page into a
     // sideways scroll indistinguishable from the document's.
     expect(body.className).toContain('mobile:overflow-x-clip');

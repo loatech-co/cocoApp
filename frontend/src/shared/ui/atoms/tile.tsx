@@ -19,7 +19,7 @@ export function tileClass(isArranging: boolean, isDragging: boolean): string {
     // The tile under the finger does not wiggle: the animation would override the
     // inline offset and it would stay still under the finger.
     isArranging && !isDragging && 'animate-[baldosa-tiembla_.4s_ease-in-out_infinite]',
-    isDragging && 'z-10 scale-105 shadow-[var(--sombra-flotante)]',
+    isDragging && 'z-10 scale-105 shadow-[var(--floating-shadow)]',
   );
 }
 
@@ -77,7 +77,7 @@ export function TileRemove({
       type="button"
       onClick={onRemove}
       aria-label={t('ui.tile.remove', { name: label })}
-      className="absolute -left-1 -top-1 grid size-6 place-items-center rounded-full bg-foreground text-background shadow-[var(--sombra-pegada)]"
+      className="absolute -left-1 -top-1 grid size-6 place-items-center rounded-full bg-foreground text-background shadow-[var(--docked-shadow)]"
     >
       <Minus className="size-3.5" strokeWidth={3} aria-hidden="true" />
     </button>

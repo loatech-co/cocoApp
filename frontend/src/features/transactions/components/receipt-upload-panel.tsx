@@ -56,7 +56,7 @@ export function UploadPanel({
       aria-label={t('transactions.supports.add')}
       // Above the sheet, which is at z-50, same as the lightbox.
       className={cn(
-        'fixed inset-0 z-[60] flex items-end justify-center bg-[var(--velo)] backdrop-blur-sm',
+        'fixed inset-0 z-[60] flex items-end justify-center bg-[var(--scrim)] backdrop-blur-sm',
         // 24 to the edge of the screen, like every sheet on the phone.
         'p-6',
         'se-revela sm:items-center sm:p-4',

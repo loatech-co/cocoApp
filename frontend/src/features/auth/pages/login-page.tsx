@@ -135,7 +135,7 @@ function LoginBrand() {
             white on it gave 1.9:1 and the sentence disappeared. The
             primary's ink is, by definition, the one that reads on it —white
             in light, near black in dark— with no choice to make. */}
-          <p className="absolute inset-x-0 bottom-0 p-10 text-5xl font-bold leading-portada tracking-tight text-primary-foreground xl:p-14 xl:text-6xl">
+          <p className="absolute inset-x-0 bottom-0 p-10 text-5xl font-bold leading-hero tracking-tight text-primary-foreground xl:p-14 xl:text-6xl">
             {t('auth.login.taglineFirst')}
             <br />
             {t('auth.login.taglineSecond')}

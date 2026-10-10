@@ -56,8 +56,8 @@ export function ViewerHeader({
   return (
     <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-sala-tinta">{receipt.fileName}</p>
-        <p className="tabular text-xs text-sala-tinta/60">
+        <p className="truncate text-sm font-medium text-stage-ink">{receipt.fileName}</p>
+        <p className="tabular text-xs text-stage-ink/60">
           {total > 1 && t('transactions.supports.position', { n: index + 1, total })}
           {t('transactions.supports.kilobytes', { size: (receipt.sizeBytes / 1024).toFixed(0) })}
         </p>
@@ -73,7 +73,7 @@ export function ViewerHeader({
             download={receipt.fileName}
             title={t('transactions.supports.download')}
             aria-label={t('transactions.supports.downloadNamed', { fileName: receipt.fileName })}
-            className="flex size-9 items-center justify-center rounded-lg text-sala-tinta transition-colors hover:bg-sala-tinta/10"
+            className="flex size-9 items-center justify-center rounded-lg text-stage-ink transition-colors hover:bg-stage-ink/10"
           >
             <Download className="size-4" aria-hidden="true" />
           </a>
@@ -152,7 +152,7 @@ export function ViewerControls({ vista }: { vista: ReturnType<typeof useViewerZo
 
 function ZoomControls({ zoom, scale, onZoom }: ZoomProps) {
   return (
-    <div className="flex items-center gap-1 rounded-full bg-sala-tinta/10 px-1">
+    <div className="flex items-center gap-1 rounded-full bg-stage-ink/10 px-1">
       <OverlayButton
         onClick={() => onZoom(-1)}
         disabled={zoom === 0}
@@ -178,7 +178,7 @@ function ZoomControls({ zoom, scale, onZoom }: ZoomProps) {
 
 function PageControls({ page, pages, onPage }: PageProps) {
   return (
-    <div className="flex items-center gap-1 rounded-full bg-sala-tinta/10 px-1">
+    <div className="flex items-center gap-1 rounded-full bg-stage-ink/10 px-1">
       <OverlayButton
         onClick={() => onPage((p) => p - 1)}
         disabled={page === 1}

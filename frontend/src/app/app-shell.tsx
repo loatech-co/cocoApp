@@ -238,7 +238,7 @@ export function AppShell() {
             // wanted: whatever is really wider gets CUT. A phone screen does
             // not scroll sideways; whatever has wide content brings its own
             // scroll.
-            'mobile:overflow-x-clip mobile:pb-[var(--hueco-de-la-barra)]',
+            'mobile:overflow-x-clip mobile:pb-[var(--bar-gap)]',
           )}
         >
           <UserView />
@@ -334,7 +334,7 @@ function PhoneTop() {
       // menu button, which no longer exists: with a single element, leaving
       // it on the left leaves half the strip empty to its right and the top
       // bar reads as a row missing something. Centered it is a cover.
-      className="sticky top-0 z-20 flex h-16 items-center justify-center bg-sidebar px-4 shadow-[var(--sombra-pegada)]"
+      className="sticky top-0 z-20 flex h-16 items-center justify-center bg-sidebar px-4 shadow-[var(--docked-shadow)]"
     >
       <Logo className="h-7 w-auto text-sidebar-active" />
     </header>

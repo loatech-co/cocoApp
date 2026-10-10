@@ -15,11 +15,11 @@ import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
  * invisible as a fill.
  */
 const PALETTE = [
-  'var(--dona-1)',
-  'var(--dona-2)',
-  'var(--dona-3)',
-  'var(--dona-4)',
-  'var(--dona-5)',
+  'var(--donut-1)',
+  'var(--donut-2)',
+  'var(--donut-3)',
+  'var(--donut-4)',
+  'var(--donut-5)',
 ] as const;
 /*
   ── The canvas is SQUARE and fitted to the ring ─────────────────────────────

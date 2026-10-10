@@ -74,7 +74,7 @@ export function BottomSheet({
       // has just been born has no previous opacity to travel from.
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
       className={cn(
-        'fixed inset-0 bg-[var(--velo)] transition-opacity duration-200 ease-[ease]',
+        'fixed inset-0 bg-[var(--scrim)] transition-opacity duration-200 ease-[ease]',
         layer,
         isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
       )}

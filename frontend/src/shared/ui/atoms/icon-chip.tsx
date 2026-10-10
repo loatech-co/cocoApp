@@ -17,10 +17,10 @@ import { cn } from '@/shared/lib/utils';
  * having two colors depending on where one comes in from.
  */
 const CHIPS = {
-  expense: { background: 'var(--chip-gasto)', ink: 'var(--chip-gasto-tinta)' },
-  income: { background: 'var(--chip-ingreso)', ink: 'var(--chip-ingreso-tinta)' },
-  budget: { background: 'var(--chip-presupuesto)', ink: 'var(--chip-presupuesto-tinta)' },
-  transactions: { background: 'var(--chip-movimientos)', ink: 'var(--chip-movimientos-tinta)' },
+  expense: { background: 'var(--chip-expense)', ink: 'var(--chip-expense-ink)' },
+  income: { background: 'var(--chip-income)', ink: 'var(--chip-income-ink)' },
+  budget: { background: 'var(--chip-budget)', ink: 'var(--chip-budget-ink)' },
+  transactions: { background: 'var(--chip-transactions)', ink: 'var(--chip-transactions-ink)' },
 } as const;
 
 export type ChipColor = keyof typeof CHIPS;
