@@ -1,5 +1,6 @@
 import { BadRequestException, ValidationPipe, type ValidationError } from '@nestjs/common';
 
+import { spanishValidationMessage } from './validation-messages';
 import type { ErrorDetail } from '../errors/domain-error';
 
 /**
@@ -16,20 +17,44 @@ function fieldErrors(errors: readonly ValidationError[], parent = ''): ErrorDeta
 }
 
 /**
+ * Rewrites, in place, class-validator's English defaults into the Spanish of
+ * `validation-messages.ts`. The decorators' own messages are left as written.
+ */
+function translateDefaults(errors: readonly ValidationError[], parent = ''): void {
+  for (const error of errors) {
+    const path = parent === '' ? error.property : `${parent}.${error.property}`;
+    const constraints = error.constraints;
+    if (constraints !== undefined) {
+      for (const [constraint, message] of Object.entries(constraints)) {
+        constraints[constraint] = spanishValidationMessage(
+          constraint,
+          error.property,
+          path,
+          message,
+        );
+      }
+    }
+    translateDefaults(error.children ?? [], path);
+  }
+}
+
+/**
  * The global `ValidationPipe`, keeping WHICH field failed.
  *
  * Nest's own factory flattens the errors into sentences and drops the field
  * (`message` is still that exact list). The API answers with `errors[]`, each
- * pointing at its field, from `fields`.
+ * pointing at its field, from `fields`. Both carry the Spanish message.
  */
 export class FieldValidationPipe extends ValidationPipe {
   public override createExceptionFactory() {
-    return (errors: ValidationError[] = []) =>
-      new BadRequestException({
+    return (errors: ValidationError[] = []) => {
+      translateDefaults(errors);
+      return new BadRequestException({
         message: this.flattenValidationErrors(errors),
         error: 'Bad Request',
         statusCode: 400,
         fields: fieldErrors(errors),
       });
+    };
   }
 }

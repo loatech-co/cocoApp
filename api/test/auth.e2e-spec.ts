@@ -628,6 +628,23 @@ describe('Our own auth (e2e)', () => {
       await register({ role: 'admin', status: 'active' }).expect(400);
     });
 
+    it("answers class-validator's own checks in Spanish, field by field", async () => {
+      // Neither check has a message of its own in the DTO: the undeclared
+      // property and the wrong type are class-validator's English defaults,
+      // and they reach the person through `errors[]`.
+      const response = await register({ name: 'Ana', displayName: 7 }).expect(400);
+
+      expect(response.body.errors).toEqual(
+        expect.arrayContaining([
+          { field: 'name', message: 'El campo «name» no se admite en esta solicitud.' },
+          { field: 'displayName', message: 'El campo «displayName» tiene que ser un texto.' },
+        ]),
+      );
+      for (const error of response.body.errors as { message: string }[]) {
+        expect(error.message).not.toMatch(/should not|must be/);
+      }
+    });
+
     it('rejects a malformed email', async () => {
       await register({ email: 'esto-no-es-un-correo' }).expect(400);
     });

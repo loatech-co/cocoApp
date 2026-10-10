@@ -478,7 +478,12 @@ describe('API v2 (e2e)', () => {
         status: 400,
         detail: 'Hay campos inválidos en la solicitud.',
         code: 'invalid_fields',
-        errors: [{ field: 'category_id', message: 'property category_id should not exist' }],
+        errors: [
+          {
+            field: 'category_id',
+            message: 'El campo «category_id» no se admite en esta solicitud.',
+          },
+        ],
       });
     });
   });
