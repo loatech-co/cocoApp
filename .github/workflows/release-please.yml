@@ -14,6 +14,8 @@ on:
     branches: [Dev] # the deploy branch (D8)
   workflow_dispatch:
 
+# Not cancelled midway (the one workflow without cancel-in-progress): a run
+# cut while it tags a release can leave the tag without its GitHub release.
 concurrency:
   group: release-please
   cancel-in-progress: false

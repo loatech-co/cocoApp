@@ -14,6 +14,10 @@ on:
         description: Lighthouse runs per page (the median is reported)
         default: '5'
 
+concurrency:
+  group: perf-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

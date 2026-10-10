@@ -13,33 +13,34 @@ on:
     - cron: '0 11 * * 1' # Mondays 06:00 Bogotá
   workflow_dispatch:
 
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  gitleaks:
-    # The gitleaks CLI and not its GitHub Action: the action needs a paid
-    # license for organization-owned repositories; the CLI is MIT and free.
+  # One job (step J-7): billing rounds each job up to the minute, and both
+  # checks together take well under one.
+  scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
-      - name: Scan the whole history
+      # The gitleaks CLI and not its GitHub Action: the action needs a paid
+      # license for organization-owned repositories; the CLI is MIT and free.
+      - name: Secrets in the whole history (gitleaks)
         env:
           GITLEAKS_VERSION: 8.28.0
         run: |
           curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
           ./gitleaks git --redact --no-banner --exit-code 1 .
-
-  audit:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
       - name: High/critical advisories in production dependencies
+        if: ${{ !cancelled() }}
         run: node scripts/ci/audit.mjs

@@ -1,19 +1,37 @@
 # The gate every change passes before it reaches the deploy branch (phase 7.6).
 #
 # Mirrors what "done" means in this repo: typecheck, lint, format, knip, layering
-# (dependency-cruiser), unit tests, API e2e
-# against a real Postgres, both production builds, and an install exactly like
-# the server's (NODE_ENV=production, no devDependencies). scripts/merge.sh
-# refuses to integrate a branch unless this is green.
+# (dependency-cruiser), unit tests, API e2e against a real Postgres, both
+# production builds, an install exactly like the server's (NODE_ENV=production,
+# no devDependencies) and the browser journeys. scripts/merge.sh refuses to
+# integrate a branch unless every check here is `pass` or `skipping`.
 #
-# Not on the push to Dev (step R-1a, Actions quota): merge.sh integrates by
-# fast-forward, so the commit that lands is the one this already passed on
-# its PR. And not on a PR that only touches docs: `hygiene` covers those.
+# One workflow, and every job on every pull request (step J-7, Actions quota).
+# The first job, `hygiene`, also decides which areas the PR touches; the heavy
+# jobs depend on it and are SKIPPED by `if:` when their area did not change. A
+# skipped job still reports a check ("skipping", green for merge.sh) and costs
+# nothing. A workflow filtered out by `paths` would report no check at all.
+# Billing rounds every job UP to the minute, so the detection lives inside
+# hygiene instead of a job of its own.
+#
+# Areas (anything outside a PR — a push to main, a manual run — is "all"):
+#   all   package.json, package-lock.json, .github/, scripts/ci/, or any other
+#         root-level file except *.md: lockfile, workflows and the configs every
+#         tool reads (eslint, prettier, tsconfig, knip, size-limit…).
+#   code  anything except docs/, .claude/, ios/ and *.md        → verify
+#   api   all, api/, packages/, scripts/db/                     → API e2e, OpenAPI
+#   web   all, frontend/, packages/                             → coverage, build
+#   ui    all, frontend/src/shared/ui/, frontend/.storybook/, frontend/package.json
+#   e2e   all, api/, frontend/, packages/, e2e/, scripts/db/    → journeys
+#   prod  all, api/, frontend/, packages/, verify-clean-install → clean-install
+#
+# Not on the push to Dev (step R-1a): merge.sh integrates by fast-forward, so
+# the commit that lands is the one this already passed on its PR. iOS has its
+# own manual workflow (ios.yml): a macOS minute counts as ten.
 name: ci
 
 on:
   pull_request:
-    paths-ignore: ['docs/**', '.claude/**', '**/*.md']
   push:
     branches: [main]
   workflow_dispatch:
@@ -26,13 +44,102 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  # What every pull request passes, including one that only touches docs: it
+  # still has commits to lint, files to format and, possibly, a secret pasted
+  # into a handoff.
+  hygiene:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
+    env:
+      EVENT: ${{ github.event_name }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    outputs:
+      code: ${{ steps.areas.outputs.code }}
+      api: ${{ steps.areas.outputs.api }}
+      web: ${{ steps.areas.outputs.web }}
+      ui: ${{ steps.areas.outputs.ui }}
+      e2e: ${{ steps.areas.outputs.e2e }}
+      prod: ${{ steps.areas.outputs.prod }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # the PR's range: areas, gitleaks and commitlint
+
+      # Fails safe: if the diff cannot be read, every area counts as changed.
+      - name: Areas the PR touches
+        id: areas
+        run: |
+          all=false
+          if [ "$EVENT" != pull_request ] \
+            || ! files="$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")"; then
+            all=true
+            files=''
+          fi
+          # Counts and here-strings, never `| grep -q`: under pipefail an early
+          # exit of grep -q can turn a match into a SIGPIPE failure.
+          count() { grep -cE "$1" <<<"$files" || true; }
+          [ "$(count '^(package\.json|package-lock\.json|\.github/|scripts/ci/)')" -gt 0 ] && all=true
+          [ "$(count '^[^/]+$')" -gt "$(count '^[^/]+\.md$')" ] && all=true
+          code_files="$(grep -cvE '^(docs/|\.claude/|ios/)|\.md$|^$' <<<"$files" || true)"
+          flag() {
+            if [ "$all" = true ] || [ "$2" -gt 0 ]; then echo "$1=true"; else echo "$1=false"; fi
+          }
+          {
+            flag code "$code_files"
+            flag api "$(count '^(api/|packages/|scripts/db/)')"
+            flag web "$(count '^(frontend/|packages/)')"
+            flag ui "$(count '^(frontend/src/shared/ui/|frontend/\.storybook/|frontend/package\.json$)')"
+            flag e2e "$(count '^(api/|frontend/|packages/|e2e/|scripts/db/)')"
+            flag prod "$(count '^(api/|frontend/|packages/|scripts/verify-clean-install\.sh$)')"
+          } | tee -a "$GITHUB_OUTPUT"
+
+      # Only the commits this PR adds. The whole history is scanned weekly
+      # (security.yml); scanning it on every PR re-read the same past each time.
+      - name: Secrets in the PR's commits (gitleaks)
+        if: github.event_name == 'pull_request'
+        env:
+          GITLEAKS_VERSION: 8.28.0
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+          ./gitleaks git --redact --no-banner --exit-code 1 --log-opts="${BASE_SHA}..${HEAD_SHA}" .
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        if: github.event_name == 'pull_request'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        if: github.event_name == 'pull_request'
+        run: npm ci --no-audit --no-fund --ignore-scripts
+
+      - name: Commit messages (commitlint)
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --verbose --from "$BASE_SHA" --to "$HEAD_SHA"
+
+      # The files the PR changes, and only those: `verify` checks the whole
+      # tree when it runs, and when it does not (a docs PR), the rest of the
+      # tree is what it already checked. Prettier honours .prettierignore.
+      - name: Format of the changed files (prettier)
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff -z --name-only --diff-filter=ACMR "${BASE_SHA}...${HEAD_SHA}" \
+            | xargs -0 -r npx prettier --check --ignore-unknown
+
+  verify:
+    needs: hygiene
+    # Also when hygiene failed (a commit message, say): its areas are already
+    # decided, and the author learns every failure from one push.
+    if: ${{ !cancelled() && needs.hygiene.outputs.code == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     services:
       postgres:
-        image: postgres:16
+        # An empty image skips the service: without API changes no step below
+        # touches the database.
+        image: ${{ needs.hygiene.outputs.api == 'true' && 'postgres:16' || '' }}
         env:
           POSTGRES_USER: coco_migrate
           POSTGRES_PASSWORD: ci-only-password
@@ -43,6 +150,7 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
 
     env:
+      API: ${{ needs.hygiene.outputs.api }}
       # Never a real secret: CI talks only to the throwaway Postgres above.
       TEST_DATABASE_URL: postgresql://coco_migrate:ci-only-password@localhost:5432/coco_test
       # The API runs as coco_app, under row-level security, so the e2e suites
@@ -53,7 +161,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          fetch-depth: 0 # the catalogue step diffs the PR against its base
+          fetch-depth: 0 # the Spanish names baseline diffs the PR against its base
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -64,6 +172,7 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Test environment (api/.env.test)
+        if: env.API == 'true'
         run: |
           {
             echo 'NODE_ENV=test'
@@ -78,14 +187,19 @@ jobs:
           } > api/.env.test
 
       - name: Application role (coco_app)
+        if: env.API == 'true'
         run: bash scripts/db/create-app-role.sh
         env:
           ADMIN_DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
 
-      - name: Prisma client and test database
-        run: |
-          npm run prisma:generate --workspace api
-          npm run db:test:push --workspace api
+      # The client always (the API's typecheck reads it); the database only
+      # when the API suites run.
+      - name: Prisma client
+        run: npm run prisma:generate --workspace api
+
+      - name: Test database
+        if: env.API == 'true'
+        run: npm run db:test:push --workspace api
 
       # The web's API client (D11) is generated by Orval from api/openapi.v2.json
       # and committed, because hbuilds builds without devDependencies. Regenerate
@@ -134,6 +248,7 @@ jobs:
 
       # Fails under the thresholds in frontend/vitest.config.ts. They only go up.
       - name: Frontend coverage
+        if: needs.hygiene.outputs.web == 'true'
         run: npm run test:coverage --workspace frontend
 
       # The e2e suite runs here, together with the unit one: coverage of
@@ -141,40 +256,29 @@ jobs:
       # or branches (api/jest.coverage.config.js). packages/receipt-parser checks its
       # own floor inside `npm test`.
       - name: API e2e and coverage
+        if: env.API == 'true'
         run: npm run test:cov --workspace api
 
-      - name: Production builds
-        run: |
-          npm run build --workspace api
-          NODE_ENV=production npm run build --workspace frontend
+      - name: API production build
+        if: env.API == 'true'
+        run: npm run build --workspace api
+
+      - name: Web production build
+        if: needs.hygiene.outputs.web == 'true'
+        run: NODE_ENV=production npm run build --workspace frontend
 
       # Step 7.9 (D26): the initial bundle must stay under its budget. Reads
       # the production build above; the budget lives in .size-limit.cjs.
       - name: Bundle budget (size-limit)
+        if: needs.hygiene.outputs.web == 'true'
         run: npx size-limit
 
       # The component catalogue (CONTRIBUTING, "Component catalogue"). Built
       # so a story that stops compiling fails here and not when someone opens
-      # it. It needs no network and no data: stories never fetch.
-      # Only when something it is built from changed (step R-1a): every story
-      # lives in shared/ui. Outside a PR it always runs.
-      - name: Did the catalogue's sources change?
-        id: catalogue
-        env:
-          EVENT: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          if [ "$EVENT" != pull_request ] \
-            || git diff --name-only "${BASE_SHA}...${HEAD_SHA}" \
-              | grep -qE '^(frontend/src/shared/ui/|frontend/\.storybook/|frontend/package\.json$|package-lock\.json$|\.github/workflows/ci\.yml$)'; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
+      # it. It needs no network and no data: stories never fetch. Every story
+      # lives in shared/ui.
       - name: Component catalogue (Storybook)
-        if: steps.catalogue.outputs.changed == 'true'
+        if: needs.hygiene.outputs.ui == 'true'
         run: npm run build-storybook --workspace frontend
 
       # The contract (step 7.4): one document per served version —only
@@ -183,12 +287,13 @@ jobs:
       # that changes the contract carries its document. The regenerated file is
       # kept as an artifact, also when the comparison fails.
       - name: OpenAPI document matches the code
+        if: env.API == 'true'
         run: |
           npm run openapi --workspace api
           git diff --exit-code -- api/openapi.v2.json
 
       - name: OpenAPI artifact
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && env.API == 'true' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: openapi
@@ -197,8 +302,10 @@ jobs:
   clean-install:
     # What hbuilds runs on every deploy: a fresh install with NODE_ENV=production
     # (no devDependencies) and the build. Three deploys failed on exactly this.
+    needs: hygiene
+    if: ${{ !cancelled() && needs.hygiene.outputs.prod == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -206,3 +313,84 @@ jobs:
           node-version: 22
       - name: Clean install and production build
         run: bash scripts/verify-clean-install.sh
+
+  # The critical journeys of the web, in Chromium (desktop and iPhone viewport),
+  # each with an axe check (plan §7.7, D16). See CONTRIBUTING.md, "Journeys".
+  # Its own job: it needs both production builds and a browser, and a failure
+  # here reads differently from a failed unit test.
+  journeys:
+    needs: hygiene
+    if: ${{ !cancelled() && needs.hygiene.outputs.e2e == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: coco_migrate
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U coco_migrate"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      # Never a real secret: the journeys talk only to the throwaway Postgres
+      # above and to a fake Supabase Auth inside the runner.
+      E2E_DATABASE_URL: postgresql://coco_migrate:ci-only-password@localhost:5432/coco_e2e_pw_test
+      E2E_APP_DATABASE_URL: postgresql://coco_app:ci-only-coco-app-password@localhost:5432/coco_e2e_pw_test
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      # The browser, by Playwright version: downloading it was over a minute.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      # Chromium's system libraries, and Ghostscript: the API compresses an
+      # uploaded PDF with it, as on the server; without it the receipt journey
+      # gets a 415. The runner rebuilds the man-db index after every apt
+      # install, and that alone took two minutes: it is switched off first.
+      - name: Chromium and Ghostscript
+        run: |
+          sudo rm -f /var/lib/man-db/auto-update
+          npx playwright install --with-deps chromium
+          sudo apt-get install -y --no-install-recommends ghostscript
+
+      - name: Application role (coco_app)
+        run: bash scripts/db/create-app-role.sh
+        env:
+          ADMIN_DATABASE_URL: postgresql://coco_migrate:ci-only-password@localhost:5432/postgres
+          COCO_APP_DB_PASSWORD: ci-only-coco-app-password
+
+      - name: Build the API and the web
+        run: npm run e2e:build
+
+      - name: Journeys
+        run: npm run e2e
+
+      - name: Report
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: journeys-report
+          path: |
+            e2e/.salida/informe
+            e2e/.salida/resultados
+          retention-days: 7
