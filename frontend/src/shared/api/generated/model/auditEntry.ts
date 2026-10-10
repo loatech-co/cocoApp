@@ -19,7 +19,7 @@ import type { AuditUser } from './auditUser';
 
 export interface AuditEntry {
   /**
-   * What changed, exactly as it was recorded: not translated to v2 names.
+   * What changed. Entries recorded with the old keys (de, a, motivo) are handed out as from, to, reason.
    * @nullable
    */
   changes: AuditEntryChanges;

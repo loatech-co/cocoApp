@@ -50,7 +50,8 @@ export class AuditEntry {
   entityId!: number | null;
   user!: AuditUser | null;
   @ApiProperty({
-    description: 'What changed, exactly as it was recorded: not translated to v2 names.',
+    description:
+      'What changed. Entries recorded with the old keys (de, a, motivo) are handed out as from, to, reason.',
     type: 'object',
     additionalProperties: true,
     nullable: true,

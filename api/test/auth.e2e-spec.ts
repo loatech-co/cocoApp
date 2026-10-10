@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import request from 'supertest';
 
 import {
@@ -573,6 +574,48 @@ describe('Our own auth (e2e)', () => {
         action: expect.any(String),
         entity: 'users',
       });
+    });
+
+    it('hands out entries recorded with the old keys in the current shape', async () => {
+      // Rows written before the English rename keep `de`/`a`/`motivo`: they are
+      // not rewritten (plan 8.7), so the reader has to accept both shapes.
+      const admin = await env.createUser({ role: 'admin' });
+      const user = await env.createUser();
+      const recorded = [
+        {
+          action: 'admin.role_changed',
+          changesJson: Object.fromEntries([
+            ['de', 'user'],
+            ['a', 'admin'],
+          ]),
+        },
+        { action: 'admin.role_changed', changesJson: { from: 'user', to: 'admin' } },
+        {
+          action: 'auth.login_failed',
+          changesJson: Object.fromEntries([['motivo', 'credenciales_incorrectas']]),
+        },
+        { action: 'auth.login_failed', changesJson: { reason: 'invalid_credentials' } },
+      ];
+      for (const entry of recorded) {
+        await env.prisma.auditLog.create({
+          data: { ...entry, entity: 'users', entityId: user.id, userId: admin.id },
+        });
+      }
+
+      const response = await http
+        .get('/api/v2/admin/audit-log?perPage=50')
+        .set('Authorization', env.as(admin))
+        .expect(200);
+
+      const changes = (response.body.data as { entityId: number; changes: unknown }[])
+        .filter((entry) => entry.entityId === Number(user.id))
+        .map((entry) => entry.changes);
+      // `jsonb` reorders the keys, so the comparison does not depend on order.
+      const roleChange = { from: 'user', to: 'admin' };
+      const failedLogin = { reason: 'invalid_credentials' };
+      expect(changes).toHaveLength(4);
+      expect(changes.filter((c) => isDeepStrictEqual(c, roleChange))).toHaveLength(2);
+      expect(changes.filter((c) => isDeepStrictEqual(c, failedLogin))).toHaveLength(2);
     });
   });
 

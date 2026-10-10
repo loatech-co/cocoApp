@@ -39,7 +39,7 @@ interface AuditEntry {
   entity: string;
   entityId: bigint | null;
   user: { email: string; name: string | null } | null;
-  /** What changed, exactly as it was recorded: data, never renamed. */
+  /** What changed, as it was recorded; the v2 presenter reads the old keys as the current ones. */
   changes: Prisma.JsonValue;
   ip: string | null;
   createdAt: Date;
