@@ -115,7 +115,7 @@ function LoginBrand() {
       */}
         <div
           className="relative size-full overflow-hidden rounded-lg bg-primary bg-cover bg-center"
-          style={{ backgroundImage: 'url(/fondo-login.webp)' }}
+          style={{ backgroundImage: 'url(/login-background.webp)' }}
         >
           {/*
           A British-green gradient from the bottom.

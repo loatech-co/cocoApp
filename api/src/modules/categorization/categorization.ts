@@ -1,5 +1,5 @@
 import { normalizeDescription } from './description';
-import type { English, SUGGESTION_REASON } from '../../common/vocabulary';
+import type { SuggestionReason } from '../../common/vocabulary';
 
 /**
  * Automatic categorization (T1) — pure logic.
@@ -28,7 +28,7 @@ export interface SuggestedCategory {
   /** 0–100. Shown so people know how much to trust it. */
   confidence: number;
   /** Why it was suggested. It shows in the interface: "because you always classify it this way". */
-  reason: English<typeof SUGGESTION_REASON>;
+  reason: SuggestionReason;
 }
 
 /** A transaction the person already categorized, to learn from. */

@@ -54,19 +54,19 @@ export interface ReadingSignals {
  * and different ids. It only exists when the tree was passed.
  *
  * ── The three sources and their order ───────────────────────────────────────
- * `palabras-clave` are the person's own —what they wrote in a concept to
- * recognise it— and go first; `firma` is the system catalogue; and
- * `diccionario` only speaks when neither of the other two recognised
+ * `keywords` are the person's own —what they wrote in a concept to
+ * recognise it— and go first; `signature` is the system catalogue; and
+ * `dictionary` only speaks when neither of the other two recognised
  * anything. A lower source never replaces a higher one.
  *
  * ── And the certainty ───────────────────────────────────────────────────────
- * `alta` is a concept; `media` is a category or several concepts not chosen
- * between; `ninguna` is not returned: then this is `null`.
+ * `high` is a concept; `medium` is a category or several concepts not chosen
+ * between; `none` is not returned: then this is `null`.
  */
 export interface TreeClassification {
-  certainty: Exclude<ClassificationCertainty, 'ninguna'>;
-  /** The package never produces `historial`: the API adds it, it owns the history. */
-  source: 'historial' | 'palabras-clave' | 'firma' | 'diccionario';
+  certainty: Exclude<ClassificationCertainty, 'none'>;
+  /** The package never produces `history`: the API adds it, it owns the history. */
+  source: 'history' | 'keywords' | 'signature' | 'dictionary';
   conceptId?: number | string | undefined;
   categoryId?: number | string | undefined;
   /** With medium certainty: what is in doubt, to keep it in sight. */
@@ -312,8 +312,8 @@ function treeClassificationFromSignature(
       normalize(e.path[0] ?? '') === normalize(signature.category),
   );
   return {
-    certainty: 'alta',
-    source: signature.priority === TYPED_TEXT_PRIORITY ? 'palabras-clave' : 'firma',
+    certainty: 'high',
+    source: signature.priority === TYPED_TEXT_PRIORITY ? 'keywords' : 'signature',
     conceptId: concept?.id,
     categoryId: concept?.categoryId,
     candidates: [],
@@ -342,7 +342,7 @@ function fromDictionary(
 
   const terms = [...new Set(found.flatMap((h) => h.group.terms))];
   const resolved = resolveTerms(index, terms);
-  if (resolved.certainty === 'ninguna') return null;
+  if (resolved.certainty === 'none') return null;
 
   const concept = resolved.concept;
   const category =
@@ -353,7 +353,7 @@ function fromDictionary(
 
   const merchant = firstFound.alias;
   const reason =
-    resolved.certainty === 'alta'
+    resolved.certainty === 'high'
       ? `Reconocí «${merchant}» y en tu árbol eso lleva a un solo concepto.`
       : resolved.candidates.length > 1
         ? `Reconocí «${merchant}», pero en tu árbol lleva a ${resolved.candidates.length} sitios: elige tú.`
@@ -366,7 +366,7 @@ function fromDictionary(
     value,
     date,
     confidence:
-      resolved.certainty === 'alta'
+      resolved.certainty === 'high'
         ? Math.round(Math.min(0.75, 0.5 + valueConfidence * 0.25) * 100) / 100
         : Math.round(Math.min(0.5, 0.3 + valueConfidence * 0.2) * 100) / 100,
     signals,
@@ -374,7 +374,7 @@ function fromDictionary(
     alternatives: resolved.candidates.map((c) => ({ concept: c.name, score: 0 })),
     inTree: {
       certainty: resolved.certainty,
-      source: 'diccionario',
+      source: 'dictionary',
       conceptId: concept?.id,
       categoryId: category?.id ?? concept?.categoryId,
       candidates: resolved.candidates.map((c) => ({

@@ -164,7 +164,7 @@ export function readablePath(e: IndexEntry): string {
 
 // ── Resolving generic terms: what the dictionary uses ───────────────────────
 
-export type ClassificationCertainty = 'alta' | 'media' | 'ninguna';
+export type ClassificationCertainty = 'high' | 'medium' | 'none';
 
 export interface Resolution {
   certainty: ClassificationCertainty;
@@ -183,11 +183,11 @@ export interface Resolution {
  * Where some generic terms lead inside someone's tree.
  *
  * ── The three certainty levels ──────────────────────────────────────────────
- * · HIGH (`alta`): the terms lead to one concept. It is proposed.
- * · MEDIUM (`media`): they lead to a category but no concept, or to several
+ * · HIGH (`high`): the terms lead to one concept. It is proposed.
+ * · MEDIUM (`medium`): they lead to a category but no concept, or to several
  *   concepts. The category is proposed —if there is only one— and the
  *   candidates stay in sight for the person to choose.
- * · NONE (`ninguna`): they lead nowhere. Nothing is proposed; the search box
+ * · NONE (`none`): they lead nowhere. Nothing is proposed; the search box
  *   is ready.
  *
  * It never guesses among several: «mercado» and «supermercado» can be two
@@ -207,7 +207,7 @@ export function resolveTerms(index: readonly IndexEntry[], terms: readonly strin
   }
 
   if (concepts.size === 1) {
-    return { certainty: 'alta', concept: [...concepts.values()][0], candidates: [] };
+    return { certainty: 'high', concept: [...concepts.values()][0], candidates: [] };
   }
 
   if (concepts.size > 1) {
@@ -217,17 +217,17 @@ export function resolveTerms(index: readonly IndexEntry[], terms: readonly strin
       candidateCategories.size === 1
         ? index.find((e) => e.level === 'categoria' && String(e.id) === [...candidateCategories][0])
         : undefined;
-    return { certainty: 'media', category, candidates };
+    return { certainty: 'medium', category, candidates };
   }
 
   if (categories.size >= 1) {
     const matchedCategories = [...categories.values()];
     return {
-      certainty: 'media',
+      certainty: 'medium',
       category: matchedCategories.length === 1 ? matchedCategories[0] : undefined,
       candidates: matchedCategories,
     };
   }
 
-  return { certainty: 'ninguna', candidates: [] };
+  return { certainty: 'none', candidates: [] };
 }

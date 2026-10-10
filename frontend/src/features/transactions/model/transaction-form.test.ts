@@ -142,7 +142,7 @@ describe('proposalFromText', () => {
   it('proposes the only concept a keyword leads to', () => {
     expect(proposalFromText(index, 'rappi')).toEqual({
       categoryId: 201,
-      origin: 'palabras-clave',
+      origin: 'keywords',
     });
   });
 
@@ -153,14 +153,14 @@ describe('proposalFromText', () => {
   it('proposes the concept the dictionary leads to when it is the only one', () => {
     expect(proposalFromText(indexTree(ONE_MARKET), 'koba')).toEqual({
       categoryId: 200,
-      origin: 'diccionario',
+      origin: 'dictionary',
     });
   });
 
   it('never picks between two concepts: it shows both as candidates', () => {
     const proposal = proposalFromText(index, 'koba');
 
-    expect(proposal).toMatchObject({ categoryId: undefined, origin: 'diccionario' });
+    expect(proposal).toMatchObject({ categoryId: undefined, origin: 'dictionary' });
     expect(proposal?.candidates?.map((c) => c.id).sort()).toEqual([200, 220]);
     expect(proposal?.candidates?.[0]?.path).toContain(' › ');
   });
@@ -168,7 +168,7 @@ describe('proposalFromText', () => {
   it('proposes the category when the dictionary leads only that far', () => {
     expect(proposalFromText(index, 'uber')).toMatchObject({
       categoryId: 21,
-      origin: 'diccionario',
+      origin: 'dictionary',
     });
   });
 });
@@ -185,7 +185,7 @@ describe('proposalFromReading', () => {
 
     expect(proposalFromReading(reading({ concept: 'Celsia (Energia)' }), tree)).toEqual({
       categoryId: 100,
-      origin: 'palabras-clave',
+      origin: 'keywords',
     });
   });
 
@@ -196,68 +196,68 @@ describe('proposalFromReading', () => {
 
   it('proposes the concept of a high-certainty reading with its source', () => {
     const inTree = {
-      certainty: 'alta',
-      source: 'historial',
+      certainty: 'high',
+      source: 'history',
       conceptId: '200',
       candidates: [],
     } satisfies TreeClassification;
 
     expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)).toEqual({
       categoryId: 200,
-      origin: 'historial',
+      origin: 'history',
     });
   });
 
   it('ranks the system catalogue as keywords', () => {
     const inTree = {
-      certainty: 'alta',
-      source: 'firma',
+      certainty: 'high',
+      source: 'signature',
       conceptId: 201,
       candidates: [],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)?.origin).toBe('palabras-clave');
+    expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)?.origin).toBe('keywords');
   });
 
   it('proposes the category and shows the candidates of a medium-certainty reading', () => {
     const inTree = {
-      certainty: 'media',
-      source: 'diccionario',
+      certainty: 'medium',
+      source: 'dictionary',
       categoryId: '20',
       candidates: [{ id: '200', name: 'Mercado', path: 'Costos variables › Alimentación' }],
     } satisfies TreeClassification;
 
     expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)).toEqual({
       categoryId: 20,
-      origin: 'diccionario',
+      origin: 'dictionary',
       candidates: [{ id: 200, name: 'Mercado', path: 'Costos variables › Alimentación' }],
     });
   });
 
   it('leaves the category empty when the candidates span several', () => {
     const inTree = {
-      certainty: 'media',
-      source: 'palabras-clave',
+      certainty: 'medium',
+      source: 'keywords',
       candidates: [],
     } satisfies TreeClassification;
 
     expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)).toEqual({
       categoryId: undefined,
-      origin: 'palabras-clave',
+      origin: 'keywords',
       candidates: [],
     });
   });
 
   it('keeps the source but proposes nothing when a high reading has no concept', () => {
     const inTree = {
-      certainty: 'alta',
-      source: 'diccionario',
+      certainty: 'high',
+      source: 'dictionary',
       candidates: [],
     } satisfies TreeClassification;
 
     expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)).toEqual({
       categoryId: undefined,
-      origin: 'diccionario',
+      origin: 'dictionary',
     });
   });
 });

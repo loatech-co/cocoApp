@@ -13,8 +13,8 @@ import {
   GOTRUE_PORT,
   ROOT,
   requireTestDatabase,
-} from './entorno.mjs';
-import { startFakeGoTrue } from './gotrue-falso.mjs';
+} from './environment.mjs';
+import { startFakeGoTrue } from './fake-gotrue.mjs';
 
 /**
  * The environment of the Playwright journeys, in ONE process: the fake GoTrue,
@@ -22,7 +22,7 @@ import { startFakeGoTrue } from './gotrue-falso.mjs';
  * exactly as production does (one app, one domain, first-party cookie).
  *
  * Steps, in order, before anything listens:
- *   1. The firewall: a local database named `*_test` (`entorno.mjs`).
+ *   1. The firewall: a local database named `*_test` (`environment.mjs`).
  *   2. Create it if missing, apply the migrations, empty every table.
  *   3. Pin EVERY variable the API reads. The API also loads `api/.env.test`
  *      without overriding what is already set, so anything left unset here
@@ -97,7 +97,7 @@ function pinEnvironment(gotrueUrl) {
     // The accounts live in the fake above, so creating them is harmless.
     ALLOW_DESTRUCTIVE_AUTH: 'si',
     JWT_SECRET: 'e2e-only-jwt-secret-at-least-32-characters',
-    BOOTSTRAP_ADMIN_EMAIL: 'admin@recorridos.coco',
+    BOOTSTRAP_ADMIN_EMAIL: 'admin@journeys.coco',
     CHECK_BREACHED_PASSWORDS: 'false',
     CORS_ORIGINS: `http://localhost:${API_PORT}`,
     RECEIPTS_DIR: RECEIPTS,

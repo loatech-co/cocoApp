@@ -176,8 +176,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
-          fetch-depth: 0 # the Spanish names baseline diffs the PR against its base
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -198,7 +196,7 @@ jobs:
             echo 'LOG_LEVEL=silent'
             echo 'CHECK_BREACHED_PASSWORDS=false'
             echo 'BOOTSTRAP_ADMIN_EMAIL=admin-e2e@pruebas.coco'
-            echo 'RECEIPTS_DIR=.soportes-test'
+            echo 'RECEIPTS_DIR=.receipts-test'
           } > api/.env.test
 
       - name: Application role (coco_app)
@@ -232,13 +230,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
-
-      # `npm run lint` above already fails on a NEW Spanish name (step 7.2-a).
-      # This also fails if the PR made the baseline hold more of any name than
-      # its base: the baseline moves between folders, but only shrinks.
-      - name: Spanish names baseline only shrinks
-        if: github.event_name == 'pull_request'
-        run: npm run lint:spanish -- --against "${{ github.event.pull_request.base.sha }}"
 
       - name: Format
         run: npx prettier --check .
@@ -406,8 +397,8 @@ jobs:
         with:
           name: journeys-report
           path: |
-            e2e/.salida/informe
-            e2e/.salida/resultados
+            e2e/.output/report
+            e2e/.output/results
           retention-days: 7
 
   # The iOS gate (phase 7.6 / 7.13): swift-format, SwiftLint, the generated

@@ -32,8 +32,8 @@ describe('interpret', () => {
   it('uses a history that points to a category, as a doubt', () => {
     const result = interpret({ merchant: 'Tienda' }, context({ categoryId: '10', confidence: 50 }));
     expect(result.classification).toMatchObject({
-      certainty: 'media',
-      source: 'historial',
+      certainty: 'medium',
+      source: 'history',
       conceptId: null,
       categoryId: '10',
       name: 'Mercado',
@@ -43,14 +43,14 @@ describe('interpret', () => {
 
   it('ignores a history that points to a cost center', () => {
     const result = interpret({ merchant: 'zzz' }, context({ categoryId: '1', confidence: 95 }));
-    expect(result.classification.source).not.toBe('historial');
+    expect(result.classification.source).not.toBe('history');
   });
 
   it('stops at the category when the dictionary knows the merchant but the tree has no concept', () => {
     const result = interpret({ merchant: 'Carulla' }, context());
     expect(result.classification).toMatchObject({
-      certainty: 'media',
-      source: 'diccionario',
+      certainty: 'medium',
+      source: 'dictionary',
       conceptId: null,
       categoryId: '10',
       name: 'Mercado',
@@ -79,7 +79,7 @@ describe('interpret', () => {
 
 describe('summaryOf', () => {
   const classification = (overrides: Partial<InterpretedClassification>) => ({
-    certainty: 'ninguna' as const,
+    certainty: 'none' as const,
     source: null,
     conceptId: null,
     categoryId: null,
@@ -90,10 +90,10 @@ describe('summaryOf', () => {
   });
 
   it('says what is missing when there is no amount', () => {
-    expect(summaryOf(null, classification({ certainty: 'alta', name: 'Aseo' }))).toBe(
+    expect(summaryOf(null, classification({ certainty: 'high', name: 'Aseo' }))).toBe(
       'Registrado: sin valor · Aseo',
     );
-    expect(summaryOf(null, classification({ certainty: 'media', name: 'Aseo' }))).toBe(
+    expect(summaryOf(null, classification({ certainty: 'medium', name: 'Aseo' }))).toBe(
       'Registrado: sin valor · Aseo (por revisar)',
     );
     expect(summaryOf(null, classification({}))).toBe('Pendiente de clasificar');

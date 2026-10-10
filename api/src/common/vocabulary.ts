@@ -1,60 +1,21 @@
 /**
- * The words the database and the older code use (Spanish), and the ones the
- * domain speaks (English), for every closed set of values that crosses the
- * service boundary.
+ * Every closed set of values that crosses the service boundary, in the words
+ * the domain and the wire speak.
  *
- * The services and the wire speak the English word; the Spanish one is what
- * the database stores. One table per set, used in both directions, so the two
- * can never disagree.
+ * Until step J-6c each set was a table from the Spanish word the database or
+ * `@coco/receipt-parser` used to the English one. Neither speaks Spanish any
+ * more: the Postgres enums map their values in Prisma (`@map`) and the parser
+ * returns English, so what is left is one type per set.
  */
 
-export const PERIODICITY = {
-  mensual: 'monthly',
-  bimestral: 'bimonthly',
-  trimestral: 'quarterly',
-  semestral: 'semiannual',
-  anual: 'annual',
-} as const;
+export type Periodicity = 'monthly' | 'bimonthly' | 'quarterly' | 'semiannual' | 'annual';
 
-export const BREAKDOWN_LEVEL = {
-  'centro de costos': 'cost_center',
-  categoría: 'category',
-  concepto: 'concept',
-} as const;
+export type BreakdownLevel = 'cost_center' | 'category' | 'concept';
 
-export const GRANULARITY = { dia: 'day', mes: 'month' } as const;
+export type Granularity = 'day' | 'month';
 
-export const CERTAINTY = { alta: 'high', media: 'medium', ninguna: 'none' } as const;
+export type Certainty = 'high' | 'medium' | 'none';
 
-export const CLASSIFICATION_SOURCE = {
-  historial: 'history',
-  'palabras-clave': 'keywords',
-  firma: 'signature',
-  diccionario: 'dictionary',
-} as const;
+export type ClassificationSource = 'history' | 'keywords' | 'signature' | 'dictionary';
 
-export const SUGGESTION_REASON = {
-  historial: 'history',
-  regla: 'rule',
-  'regla-sembrada': 'seeded_rule',
-} as const;
-
-type Table = Readonly<Record<string, string>>;
-
-/** The English word of each Spanish one in `T`. */
-export type English<T extends Table> = T[keyof T];
-
-/** The Spanish word that `T` turns into `V`. */
-export type Spanish<T extends Table, V extends string> = {
-  [K in keyof T]: T[K] extends V ? K : never;
-}[keyof T];
-
-export function english<T extends Table, K extends keyof T>(table: T, word: K): T[K] {
-  return table[word];
-}
-
-export function spanish<T extends Table, V extends English<T>>(table: T, word: V): Spanish<T, V> {
-  const found = Object.keys(table).find((key) => table[key] === word);
-  if (found === undefined) throw new Error(`No Spanish word for ${word}`);
-  return found as Spanish<T, V>;
-}
+export type SuggestionReason = 'history' | 'rule' | 'seeded_rule';

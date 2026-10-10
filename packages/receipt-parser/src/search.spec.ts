@@ -64,33 +64,33 @@ describe('resolveTerms', () => {
 
   it('is certain when the terms point to one concept', () => {
     const r = resolveTerms(index, ['enel', 'energia']);
-    expect(r.certainty).toBe('alta');
+    expect(r.certainty).toBe('high');
     expect(r.concept?.id).toBe('luz');
   });
 
   it('names the shared category when several concepts of one category match', () => {
     const r = resolveTerms(index, ['agua', 'vanti']);
-    expect(r.certainty).toBe('media');
+    expect(r.certainty).toBe('medium');
     expect(r.category?.id).toBe('servicios');
     expect(r.candidates.map((c) => c.id)).toEqual(['agua', 'gas']);
   });
 
   it('names no category when the matching concepts are in different ones', () => {
     const r = resolveTerms(index, ['agua', 'exito']);
-    expect(r.certainty).toBe('media');
+    expect(r.certainty).toBe('medium');
     expect(r.category).toBeUndefined();
   });
 
   it('falls back to categories when no concept matches', () => {
     expect(resolveTerms(index, ['servicios'])).toMatchObject({
-      certainty: 'media',
+      certainty: 'medium',
       category: { id: 'servicios' },
     });
     const several = resolveTerms(index, ['servicios', 'mercado']);
-    expect(several.certainty).toBe('alta');
+    expect(several.certainty).toBe('high');
   });
 
   it('is uncertain when nothing matches', () => {
-    expect(resolveTerms(index, ['zapatos'])).toEqual({ certainty: 'ninguna', candidates: [] });
+    expect(resolveTerms(index, ['zapatos'])).toEqual({ certainty: 'none', candidates: [] });
   });
 });

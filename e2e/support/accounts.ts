@@ -1,14 +1,14 @@
 import { expect, request, type APIRequestContext } from '@playwright/test';
 
-import { BASE_URL } from './entorno.mjs';
+import { BASE_URL } from './environment.mjs';
 
 /**
  * Registering and logging in through the API, shared by the fixtures and by
- * `global-setup.ts`. Accounts live in the fake GoTrue of `servidor.mjs`; the
+ * `global-setup.ts`. Accounts live in the fake GoTrue of `server.mjs`; the
  * password below is only valid there.
  */
 
-export const ADMIN_EMAIL = 'admin@recorridos.coco';
+export const ADMIN_EMAIL = 'admin@journeys.coco';
 export const PASSWORD = 'Xk9$Ronda-Verde!';
 
 interface Envelope<T> {

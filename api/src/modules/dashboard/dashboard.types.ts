@@ -1,5 +1,5 @@
 /** The dashboard as the service hands it out: the domain, in English. */
-import type { BREAKDOWN_LEVEL, English, GRANULARITY, PERIODICITY } from '../../common/vocabulary';
+import type { BreakdownLevel, Granularity, Periodicity } from '../../common/vocabulary';
 import type { Account } from '../accounts/accounts.service';
 
 /** What the summary is asked for: a range, and the categories or the words to narrow it to. */
@@ -18,7 +18,7 @@ export interface PendingPayment {
   name: string;
   /** The path to it, to know which part of the house it is about. */
   path: string;
-  periodicity: English<typeof PERIODICITY>;
+  periodicity: Periodicity;
   /** `YYYY-MM-DD`. Already clipped to the short months. */
   dueDate: string;
   /**
@@ -76,7 +76,7 @@ export interface TrendPoint {
 }
 
 export interface Dashboard {
-  period: { from: string; to: string; granularity: English<typeof GRANULARITY> };
+  period: { from: string; to: string; granularity: Granularity };
   accounts: Account[];
   totals: {
     /** Sum of the asset accounts. */
@@ -103,7 +103,7 @@ export interface Dashboard {
    * the top level —fixed against variable— IS the answer.
    */
   expenseByCostCenter: CategorySpend[];
-  breakdownLevel: English<typeof BREAKDOWN_LEVEL>;
+  breakdownLevel: BreakdownLevel;
   /**
    * Whose rows the breakdown shows.
    *

@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 
 /// The photo the camera takes, at the size recommended by
-/// `CONTRATO_DE_SOPORTES`: long side at 1600 px and JPEG at 0.85. Same as
+/// `RECEIPTS_CONTRACT`: long side at 1600 px and JPEG at 0.85. Same as
 /// `PhotoReducer`, but from a `UIImage` and correcting the EXIF
 /// orientation: drawing the image leaves it at `.up`, so the OCR and the API receive
 /// the receipt upright even if the phone was rotated.

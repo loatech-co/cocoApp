@@ -96,18 +96,18 @@ export interface AppNotices {
  * (`shared/lib/shrink-receipt.ts`): longest side 1600 px, JPEG at 0.85.
  * @public read by `receipts.contract.spec.ts` (api)
  */
-export const CONTRATO_DE_SOPORTES = {
+export const RECEIPTS_CONTRACT = {
   endpoint: 'POST /api/v2/transactions/:id/receipts',
   /** `multipart/form-data`, and this is the field name. Several files, same name. */
-  campo: 'files',
-  maximo_por_subida: 10,
+  field: 'files',
+  maxPerUpload: 10,
   /** Per file, in bytes. */
-  tamano_maximo_bytes: 26214400,
+  maxSizeBytes: 26214400,
   /** The only accepted types. A HEIC is converted first; an SVG never. */
-  tipos: ['application/pdf', 'image/jpeg', 'image/png'],
-  recomendado: {
-    lado_maximo_px: 1600,
-    formato: 'image/jpeg',
-    calidad: 0.85,
+  types: ['application/pdf', 'image/jpeg', 'image/png'],
+  recommended: {
+    maxSidePx: 1600,
+    format: 'image/jpeg',
+    quality: 0.85,
   },
 } as const;

@@ -54,7 +54,7 @@ vi.mock('@/features/transactions/api/read-receipt', () => ({ readReceipt: vi.fn(
   suggestion on top of the form without going through a receipt.
 */
 const suggestion = vi.fn<
-  () => { categoryId: number; confidence: number; reason: 'historial' } | null
+  () => { categoryId: number; confidence: number; reason: 'history' } | null
 >(() => null);
 vi.mock('@/features/transactions/hooks/use-category-suggestion', () => ({
   useCategorySuggestion: () => suggestion(),
@@ -185,7 +185,7 @@ describe('Recording an expense with full classification', () => {
   });
 
   it('with a suggestion that is right: two gestures from when the sheet opens', async () => {
-    suggestion.mockReturnValue({ categoryId: 100, confidence: 0.9, reason: 'historial' });
+    suggestion.mockReturnValue({ categoryId: 100, confidence: 0.9, reason: 'history' });
     openNewSheet();
 
     typeAmount(); // 1

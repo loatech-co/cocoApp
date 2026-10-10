@@ -1,11 +1,8 @@
 /** What the interpretation service hands out (the domain), and the pure helpers that build it. */
 import type { InterpretedClassification, Interpreted } from './interpret';
-import { CERTAINTY, CLASSIFICATION_SOURCE, english, type English } from '../../common/vocabulary';
+import type { Certainty, ClassificationSource } from '../../common/vocabulary';
 import type { TransactionSource } from '../../generated/prisma/client';
 import type { Transaction } from '../transactions/transactions.service';
-
-type Certainty = English<typeof CERTAINTY>;
-type ClassificationSource = English<typeof CLASSIFICATION_SOURCE>;
 
 /**
  * What there is to read: free text (OCR, an SMS) or data already split (the
@@ -93,9 +90,9 @@ export function categoryIdToSave(c: InterpretedClassification): number | undefin
   // High: the concept. Medium: the category, if any —flagged for review, but
   // already halfway in the right place—. None: nothing.
   const id =
-    c.certainty === 'alta'
+    c.certainty === 'high'
       ? (c.conceptId ?? c.categoryId)
-      : c.certainty === 'media'
+      : c.certainty === 'medium'
         ? c.categoryId
         : null;
   return id === null ? undefined : Number(id);
@@ -103,8 +100,8 @@ export function categoryIdToSave(c: InterpretedClassification): number | undefin
 
 export function classificationOf(c: InterpretedClassification): Classification {
   return {
-    certainty: english(CERTAINTY, c.certainty),
-    source: c.source === null ? null : english(CLASSIFICATION_SOURCE, c.source),
+    certainty: c.certainty,
+    source: c.source,
     conceptId: c.conceptId === null ? null : BigInt(c.conceptId),
     categoryId: c.categoryId === null ? null : BigInt(c.categoryId),
     name: c.name,

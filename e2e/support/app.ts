@@ -6,7 +6,7 @@ import { test, type Locator, type Page } from '@playwright/test';
  */
 
 function onPhone(): boolean {
-  return test.info().project.name === 'movil';
+  return test.info().project.name === 'mobile';
 }
 
 /** Opens the "new expense" sheet: the round button of the bottom bar, or the menu. */

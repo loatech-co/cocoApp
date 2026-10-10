@@ -159,19 +159,12 @@ const cargando = true;
 export function crearMovimiento(input: MovimientoInputType) { … }
 ```
 
-**Baselines, while step 7.2 renames.** What broke these rules when they arrived
-is recorded, and only that passes:
-
-- `scripts/lint/spanish-identifiers.baseline.json`: Spanish names per folder,
-  with a count. One more in a folder fails; one fewer fails too until the
-  baseline is shrunk with `npm run lint:spanish -- --update`. CI also fails if
-  the baseline holds more of any name than on the PR's base.
-- ESLint's bulk suppressions for `naming-convention`: emptied and deleted,
-  the web's in 7.2-p and the api's in J-1. Never `--suppress-rule` again: a
-  new name is fixed, not suppressed.
-
-Each 7.2 slice empties its folder in both, and they are deleted when they are
-empty.
+**No baselines left.** What broke these rules when they arrived was recorded
+and let through while step 7.2 renamed, and both records are now empty and
+deleted: `scripts/lint/spanish-identifiers.baseline.json` in J-6c, ESLint's bulk
+suppressions for `naming-convention` in 7.2-p (web) and J-1 (api). Any Spanish
+name fails `npm run lint`. Never `--suppress-rule` again: a new name is fixed,
+not suppressed.
 
 ## TypeScript strictness
 
@@ -1018,7 +1011,7 @@ An optimization goes in with its ADR and its numbers before and after.
 
 ## Journeys (Playwright)
 
-The critical paths of the web, end to end, in `e2e/recorridos/`: signing in
+The critical paths of the web, end to end, in `e2e/journeys/`: signing in
 and out, registering an expense by hand and with a receipt, the concept
 finder, editing and deleting a movement, pending payments (including a
 concept paid in several instalments) and cost centres. Each runs in Chromium
@@ -1027,19 +1020,19 @@ twice: desktop and an iPhone viewport.
 ```bash
 npm run e2e:build                # once, and after changing api/ or frontend/
 npx playwright install chromium  # once per machine
-npm run e2e                      # all of them; `-- --project movil` for one viewport
+npm run e2e                      # all of them; `-- --project mobile` for one viewport
 ```
 
-- **Its own environment, never a real one.** `e2e/support/servidor.mjs`
+- **Its own environment, never a real one.** `e2e/support/server.mjs`
   starts the compiled API, unchanged, serving the built SPA on one origin, as
   production does. Its database is `coco_e2e_pw_test` on the local Postgres
   (`E2E_DATABASE_URL` overrides it); the launcher refuses any database that
   is not local or whose name does not end in `_test`, creates it, migrates it
   and **empties it** on every start. Supabase Auth is a fake GoTrue on
-  127.0.0.1 (`e2e/support/gotrue-falso.mjs`) that signs real ES256 tokens.
+  127.0.0.1 (`e2e/support/fake-gotrue.mjs`) that signs real ES256 tokens.
   The only thing switched off is the rate limiter's counter.
 - **Every test has its own user**, registered, approved by the admin and
-  seeded through the public API (`e2e/support/semilla.ts`), never through
+  seeded through the public API (`e2e/support/seed.ts`), never through
   SQL. No journey depends on another one or on the order.
 - **Accessibility rides on the journeys** (D16): `expectAccessible(page, …)`
   runs axe on what is on screen and fails on `serious` or `critical`

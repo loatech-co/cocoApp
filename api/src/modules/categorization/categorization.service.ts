@@ -10,7 +10,7 @@ import {
 import { CategorizationRepository } from './categorization.repository';
 import { normalizeDescription } from './description';
 import { ValidationError } from '../../common/errors/domain-error';
-import { SUGGESTION_REASON, type English } from '../../common/vocabulary';
+import type { SuggestionReason } from '../../common/vocabulary';
 import { CategoryLookupService } from '../categories/category-lookup.service';
 import { LedgerService } from '../transactions/ledger.service';
 
@@ -36,7 +36,7 @@ export interface Suggestion {
   categoryId: number;
   /** 0–100. */
   confidence: number;
-  reason: English<typeof SUGGESTION_REASON>;
+  reason: SuggestionReason;
 }
 
 /** Whether confirming a classification left a rule behind. */

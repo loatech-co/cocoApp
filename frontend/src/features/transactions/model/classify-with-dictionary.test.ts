@@ -55,8 +55,8 @@ describe('The dictionary as the last source of the reading', () => {
     // «Mercado» exists twice in this tree —Alimentación and Hogar—, so
     // the dictionary does NOT pick: it leaves both in view.
     const l = read('KOBA COLOMBIA SAS Total 45.000');
-    expect(l.inTree?.source).toBe('diccionario');
-    expect(l.inTree?.certainty).toBe('media');
+    expect(l.inTree?.source).toBe('dictionary');
+    expect(l.inTree?.certainty).toBe('medium');
     expect(l.inTree?.conceptId).toBeUndefined();
     expect(l.inTree?.candidates.map((c) => c.id).sort()).toEqual([200, 220]);
     // And each candidate's path is what tells one from the other.
@@ -76,8 +76,8 @@ describe('The dictionary as the last source of the reading', () => {
     ];
     const l = read('Compra en ARA cra 5', singleMarket);
     expect(l.inTree).toMatchObject({
-      source: 'diccionario',
-      certainty: 'alta',
+      source: 'dictionary',
+      certainty: 'high',
       conceptId: 200,
       categoryId: 20,
     });
@@ -95,13 +95,13 @@ describe('The dictionary as the last source of the reading', () => {
       },
     ];
     const l = read('EXITO Total a pagar 120.000', singleMarket);
-    expect(l.inTree?.certainty).toBe('alta');
+    expect(l.inTree?.certainty).toBe('high');
     expect(l.confidence).toBeLessThan(0.8);
   });
 
   it('leads to a category with no concepts: medium certainty with the category', () => {
     const l = read('UBER *TRIP 18.500');
-    expect(l.inTree).toMatchObject({ source: 'diccionario', certainty: 'media', categoryId: 21 });
+    expect(l.inTree).toMatchObject({ source: 'dictionary', certainty: 'medium', categoryId: 21 });
     expect(l.inTree?.conceptId).toBeUndefined();
     expect(l.category).toBe('Transporte');
   });
@@ -110,8 +110,8 @@ describe('The dictionary as the last source of the reading', () => {
     // «rappi» is a keyword of «Restaurantes»: that is a signature of their own, and
     // a recognized signature silences the dictionary even if RAPPI is in it.
     const l = read('RAPPI*PEDIDO 32.000');
-    expect(l.inTree?.source).toBe('palabras-clave');
-    expect(l.inTree?.certainty).toBe('alta');
+    expect(l.inTree?.source).toBe('keywords');
+    expect(l.inTree?.certainty).toBe('high');
     expect(l.inTree?.conceptId).toBe(201);
     expect(l.concept).toBe('Restaurantes');
   });

@@ -86,7 +86,7 @@ frontend/public/tesseract/
 
 # Soportes: recibos reales. Ni al repositorio ni por descuido.
 api/.soportes/
-api/.soportes-test/
+api/.receipts-test/
 soportes-origen/
 
 # `@coco/receipt-parser` se compila a CommonJS para que la API lo importe en tiempo
@@ -98,4 +98,4 @@ packages/receipt-parser/dist/
 .claude/worktrees/
 
 # Playwright journeys: traces, screenshots and the HTML report (e2e/)
-e2e/.salida/
+e2e/.output/

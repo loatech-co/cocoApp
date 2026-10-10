@@ -54,7 +54,7 @@ export function useClassificationProposals(
     // what another source had already set.
     if (typeof historySuggestion?.categoryId !== 'number') return;
     sheet.setWasSuggested(true);
-    sheet.propose({ categoryId: historySuggestion.categoryId, origin: 'historial' });
+    sheet.propose({ categoryId: historySuggestion.categoryId, origin: 'history' });
   });
 
   const localProposal = useMemo(() => {

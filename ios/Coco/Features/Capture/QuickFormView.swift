@@ -159,7 +159,7 @@ struct QuickFormView: View {
         } label: {
             Label(
                 model.photo == nil
-                    ? (CameraPicker.hayCamara ? L10n.Capture.photoTake : L10n.Capture.photoChoose)
+                    ? (CameraPicker.hasCamera ? L10n.Capture.photoTake : L10n.Capture.photoChoose)
                     : L10n.Capture.photoChange,
                 systemImage: "camera")
         }

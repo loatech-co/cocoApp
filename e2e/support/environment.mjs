@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** Test documents: a receipt PDF with embedded text, so no OCR is needed. */
-export const FILES = resolve(ROOT, 'e2e', 'archivos');
+export const FILES = resolve(ROOT, 'e2e', 'files');
 
 export const API_PORT = Number(process.env.E2E_API_PORT ?? 4310);
 export const GOTRUE_PORT = Number(process.env.E2E_GOTRUE_PORT ?? 4311);

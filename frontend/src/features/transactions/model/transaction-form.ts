@@ -130,16 +130,16 @@ export function proposalFromText(
   const concepts = searchInTree(index, written).filter((e) => e.level === 'concepto');
   const [single] = concepts;
   if (concepts.length === 1 && single !== undefined) {
-    return { categoryId: Number(single.id), origin: 'palabras-clave' };
+    return { categoryId: Number(single.id), origin: 'keywords' };
   }
 
   const terms = termsFor(written);
   if (terms.length === 0) return null;
   const resolved = resolveTerms(index, terms);
-  if (resolved.certainty === 'alta' && resolved.concept) {
-    return { categoryId: Number(resolved.concept.id), origin: 'diccionario' };
+  if (resolved.certainty === 'high' && resolved.concept) {
+    return { categoryId: Number(resolved.concept.id), origin: 'dictionary' };
   }
-  if (resolved.certainty === 'media') {
+  if (resolved.certainty === 'medium') {
     const candidates = resolved.candidates.map((c) => ({
       id: Number(c.id),
       name: c.name,
@@ -147,7 +147,7 @@ export function proposalFromText(
     }));
     return {
       categoryId: resolved.category ? Number(resolved.category.id) : undefined,
-      origin: 'diccionario',
+      origin: 'dictionary',
       // From the text, they are only put in view if there is any.
       ...(candidates.length > 0 ? { candidates } : {}),
     };
@@ -170,20 +170,20 @@ export function proposalFromReading(reading: Reading, tree: CategoryTree[]): Aut
   const inTree = reading.inTree;
   if (!inTree) {
     const own = reading.concept ? conceptNamed(tree, reading.concept) : undefined;
-    return own ? { categoryId: own.id, origin: 'palabras-clave' } : null;
+    return own ? { categoryId: own.id, origin: 'keywords' } : null;
   }
 
   const origin: Origin =
-    inTree.source === 'diccionario'
-      ? 'diccionario'
-      : inTree.source === 'historial'
-        ? 'historial'
-        : 'palabras-clave';
+    inTree.source === 'dictionary'
+      ? 'dictionary'
+      : inTree.source === 'history'
+        ? 'history'
+        : 'keywords';
 
-  if (inTree.certainty === 'alta' && inTree.conceptId !== undefined) {
+  if (inTree.certainty === 'high' && inTree.conceptId !== undefined) {
     return { categoryId: Number(inTree.conceptId), origin };
   }
-  if (inTree.certainty === 'media') {
+  if (inTree.certainty === 'medium') {
     return {
       categoryId: inTree.categoryId !== undefined ? Number(inTree.categoryId) : undefined,
       origin,

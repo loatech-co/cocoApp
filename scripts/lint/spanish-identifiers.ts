@@ -14,21 +14,15 @@
  * `Localizable.xcstrings`, step 7.3); comments and titles are the «P» half of
  * every 7.2 slice and a review item until then.
  *
- * The baseline (`spanish-identifiers.baseline.json`) is what was Spanish when
- * the lint arrived, per folder and with a count per name. A name passes while
- * its folder still has that many; one more fails. Each 7.2 slice renames its
- * folder and removes its part, so the file only shrinks, and 7.10 deletes it.
+ * Any Spanish name fails, wherever it is. Until step J-6c a baseline
+ * (`spanish-identifiers.baseline.json`) let through what was Spanish when the
+ * lint arrived, per folder; every 7.2 slice shrank it and J-6c emptied it, so
+ * it is gone and there is no exception left to hold.
  *
- *   npx tsx scripts/lint/spanish-identifiers.ts            check
- *   npx tsx scripts/lint/spanish-identifiers.ts --update   rewrite the baseline
- *   npx tsx scripts/lint/spanish-identifiers.ts --against <git ref>
- *       also fail if the baseline holds more of any name than at <ref> (CI)
- *
- * A stale entry (the baseline expects more than there is) fails too: the
- * baseline has to say exactly what is left, or a slice cannot prove it ended.
+ *   npx tsx scripts/lint/spanish-identifiers.ts
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import ts from 'typescript';
@@ -36,7 +30,6 @@ import ts from 'typescript';
 import { SPANISH_WORDS } from './spanish-words.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
-const BASELINE = 'scripts/lint/spanish-identifiers.baseline.json';
 const ROOTS = ['api', 'frontend', 'packages', 'scripts', 'e2e', 'ios'];
 
 /** Words never in the list, each with its reason. */
@@ -279,124 +272,19 @@ function scan(): Hit[] {
   return hits;
 }
 
-type Baseline = Record<string, Record<string, number>>;
-
-function count(hits: Hit[]): Baseline {
-  const result: Baseline = {};
-  for (const { folder, entry } of hits) {
-    result[folder] ??= {};
-    result[folder][entry] = (result[folder][entry] ?? 0) + 1;
-  }
-  const sorted: Baseline = {};
-  for (const folder of Object.keys(result).sort()) {
-    sorted[folder] = {};
-    for (const entry of Object.keys(result[folder]).sort())
-      sorted[folder][entry] = result[folder][entry];
-  }
-  return sorted;
-}
-
-function totalsByName(baseline: Baseline): Map<string, number> {
-  const totals = new Map<string, number>();
-  for (const entries of Object.values(baseline)) {
-    for (const [entry, n] of Object.entries(entries))
-      totals.set(entry, (totals.get(entry) ?? 0) + n);
-  }
-  return totals;
-}
-
-function readBaseline(): Baseline {
-  try {
-    return JSON.parse(readFileSync(path.join(ROOT, BASELINE), 'utf8')) as Baseline;
-  } catch {
-    return {};
-  }
-}
-
-/** The baseline may move between folders (a slice renames one) but never grow. */
-function grewSince(ref: string, current: Baseline): string[] {
-  let before: Baseline;
-  try {
-    const text = execFileSync('git', ['show', `${ref}:${BASELINE}`], {
-      cwd: ROOT,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-    before = JSON.parse(text) as Baseline;
-  } catch {
-    console.log(`No baseline at ${ref}: nothing to compare (the lint arrives with this change).`);
-    return [];
-  }
-  const was = totalsByName(before);
-  const problems: string[] = [];
-  for (const [entry, n] of totalsByName(current)) {
-    const old = was.get(entry) ?? 0;
-    if (n > old) problems.push(`  ${entry}: ${old} → ${n}`);
-  }
-  return problems;
-}
-
 function main() {
-  const args = process.argv.slice(2);
   const hits = scan();
-  const current = count(hits);
-
-  if (args.includes('--update')) {
-    writeFileSync(path.join(ROOT, BASELINE), `${JSON.stringify(current, null, 2)}\n`);
-    const total = [...totalsByName(current).values()].reduce((a, b) => a + b, 0);
-    console.log(
-      `Baseline written: ${total} Spanish names in ${Object.keys(current).length} folders.`,
-    );
-    return;
-  }
-
-  const baseline = readBaseline();
-  const failures: string[] = [];
-
-  for (const [folder, entries] of Object.entries(current)) {
-    for (const [entry, n] of Object.entries(entries)) {
-      const allowed = baseline[folder]?.[entry] ?? 0;
-      if (n <= allowed) continue;
-      const where = hits
-        .filter((h) => h.folder === folder && h.entry === entry)
-        .map((h) => h.where);
+  if (hits.length > 0) {
+    const lines = hits.map(({ entry, where }) => {
       const spanish = spanishIn(entry.replace(/^(?:file|dir):/, '').replace(/\.[^.]*$/, ''));
-      failures.push(
-        `  ${entry} (${spanish.join(', ')}): ${n} in ${folder}, baseline allows ${allowed}\n` +
-          where.map((w) => `      ${w}`).join('\n'),
-      );
-    }
-  }
-  const stale: string[] = [];
-  for (const [folder, entries] of Object.entries(baseline)) {
-    for (const [entry, n] of Object.entries(entries)) {
-      const now = current[folder]?.[entry] ?? 0;
-      if (now < n) stale.push(`  ${folder}: ${entry} (baseline ${n}, now ${now})`);
-    }
-  }
-
-  const against = args.indexOf('--against');
-  const grew = against >= 0 ? grewSince(args[against + 1], baseline) : [];
-
-  if (failures.length > 0) {
+      return `  ${entry} (${spanish.join(', ')}): ${where}`;
+    });
     console.error(
-      `New Spanish names (code is in English; docs/standards/rename-plan.md):\n${failures.join('\n')}`,
+      `Spanish names (code is in English; docs/standards/rename-plan.md):\n${lines.join('\n')}`,
     );
+    process.exit(1);
   }
-  if (stale.length > 0) {
-    console.error(
-      `The baseline expects names that are gone. Good: shrink it with\n` +
-        `  npm run lint:spanish -- --update\n${stale.join('\n')}`,
-    );
-  }
-  if (grew.length > 0) {
-    console.error(`The baseline grew (it may only shrink):\n${grew.join('\n')}`);
-  }
-  if (failures.length + stale.length + grew.length > 0) process.exit(1);
-  const total = [...totalsByName(baseline).values()].reduce((a, b) => a + b, 0);
-  console.log(
-    `No new Spanish names. Baseline: ${total} left in ${Object.keys(baseline).length} folders.`,
-  );
+  console.log('No Spanish names.');
 }
 
 main();

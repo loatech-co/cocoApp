@@ -13,7 +13,7 @@ const CI_TEST_ENV = {
   LOG_LEVEL: 'silent',
   CHECK_BREACHED_PASSWORDS: 'false',
   BOOTSTRAP_ADMIN_EMAIL: 'admin-e2e@pruebas.coco',
-  RECEIPTS_DIR: '.soportes-test',
+  RECEIPTS_DIR: '.receipts-test',
 };
 
 const SUPABASE = {

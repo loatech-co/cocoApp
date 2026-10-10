@@ -12,7 +12,7 @@ final class BogotaDateTests: XCTestCase {
         XCTAssertEqual(BogotaDate.day(try instant("2026-10-04T05:00:00Z")), "2026-10-04")
     }
 
-    func testMes() throws {
+    func testTheMonthIsBogotas() throws {
         XCTAssertEqual(BogotaDate.month(try instant("2026-10-04T04:30:00Z")), "2026-10")
         XCTAssertEqual(BogotaDate.month(try instant("2026-11-01T04:30:00Z")), "2026-10")
     }

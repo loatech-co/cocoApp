@@ -19,13 +19,13 @@ import { t } from '@/shared/lib/i18n';
  * different paths —a request, the reading of a receipt, a click— and each
  * path would have its own version of the rule. Here there is one.
  */
-export type Origin = 'manual' | 'historial' | 'palabras-clave' | 'diccionario';
+export type Origin = 'manual' | 'history' | 'keywords' | 'dictionary';
 
 const RANK: Record<Origin, number> = {
   manual: 4,
-  historial: 3,
-  'palabras-clave': 2,
-  diccionario: 1,
+  history: 3,
+  keywords: 2,
+  dictionary: 1,
 };
 
 export interface Classification {
@@ -56,11 +56,11 @@ export function originName(origin: Origin): string {
   switch (origin) {
     case 'manual':
       return 'elegido';
-    case 'historial':
+    case 'history':
       return t('transactions.classification.suggestedByHistory');
-    case 'palabras-clave':
+    case 'keywords':
       return t('transactions.classification.suggestedByKeywords');
-    case 'diccionario':
+    case 'dictionary':
       return t('transactions.classification.suggestedByMerchant');
   }
 }

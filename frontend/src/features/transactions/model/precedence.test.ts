@@ -7,9 +7,9 @@ import { UNCLASSIFIED, apply, type Proposal } from './precedence';
  * choice.» It is the plan's test, word for word.
  */
 const manual: Proposal = { categoryId: 1, origin: 'manual' };
-const history: Proposal = { categoryId: 2, origin: 'historial' };
-const words: Proposal = { categoryId: 3, origin: 'palabras-clave' };
-const dictionary: Proposal = { categoryId: 4, origin: 'diccionario' };
+const history: Proposal = { categoryId: 2, origin: 'history' };
+const words: Proposal = { categoryId: 3, origin: 'keywords' };
+const dictionary: Proposal = { categoryId: 4, origin: 'dictionary' };
 
 describe('Precedence of the sources', () => {
   it('over nothing, anyone proposes', () => {
@@ -47,7 +47,7 @@ describe('Precedence of the sources', () => {
     // The history that suggests something else as typing goes on is still the
     // history: if it could not replace itself, the first suggestion would stay
     // stuck even though the description already said something else.
-    const otherHistory: Proposal = { categoryId: 9, origin: 'historial' };
+    const otherHistory: Proposal = { categoryId: 9, origin: 'history' };
     expect(apply(history, otherHistory)).toEqual(otherHistory);
   });
 });

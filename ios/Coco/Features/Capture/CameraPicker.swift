@@ -8,12 +8,12 @@ struct CameraPicker: UIViewControllerRepresentable {
     let onCapture: @MainActor (UIImage) -> Void
     let onCancel: @MainActor () -> Void
 
-    static var hayCamara: Bool {
+    static var hasCamera: Bool {
         UIImagePickerController.isSourceTypeAvailable(.camera)
     }
 
     func makeUIViewController(context: Context) -> UIViewController {
-        if Self.hayCamara {
+        if Self.hasCamera {
             let picker = UIImagePickerController()
             picker.sourceType = .camera
             picker.cameraCaptureMode = .photo

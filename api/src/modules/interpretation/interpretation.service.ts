@@ -172,7 +172,7 @@ export class InterpretationService {
           merchant: null,
           description: null,
           classification: chosen,
-          needsReview: chosen.certainty !== 'alta',
+          needsReview: chosen.certainty !== 'high',
         };
       }
       throw new ValidationError('Hace falta un texto o, al menos, el comercio.', {
@@ -212,7 +212,7 @@ export class InterpretationService {
     // already decided. And what flags for review is only a half choice (a
     // category without a concept), not the engine's doubt, which does not
     // count here.
-    return { ...parsed, classification: chosen, needsReview: chosen.certainty !== 'alta' };
+    return { ...parsed, classification: chosen, needsReview: chosen.certainty !== 'high' };
   }
 
   /**
@@ -246,7 +246,7 @@ export class InterpretationService {
 
     const isConcept = row.parent.parentId !== null;
     return {
-      certainty: isConcept ? 'alta' : 'media',
+      certainty: isConcept ? 'high' : 'medium',
       source: null,
       conceptId: isConcept ? row.id.toString() : null,
       categoryId: isConcept ? row.parent.id.toString() : row.id.toString(),
@@ -291,7 +291,7 @@ export class InterpretationService {
       // A repeat is not interpreted again: what matters is what was saved,
       // and that is what it is told.
       {
-        certainty: transaction.categoryId === null ? 'ninguna' : 'alta',
+        certainty: transaction.categoryId === null ? 'none' : 'high',
         source: null,
         conceptId: transaction.categoryId === null ? null : transaction.categoryId.toString(),
         categoryId: null,

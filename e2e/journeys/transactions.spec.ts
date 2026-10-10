@@ -1,13 +1,13 @@
 import { movementRow } from '../support/app';
 import { expectAccessible } from '../support/axe';
 import { expect, test } from '../support/fixtures';
-import { createConcept, createExpense } from '../support/semilla';
+import { createConcept, createExpense } from '../support/seed';
 
 test.describe('a movement', () => {
-  test.beforeEach(async ({ cuenta, entrar }) => {
-    const concept = await createConcept(cuenta.api, ['Costos variables', 'Licencias'], 'Mercado');
-    await createExpense(cuenta.api, concept, 50000);
-    await entrar();
+  test.beforeEach(async ({ account, signIn }) => {
+    const concept = await createConcept(account.api, ['Costos variables', 'Licencias'], 'Mercado');
+    await createExpense(account.api, concept, 50000);
+    await signIn();
   });
 
   test('is edited from its card and the table shows the new amount', async ({ page }) => {

@@ -127,7 +127,7 @@ describe('Search', () => {
 describe('Resolving generic terms (what the dictionary uses)', () => {
   it('HIGH when the terms lead to a single concept', () => {
     const r = resolveTerms(index, ['acueducto', 'agua']);
-    expect(r.certainty).toBe('alta');
+    expect(r.certainty).toBe('high');
     expect(r.concept?.id).toBe(101);
   });
 
@@ -135,7 +135,7 @@ describe('Resolving generic terms (what the dictionary uses)', () => {
     // «mercado» and «supermercado» are two concepts of the same account. Picking
     // one would be moving money to a place nobody asked for.
     const r = resolveTerms(index, ['mercado', 'supermercado']);
-    expect(r.certainty).toBe('media');
+    expect(r.certainty).toBe('medium');
     expect(r.concept).toBeUndefined();
     expect(r.category?.id).toBe(20);
     expect(r.candidates.map((c) => c.id).sort()).toEqual([200, 201]);
@@ -144,21 +144,21 @@ describe('Resolving generic terms (what the dictionary uses)', () => {
   it('MEDIUM when they lead to a category and to no concept', () => {
     // Whoever has «Transporte» as an empty category: the category is proposed.
     const r = resolveTerms(index, ['transporte', 'taxi']);
-    expect(r.certainty).toBe('media');
+    expect(r.certainty).toBe('medium');
     expect(r.category?.id).toBe(21);
     expect(r.candidates.map((c) => c.id)).toEqual([21]);
   });
 
   it('MEDIUM with several concepts from different categories: it proposes none', () => {
     const r = resolveTerms(index, ['celsia', 'mercado']);
-    expect(r.certainty).toBe('media');
+    expect(r.certainty).toBe('medium');
     expect(r.category).toBeUndefined();
     expect(r.candidates.length).toBeGreaterThan(1);
   });
 
   it('NONE when they lead to nothing', () => {
     const r = resolveTerms(index, ['gasolina', 'combustible']);
-    expect(r.certainty).toBe('ninguna');
+    expect(r.certainty).toBe('none');
     expect(r.candidates).toEqual([]);
   });
 });

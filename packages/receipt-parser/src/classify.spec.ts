@@ -110,8 +110,8 @@ describe('classify', () => {
       tree,
     });
     expect(reading.inTree).toEqual({
-      certainty: 'alta',
-      source: 'palabras-clave',
+      certainty: 'high',
+      source: 'keywords',
       conceptId: 'luz',
       categoryId: 'servicios',
       candidates: [],
@@ -125,7 +125,7 @@ describe('classify', () => {
       signatures: [makeSignature({ concept: 'Luz' })],
       tree: makeTree(),
     });
-    expect(reading.inTree).toMatchObject({ source: 'firma', conceptId: undefined });
+    expect(reading.inTree).toMatchObject({ source: 'signature', conceptId: undefined });
     expect(reading.reason).toContain('(ocr)');
   });
 
@@ -144,7 +144,7 @@ describe('classify', () => {
         costCenter: 'Hogar',
         value: 45000,
       });
-      expect(reading.inTree).toMatchObject({ certainty: 'alta', source: 'diccionario' });
+      expect(reading.inTree).toMatchObject({ certainty: 'high', source: 'dictionary' });
       expect(reading.reason).toMatch(/un solo concepto/);
       expect(reading.confidence).toBeLessThanOrEqual(0.75);
     });

@@ -27,16 +27,16 @@ import {
  * A lower source never replaces a higher one.
  *
  * ── And the certainty ───────────────────────────────────────────────────────
- * HIGH (`alta`) is one concrete concept. MEDIUM (`media`) is a category, or
- * several concepts with no choice among them. NONE (`ninguna`) is nothing.
+ * HIGH (`high`) is one concrete concept. MEDIUM (`medium`) is a category, or
+ * several concepts with no choice among them. NONE (`none`) is nothing.
  * With anything short of high, the capture saves unclassified or with the
  * category, and flags it for review. It never guesses.
  *
  * It is a pure function: everything it needs —the tree, the history's
  * suggestion— comes from the caller, which is the one with the database.
  */
-export type InterpretedCertainty = 'alta' | 'media' | 'ninguna';
-export type InterpretedSource = 'historial' | 'palabras-clave' | 'firma' | 'diccionario';
+export type InterpretedCertainty = 'high' | 'medium' | 'none';
+export type InterpretedSource = 'history' | 'keywords' | 'signature' | 'dictionary';
 
 export interface InterpretationInput {
   /** Free text: the OCR of a receipt, the bank's SMS. */
@@ -128,7 +128,7 @@ export function interpret(input: InterpretationInput, context: InterpretationCon
     classification,
     // Something is missing that somebody has to fill in —the amount, the date—
     // or the classification is not certain: flag it for review.
-    needsReview: classification.certainty !== 'alta' || amount === null || date === null,
+    needsReview: classification.certainty !== 'high' || amount === null || date === null,
   };
 }
 
@@ -141,7 +141,7 @@ function classifyWith(
   return (
     byHistory(context, index) ??
     (inTree ? byReading(index, inTree, parsed) : null) ?? {
-      certainty: 'ninguna',
+      certainty: 'none',
       source: null,
       conceptId: null,
       categoryId: null,
@@ -163,8 +163,8 @@ function byHistory(
     if (entry && entry.level !== 'centro') {
       const isHigh = history.confidence >= SAFE_HISTORY_CONFIDENCE;
       return {
-        certainty: isHigh ? 'alta' : 'media',
-        source: 'historial',
+        certainty: isHigh ? 'high' : 'medium',
+        source: 'history',
         conceptId: entry.level === 'concepto' ? String(entry.id) : null,
         categoryId: entry.level === 'concepto' ? String(entry.categoryId) : String(entry.id),
         name: entry.name,
@@ -234,10 +234,10 @@ export function summaryOf(
   classification: InterpretedClassification,
 ): string {
   const shownAmount = amount === null ? null : pesos(amount);
-  if (classification.certainty === 'alta' && classification.name) {
+  if (classification.certainty === 'high' && classification.name) {
     return `Registrado: ${shownAmount ?? 'sin valor'} · ${classification.name}`;
   }
-  if (classification.certainty === 'media' && classification.name) {
+  if (classification.certainty === 'medium' && classification.name) {
     return `Registrado: ${shownAmount ?? 'sin valor'} · ${classification.name} (por revisar)`;
   }
   return shownAmount

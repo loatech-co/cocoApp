@@ -1,15 +1,15 @@
 import { movementRow, openNewExpense } from '../support/app';
 import { expectAccessible } from '../support/axe';
 import { expect, test } from '../support/fixtures';
-import { createConcept } from '../support/semilla';
+import { createConcept } from '../support/seed';
 
 test.describe('the concept finder', () => {
-  test('finds a concept by one of its keywords', async ({ page, cuenta, entrar }) => {
-    await createConcept(cuenta.api, ['Costos variables', 'Licencias'], 'Mercado', {
+  test('finds a concept by one of its keywords', async ({ page, account, signIn }) => {
+    await createConcept(account.api, ['Costos variables', 'Licencias'], 'Mercado', {
       keywords: ['Supertienda'],
     });
-    await createConcept(cuenta.api, ['Costos fijos', 'Vivienda'], 'Arriendo');
-    await entrar();
+    await createConcept(account.api, ['Costos fijos', 'Vivienda'], 'Arriendo');
+    await signIn();
 
     const sheet = await openNewExpense(page);
     await sheet.getByRole('button', { name: 'Concepto' }).click();
@@ -43,8 +43,8 @@ test.describe('the concept finder', () => {
     );
   });
 
-  test('creates the concept that is missing, in the category chosen', async ({ page, entrar }) => {
-    await entrar();
+  test('creates the concept that is missing, in the category chosen', async ({ page, signIn }) => {
+    await signIn();
 
     const sheet = await openNewExpense(page);
     await sheet.getByRole('button', { name: 'Concepto' }).click();

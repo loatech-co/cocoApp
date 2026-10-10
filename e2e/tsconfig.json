@@ -19,5 +19,5 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["**/*.ts", "**/*.mjs"],
-  "exclude": [".salida"]
+  "exclude": [".output"]
 }

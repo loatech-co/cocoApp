@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-/// What `CONTRATO_DE_SOPORTES` recommends: long side at 1600 px and JPEG at
+/// What `RECEIPTS_CONTRACT` recommends: long side at 1600 px and JPEG at
 /// 0.85. A twelve-megapixel photo weighs 4 MB and the OCR does not read better; at
 /// 1600 px it weighs 300 KB. If the bytes are not an image they are returned as is:
 /// the queue does not decide what a receipt is, it only shrinks it.

@@ -544,7 +544,7 @@ describe('Our own auth (e2e)', () => {
       // wrong": the check happens inside Supabase, which answers the same in both
       // cases. From the outside that is what we want; what is lost is the detail
       // in the audit log.
-      expect(events[0]!.changesJson).toEqual({ motivo: 'credenciales_incorrectas' });
+      expect(events[0]!.changesJson).toEqual({ reason: 'invalid_credentials' });
     });
 
     it('the audit log never stores the password or the token', async () => {

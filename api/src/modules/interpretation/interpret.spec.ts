@@ -39,8 +39,8 @@ describe('Interpreting a text', () => {
     expect(r.amount).toBe('45000');
     expect(r.date).toBe('2026-10-03');
     expect(r.classification).toMatchObject({
-      certainty: 'alta',
-      source: 'diccionario',
+      certainty: 'high',
+      source: 'dictionary',
       conceptId: '200',
       categoryId: '20',
       name: 'Mercado',
@@ -51,8 +51,8 @@ describe('Interpreting a text', () => {
   it("the person's keywords beat the dictionary", () => {
     const r = interpret({ text: 'RAPPI*PEDIDO 32.000' }, context());
     expect(r.classification).toMatchObject({
-      source: 'palabras-clave',
-      certainty: 'alta',
+      source: 'keywords',
+      certainty: 'high',
       conceptId: '201',
     });
   });
@@ -65,8 +65,8 @@ describe('Interpreting a text', () => {
       context({ categoryId: '201', confidence: 100 }),
     );
     expect(r.classification).toMatchObject({
-      source: 'historial',
-      certainty: 'alta',
+      source: 'history',
+      certainty: 'high',
       conceptId: '201',
     });
   });
@@ -76,16 +76,16 @@ describe('Interpreting a text', () => {
       { text: 'KOBA COLOMBIA 45.000' },
       context({ categoryId: '201', confidence: SAFE_HISTORY_CONFIDENCE - 1 }),
     );
-    expect(r.classification.certainty).toBe('media');
-    expect(r.classification.source).toBe('historial');
+    expect(r.classification.certainty).toBe('medium');
+    expect(r.classification.source).toBe('history');
     expect(r.needsReview).toBe(true);
   });
 
   it('a merchant that leads to a category without concepts: MEDIUM with the category', () => {
     const r = interpret({ text: 'UBER *TRIP 18.500' }, context());
     expect(r.classification).toMatchObject({
-      certainty: 'media',
-      source: 'diccionario',
+      certainty: 'medium',
+      source: 'dictionary',
       conceptId: null,
       categoryId: '21',
       name: 'Transporte',
@@ -95,14 +95,14 @@ describe('Interpreting a text', () => {
 
   it('an unknown merchant: NONE, and for review', () => {
     const r = interpret({ text: 'FERRETERIA LA ESQUINA 80.000' }, context());
-    expect(r.classification.certainty).toBe('ninguna');
+    expect(r.classification.certainty).toBe('none');
     expect(r.classification.conceptId).toBeNull();
     expect(r.needsReview).toBe(true);
   });
 
   it('without an amount or a date, for review even when the classification is high', () => {
     const r = interpret({ text: 'KOBA COLOMBIA' }, context());
-    expect(r.classification.certainty).toBe('alta');
+    expect(r.classification.certainty).toBe('high');
     expect(r.amount).toBeNull();
     expect(r.needsReview).toBe(true);
   });
@@ -117,7 +117,7 @@ describe('Interpreting structured data (Wallet)', () => {
     expect(r.amount).toBe('120000');
     expect(r.date).toBe('2026-10-02');
     expect(r.merchant).toBe('Exito Poblado');
-    expect(r.classification).toMatchObject({ certainty: 'alta', conceptId: '200' });
+    expect(r.classification).toMatchObject({ certainty: 'high', conceptId: '200' });
     expect(r.needsReview).toBe(false);
   });
 
@@ -137,8 +137,8 @@ describe('Interpreting structured data (Wallet)', () => {
 
 describe('The summary for the notification', () => {
   const high = {
-    certainty: 'alta' as const,
-    source: 'diccionario' as const,
+    certainty: 'high' as const,
+    source: 'dictionary' as const,
     conceptId: '200',
     categoryId: '20',
     name: 'Mercado',
@@ -151,16 +151,16 @@ describe('The summary for the notification', () => {
   });
 
   it('with medium certainty it says so', () => {
-    expect(summaryOf('18500', { ...high, certainty: 'media', name: 'Transporte' })).toBe(
+    expect(summaryOf('18500', { ...high, certainty: 'medium', name: 'Transporte' })).toBe(
       'Registrado: $18.500 · Transporte (por revisar)',
     );
   });
 
   it('without a classification, pending', () => {
-    expect(summaryOf('80000', { ...high, certainty: 'ninguna', name: null })).toBe(
+    expect(summaryOf('80000', { ...high, certainty: 'none', name: null })).toBe(
       'Registrado: $80.000 · Pendiente de clasificar',
     );
-    expect(summaryOf(null, { ...high, certainty: 'ninguna', name: null })).toBe(
+    expect(summaryOf(null, { ...high, certainty: 'none', name: null })).toBe(
       'Pendiente de clasificar',
     );
   });

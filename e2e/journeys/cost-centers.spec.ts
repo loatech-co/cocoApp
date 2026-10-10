@@ -1,11 +1,11 @@
 import { actionsMenu, movementRow } from '../support/app';
 import { expectAccessible } from '../support/axe';
 import { expect, test } from '../support/fixtures';
-import { createConcept, createExpense } from '../support/semilla';
+import { createConcept, createExpense } from '../support/seed';
 
 test.describe('cost centres', () => {
-  test('builds a centre, a category and a concept', async ({ page, entrar }) => {
-    await entrar();
+  test('builds a centre, a category and a concept', async ({ page, signIn }) => {
+    await signIn();
     await page.goto('/cost-centers');
     await expect(page.getByRole('heading', { level: 1, name: 'Centros de costos' })).toBeVisible();
     await expectAccessible(page, 'the cost centres');
@@ -41,10 +41,10 @@ test.describe('cost centres', () => {
     );
   });
 
-  test('renaming a concept renames its movements too', async ({ page, cuenta, entrar }) => {
-    const concept = await createConcept(cuenta.api, ['Costos variables', 'Licencias'], 'Aseo');
-    await createExpense(cuenta.api, concept, 27_000);
-    await entrar();
+  test('renaming a concept renames its movements too', async ({ page, account, signIn }) => {
+    const concept = await createConcept(account.api, ['Costos variables', 'Licencias'], 'Aseo');
+    await createExpense(account.api, concept, 27_000);
+    await signIn();
     await expect(movementRow(page, 'Aseo', '27.000')).toBeVisible();
 
     await page.goto('/cost-centers');

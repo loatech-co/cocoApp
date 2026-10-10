@@ -4,12 +4,12 @@ import { expectAccessible } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 
 test.describe('session', () => {
-  test('signs in with e-mail and password and lands on the summary', async ({ page, cuenta }) => {
+  test('signs in with e-mail and password and lands on the summary', async ({ page, account }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: '¡Hola de nuevo!' })).toBeVisible();
     await expectAccessible(page, 'the sign-in screen');
 
-    await page.getByRole('textbox', { name: 'Correo' }).fill(cuenta.email);
+    await page.getByRole('textbox', { name: 'Correo' }).fill(account.email);
     await page.getByRole('textbox', { name: 'Contraseña' }).fill(PASSWORD);
     await page.getByRole('button', { name: 'Iniciar sesión' }).click();
 
@@ -17,9 +17,9 @@ test.describe('session', () => {
     await expectAccessible(page, 'the summary');
   });
 
-  test('rejects a wrong password without signing in', async ({ page, cuenta }) => {
+  test('rejects a wrong password without signing in', async ({ page, account }) => {
     await page.goto('/');
-    await page.getByRole('textbox', { name: 'Correo' }).fill(cuenta.email);
+    await page.getByRole('textbox', { name: 'Correo' }).fill(account.email);
     await page.getByRole('textbox', { name: 'Contraseña' }).fill('Otra-clave-equivocada-9!');
     await page.getByRole('button', { name: 'Iniciar sesión' }).click();
 
@@ -30,13 +30,13 @@ test.describe('session', () => {
 
   test('signs out and a reload does not bring the session back', async ({
     page,
-    cuenta,
-    entrar,
+    account,
+    signIn,
   }) => {
-    await entrar();
+    await signIn();
     await expect(page.getByRole('heading', { level: 1, name: /Hola de nuevo/ })).toBeVisible();
 
-    await openAccountPanel(page, cuenta.email);
+    await openAccountPanel(page, account.email);
     await expectAccessible(page, 'the account panel');
     await signOutButton(page).click();
 

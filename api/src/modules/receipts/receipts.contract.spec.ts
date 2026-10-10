@@ -22,9 +22,7 @@ describe('The receipts contract', () => {
     'utf8',
   );
 
-  const contract = nativeContract.slice(
-    nativeContract.indexOf('export const CONTRATO_DE_SOPORTES'),
-  );
+  const contract = nativeContract.slice(nativeContract.indexOf('export const RECEIPTS_CONTRACT'));
   const numberIn = (source: string, pattern: RegExp): number => {
     const m = pattern.exec(source);
     if (!m) throw new Error(`No encontré ${String(pattern)}`);
@@ -35,14 +33,14 @@ describe('The receipts contract', () => {
   it("the field and the per-upload maximum are the controller's", () => {
     expect(controller).toContain("const FILES_FIELD = 'files';");
     expect(controller).toContain('FilesInterceptor(FILES_FIELD, MAX_PER_UPLOAD');
-    expect(contract).toContain("campo: 'files'");
-    expect(numberIn(contract, /maximo_por_subida:\s*(\d+)/)).toBe(
+    expect(contract).toContain("field: 'files'");
+    expect(numberIn(contract, /maxPerUpload:\s*(\d+)/)).toBe(
       numberIn(controller, /MAX_PER_UPLOAD = ([^;]+);/),
     );
   });
 
   it('the maximum size is the one the API enforces', () => {
-    expect(numberIn(contract, /tamano_maximo_bytes:\s*(\d+)/)).toBe(
+    expect(numberIn(contract, /maxSizeBytes:\s*(\d+)/)).toBe(
       numberIn(optimization, /export const MAX_UPLOAD_BYTES = ([^;]+);/),
     );
   });
@@ -58,10 +56,10 @@ describe('The receipts contract', () => {
   });
 
   it('the recommendation is what the web does before uploading', () => {
-    expect(numberIn(contract, /lado_maximo_px:\s*(\d+)/)).toBe(
+    expect(numberIn(contract, /maxSidePx:\s*(\d+)/)).toBe(
       numberIn(shrink, /const MAX_SIDE_PX = ([^;]+);/),
     );
-    expect(numberIn(contract, /calidad:\s*([\d.]+)/)).toBe(
+    expect(numberIn(contract, /quality:\s*([\d.]+)/)).toBe(
       numberIn(shrink, /const QUALITY = ([^;]+);/),
     );
   });

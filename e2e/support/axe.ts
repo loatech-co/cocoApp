@@ -23,7 +23,7 @@ interface Exception {
   reason: string;
 }
 
-const EXCEPCIONES: readonly Exception[] = [];
+const EXCEPTIONS: readonly Exception[] = [];
 
 const BLOCKING = new Set(['serious', 'critical']);
 
@@ -35,7 +35,7 @@ interface Offender {
 }
 
 function isException(o: Offender): boolean {
-  return EXCEPCIONES.some(
+  return EXCEPTIONS.some(
     (e) =>
       e.rule === o.rule &&
       (e.match === undefined || `${o.target} ${o.html}`.includes(e.match)) &&
@@ -69,7 +69,7 @@ export async function expectAccessible(page: Page, where: string): Promise<void>
     );
 
   // Which of the containers named by an exception each node sits in.
-  const containers = [...new Set(EXCEPCIONES.flatMap((e) => (e.inside ? [e.inside] : [])))];
+  const containers = [...new Set(EXCEPTIONS.flatMap((e) => (e.inside ? [e.inside] : [])))];
   for (const o of offenders) {
     o.inside = await page.evaluate(
       ([target, selectors]) => {

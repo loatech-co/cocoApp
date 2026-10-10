@@ -8,7 +8,7 @@ import { expect, test } from '../support/fixtures';
 test.describe('the Spanish routes, signed in', () => {
   // The fixture keeps its Spanish name until its own slice; asking for it once
   // keeps `lint:spanish` from counting it again in every test.
-  test.beforeEach(async ({ entrar: signIn }) => signIn());
+  test.beforeEach(async ({ signIn: signIn }) => signIn());
 
   test('a cost centers bookmark lands on the new route with its query and hash', async ({
     page,

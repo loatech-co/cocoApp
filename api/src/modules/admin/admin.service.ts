@@ -82,7 +82,7 @@ export class AdminService {
       entity: 'users',
       entityId: userId,
       action: 'admin.user_approved',
-      changes: { de: user.status, a: 'active' },
+      changes: { from: user.status, to: 'active' },
       ...context,
     });
 
@@ -107,7 +107,7 @@ export class AdminService {
       entity: 'users',
       entityId: userId,
       action: 'admin.user_suspended',
-      changes: { de: user.status, a: 'suspended' },
+      changes: { from: user.status, to: 'suspended' },
       ...context,
     });
 
@@ -124,7 +124,7 @@ export class AdminService {
       entity: 'users',
       entityId: userId,
       action: 'admin.user_reactivated',
-      changes: { de: user.status, a: 'active' },
+      changes: { from: user.status, to: 'active' },
       ...context,
     });
 
@@ -156,7 +156,7 @@ export class AdminService {
       entity: 'users',
       entityId: userId,
       action: 'admin.role_changed',
-      changes: { de: user.role, a: role },
+      changes: { from: user.role, to: role },
       ...context,
     });
 

@@ -216,7 +216,7 @@ export class AuthService {
       await this.audit.record({
         entity: 'users',
         action: 'auth.login_failed',
-        changes: { motivo: 'credenciales_incorrectas' },
+        changes: { reason: 'invalid_credentials' },
         ip: context.ip,
         userAgent: context.userAgent,
       });

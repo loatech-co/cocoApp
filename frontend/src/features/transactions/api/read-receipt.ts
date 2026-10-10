@@ -1,9 +1,9 @@
 import { ApiClientError } from '@/shared/api/api-client';
 import { interpretationInterpret } from '@/shared/api/generated/interpretation-v2/interpretation-v2';
-import type { ClassificationSource, Interpretation } from '@/shared/api/generated/model';
+import type { Interpretation } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { loadPdfjs } from '@/shared/lib/pdf';
-import type { TreeClassification, Reading } from '@coco/receipt-parser';
+import type { Reading } from '@coco/receipt-parser';
 
 /**
  * Reading a receipt: extracting its text and, with it, what it is for.
@@ -277,22 +277,11 @@ function readingFrom(i: Interpretation, source: 'texto-embebido' | 'ocr'): Readi
       c.certainty === 'none'
         ? null
         : {
-            certainty: c.certainty === 'high' ? 'alta' : 'media',
-            source: PARSER_SOURCE[c.source ?? 'dictionary'],
+            certainty: c.certainty,
+            source: c.source ?? 'dictionary',
             conceptId: c.conceptId ?? undefined,
             categoryId: c.categoryId ?? undefined,
             candidates: c.candidates.map((k) => ({ id: k.id, name: k.name, path: k.path })),
           },
   };
 }
-
-/**
- * The API speaks English (v2); `@coco/receipt-parser`, which the sheet reads, still
- * names its sources in Spanish. Translated here, at the edge.
- */
-const PARSER_SOURCE: Record<NonNullable<ClassificationSource>, TreeClassification['source']> = {
-  history: 'historial',
-  keywords: 'palabras-clave',
-  signature: 'firma',
-  dictionary: 'diccionario',
-};

@@ -1,7 +1,7 @@
 import { movementRow } from '../support/app';
 import { expectAccessible } from '../support/axe';
 import { expect, test } from '../support/fixtures';
-import { createConcept, createExpense } from '../support/semilla';
+import { createConcept, createExpense } from '../support/seed';
 
 /** Rent: a monthly concept in the static centre, due on day 1. */
 const RENT = {
@@ -14,11 +14,11 @@ const RENT = {
 test.describe('pending payments', () => {
   test('a recurring concept not yet paid is pending, and paying it clears it', async ({
     page,
-    cuenta,
-    entrar,
+    account,
+    signIn,
   }) => {
-    await createConcept(cuenta.api, ['Costos fijos', 'Vivienda'], 'Arriendo', RENT);
-    await entrar();
+    await createConcept(account.api, ['Costos fijos', 'Vivienda'], 'Arriendo', RENT);
+    await signIn();
 
     const pending = page.getByRole('listitem').filter({ hasText: 'Costos fijos · Vivienda' });
     await expect(page.getByRole('heading', { name: 'Pagos pendientes' })).toBeVisible();
@@ -40,12 +40,12 @@ test.describe('pending payments', () => {
 
   test('a concept paid in several instalments shows how much it carries', async ({
     page,
-    cuenta,
-    entrar,
+    account,
+    signIn,
   }) => {
-    const rent = await createConcept(cuenta.api, ['Costos fijos', 'Vivienda'], 'Arriendo', RENT);
-    await createExpense(cuenta.api, rent, 400_000);
-    await entrar();
+    const rent = await createConcept(account.api, ['Costos fijos', 'Vivienda'], 'Arriendo', RENT);
+    await createExpense(account.api, rent, 400_000);
+    await signIn();
 
     // Paid in part and NOT marked: one payment is enough to clear it.
     await expect(page.getByRole('heading', { name: 'Pagos pendientes' })).toBeHidden();

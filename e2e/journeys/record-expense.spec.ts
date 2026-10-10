@@ -2,18 +2,18 @@ import { join } from 'node:path';
 
 import { movementRow, openNewExpense, pickConcept } from '../support/app';
 import { expectAccessible } from '../support/axe';
-import { FILES } from '../support/entorno.mjs';
+import { FILES } from '../support/environment.mjs';
 import { expect, test } from '../support/fixtures';
-import { createConcept } from '../support/semilla';
+import { createConcept } from '../support/seed';
 
 test.describe('registering an expense', () => {
   test('by hand: the form opens straight away and the row appears', async ({
     page,
-    cuenta,
-    entrar,
+    account,
+    signIn,
   }) => {
-    await createConcept(cuenta.api, ['Costos variables', 'Licencias'], 'Mercado');
-    await entrar();
+    await createConcept(account.api, ['Costos variables', 'Licencias'], 'Mercado');
+    await signIn();
 
     const sheet = await openNewExpense(page);
     await expect(sheet.getByRole('textbox', { name: 'Valor' })).toBeVisible();
@@ -29,19 +29,19 @@ test.describe('registering an expense', () => {
 
   test('with a file: the receipt fills the form and stays attached', async ({
     page,
-    cuenta,
-    entrar,
+    account,
+    signIn,
   }) => {
     // The receipt says "La Esquina": the keyword is what suggests the concept.
-    await createConcept(cuenta.api, ['Costos variables', 'Licencias'], 'Mercado', {
+    await createConcept(account.api, ['Costos variables', 'Licencias'], 'Mercado', {
       keywords: ['La Esquina'],
     });
-    await entrar();
+    await signIn();
 
     const sheet = await openNewExpense(page);
     await sheet.getByRole('button', { name: 'Cargar archivo' }).click();
     const upload = page.getByRole('dialog', { name: 'Agregar soportes' });
-    await upload.locator('input[type="file"]').setInputFiles(join(FILES, 'recibo.pdf'));
+    await upload.locator('input[type="file"]').setInputFiles(join(FILES, 'receipt.pdf'));
 
     await expect(sheet.getByText('Los datos se extrajeron del soporte')).toBeVisible();
     await expect(sheet.getByRole('textbox', { name: 'Valor' })).toHaveValue('45.000');

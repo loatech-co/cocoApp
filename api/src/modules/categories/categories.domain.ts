@@ -1,5 +1,5 @@
 import type { WithChildren } from '../../common/categories/categories.tree';
-import { PERIODICITY, type English } from '../../common/vocabulary';
+import type { Periodicity } from '../../common/vocabulary';
 import type { Category as CategoryRow, CategoryKind } from '../../generated/prisma/client';
 
 /**
@@ -21,7 +21,7 @@ export interface Category {
   isRecurring: boolean;
   /** Whether the cost center cannot be reclassified from the transactions table. */
   isStatic: boolean;
-  periodicity: English<typeof PERIODICITY> | null;
+  periodicity: Periodicity | null;
   /** Day of the month it is due. */
   paymentDay: number | null;
   /** Reference month of the cycle, 1–12. Only when the periodicity is not monthly. */
@@ -59,7 +59,7 @@ export interface CategoryChanges {
   isArchived?: boolean;
   isRecurring?: boolean;
   isStatic?: boolean;
-  periodicity?: English<typeof PERIODICITY> | null;
+  periodicity?: Periodicity | null;
   paymentDay?: number | null;
   paymentMonth?: number | null;
   budget?: number | null;
