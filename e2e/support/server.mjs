@@ -96,7 +96,6 @@ function pinEnvironment(gotrueUrl) {
     SUPABASE_SERVICE_ROLE_KEY: 'e2e-service',
     // The accounts live in the fake above, so creating them is harmless.
     ALLOW_DESTRUCTIVE_AUTH: 'si',
-    JWT_SECRET: 'e2e-only-jwt-secret-at-least-32-characters',
     BOOTSTRAP_ADMIN_EMAIL: 'admin@journeys.coco',
     CHECK_BREACHED_PASSWORDS: 'false',
     CORS_ORIGINS: `http://localhost:${API_PORT}`,
