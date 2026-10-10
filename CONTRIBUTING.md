@@ -342,8 +342,9 @@ await this.prisma.transaction.findMany({ where: { userId } }); // in dashboard/
 | `shared/`            | `ui/` (the design system), `lib/` (infrastructure: dates, formatting, focus, native bridge), `api/` (client, session, common queries).  |
 
 The features are `admin`, `auth`, `bank-accounts`, `cost-centers`, `profile` and
-`transactions`. The full criterion, with examples from Coco and the inventory
-of `shared/ui`, is in `.claude/rules/web.md`; it is updated in the same PR
+`transactions`. The full criterion, with examples from Coco, is in
+`.claude/rules/web/structure.md`, and the inventory of `shared/ui` in
+`.claude/rules/web/inventory.md`; it is updated in the same PR
 that creates or changes a component.
 
 **Features never import each other.**
@@ -612,8 +613,8 @@ side.
   config or the dependencies change.
 - Storybook is a devDependency: stories and its config are excluded from the
   production build (`frontend/tsconfig.build.json`).
-- A component that still has no story is marked in the inventory of
-  `.claude/rules/web.md`.
+- A component that still has no story is marked in the inventory,
+  `.claude/rules/web/inventory.md`.
 
 ## Frontend tests and coverage
 

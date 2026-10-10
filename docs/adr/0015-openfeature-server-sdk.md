@@ -29,3 +29,11 @@ planned.
 - Good: the same evaluation API as the wrapper, on a stable package; call
   sites do not change if a vendor is ever added.
 - Bad: the wrapper's decorators are replaced by one provider of ours.
+
+## iOS (2026-10-09, step J-6e)
+
+The plan's iOS reader (`FeatureFlags.isEnabled(.name)` over `/auth/me`) is
+**dropped**, not postponed. iOS does not call `/auth/me`, the native bridge
+carries no flags, and no flag in `packages/flags` has an iOS consumer, so the
+reader would be dead code. If a flag ever needs iOS, its reader is added then,
+in the same change as its first consumer.

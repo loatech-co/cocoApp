@@ -44,7 +44,7 @@ contexto es pequeño a propósito: no lo llenes.
 - **Código nuevo en inglés; el texto que ve el usuario, en español.**
 - **Nada de secretos, datos personales ni importes** en logs, pruebas,
   commits ni traspasos.
-- Las reglas de `.claude/rules/` (las 18 de la interfaz están en `web.md`) y
+- Las reglas de `.claude/rules/` (`web.md` es el índice de `web/`, con las 18 de la interfaz) y
   las de `CONTRIBUTING.md` se cumplen; si una prueba las protege, no se
   desactiva.
 - Nada fuera del paso: lo que convenga y no esté en el plan va a "pendiente"

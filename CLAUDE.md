@@ -14,6 +14,7 @@ Libro de caja personal: los movimientos son el centro, y saldos, presupuestos, d
 
 ```bash
 npm ci && npm run dev                      # instalar y correr api + web (dev:api, dev:web por separado)
+npm run dev:auth                           # Auth local, en otra terminal: sin él la web no inicia sesión
 npm run typecheck && npm run lint && npx prettier --check . && npx knip && npm run depcruise
 npm test && npm run test:e2e --workspace api && npm run e2e   # unitarias, e2e de la API (Postgres local), recorridos
 npm run openapi --workspace api && npm run generate:api --workspace frontend   # contrato y cliente
@@ -30,7 +31,7 @@ bash scripts/merge.sh [rama]                # la única forma de integrar en Dev
 - Ningún archivo de más de 300 líneas ni función de más de 50 — [Size limits](CONTRIBUTING.md#size-limits).
 - Pruebas contra Postgres real, sin mocks de Prisma — [Tests](CONTRIBUTING.md#tests).
 - Lo que rompe el contrato es una versión nueva — [API versions](CONTRIBUTING.md#api-versions).
-- Lo específico de cada zona: [api](.claude/rules/api.md), [database](.claude/rules/database.md), [web](.claude/rules/web.md) (con las 18 reglas de la interfaz), [ios](.claude/rules/ios.md).
+- Lo específico de cada zona: [api](.claude/rules/api.md), [database](.claude/rules/database.md), [web](.claude/rules/web.md) (índice de `.claude/rules/web/`, con las 18 reglas de la interfaz), [ios](.claude/rules/ios.md).
 
 ## Reglas que nunca se rompen
 

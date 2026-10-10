@@ -67,7 +67,7 @@ module.exports = {
       },
     },
     // ── Web (step 7.4-web-a). Each rule has its line in CONTRIBUTING.md
-    // ("Web architecture") and the reasoning in .claude/rules/web.md.
+    // ("Web architecture") and the reasoning in .claude/rules/web/structure.md.
     {
       name: 'web-features-do-not-import-each-other',
       severity: 'error',

@@ -4,9 +4,9 @@ Dos PR: #114 (fuera de iOS + ADR 0032) y el de iOS.
 
 Hecho:
 
-- ~~10. Comentarios en español~~: `app.module.ts`, `bootstrap.ts` (entero, no
-  solo 29-31), `api/.env.example`, `frontend/index.html` (los textos visibles
-  siguen en español), mensaje de gitleaks en `lefthook.yml`; en iOS, todos los
+- ~~10. Comentarios en español~~: `app.module.ts`, `bootstrap.ts` (entero),
+  `api/.env.example`, `frontend/index.html` (los textos visibles siguen en
+  español), mensaje de gitleaks en `lefthook.yml`; en iOS, todos los
   comentarios y `MARK:` de `Coco`, `CocoTests`, `CocoWidgets`, `project.yml` y
   `CocoTests/.swiftlint.yml`.
 - ~~10. Documentación técnica en español~~: ADR 0032 (los documentos que lee el
@@ -21,13 +21,7 @@ Decisiones: el español citado dentro de un comentario («Por revisar»,
 «Registrar gasto», «red») se deja: nombra una cadena real. Un comentario que
 nombraba un identificador ya renombrado ahora nombra el actual.
 
-Pendiente:
-
-- `e2e/support/servidor.mjs:99` sigue escribiendo `JWT_SECRET`: lo dejé para
-  J-6c, que está renombrando `e2e/`.
-- `frontend/index.html` dice «Google Sans / Roboto» y `bootstrap.ts`
-  «Montserrat y Lora», pero se carga Geist, Instrument Serif y JetBrains Mono:
-  los comentarios ya estaban desfasados (traducidos tal cual).
-- `package.json` `description` sigue en español.
-- `CONTRATO_DE_SOPORTES` sigue citado en los comentarios de iOS mientras
-  exista con ese nombre.
+Pendiente: nada. Lo que quedó al cerrar —el `JWT_SECRET` del servidor de los
+recorridos, las fuentes desfasadas en los comentarios, la `description` de
+`package.json` y el contrato de soportes citado en iOS— lo cerraron J-6c
+(`15be0a5`) y `ad3b1b5`; R2-C lo comprobó en `ba73eee`.

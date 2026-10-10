@@ -1,7 +1,8 @@
 # Informe de cierre de la fase 7: estándares y mantenibilidad
 
-Fecha: 9 oct 2026. Contrastado contra `Dev` en `50b7d08` y con la revisión
-independiente de J-6 (clon limpio, producción en solo lectura). El detalle de
+Fecha: 9 oct 2026. Contrastado contra `Dev` en `ba73eee` (paso R2-C), con
+las dos revisiones independientes de J-6 (clon limpio, producción en solo
+lectura); cada número de abajo sale de un comando corrido en ese commit. El detalle de
 cada paso está en [`registro-autonomo.md`](registro-autonomo.md), § 6; la
 lista del senior, punto por punto, en el
 [plan](plan-completo.md#lista-de-verificación-del-senior); los hallazgos de la
@@ -11,8 +12,10 @@ auditoría de 7.1, en [`standards/audit-closing.md`](standards/audit-closing.md)
 
 - **Nombres en inglés** en código, rutas, contrato y pruebas (7.2, en dos
   carriles y más de treinta pasos). La base conserva sus nombres detrás de
-  `@map` ([ADR 0026](adr/0026-database-names-stay-behind-prisma-map.md)) y
-  `lint:spanish` impide que entren nombres nuevos en español.
+  `@map` ([ADR 0026](adr/0026-database-names-stay-behind-prisma-map.md)).
+  `lint:spanish` da 0 nombres en español, ya sin línea base, y lee también
+  las propiedades CSS; los documentos del dueño pueden ir en español
+  ([ADR 0032](adr/0032-owner-documents-may-stay-in-spanish.md)).
 - **Textos de usuario** en el catálogo de la web
   ([ADR 0011](adr/0011-i18next-no-literal-string.md)) y en
   `Localizable.xcstrings` en iOS, con pruebas que fallan si aparece un
@@ -26,15 +29,25 @@ auditoría de 7.1, en [`standards/audit-closing.md`](standards/audit-closing.md)
   (gitleaks y auditoría), presupuestos de rendimiento, e2e sobre Postgres y
   recorridos de Playwright con axe. `scripts/merge.sh` es la única puerta a
   `Dev` y espera a todas las ejecuciones.
-- **Pruebas:** API 503 unitarias y 316 e2e (cobertura 96,75 % / 87,75 %),
-  web 821 (72,19 % / 68,37 %), iOS 250, recorridos 36 en escritorio y móvil.
+- **Pruebas:** API 494 unitarias y 317 e2e (cobertura 96,87 % de líneas y
+  88,88 % de ramas), web 821 (72,2 % / 68,43 %), `receipt-parser` 57, flags
+  17, iOS 251 y 36 recorridos en escritorio y móvil. Las de iOS y los
+  recorridos se corrieron en `409b59a`, y desde entonces no cambió nada de lo
+  que leen.
+- **Dependencias y presupuestos:** Jest 30; `npm audit` da 4 altas, todas de
+  la CLI de Prisma y aceptadas con su motivo en `scripts/ci/audit.mjs`, y 0
+  críticas en el árbol completo. El bundle de entrada pesa 170,99 kB de 200.
 - **Seguridad y operación:** RLS activa en producción con el rol `coco_app`
   ([ADR 0024](adr/0024-rls-active-in-production.md)), el alta de usuarios
   acotada ([ADR 0027](adr/0027-app-role-creates-only-pending-users-or-the-first-admin.md)),
   logs JSON sin datos personales, `/health` y `/ready`, respaldo completo
   cifrado con restauración probada, feature flags con caducidad.
-- **Documentación:** README, arquitectura, 31 ADR, runbook, CONTRIBUTING,
-  README de iOS; `CLAUDE.md` de 64 líneas con reglas por zona.
+- **Documentación:** README, arquitectura, 32 ADR, runbook, CONTRIBUTING,
+  README de iOS; `CLAUDE.md` de 65 líneas con reglas por zona, y las de la
+  web partidas por tema en `.claude/rules/web/`.
+- **Descartado:** las feature flags en iOS. No hay ninguna flag que lo
+  necesite y el lector sería código muerto
+  ([ADR 0015](adr/0015-openfeature-server-sdk.md), `409b59a`).
 - **Modo de trabajo:** director y un ejecutor por paso. Los 67 traspasos de
   la fase se destilaron en el runbook («Owner actions») y en el plan (8.7 y
   8.8), y se borraron.
@@ -46,13 +59,11 @@ Todo está escrito en el plan, Parte 4. Lo principal:
 - **La contracción de 7.10** (8.7): variables de entorno viejas, rutas web
   en español y soportes en el disco del servidor, cada uno con su criterio de
   cuándo y con respaldo y restauración probada antes de borrar.
-- **Lo que quedó de los nombres:** 76 nombres de archivo en español (sobre
-  todo `e2e/`), los comentarios de iOS y los mensajes de la API fuera de un
-  catálogo.
+- **Los mensajes de la API, a un catálogo** (8.4), con los de class-validator
+  que hoy llegan en inglés.
 - `created_at` en cuatro tablas y `timestamptz` (8.4), por expandir y
   contraer.
-- Flags en iOS, el árbol de desarrollo de `npm audit` (Jest 29) y lo demás de
-  8.8.
+- Las excepciones de Prisma de la auditoría y lo demás de 8.8.
 - Los hallazgos de instalación y de código de la revisión de J-6 que no se
   cierren en sus pasos.
 
@@ -77,3 +88,6 @@ de release-please ([ADR 0028](adr/0028-release-please-waits-for-the-owner.md)),
 el presupuesto de Actions en 0 USD, cambiar hPanel a `main`, guardar la clave
 de los respaldos, aprobar la retención, y decidir sobre los extractos y sobre
 cómo comparte iOS la lectura de documentos.
+
+Los hallazgos de las revisiones de J-6 que siguen en curso se cierran en la
+constancia.

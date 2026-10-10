@@ -116,12 +116,14 @@ bash scripts/verify-clean-install.sh             # installs like the server does
 
 The Playwright journeys build the API and the web, and run them against a
 fake GoTrue and their own `coco_e2e_pw_test` database, which they create and
-empty:
+empty. Their two URLs come from `api/.env.test`, the file `setup-local-db.sh`
+wrote, so they carry its roles, passwords, host and port (also when
+`ADMIN_DATABASE_URL` pointed at another port):
 
 ```bash
 npx playwright install chromium
-export E2E_DATABASE_URL=postgresql://coco_migrate:local-only-migrate-password@127.0.0.1:5432/coco_e2e_pw_test
-export E2E_APP_DATABASE_URL=postgresql://coco_app:local-only-coco-app-password@127.0.0.1:5432/coco_e2e_pw_test
+export E2E_DATABASE_URL=$(npx dotenv -e api/.env.test -p DIRECT_URL | sed 's|/coco_test$|/coco_e2e_pw_test|')
+export E2E_APP_DATABASE_URL=$(npx dotenv -e api/.env.test -p DATABASE_URL | sed 's|/coco_test$|/coco_e2e_pw_test|')
 npm run e2e:build
 npm run e2e
 ```
