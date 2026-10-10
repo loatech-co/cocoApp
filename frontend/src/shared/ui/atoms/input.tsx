@@ -113,7 +113,7 @@ function inputClass(
     // The touch floor, even if in `md` it is redundant: 44 is already over 42. It is declared
     // anyway because `piso-tactil.test.ts` asks whoever draws a control
     // to say so, and the day someone lowers this height the floor is still in place.
-    'movil:min-h-[42px]',
+    'mobile:min-h-[42px]',
     /*
       Inside a field, the placeholder is ONLY shown with focus: at rest its
       place is taken by the label, and both at once are two gray texts
@@ -138,7 +138,7 @@ function inputClass(
     // —not Tailwind's `md:`, which only measures the width—: a tablet
     // in portrait is touch even if it measures 800, and Safari zooms the whole
     // page when focusing a field under 16px.
-    size === 'md' && 'escritorio:text-sm',
+    size === 'md' && 'desktop:text-sm',
     // Room for the icons. On the left: 12 of margin, 16 of icon and 8
     // of air. On the right, the same for each 28 button.
     hasIcon && 'pl-9',

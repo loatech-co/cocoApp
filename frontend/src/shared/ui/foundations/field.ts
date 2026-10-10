@@ -84,7 +84,7 @@ export function fieldTrigger(isSmall = false): string {
     'aria-expanded:border-ring',
     // The touch floor: disabled and enabled measure the same, or the row
     // jumps on being disabled.
-    'movil:min-h-[42px]',
+    'mobile:min-h-[42px]',
     // The right padding equals the left one because what it opens is
     // already inside the flex: there is nothing to dodge.
     isSmall ? 'h-9 px-3 text-xs' : 'h-11 px-3 text-sm',

@@ -130,7 +130,7 @@ function FilterRow({ node, isChecked, hasCheckedInside, onToggle, onEnter }: Fil
           // smaller way of hitting a target that is already the whole
           // width of the dropdown. That is why the row has a floor and the
           // box does not.
-          'movil:min-h-[42px]',
+          'mobile:min-h-[42px]',
           HIGHLIGHT,
           isChecked && 'font-medium',
         )}

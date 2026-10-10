@@ -22,9 +22,9 @@ import { isInNativeApp } from './bridge';
  * `mobile.test.ts` checks it over a sweep of sizes.
  *
  * ── Where the CSS copy lives ────────────────────────────────────────────────
- * In `index.css`, as `@custom-variant movil` and `@custom-variant escritorio`.
- * Tailwind does know how to name a media query, so classes say `movil:` and
- * `escritorio:` and the string is not repeated across the project. This one
+ * In `index.css`, as `@custom-variant mobile` and `@custom-variant desktop`.
+ * Tailwind does know how to name a media query, so classes say `mobile:` and
+ * `desktop:` and the string is not repeated across the project. This one
  * and that one are the only two; the test checks that they say the same
  * thing, character by character.
  */
@@ -42,7 +42,7 @@ function subscribe(onChange: () => void): () => void {
  * Whether we are below the breakpoint.
  *
  * It is used to MOUNT or not mount —the bottom bar, the sections panel—, not
- * for styling: that is what the `movil:` and `escritorio:` variants are for.
+ * for styling: that is what the `mobile:` and `desktop:` variants are for.
  *
  * Mount and not hide, because a rail hidden with CSS is still nine links in
  * the tab order, and a panel hidden with CSS is a second copy of every `id`

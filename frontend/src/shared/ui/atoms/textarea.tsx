@@ -48,7 +48,7 @@ export function Textarea({ className, placeholder, ...props }: ComponentProps<'t
         FIELD_FOCUS,
         'disabled:cursor-not-allowed disabled:opacity-50',
         'aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive',
-        'escritorio:text-sm',
+        'desktop:text-sm',
         className,
       )}
       {...props}

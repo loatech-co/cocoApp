@@ -37,7 +37,7 @@ export function IconGrid({
             aria-label={label}
             className={cn(
               'grid aspect-square place-items-center rounded-md transition-colors',
-              'movil:min-h-[42px]',
+              'mobile:min-h-[42px]',
               isSelected
                 ? 'bg-primary text-primary-foreground'
                 : cn('text-muted-foreground', HIGHLIGHT),

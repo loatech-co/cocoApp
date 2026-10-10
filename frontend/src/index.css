@@ -18,19 +18,19 @@
    The two are COMPLEMENTARY: no size falls in both or in neither. That is not
    left to the eye; `shared/lib/mobile.test.ts` checks it by sweeping sizes.
 
-   Tailwind does know how to name a media query, so classes say `movil:` and
-   `escritorio:` and the string is not copied around the project. The only
+   Tailwind does know how to name a media query, so classes say `mobile:` and
+   `desktop:` and the string is not copied around the project. The only
    copies are this one and the one in `shared/lib/mobile.ts`, which is needed
    to decide what gets MOUNTED; the test checks they say the same thing.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-@custom-variant movil {
+@custom-variant mobile {
   @media (max-width: 767px), (orientation: portrait) and (max-width: 1024px) {
     @slot;
   }
 }
 
-@custom-variant escritorio {
+@custom-variant desktop {
   @media (min-width: 1025px), (orientation: landscape) and (min-width: 768px) {
     @slot;
   }
@@ -1074,7 +1074,7 @@
      near the edge again. `main.tsx` sets the mark on startup.
 
      The VARIABLE is redefined and no variant is added: a `@custom-variant`
-     would compete at equal specificity with `movil:` and would depend on the
+     would compete at equal specificity with `mobile:` and would depend on the
      order in which Tailwind emits the two. An attribute selector beats
      `:root` on specificity, so it does not depend on where it is written. */
   html[data-embebido='si'] {

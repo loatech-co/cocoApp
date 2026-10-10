@@ -441,7 +441,7 @@ export function MenuOption({
       className={cn(
         'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
         // A menu row is 36 with a pointer. With a finger, 42.
-        'movil:min-h-[42px]',
+        'mobile:min-h-[42px]',
         isDisabled
           ? 'cursor-not-allowed text-muted-foreground opacity-60'
           : isDestructive

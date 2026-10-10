@@ -102,7 +102,7 @@ export function ToolbarFilters(props: ToolbarFiltersProps) {
             hasShortcuts
             filters={filters}
             apply={apply}
-            boxClassName="movil:min-w-0 movil:flex-1"
+            boxClassName="mobile:min-w-0 mobile:flex-1"
           />
 
           {hasActiveFilters && <ClearFiltersButton onClick={clear} />}

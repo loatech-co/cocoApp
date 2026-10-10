@@ -66,7 +66,7 @@ const EXCEPTIONS: [filePath: string, className: string, reason: string][] = [
 describe('The touch floor', () => {
   it.each(CONTROLS)('%s declares it — %s', (filePath) => {
     const code = readFileSync(join(SRC_ROOT, filePath), 'utf8');
-    expect(code).toContain(`movil:min-h-[${TOUCH_FLOOR_PX}px]`);
+    expect(code).toContain(`mobile:min-h-[${TOUCH_FLOOR_PX}px]`);
   });
 
   it.each(EXCEPTIONS)('%s stays below on purpose (%s)', (filePath, className) => {
@@ -79,7 +79,7 @@ describe('The touch floor', () => {
 
     for (const filePath of sourceFiles(SRC_ROOT)) {
       const code = readFileSync(filePath, 'utf8');
-      for (const match of code.matchAll(/movil:min-(?:h|w)-\[(\d+)px\]/g)) {
+      for (const match of code.matchAll(/mobile:min-(?:h|w)-\[(\d+)px\]/g)) {
         if (Number(match[1]) < TOUCH_FLOOR_PX)
           offenders.push(`${filePath.split('/src/')[1]}: ${match[0]}`);
       }

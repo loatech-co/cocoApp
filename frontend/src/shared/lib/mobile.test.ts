@@ -81,13 +81,13 @@ describe('The breakpoint between phone and desktop', () => {
 describe('The CSS copy says the same', () => {
   const css = readFileSync(join(import.meta.dirname, '..', '..', 'index.css'), 'utf8');
 
-  it('`movil` and `escritorio` are the same strings, character by character', () => {
+  it('`mobile` and `desktop` are the same strings, character by character', () => {
     expect(css).toContain(`@media ${MOBILE_QUERY}`);
     expect(css).toContain(`@media ${DESKTOP_QUERY}`);
   });
 
   it('nobody wrote the breakpoint by hand somewhere else', () => {
-    // Two: the `movil` variant and the shell's block of rules. More than that
+    // Two: the `mobile` variant and the shell's block of rules. More than that
     // means someone copied it again, and then changing it is no longer
     // changing one place.
     const copies = css.split('(max-width: 767px)').length - 1;

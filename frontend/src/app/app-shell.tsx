@@ -178,14 +178,10 @@ export function AppShell() {
       <div
         className={cn(
           'flex flex-1 flex-col transition-[padding]',
-          'escritorio:h-dvh escritorio:py-5 escritorio:pr-5',
+          'desktop:h-dvh desktop:py-5 desktop:pr-5',
           // Without a rail —a tablet inside the app— the left gap is the same
           // as on the other three sides.
-          isEmbedded
-            ? 'escritorio:pl-5'
-            : shell.isCollapsed
-              ? 'escritorio:pl-16'
-              : 'escritorio:pl-56',
+          isEmbedded ? 'desktop:pl-5' : shell.isCollapsed ? 'desktop:pl-16' : 'desktop:pl-56',
         )}
       >
         <main
@@ -197,7 +193,7 @@ export function AppShell() {
             // edge. Now, above it, there are 20px of material and the well's
             // edge, which already do that job; the 40 inside added to them
             // and left the title floating in 60px of nothing.
-            'w-full flex-1 px-4 pt-5 escritorio:px-8 escritorio:pb-16 escritorio:pt-6 lg:px-10',
+            'w-full flex-1 px-4 pt-5 desktop:px-8 desktop:pb-16 desktop:pt-6 lg:px-10',
             // ── THE WELL ────────────────────────────────────────────────────
             // The content does not sit on the page: it opens INSIDE it. The
             // page is the material —the same color as the card and the
@@ -220,12 +216,12 @@ export function AppShell() {
             // radius: it is the largest container there is, and 10 on an
             // edge as long as the window is barely visible. It is registered,
             // with its reason, in `components/ui/radius.test.ts`.
-            'bg-background escritorio:rounded-xl',
+            'bg-background desktop:rounded-xl',
             // The well is what scrolls, not the page. `min-h-0` is what allows
             // it: without it, a child of a flex column is as tall as its
             // content and stretches the outer box, which is exactly the one
             // that cannot grow.
-            'escritorio:min-h-0 escritorio:overflow-y-auto',
+            'desktop:min-h-0 desktop:overflow-y-auto',
             // ── Clips, does not offer ───────────────────────────────────────
             // `auto` does not contain an overflow: it OFFERS it as a
             // scrollbar. And since the whole page lives in here, the effect
@@ -242,7 +238,7 @@ export function AppShell() {
             // wanted: whatever is really wider gets CUT. A phone screen does
             // not scroll sideways; whatever has wide content brings its own
             // scroll.
-            'movil:overflow-x-clip movil:pb-[var(--hueco-de-la-barra)]',
+            'mobile:overflow-x-clip mobile:pb-[var(--hueco-de-la-barra)]',
           )}
         >
           <UserView />

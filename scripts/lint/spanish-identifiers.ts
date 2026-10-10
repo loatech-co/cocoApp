@@ -5,7 +5,8 @@
  * What it reads: every name DECLARED in TypeScript/JavaScript under `api/`,
  * `frontend/`, `packages/`, `scripts/` and `e2e/`, and in Swift under `ios/`
  * (variables, parameters, functions, classes, types, members, object keys),
- * plus every file and folder name there. A name is split into words
+ * plus the `@custom-variant` names of every stylesheet and every file and
+ * folder name there. A name is split into words
  * (camelCase, PascalCase, snake_case, kebab-case), accents are stripped
  * (`categoría` → `categoria`) and it fails if a word is in SPANISH_WORDS.
  *
@@ -217,6 +218,20 @@ function swiftNames(text: string): { name: string; line: number }[] {
   return found;
 }
 
+/**
+ * The Tailwind variants declared in a stylesheet (`@custom-variant mobile`):
+ * every class that uses one carries its name (`mobile:min-h-[42px]`), so a
+ * Spanish name there spreads to every call.
+ */
+const CSS_VARIANT = /@custom-variant\s+([\w-]+)/g;
+
+function cssVariantNames(text: string): { name: string; line: number }[] {
+  return [...text.matchAll(CSS_VARIANT)].map((match) => ({
+    name: match[1]!,
+    line: text.slice(0, match.index).split('\n').length,
+  }));
+}
+
 // ── The scan ────────────────────────────────────────────────────────────────
 
 function trackedFiles(): string[] {
@@ -257,14 +272,19 @@ function scan(): Hit[] {
 
     const isCode = CODE.test(file);
     const isSwift = file.endsWith('.swift');
-    if (!isCode && !isSwift) continue;
+    const isCss = file.endsWith('.css');
+    if (!isCode && !isSwift && !isCss) continue;
     let text: string;
     try {
       text = readFileSync(path.join(ROOT, file), 'utf8');
     } catch {
       continue; // deleted in the working tree, not yet staged
     }
-    const names = isSwift ? swiftNames(text) : declaredNames(file, text);
+    const names = isCss
+      ? cssVariantNames(text)
+      : isSwift
+        ? swiftNames(text)
+        : declaredNames(file, text);
     for (const { name, line } of names) {
       if (spanishIn(name).length > 0) hits.push({ folder, entry: name, where: `${file}:${line}` });
     }

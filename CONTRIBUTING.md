@@ -466,7 +466,7 @@ with its story in the catalogue.
 **An exception is registered with its reason in one place, or it does not
 exist.** For these two rules that place is `DESIGN_EXCEPTIONS` in
 `eslint.config.js`; the lint also fails on an entry nobody uses any more. The
-touch floor (`movil:min-h-[42px]`) keeps its own registry in
+touch floor (`mobile:min-h-[42px]`) keeps its own registry in
 `shared/ui/touch-floor.test.ts`, and a radius over 10px in
 `shared/ui/radius.test.ts`.
 

@@ -179,7 +179,7 @@ componente en el nivel más bajo posible, con su historia en el catálogo.**
 
 Para estas dos reglas, `DESIGN_EXCEPTIONS` en `eslint.config.js`; el lint
 falla también si una entrada ya no la usa nadie. El suelo táctil
-(`movil:min-h-[42px]`) tiene su propio registro en
+(`mobile:min-h-[42px]`) tiene su propio registro en
 `shared/ui/touch-floor.test.ts`, y el radio por encima de 10px en
 `shared/ui/radius.test.ts`.
 

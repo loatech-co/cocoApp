@@ -68,7 +68,7 @@ export function SectionLink({
           // On the phone the row grows to 48: the height of a row that is
           // tapped, above the 42 floor because here there is height to spare
           // and a list of nine is run through with the thumb.
-          'movil:min-h-[48px]',
+          'mobile:min-h-[48px]',
           isCollapsed ? 'justify-center px-0' : 'px-3',
           // ── Only the SELECTED one gets a background ─────────────────────
           // Hovering paints none. It used `sidebar-hover`, which in dark is
@@ -142,7 +142,7 @@ export function AccountMenu({ isCollapsed = false }: { isCollapsed?: boolean }) 
         // and a green showing up only here would read as a control from
         // another family.
         'flex w-full min-w-0 items-center gap-2.5 rounded-lg py-2 text-left outline-none',
-        'movil:min-h-[42px]',
+        'mobile:min-h-[42px]',
         isCollapsed ? 'justify-center px-0' : 'px-2',
       )}
       trigger={() => <AccountTrigger isCollapsed={isCollapsed} />}

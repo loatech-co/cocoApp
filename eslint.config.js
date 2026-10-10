@@ -79,7 +79,7 @@ const RAW_ELEMENTS = {
   table: 'Table (shared/ui/molecules/table)',
 };
 
-/** `utility-[value]`, with any variant prefix (`movil:`, `hover:`) before it. */
+/** `utility-[value]`, with any variant prefix (`mobile:`, `hover:`) before it. */
 const ARBITRARY = /(?<![\w[-])(?:[\w-]+:)*-?([a-z]+(?:-[a-z]+)*)-\[([^\]\s'"`]+)\]/g;
 const RADIUS = /^rounded(?:-[a-z]{1,2})?$/;
 const COLOUR = /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|oklch|oklab|lab|lch|color-mix)\(/i;
@@ -123,10 +123,10 @@ function arbitraryUses(text) {
   const found = [];
   for (const [token, utility, value] of text.matchAll(ARBITRARY)) {
     if (value.startsWith('var(')) continue;
-    // The touch floor (`movil:min-h-[42px]`) has its own registry with its
+    // The touch floor (`mobile:min-h-[42px]`) has its own registry with its
     // reasons: `shared/ui/touch-floor.test.ts`, which also rejects any floor
     // under 42. One place per rule, not two.
-    if (token.startsWith('movil:min-')) continue;
+    if (token.startsWith('mobile:min-')) continue;
     if (RADIUS.test(utility)) found.push({ token, kind: 'radius' });
     else if (COLOUR.test(value)) found.push({ token, kind: 'colour' });
     else if (MEASURE.test(utility) && /\d/.test(value)) found.push({ token, kind: 'measure' });
