@@ -11,7 +11,6 @@ const CI_TEST_ENV = {
   DIRECT_URL: 'postgresql://coco_migrate:ci-only-password@localhost:5432/coco_test',
   CORS_ORIGINS: 'http://localhost:5173',
   LOG_LEVEL: 'silent',
-  JWT_SECRET: 'ci-only-jwt-secret-at-least-32-characters-long',
   CHECK_BREACHED_PASSWORDS: 'false',
   BOOTSTRAP_ADMIN_EMAIL: 'admin-e2e@pruebas.coco',
   RECEIPTS_DIR: '.soportes-test',

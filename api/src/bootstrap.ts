@@ -23,13 +23,13 @@ export function configureRouting(app: INestApplication): void {
 }
 
 /**
- * Configuración transversal de la aplicación: prefijo, cabeceras de seguridad,
- * CORS y validación.
+ * Cross-cutting application setup: prefix, security headers, CORS and
+ * validation.
  *
- * Vive aparte de `main.ts` a propósito. Si esto se configurara solo en el
- * arranque, las pruebas levantarían una app SIN helmet ni ValidationPipe y
- * estarían verificando algo que no es lo que corre en producción. Al
- * compartir esta función, lo que se prueba es exactamente lo que se despliega.
+ * It lives apart from `main.ts` on purpose. If this were configured only at
+ * boot, the tests would bring up an app WITHOUT helmet or ValidationPipe and
+ * would be verifying something that is not what runs in production. By
+ * sharing this function, what is tested is exactly what is deployed.
  */
 export function configureApp(
   app: INestApplication,
@@ -58,29 +58,29 @@ export function configureApp(
       referrerPolicy: { policy: 'no-referrer' },
       frameguard: { action: 'deny' },
       /**
-       * CSP para el proceso que sirve TAMBIÉN la SPA.
+       * CSP for the process that ALSO serves the SPA.
        *
-       * Cada permiso de aquí abajo está por una razón concreta; ninguno es
-       * "por si acaso". Lo que no aparece, está prohibido.
+       * Every permission below is here for a specific reason; none is
+       * "just in case". Whatever does not appear is forbidden.
        */
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          // `wasm-unsafe-eval` habilita WebAssembly, que es lo que ejecuta
-          // Tesseract. Pese al nombre, NO habilita eval(): es un permiso
-          // mucho más estrecho, creado precisamente para no tener que abrir
-          // 'unsafe-eval' entero por culpa del WASM.
+          // `wasm-unsafe-eval` enables WebAssembly, which is what runs
+          // Tesseract. Despite the name, it does NOT enable eval(): it is a
+          // much narrower permission, created precisely so as not to have to
+          // open 'unsafe-eval' entirely because of WASM.
           scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
-          // 'unsafe-inline' lo exige el estilo en línea que genera Tailwind.
-          // fonts.googleapis.com sirve la hoja de Montserrat y Lora.
+          // 'unsafe-inline' is required by the inline style Tailwind generates.
+          // fonts.googleapis.com serves the Montserrat and Lora stylesheet.
           styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
           fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
-          // blob: para las vistas previas de las imágenes que se importan.
+          // blob: for the previews of the images being imported.
           imgSrc: ["'self'", 'data:', 'blob:'],
-          // Solo a nosotros mismos. La consulta a Have I Been Pwned la hace el
-          // SERVIDOR, nunca el navegador, así que no hace falta abrirla aquí.
+          // Only to ourselves. The Have I Been Pwned lookup is made by the
+          // SERVER, never the browser, so there is no need to open it here.
           connectSrc: ["'self'"],
-          // Tesseract y pdf.js crean sus Web Workers desde blobs.
+          // Tesseract and pdf.js create their Web Workers from blobs.
           workerSrc: ["'self'", 'blob:'],
           frameAncestors: ["'none'"],
           baseUri: ["'self'"],
@@ -94,25 +94,25 @@ export function configureApp(
     origin: parseOrigins(config),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key'],
-    // El navegador debe poder enviar la cookie de refresh. Es seguro porque el
-    // origen está en lista blanca exacta: con `credentials: true` un comodín
-    // en `origin` sería una brecha, y por eso aquí nunca se usa uno.
+    // The browser must be able to send the refresh cookie. It is safe because
+    // the origin is on an exact allowlist: with `credentials: true` a wildcard
+    // in `origin` would be a breach, and that is why one is never used here.
     credentials: true,
   });
 
   app.useGlobalPipes(
     new FieldValidationPipe({
-      // Descarta propiedades no declaradas en el DTO...
+      // Drops properties not declared in the DTO...
       whitelist: true,
-      // ...y además rechaza la petición si venían. Así, si alguien intenta
-      // colar un `userId` en el body, muere aquí y no llega al servicio.
+      // ...and also rejects the request if they came. So if someone tries to
+      // slip a `userId` into the body, it dies here and never reaches the service.
       forbidNonWhitelisted: true,
       transform: true,
     }),
   );
 }
 
-/** Orígenes permitidos por CORS. Lista exacta, sin comodines, nunca. */
+/** Origins allowed by CORS. An exact list, no wildcards, ever. */
 export function parseOrigins(config: ConfigService): string[] {
   return (config.get<string>('CORS_ORIGINS') ?? '')
     .split(',')

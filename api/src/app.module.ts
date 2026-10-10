@@ -27,29 +27,29 @@ import { PrismaModule } from './prisma/prisma.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      // La ruta es ABSOLUTA, derivada de dónde está este archivo, y no relativa
-      // al directorio de trabajo.
+      // The path is ABSOLUTE, derived from where this file lives, and not
+      // relative to the working directory.
       //
-      // Hostinger arranca el proceso con el cwd en el HOME del usuario, no en
-      // la carpeta de la aplicación. Con una ruta relativa, la app buscaba
-      // `.env` en el home, no lo encontraba, y Prisma fallaba al arrancar con
-      // un P1012 que se lee como si la URL estuviera mal escrita:
+      // Hostinger starts the process with the cwd in the user's HOME, not in
+      // the application folder. With a relative path, the app looked for
+      // `.env` in the home, did not find it, and Prisma failed at boot with
+      // a P1012 that reads as if the URL were misspelled:
       //   "the URL must start with the protocol postgresql://"
-      // cuando en realidad la variable simplemente no existía.
+      // when in fact the variable simply did not exist.
       //
-      // __dirname es `api/dist`, así que esto apunta a `api/.env` tanto en
-      // desarrollo como compilado.
+      // __dirname is `api/dist`, so this points to `api/.env` both in
+      // development and compiled.
       //
-      // Las pruebas corren contra su propia base, nunca contra la de desarrollo.
+      // Tests run against their own database, never against the development one.
       envFilePath: join(__dirname, '..', process.env.NODE_ENV === 'test' ? '.env.test' : '.env'),
       cache: true,
     }),
 
-    // Rate limiting. El proceso es único, así que el contador en memoria
-    // alcanza; si algún día hubiera varias instancias, se cambia a un store
-    // compartido sin tocar los controladores. Los endpoints sensibles
-    // (registro, login) llevan además su propio @Throttle más estricto.
-    // Login además cuenta por correo, sea cual sea la IP (`login-throttle.ts`).
+    // Rate limiting. There is a single process, so the in-memory counter is
+    // enough; if there were ever several instances, it switches to a shared
+    // store without touching the controllers. The sensitive endpoints
+    // (sign-up, login) also carry their own, stricter @Throttle.
+    // Login also counts per email, whatever the IP (`login-throttle.ts`).
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }, LOGIN_PER_EMAIL]),
 
     PrismaModule,
@@ -57,7 +57,7 @@ import { PrismaModule } from './prisma/prisma.module';
     HealthModule,
     AdminModule,
 
-    // El núcleo. Todo lo demás se deriva de estos.
+    // The core. Everything else derives from these.
     AccountsModule,
     CategoriesModule,
     TagsModule,
@@ -66,20 +66,20 @@ import { PrismaModule } from './prisma/prisma.module';
     ReceiptsModule,
     DashboardModule,
 
-    // Preferencias: entre otras cosas, decide si este usuario lleva cuentas.
-    // Va antes que el núcleo porque varios módulos la consultan.
+    // Preferences: among other things, decides whether this user keeps accounts.
+    // It goes before the core because several modules query it.
     PreferencesModule,
 
-    // Fase 2 — importación y categorización automática.
+    // Phase 2 — import and automatic categorization.
     CategorizationModule,
 
-    // La SPA compilada, servida por este mismo proceso. Va AL FINAL: su ruta
-    // comodín tiene que ceder ante todas las de la API.
+    // The compiled SPA, served by this same process. It goes LAST: its
+    // wildcard route has to yield to every API route.
     SpaModule.forRoot(),
   ],
   providers: [
-    // El orden importa: primero se limita la tasa (para que una ráfaga sin
-    // token ni siquiera llegue a consultar la base), después se autentica.
+    // The order matters: first the rate is limited (so that a burst without
+    // a token does not even get to query the database), then it authenticates.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
 

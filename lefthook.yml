@@ -18,7 +18,7 @@ pre-commit:
         if command -v gitleaks >/dev/null 2>&1; then
           gitleaks git --pre-commit --staged --redact --no-banner --exit-code 1 .
         else
-          echo "aviso: gitleaks no está instalado (brew install gitleaks); el commit sigue sin revisar secretos y CI lo revisará." >&2
+          echo "warning: gitleaks is not installed (brew install gitleaks); the commit goes through without a secret scan and CI will scan it." >&2
         fi
     1_lint-staged:
       # eslint --fix + prettier --write on the staged files (lint-staged.config.js)

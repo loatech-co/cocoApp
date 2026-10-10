@@ -38,7 +38,7 @@ bash scripts/merge.sh [rama]                # la única forma de integrar en Dev
 - **Nunca se desarrolla contra producción.** La API se niega a arrancar contra una base remota salvo con `ALLOW_REMOTE_DATABASE`; los datos reales solo llegan con `scripts/pull-data-to-local.sh`.
 - **Migraciones aditivas y en producción antes que el código; lo que rompe va por expandir y contraer.** El código viejo sigue corriendo minutos sobre el esquema nuevo.
 - **Ni secretos, ni datos personales, ni importes** en código, logs, pruebas, commits o traspasos. Son datos financieros reales de personas reales.
-- **Código y documentación técnica en inglés; lo que ve el usuario, en español.**
+- **Código y documentación técnica en inglés; lo que ve el usuario, en español.** Los documentos que lee el dueño (este, las reglas, el plan, los traspasos…) pueden ir en español: [ADR 0032](docs/adr/0032-owner-documents-may-stay-in-spanish.md).
 - **Una decisión que el plan no cubre se escribe en un ADR (`docs/adr/`) antes de implementarla.** Si no, la siguiente sesión la deshace sin saber que existía.
 
 ## Modo de trabajo
