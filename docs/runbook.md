@@ -520,27 +520,27 @@ WebBridgeSmokeTests skip themselves without it.
   | Only scripts (not `scripts/ci`)     |         11 |         ~4 | hygiene, verify (light)      |
   | Web (`frontend/`)                   |         11 |          9 | the four Linux jobs, no API  |
   | API, without touching the contract  |         11 |         ~9 | the four Linux jobs, no web  |
-  | Only `ios/`                         |     11 (*) | **51–101** | hygiene, ios (5–10 min x 10) |
-  | API that changes `openapi.v2.json`  |     11 (*) | **59–109** | the four Linux jobs and ios  |
+  | Only `ios/`                         |     11 (*) | **41–101** | hygiene, ios (4–10 min x 10) |
+  | API that changes `openapi.v2.json`  |     11 (*) | **49–109** | the four Linux jobs and ios  |
   | Lockfile or a workflow but `ci.yml` |         11 |         10 | the four Linux jobs          |
-  | `ci.yml`                            |     11 (*) | **60–110** | everything                   |
+  | `ci.yml`                            |     11 (*) | **50–110** | everything                   |
 
   (*) Before J-7, iOS was manual and its cost did not show; run by hand it was
-  the same 50–100. "Before" is the average of 15 PRs (120 runs): hygiene 1,
+  the same 40–100. "Before" is the average of 15 PRs (120 runs): hygiene 1,
   verify 5.4, clean-install 1.1, journeys 3.1 (5–6 whenever apt rebuilt the
-  man-db index, now switched off). The `ios` job measured 9 min 38 s and then
-  4 min 56 s on PR #110, almost all of it the simulator build and tests: 5 to
-  10 billed minutes, 50 to 100 against the quota. `release-please` bills 0 until it is enabled (below);
+  man-db index, now switched off). The `ios` job measured 9 min 38 s, 4 min 56 s
+  and 3 min 21 s on PR #110, almost all of it the simulator build and tests: 4 to
+  10 billed minutes, 40 to 100 against the quota. `release-please` bills 0 until it is enabled (below);
   the weekly `security` is one job, ~4 a month.
 
 - **How many PRs fit.** A PR is pushed about three times. A web or API PR
   costs ~28 minutes: **~65 a month** if nothing touches iOS. An iOS PR costs
-  150 to 300, so **each one takes the place of 5 to 10 web or API PRs**: with
-  two iOS PRs a month, 45 to 55 others fit. The limit is pushes, not PRs: on 9 October, a
+  150 to 300 (three pushes), so **each one takes the place of 5 to 10 web or API PRs**: with
+  two iOS PRs a month, 45 to 55 others fit in the 2,000. The limit is pushes, not PRs: on 9 October, a
   heavy day, 833 minutes went in one day. On an iOS branch, let the
   `pre-push` hook (`ios/scripts/pre-push.sh`) catch what it can, push once,
   and re-run a flaky job with `gh run rerun <id> --failed` instead of pushing
-  again: a re-run of `ios` costs 50 to 100 again.
+  again: a re-run of `ios` costs 40 to 100 again.
 - **release-please is off until it is enabled.** Its job has
   `if: vars.RELEASE_PLEASE_ENABLED == 'true'` (a job-level `if:` cannot read
   a secret), so today it reports skipped and bills nothing. To turn it on,
