@@ -48,7 +48,13 @@ enum BackgroundJobs {
     /// On moving to the background and at the end of each task. If the system
     /// rejects the request —simulator, unregistered identifier— it is
     /// ignored: correctness never depends on this.
-    static func schedule(scheduler: BGTaskScheduler = .shared) {
+    ///
+    /// `isRegistered` is a parameter so the tests can reach the unregistered
+    /// case: the host app has already registered by the time they run.
+    static func schedule(
+        scheduler: any TaskSubmitting = BGTaskScheduler.shared,
+        isRegistered: Bool = BackgroundJobs.isRegistered
+    ) {
         guard isRegistered else { return }
         for request in requests() {
             try? scheduler.submit(request)
@@ -110,3 +116,11 @@ enum BackgroundJobs {
         task.expirationHandler = { execution.cancel() }
     }
 }
+
+/// The one part of `BGTaskScheduler` that `schedule` uses, so the tests can
+/// stand in for it without touching the real scheduler.
+protocol TaskSubmitting {
+    func submit(_ taskRequest: BGTaskRequest) throws
+}
+
+extension BGTaskScheduler: TaskSubmitting {}

@@ -26,13 +26,18 @@ final class BackgroundJobsTests: XCTestCase {
         XCTAssertEqual(processingRequest?.requiresNetworkConnectivity, true)
     }
 
-    func testScheduleWithoutRegistrationDoesNotTouchTheScheduler() throws {
-        // `submit` without registration is an ObjC exception, not a `throws`:
-        // scheduling has to skip it instead of blowing up. The host app
-        // registers at launch (M9), so inside it the
-        // test does not have the case it wants to test.
-        try XCTSkipIf(BackgroundJobs.isRegistered, "la app anfitriona ya registró las tareas al arrancar")
-        BackgroundJobs.schedule()
+    func testScheduleWithoutRegistrationDoesNotTouchTheScheduler() {
+        // `submit` without a registered handler is an Objective-C exception,
+        // not a `throws`: scheduling has to skip it instead of crashing.
+        let scheduler = SchedulerSpy()
+        BackgroundJobs.schedule(scheduler: scheduler, isRegistered: false)
+        XCTAssertEqual(scheduler.submitted, [])
+    }
+
+    func testScheduleOnceRegisteredSubmitsBothRequests() {
+        let scheduler = SchedulerSpy()
+        BackgroundJobs.schedule(scheduler: scheduler, isRegistered: true)
+        XCTAssertEqual(Set(scheduler.submitted), [BackgroundJobs.refresh, BackgroundJobs.queue])
     }
 
     func testRunQueueSendsThePendingAndTheQueueNotifiesOnce() async throws {
@@ -83,5 +88,14 @@ final class BackgroundJobsTests: XCTestCase {
         XCTAssertEqual(transport.received.map { $0.url?.path }, ["/api/v2/categories"])
         let index = await tree.index()
         XCTAssertEqual(index?.entries.map(\.name), ["Hogar"])
+    }
+}
+
+/// Records what would have reached `BGTaskScheduler`.
+private final class SchedulerSpy: TaskSubmitting {
+    private(set) var submitted: [String] = []
+
+    func submit(_ taskRequest: BGTaskRequest) throws {
+        submitted.append(taskRequest.identifier)
     }
 }
