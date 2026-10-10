@@ -5,7 +5,8 @@
 # On GitHub's free plan a PRIVATE repository gets no enforced branch
 # protection or rulesets, so "nothing merges with red CI" cannot be a server
 # setting. This script is the compensating control: it waits for the PR's
-# checks, refuses if any failed or none ran, and only then integrates.
+# checks, refuses if any failed or none ran, if the PR targets another branch
+# or if `ci/hygiene` is missing, and only then integrates.
 #
 #   - Deploy branch `Dev` (today): fast-forward only, so the history stays
 #     linear and the SHAs that CI tested are the SHAs that deploy.
@@ -22,9 +23,17 @@ if [ "$BRANCH" = "$DEPLOY_BRANCH" ] || [ "$BRANCH" = "main" ]; then
   exit 1
 fi
 
-PR=$(gh pr view "$BRANCH" --json number -q .number 2>/dev/null || true)
-if [ -z "$PR" ]; then
+PR_INFO=$(gh pr view "$BRANCH" --json number,baseRefName -q '"\(.number)\t\(.baseRefName)"' 2>/dev/null || true)
+PR="${PR_INFO%%$'\t'*}"
+BASE="${PR_INFO#*$'\t'}"
+if [ -z "$PR_INFO" ] || [ -z "$PR" ]; then
   echo "Refusing: no pull request for '$BRANCH'. Open one first (gh pr create --base $DEPLOY_BRANCH)." >&2
+  exit 1
+fi
+# Its checks ran against its base: a PR into another branch proves nothing
+# about what lands on the deploy branch.
+if [ "$BASE" != "$DEPLOY_BRANCH" ]; then
+  echo "Refusing: PR #${PR} targets '$BASE', not '$DEPLOY_BRANCH' (gh pr edit $PR --base $DEPLOY_BRANCH)." >&2
   exit 1
 fi
 
@@ -112,6 +121,19 @@ if [ -n "$NOT_GREEN" ]; then
   echo "Re-run them (gh run rerun <id> --failed) and run this again." >&2
   exit 1
 fi
+
+# All green is not enough if `ci` never loaded (a YAML error): the checks
+# left, from other workflows, would be green on their own. These must be there
+# and have passed; skipped does not count.
+REQUIRED_CHECKS="${REQUIRED_CHECKS:-ci/hygiene}"
+for required in $REQUIRED_CHECKS; do
+  # A here-string, not a pipe: under pipefail an early exit of grep -q can
+  # turn a match into a SIGPIPE failure.
+  if ! grep -qxF "$(printf 'pass\t%s' "$required")" <<<"$CHECKS"; then
+    echo "Refusing: PR #${PR} has no passing '$required' check. Did the ci workflow run?" >&2
+    exit 1
+  fi
+done
 
 if [ "$DEPLOY_BRANCH" = "main" ]; then
   gh pr merge "$PR" --squash --delete-branch
