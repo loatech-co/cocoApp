@@ -42,10 +42,11 @@ pre-push:
   commands:
     ios:
       # swift-format (strict) + the iOS tests on the simulator, only when the
-      # push carries changes under ios/. This is the iOS gate for routine
-      # work: the workflow is manual because a macOS minute counts as ten.
-      # Without Xcode it warns and lets the push through.
-      glob: 'ios/**'
+      # branch touches what the `ios` job of ci.yml reads, compared with
+      # origin/Dev. No `glob`: on a branch's first push lefthook diffed against
+      # the default branch and ran the suite for a docs-only push. The script
+      # decides (ios/scripts/pre-push.sh). Without Xcode it warns and lets the
+      # push through.
       run: bash ios/scripts/pre-push.sh
 
 commit-msg:

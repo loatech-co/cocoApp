@@ -10,8 +10,9 @@ mapa de carpetas en [ios/README.md](../../ios/README.md).
 
 **Antes de entregar: `bash ios/scripts/lint.sh` y `xcodebuild test`.**
 
-El flujo `ios` del CI es manual (un minuto de macOS cuenta por diez), así que
-la compuerta de rutina es el Mac.
+El job `ios` del CI corre solo si cambia lo que lee (un minuto de macOS cuenta
+por diez: 40–100 por push), así que la compuerta de rutina es el Mac, con el
+mismo criterio, en el `pre-push`.
 
 **`swift-format --strict` y SwiftLint estricto, con su versión fijada.**
 
