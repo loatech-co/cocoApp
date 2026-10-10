@@ -1,6 +1,7 @@
+import { PASSWORD } from '../support/accounts';
 import { openAccountPanel, signOutButton } from '../support/app';
 import { expectAccessible } from '../support/axe';
-import { expect, PASSWORD, test } from '../support/fixtures';
+import { expect, test } from '../support/fixtures';
 
 test.describe('session', () => {
   test('signs in with e-mail and password and lands on the summary', async ({ page, cuenta }) => {

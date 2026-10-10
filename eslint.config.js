@@ -284,6 +284,8 @@ export default defineConfig(
       '*.config.{js,ts,mjs}',
       'frontend/*.config.ts',
       'e2e/*.config.ts',
+      // Playwright loads its global setup the same way.
+      'e2e/support/global-setup.ts',
       // Storybook reads its config and each story file's meta the same way.
       'frontend/.storybook/*.{ts,tsx}',
       'frontend/src/**/*.stories.tsx',

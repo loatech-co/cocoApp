@@ -12,6 +12,8 @@ import { API_PORT, BASE_URL } from './support/entorno.mjs';
  */
 export default defineConfig({
   testDir: './recorridos',
+  // Registers the admin once, after the server is up and before any worker.
+  globalSetup: './support/global-setup.ts',
   outputDir: './.salida/resultados',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

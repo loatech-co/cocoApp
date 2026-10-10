@@ -1,18 +1,12 @@
-import { test as base, expect, request, type APIRequestContext } from '@playwright/test';
+import { test as base, expect, type APIRequestContext } from '@playwright/test';
 
-import { BASE_URL } from './entorno.mjs';
+import { ADMIN_EMAIL, login, PASSWORD, readData, register } from './accounts';
 
 /**
  * Every journey gets its OWN user: registered, approved by the admin and with
  * nothing in it. Journeys share no data, so they run in parallel and in any
  * order (§7.7: no test may depend on another one).
- *
- * Accounts live in the fake GoTrue of `servidor.mjs`; the password below is
- * only valid there.
  */
-
-const ADMIN_EMAIL = 'admin@recorridos.coco';
-export const PASSWORD = 'Xk9$Ronda-Verde!';
 
 let counter = 0;
 
@@ -20,39 +14,6 @@ let counter = 0;
 function uniqueEmail(): string {
   counter += 1;
   return `persona-${process.pid}-${Date.now()}-${counter}@recorridos.coco`;
-}
-
-interface Envelope<T> {
-  data: T;
-}
-
-async function readData<T>(response: Awaited<ReturnType<APIRequestContext['get']>>): Promise<T> {
-  expect(response.ok(), `${response.url()} → ${response.status()}`).toBeTruthy();
-  return ((await response.json()) as Envelope<T>).data;
-}
-
-async function login(email: string): Promise<APIRequestContext> {
-  const anonymous = await request.newContext({ baseURL: BASE_URL });
-  const { accessToken } = await readData<{ accessToken: string }>(
-    await anonymous.post('/api/v2/auth/login', { data: { email, password: PASSWORD } }),
-  );
-  await anonymous.dispose();
-  return request.newContext({
-    baseURL: BASE_URL,
-    extraHTTPHeaders: { Authorization: `Bearer ${accessToken}` },
-  });
-}
-
-async function register(email: string, displayName: string): Promise<void> {
-  const anonymous = await request.newContext({ baseURL: BASE_URL });
-  const response = await anonymous.post('/api/v2/auth/register', {
-    data: { email, password: PASSWORD, displayName },
-  });
-  await anonymous.dispose();
-  // Another worker may have registered the admin first: that is fine.
-  if (!response.ok() && !(email === ADMIN_EMAIL && response.status() === 409)) {
-    throw new Error(`register ${email} → ${response.status()} ${await response.text()}`);
-  }
 }
 
 interface Cuenta {
@@ -74,9 +35,11 @@ interface TestFixtures {
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
   admin: [
+    // The admin is registered ONCE, in `global-setup.ts`, before any worker
+    // starts: registered here, two workers raced and one logged in before the
+    // other had created its profile, which is a 403 `account_not_enabled`.
     // eslint-disable-next-line no-empty-pattern -- Playwright reads a fixture's dependencies from this pattern; the admin has none.
     async ({}, use) => {
-      await register(ADMIN_EMAIL, 'Administración');
       const admin = await login(ADMIN_EMAIL);
       await use(admin);
       await admin.dispose();
