@@ -975,8 +975,9 @@ a **fine-grained personal access token** stored as the repository secret
 `RELEASE_PLEASE_TOKEN`: access to this repository only, permissions
 **Contents: read and write** and **Pull requests: read and write**, with an
 expiry date and a reminder to rotate it. The repository owner creates it (it
-cannot be created from a workflow). Until it exists the job is skipped with a
-warning instead of failing.
+cannot be created from a workflow). The job is skipped, and bills nothing,
+until the repository variable `RELEASE_PLEASE_ENABLED` is `true`: set it once
+the token exists (`gh variable set RELEASE_PLEASE_ENABLED --body true`).
 
 ## Performance budgets
 

@@ -34,7 +34,7 @@ pre-commit:
       run: npm run typecheck --workspace @coco/receipt-parser
     6_lint-ios:
       # swift-format + SwiftLint, strict. Without Xcode or SwiftLint it warns
-      # and lets the commit through: the iOS workflow (ios.yml) is the gate.
+      # and lets the commit through: the `ios` job of ci.yml is the gate.
       glob: 'ios/**/*.swift'
       run: bash ios/scripts/lint.sh --if-installed
 

@@ -499,34 +499,55 @@ their paths are listed at the top of `ci.yml`: the lockfile, `package.json`,
 `.github/`, `scripts/ci/` or a root config runs everything. Inside `verify`,
 Postgres, the API e2e and the OpenAPI check need `api/` or `packages/`; the
 frontend coverage, its build and size-limit need `frontend/` or `packages/`.
-iOS is manual (`ios.yml`, x10).
+`ios` is the exception: it does NOT follow "everything", because a macOS
+minute bills as ten. It runs when `ios/`, the two bridge files its tests copy
+(`frontend/src/shared/lib/native-contract.ts`, `bridge.ts`),
+`api/openapi.v2.json` or `ci.yml` change, on a manual run, and never on a push.
+`frontend/dist` is not a trigger: the job does not build it, and
+WebBridgeSmokeTests skip themselves without it.
 
 - **merge.sh waits for the RUNS, not only the checks.** A job that `needs`
   another has no check until that one finishes: while `hygiene` runs, the
   heavy jobs are not listed, and the moment it passes everything listed is
   green. So merge.sh first waits for every workflow run of the PR head to be
   `completed`, then reads the checks.
-- **Minutes per push** (billed, measured on real PRs, October 2026):
+- **Minutes per push** (billed, macOS x10 included, measured on real PRs,
+  October 2026):
 
-  | PR touches                       | Before J-7 | After J-7 | Jobs that run (after)         |
-  | -------------------------------- | ---------: | --------: | ----------------------------- |
-  | Only docs, `.claude/`, `*.md`    |          1 |         1 | hygiene                       |
-  | Only `ios/`                      |         11 |         1 | hygiene (+ `ios.yml` by hand) |
-  | Only scripts (not `scripts/ci`)  |         11 |        ~4 | hygiene, verify (light)       |
-  | Web (`frontend/`)                |         11 |         9 | all four, verify without API  |
-  | API (`api/`)                     |         11 |        ~9 | all four, verify without web  |
-  | Everything (lockfile, workflows) |         11 |        10 | all four                      |
+  | PR touches                          | Before J-7 | After J-7 | Jobs that run (after)       |
+  | ----------------------------------- | ---------: | --------: | --------------------------- |
+  | Only docs, `.claude/`, `*.md`       |          1 |         1 | hygiene                     |
+  | Only scripts (not `scripts/ci`)     |         11 |        ~4 | hygiene, verify (light)     |
+  | Web (`frontend/`)                   |         11 |         9 | the four Linux jobs, no API |
+  | API, without touching the contract  |         11 |        ~9 | the four Linux jobs, no web |
+  | Only `ios/`                         |     11 (*) |   **101** | hygiene, ios (10 min x 10)  |
+  | API that changes `openapi.v2.json`  |     11 (*) |  **~109** | the four Linux jobs and ios |
+  | Lockfile or a workflow but `ci.yml` |         11 |        10 | the four Linux jobs         |
+  | `ci.yml`                            |     11 (*) |   **110** | everything                  |
 
-  "Before" is the average of 15 PRs (120 runs): hygiene 1, verify 5.4,
-  clean-install 1.1, journeys 3.1, and journeys hit 5–6 whenever apt rebuilt
-  the man-db index (two minutes, now switched off). Each merge to `Dev` adds 1
-  for `release-please`. The weekly `security` is one job now: ~4 a month.
+  (*) Before J-7, iOS was manual and its cost did not show; run by hand it was
+  the same 100. "Before" is the average of 15 PRs (120 runs): hygiene 1,
+  verify 5.4, clean-install 1.1, journeys 3.1 (5–6 whenever apt rebuilt the
+  man-db index, now switched off). The `ios` job measured 9 min 38 s on PR
+  #110, almost all of it the simulator build and tests: 10 billed minutes,
+  100 against the quota. `release-please` bills 0 until it is enabled (below);
+  the weekly `security` is one job, ~4 a month.
 
-- **How many PRs fit.** A code PR is pushed about three times: ~28 minutes,
-  plus 1 for the release. That is **~65 code PRs a month**, or ~1,000 docs
-  PRs. The limit is pushes, not PRs: on 9 October, a heavy day, 833 minutes
-  went in one day. Run the local checks before pushing, push once, and re-run
-  a flaky job with `gh run rerun <id> --failed` instead of pushing again.
+- **How many PRs fit.** A PR is pushed about three times. A web or API PR
+  costs ~28 minutes: **~65 a month** if nothing touches iOS. An iOS PR costs
+  ~300, so **each one takes the place of ~10 web or API PRs**: with two iOS
+  PRs a month, ~45 others fit. The limit is pushes, not PRs: on 9 October, a
+  heavy day, 833 minutes went in one day. On an iOS branch, let the
+  `pre-push` hook (`ios/scripts/pre-push.sh`) catch what it can, push once,
+  and re-run a flaky job with `gh run rerun <id> --failed` instead of pushing
+  again: a re-run of `ios` is 100 minutes too.
+- **release-please is off until it is enabled.** Its job has
+  `if: vars.RELEASE_PLEASE_ENABLED == 'true'` (a job-level `if:` cannot read
+  a secret), so today it reports skipped and bills nothing. To turn it on,
+  after creating the `RELEASE_PLEASE_TOKEN` secret (CONTRIBUTING.md,
+  "Versioning"): `gh variable set RELEASE_PLEASE_ENABLED --body true`, or
+  Settings → Secrets and variables → Actions → Variables. Then 1 minute per
+  merge to `Dev`.
 - **Measure the month.** `node scripts/ci/actions-minutes.mjs [YYYY-MM-DD]`
   sums every job since that day (default: the 1st) the way GitHub bills it,
   by workflow and job, with plain read access. GitHub's own figure needs the
