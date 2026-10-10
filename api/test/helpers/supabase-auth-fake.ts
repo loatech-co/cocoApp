@@ -106,6 +106,11 @@ export class SupabaseAuthFake {
 
   // ── Test utilities ─────────────────────────────────────────────────────────
 
+  /** Whether a credential exists for this email: an orphan shows up here. */
+  hasAccount(email: string): boolean {
+    return [...this.accounts.values()].some((c) => c.email === email);
+  }
+
   /** Registers an existing account and returns its id, without going through sign-up. */
   seed(email: string, password: string): string {
     const authId = randomUUID();

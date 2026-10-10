@@ -148,6 +148,38 @@ describe('Our own auth (e2e)', () => {
       await register().expect(201);
       expect(await env.prisma.user.count({ where: { role: 'admin' } })).toBe(0);
     });
+
+    it('with an admin already there, the BOOTSTRAP_ADMIN_EMAIL address signs up pending', async () => {
+      // The database would refuse a second admin (ADR 0027): the app asks
+      // first, so the credential and the profile are both created.
+      await env.createUser({ role: 'admin', status: 'suspended' });
+
+      const response = await register({ email: INITIAL_ADMIN_EMAIL }).expect(201);
+
+      expect(response.body.data).toMatchObject({ pendingApproval: true });
+      expect(
+        await env.prisma.user.findUniqueOrThrow({
+          where: { email: INITIAL_ADMIN_EMAIL },
+          select: { role: true, status: true, approvedAt: true },
+        }),
+      ).toEqual({ role: 'user', status: 'pending', approvedAt: null });
+      expect(await env.prisma.user.count({ where: { role: 'admin' } })).toBe(1);
+      expect(env.supabase.hasAccount(INITIAL_ADMIN_EMAIL)).toBe(true);
+    });
+
+    it('a profile that cannot be created leaves no credential behind in Supabase', async () => {
+      // A legacy row (no auth_id) holds the email, so the INSERT of the
+      // profile fails after Supabase created the credential.
+      const email = testEmail();
+      await env.prisma.user.create({ data: { email } });
+      expect(env.supabase.hasAccount(email)).toBe(false);
+
+      const response = await register({ email });
+
+      expect(response.status).toBeGreaterThanOrEqual(400);
+      expect(env.supabase.hasAccount(email)).toBe(false);
+      expect(await env.prisma.user.count({ where: { email } })).toBe(1);
+    });
   });
 
   // ── Login ──────────────────────────────────────────────────────────────────

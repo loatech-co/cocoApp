@@ -8,7 +8,7 @@ import { SupabaseAuthService } from './supabase-auth.service';
 import { UsersRepository } from './users.repository';
 import { AuditService } from '../../common/audit/audit.service';
 import { AuthenticationError, ForbiddenError } from '../../common/errors/domain-error';
-import type { User } from '../../generated/prisma/client';
+import type { Prisma, User } from '../../generated/prisma/client';
 import { CategoriesService } from '../categories/categories.service';
 
 export interface RequestContext {
@@ -103,6 +103,13 @@ export class AuthService {
     // give them away.
     await this.passwords.requireStrong(input.password, { email, displayName });
 
+    // Decided BEFORE Supabase, and for every email, so the timing gives
+    // nothing away: once any admin exists the database refuses the app a
+    // second one (ADR 0027), and the bootstrap address signs up like anyone
+    // else, pending approval. Asking afterwards would leave a credential in
+    // Supabase with no profile.
+    const isInitialAdmin = this.initialAdminEmail === email && !(await this.users.hasAnyAdmin());
+
     // Supabase is called whether the email exists or not, so the response
     // takes the same time in both cases. It returns null if it already existed.
     const authId = await this.supabase.createUser(email, input.password);
@@ -112,9 +119,7 @@ export class AuthService {
       return { isPendingApproval: true };
     }
 
-    const isInitialAdmin = this.initialAdminEmail === email;
-
-    const user = await this.users.create({
+    const user = await this.createProfileOrUndo(authId, {
       authId,
       email,
       displayName,
@@ -166,6 +171,28 @@ export class AuthService {
     });
 
     return { isPendingApproval: user.status === 'pending' };
+  }
+
+  /**
+   * Creates the profile of a credential that was just created in Supabase,
+   * and if that fails, deletes the credential again. Left behind, it would be
+   * the one state with no way out: retrying says «already exists» and there
+   * is no profile to approve. Two bootstraps racing, or a legacy row with the
+   * same email, are what still get here.
+   */
+  private async createProfileOrUndo(authId: string, data: Prisma.UserCreateInput): Promise<User> {
+    try {
+      return await this.users.create(data);
+    } catch (error) {
+      try {
+        await this.supabase.deleteUser(authId);
+      } catch (undoError) {
+        this.logger.error(
+          `Profile creation failed and its Supabase credential could not be deleted: ${(undoError as Error).message}`,
+        );
+      }
+      throw error;
+    }
   }
 
   // ── Login ──────────────────────────────────────────────────────────────────

@@ -33,7 +33,8 @@ A `BEFORE INSERT OR UPDATE` trigger on `public.users`,
   the second lock if a grant is ever widened.
 
 The owner (migrations, fixtures, data fixes) and `set_user_access` (SECURITY
-DEFINER, runs as its owner) are not affected. No line of the API changed.
+DEFINER, runs as its owner) are not affected. The migration needs no code
+change; the sign-up changes under Consequences (J-5b) only keep it from hitting the rule.
 
 ## Considered options
 
@@ -51,8 +52,16 @@ DEFINER, runs as its owner) are not affected. No line of the API changed.
 - In production, which already has an admin, `coco_app` cannot create one at
   all. A fresh database still accepts exactly one, and the app only attempts
   it for `BOOTSTRAP_ADMIN_EMAIL`.
-- If `BOOTSTRAP_ADMIN_EMAIL` names a NEW address while an admin exists, its
-  sign-up fails after Supabase created the credential (a profile-less account).
-  Promote through the admin screen instead.
+- The sign-up asks the same question before calling Supabase
+  (`UsersRepository.hasAnyAdmin`, for every email so the timing says
+  nothing): with an admin already there, the `BOOTSTRAP_ADMIN_EMAIL` address
+  signs up like anyone else, `user` / `pending`, and an admin approves or
+  promotes it. Treated as a normal sign-up and not refused, because a refusal
+  only for that address would be a signal, and the database rule and the app
+  now say the same thing.
+- If the profile still fails after the credential exists (two bootstraps
+  racing, a legacy row with the same email), the sign-up deletes the
+  credential again with `SupabaseAuthService.deleteUser` and fails, so no
+  profile-less account is left behind. A failed undo is logged.
 - Applying and undoing it in production: runbook, "Guard on `users` inserts
   (J-5)".

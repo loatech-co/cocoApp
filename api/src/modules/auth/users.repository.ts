@@ -89,6 +89,14 @@ export class UsersRepository {
     });
   }
 
+  /**
+   * Whether any admin exists, in any status. While one does, the database
+   * refuses the app a second one (ADR 0027), so the bootstrap is closed.
+   */
+  async hasAnyAdmin(): Promise<boolean> {
+    return (await this.prisma.user.count({ where: { role: 'admin' }, take: 1 })) > 0;
+  }
+
   /** Active administrators other than this user. */
   countOtherActiveAdmins(userId: bigint): Promise<number> {
     return this.prisma.user.count({
