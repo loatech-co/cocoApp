@@ -1,5 +1,5 @@
 import { Check, ChevronDown } from 'lucide-react';
-import { type ComponentType, type ReactNode } from 'react';
+import { type ButtonHTMLAttributes, type ComponentType, type ReactNode } from 'react';
 
 import { panelStyle, useMenuState, type Anchor } from '@/shared/lib/menu-anchor';
 import { useIsMobile } from '@/shared/lib/mobile';
@@ -8,8 +8,19 @@ import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
 import { Button } from '@/shared/ui/atoms/button';
 import { HIGHLIGHT, FLOATING_SURFACE, SURGE } from '@/shared/ui/foundations/surface';
 
-const ROLE = { menu: 'menu', panel: 'dialog', list: 'listbox', search: 'dialog' } as const;
+/*
+  `list` has no role on the panel: the listbox is INSIDE it, supplied by the
+  caller with its options as direct children —the same structure as `search`
+  and as `Combo`—. With the panel as the listbox, the caller had nowhere to
+  put a scroll box without wedging it between the listbox and its options.
+*/
+const ROLE = { menu: 'menu', panel: 'dialog', list: undefined, search: 'dialog' } as const;
 const ARIA = { menu: 'menu', panel: 'dialog', list: 'listbox', search: 'dialog' } as const;
+
+type TriggerProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'type' | 'id' | 'onClick' | 'className' | 'children'
+>;
 
 interface MenuProps {
   /** What the button says. With `isIconOnly`, it becomes its accessible name. */
@@ -98,6 +109,15 @@ interface MenuProps {
   hasOwnWidth?: boolean;
   /** Replaces the button entirely (the avatar, for example). */
   trigger?: (props: { isOpen: boolean }) => ReactNode;
+  /**
+   * Extra attributes for a custom `trigger`'s button, given whether it is open.
+   *
+   * For a select-only combobox: the button keeps the focus while the list is
+   * open, so IT says which option is active and handles the arrows.
+   */
+  triggerProps?: (state: { isOpen: boolean; close: () => void }) => TriggerProps;
+  /** Runs when the button opens the panel: to point at the chosen option. */
+  onOpen?: () => void;
   children: ReactNode | ((close: () => void) => ReactNode);
 }
 
@@ -146,6 +166,7 @@ export function Menu(props: MenuProps) {
 
   function toggle(): void {
     if (isFloating && !isSheet) measure();
+    if (!isOpen) m.onOpen?.();
     setIsOpen((wasOpen) => !wasOpen);
   }
 
@@ -159,6 +180,7 @@ export function Menu(props: MenuProps) {
           aria-expanded={isOpen}
           aria-haspopup={ARIA[kind]}
           className={m.triggerClassName ?? 'flex items-center rounded-full outline-none'}
+          {...m.triggerProps?.({ isOpen, close })}
         >
           {trigger({ isOpen })}
         </button>
@@ -318,7 +340,7 @@ function MenuDropdown({
   return (
     <div
       role={ROLE[m.kind]}
-      aria-label={m.label}
+      aria-label={ROLE[m.kind] ? m.label : undefined}
       style={m.isFloating && anchor ? panelStyle(anchor, m.hasOwnWidth, m.align) : undefined}
       className={panelClass(m)}
     >

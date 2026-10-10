@@ -1,9 +1,10 @@
-import { Check, ChevronDown } from 'lucide-react';
-import type { ComponentType, ReactNode } from 'react';
+import { ChevronDown } from 'lucide-react';
+import type { ComponentType, KeyboardEvent, ReactNode } from 'react';
 
+import { useActiveOption } from '@/shared/lib/active-option';
 import { cn } from '@/shared/lib/utils';
+import { Option } from '@/shared/ui/atoms/option';
 import { fieldTrigger, useInsideField } from '@/shared/ui/foundations/field';
-import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 import { Menu } from '@/shared/ui/molecules/menu';
 
 interface SelectOption {
@@ -64,21 +65,14 @@ interface SelectProps {
  * text while the label is taking its place.
  */
 export function Select(props: SelectProps) {
-  const {
-    value,
-    onChange,
-    options,
-    label,
-    emptyLabel,
-    size = 'md',
-    disabled: isDisabled = false,
-    id,
-    className,
-  } = props;
-  const isSmall = size === 'sm';
-  const isInert = isDisabled || (options.length === 0 && emptyLabel === undefined);
+  const { value, onChange, options, label, emptyLabel, id, className } = props;
+  const isSmall = props.size === 'sm';
+  const isInert = props.disabled === true || (options.length === 0 && emptyLabel === undefined);
   const isInField = useInsideField();
   const triggerContent = <SelectTriggerContent select={props} isInField={isInField} />;
+  // The rows the arrows walk, in the order they are drawn.
+  const values = [...(emptyLabel === undefined ? [] : ['']), ...options.map((o) => o.value)];
+  const nav = useActiveOption(values);
 
   // Disabled cannot be a button that opens anything: it is painted the same
   // but with no dropdown behind it, so that focus does not fall into a trap.
@@ -97,9 +91,19 @@ export function Select(props: SelectProps) {
       boxClassName={cn('w-full min-w-0', className)}
       triggerClassName={fieldTrigger(isSmall)}
       trigger={() => triggerContent}
+      // Opening points at the chosen option.
+      onOpen={() => nav.point(values.indexOf(value))}
+      triggerProps={({ isOpen, close }) =>
+        comboboxTrigger({ nav, isOpen, label: isInField ? undefined : label }, (v) => {
+          onChange(v);
+          close();
+        })
+      }
     >
       {(close) => (
         <SelectOptions
+          label={label}
+          nav={nav}
           value={value}
           options={options}
           emptyLabel={emptyLabel}
@@ -111,75 +115,103 @@ export function Select(props: SelectProps) {
   );
 }
 
-function Option({
-  isSelected,
-  onClick,
-  children,
-}: {
-  isSelected: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <li>
-      <button
-        type="button"
-        role="option"
-        aria-selected={isSelected}
-        onClick={onClick}
-        className={cn(
-          'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
-          'movil:min-h-[42px]',
-          // Still on `muted`, pointed at on `accent`: with the same color for
-          // both, hovering over the already-selected option changes nothing.
-          isSelected ? cn('bg-muted font-medium', HIGHLIGHT) : HIGHLIGHT,
-        )}
-      >
-        <span className="min-w-0 flex-1 truncate">{children}</span>
-        {isSelected && <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />}
-      </button>
-    </li>
-  );
+/**
+ * What the trigger says as a select-only combobox: it keeps the focus while
+ * the list is open, says which option is active and handles the arrows.
+ *
+ * `label` only loose: a combobox takes no name from its content, and inside a
+ * field the `<label>` already names it.
+ */
+function comboboxTrigger(
+  { nav, isOpen, label }: { nav: ActiveOption; isOpen: boolean; label: string | undefined },
+  pick: (value: string) => void,
+) {
+  return {
+    ...nav.boxProps,
+    'aria-label': label,
+    'aria-expanded': isOpen,
+    'aria-controls': isOpen ? nav.listId : undefined,
+    'aria-activedescendant': isOpen ? nav.activeId : undefined,
+    'aria-autocomplete': undefined,
+    onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => {
+      onTriggerKey(e, isOpen, nav, pick);
+    },
+  };
 }
 
+type ActiveOption = ReturnType<typeof useActiveOption>;
+
+/**
+ * The keys of the trigger. Closed, an arrow opens the list; open, the arrows
+ * move the active option and Enter or Space picks it. Without an active
+ * option, Enter does what a button does: close.
+ */
+function onTriggerKey(
+  e: KeyboardEvent<HTMLButtonElement>,
+  isOpen: boolean,
+  nav: ReturnType<typeof useActiveOption>,
+  pick: (value: string) => void,
+): void {
+  const isArrow = e.key === 'ArrowDown' || e.key === 'ArrowUp';
+  if (!isOpen) {
+    if (isArrow) {
+      e.preventDefault();
+      e.currentTarget.click();
+    }
+    return;
+  }
+  if (nav.move(e.key)) e.preventDefault();
+  else if ((e.key === 'Enter' || e.key === ' ') && nav.activeValue !== undefined) {
+    e.preventDefault();
+    pick(nav.activeValue);
+  }
+}
+
+/**
+ * The listbox the trigger controls, with its options as DIRECT children —the
+ * same structure as `Combo`—. A `ul` with an `li` around each option put a
+ * list between the listbox and its options.
+ */
 function SelectOptions({
+  label,
+  nav,
   value,
   options,
   emptyLabel,
   onChange,
   close,
-}: Pick<SelectProps, 'value' | 'options' | 'onChange'> & {
+}: Pick<SelectProps, 'label' | 'value' | 'options' | 'onChange'> & {
+  nav: ActiveOption;
   emptyLabel: string | undefined;
   close: () => void;
 }) {
-  const canBeEmpty = emptyLabel !== undefined;
+  const rows = [
+    ...(emptyLabel === undefined ? [] : [{ value: '', label: emptyLabel }]),
+    ...options,
+  ];
   return (
-    <ul className="max-h-64 overflow-y-auto">
-      {canBeEmpty && (
-        <Option
-          isSelected={value === ''}
-          onClick={() => {
-            onChange('');
-            close();
-          }}
-        >
-          <span className="text-muted-foreground">{emptyLabel}</span>
-        </Option>
-      )}
-
-      {options.map((o) => (
-        <Option
-          key={o.value}
-          isSelected={o.value === value}
-          onClick={() => {
-            onChange(o.value);
-            close();
-          }}
-        >
-          {o.label}
-        </Option>
-      ))}
-    </ul>
+    <div className="max-h-64 overflow-y-auto">
+      <div role="listbox" id={nav.listId} aria-label={label}>
+        {rows.map((o, i) => (
+          <Option
+            key={o.value}
+            id={nav.optionId(i)}
+            isSelected={o.value === value}
+            isActive={nav.activeId === nav.optionId(i)}
+            onClick={() => {
+              onChange(o.value);
+              close();
+            }}
+          >
+            {i === 0 && emptyLabel !== undefined ? (
+              <span className="text-muted-foreground">{o.label}</span>
+            ) : (
+              o.label
+            )}
+          </Option>
+        ))}
+      </div>
+    </div>
   );
 }
 

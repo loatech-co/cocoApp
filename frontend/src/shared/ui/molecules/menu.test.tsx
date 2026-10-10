@@ -129,7 +129,7 @@ describe('Menu', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
-  it('uses the listbox role when it is a list and the dialog role when it is a panel', () => {
+  it('leaves the listbox role to the content of a list, and is a dialog when it is a panel', () => {
     render(
       <>
         <Menu label="Lista" kind="list">
@@ -144,7 +144,13 @@ describe('Menu', () => {
     fireEvent.click(screen.getByRole('button', { name: /Lista/ }));
     fireEvent.click(screen.getByRole('button', { name: /Panel/ }));
 
-    expect(screen.getByRole('listbox', { name: 'Lista' })).toBeTruthy();
+    // The caller puts the listbox inside, with its options as direct children:
+    // the panel being the listbox left no room for its scroll box.
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(screen.getByText('a')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Lista/ }).getAttribute('aria-haspopup')).toBe(
+      'listbox',
+    );
     expect(screen.getByRole('dialog', { name: 'Panel' })).toBeTruthy();
   });
 
@@ -254,7 +260,9 @@ describe('Menu', () => {
     onPhone();
     render(
       <Menu label="Lista" kind="list">
-        <span>a</span>
+        <div role="listbox" aria-label="Lista">
+          a
+        </div>
       </Menu>,
     );
 

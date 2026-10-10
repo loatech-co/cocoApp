@@ -29,7 +29,7 @@ const SRC_ROOT = join(import.meta.dirname, '..', '..');
 const CONTROLS: [filePath: string, what: string][] = [
   ['shared/ui/atoms/button.tsx', 'every button, in the base of the `cva`'],
   ['shared/ui/atoms/input.tsx', 'every text field'],
-  ['shared/ui/organisms/select.tsx', 'the field that drops down a list, enabled and disabled'],
+  ['shared/ui/atoms/option.tsx', 'the row of a list: Select, Combo and the concept search'],
   ['shared/ui/molecules/menu.tsx', 'a menu option'],
   ['app/navigation.tsx', 'a section row and the account trigger'],
   [

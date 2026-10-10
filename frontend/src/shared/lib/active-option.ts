@@ -10,14 +10,17 @@ import { useOnChange } from './on-change';
  * means every letter typed after an arrow is lost. The box says which row is
  * active, and a screen reader reads that row as if it had the focus.
  *
- * `values` are the rows in the order they are drawn; `query` is what was
- * typed, because a new search is a new list and the old index would point at
- * another row.
+ * `values` are the rows in the order they are drawn; `resetOn` is what makes
+ * a new list —what was typed, in a combo—, because the old index would point
+ * at another row.
+ *
+ * The box is the search box of `Combo` and the trigger of `Select`: both keep
+ * the focus while their list is open.
  */
-export function useActiveOption(values: string[], query: string) {
+export function useActiveOption(values: string[], resetOn = '') {
   const listId = useId();
   const [active, setActive] = useState(-1);
-  useOnChange([query, values.length], () => setActive(-1));
+  useOnChange([resetOn, values.length], () => setActive(-1));
 
   const optionId = (index: number) => `${listId}-${String(index)}`;
   const activeId = active >= 0 && active < values.length ? optionId(active) : undefined;
@@ -41,7 +44,9 @@ export function useActiveOption(values: string[], query: string) {
     activeId,
     activeValue: activeId ? values[active] : undefined,
     move,
-    /** What the search box says about the list it controls. */
+    /** Points at a row: the chosen one, when a select opens. `-1` is none. */
+    point: setActive,
+    /** What the box says about the list it controls. */
     boxProps: {
       role: 'combobox',
       'aria-expanded': true,

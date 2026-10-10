@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { Tag } from 'lucide-react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -42,9 +42,10 @@ describe('The dropdown of a Select', () => {
     // cuts off options the field does show whole.
     render(<Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={() => {}} />);
 
-    fireEvent.click(screen.getAllByRole('button')[0]!);
+    fireEvent.click(screen.getByRole('combobox'));
 
-    const panel = screen.getByRole('listbox');
+    // The floating panel, which holds the listbox.
+    const panel = screen.getByRole('listbox').closest<HTMLElement>('[style]')!;
     expect(panel.style.width).toBe('240px');
   });
 
@@ -53,9 +54,10 @@ describe('The dropdown of a Select', () => {
     // container's clipping eats it.
     render(<Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={() => {}} />);
 
-    fireEvent.click(screen.getAllByRole('button')[0]!);
+    fireEvent.click(screen.getByRole('combobox'));
 
-    const panel = screen.getByRole('listbox');
+    // The floating panel, which holds the listbox.
+    const panel = screen.getByRole('listbox').closest<HTMLElement>('[style]')!;
     expect(panel.className).toContain('fixed');
     expect(panel.style.left).toBe('32px');
     // Eight pixels below the field's bottom edge.
@@ -65,7 +67,7 @@ describe('The dropdown of a Select', () => {
   it('shows the options and marks the chosen one', () => {
     render(<Select label="Periodicidad" value="anual" options={OPTIONS} onChange={() => {}} />);
 
-    fireEvent.click(screen.getAllByRole('button')[0]!);
+    fireEvent.click(screen.getByRole('combobox'));
 
     const selected = screen.getByRole('option', { name: /Cada año/ });
     expect(selected.getAttribute('aria-selected')).toBe('true');
@@ -76,7 +78,8 @@ describe('Select', () => {
   it('shows the label of the chosen value on its trigger', () => {
     render(<Select label="Periodicidad" value="anual" options={OPTIONS} onChange={vi.fn()} />);
 
-    const trigger = screen.getByRole('button', { name: /Cada año/ });
+    const trigger = screen.getByRole('combobox', { name: 'Periodicidad' });
+    expect(trigger.textContent).toContain('Cada año');
     expect(trigger.getAttribute('aria-haspopup')).toBe('listbox');
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
   });
@@ -85,7 +88,7 @@ describe('Select', () => {
     const onChange = vi.fn();
     render(<Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={onChange} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Cada mes/ }));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Periodicidad' }));
     fireEvent.click(screen.getByRole('option', { name: /Cada año/ }));
 
     expect(onChange).toHaveBeenCalledWith('anual');
@@ -104,7 +107,7 @@ describe('Select', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Sin periodicidad/ }));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Periodicidad' }));
     const empty = screen.getByRole('option', { name: /Sin periodicidad/ });
     expect(empty.getAttribute('aria-selected')).toBe('true');
 
@@ -117,7 +120,7 @@ describe('Select', () => {
     const onChange = vi.fn();
     render(<Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={onChange} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Cada mes/ }));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Periodicidad' }));
     fireEvent.keyDown(document, { key: 'Escape' });
 
     expect(screen.queryByRole('listbox')).toBeNull();
@@ -129,6 +132,7 @@ describe('Select', () => {
       <Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={vi.fn()} disabled />,
     );
 
+    expect(screen.queryByRole('combobox')).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.getByText('Cada mes').closest('[aria-disabled="true"]')).not.toBeNull();
   });
@@ -136,6 +140,7 @@ describe('Select', () => {
   it('is disabled when there is nothing to choose', () => {
     render(<Select label="Periodicidad" value="" options={[]} onChange={vi.fn()} />);
 
+    expect(screen.queryByRole('combobox')).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.getByText('—')).toBeTruthy();
   });
@@ -153,8 +158,64 @@ describe('Select', () => {
       />,
     );
 
-    const trigger = screen.getByRole('button', { name: /Cada mes/ });
+    const trigger = screen.getByRole('combobox', { name: 'Etiqueta' });
     expect(trigger.querySelector('[data-icono]')).not.toBeNull();
     expect(trigger.textContent).toContain('acción');
+  });
+});
+
+/**
+ * The select-only combobox: the trigger keeps the focus, controls the
+ * listbox and points at the active option, the same structure as `Combo`.
+ */
+describe('Select, read by a screen reader', () => {
+  const activeText = (box: HTMLElement) =>
+    document.getElementById(box.getAttribute('aria-activedescendant') ?? '')?.textContent;
+
+  it('is a combobox that controls a listbox whose options are its direct children', () => {
+    render(<Select label="Periodicidad" value="anual" options={OPTIONS} onChange={vi.fn()} />);
+
+    const box = screen.getByRole('combobox', { name: 'Periodicidad' });
+    expect(box.getAttribute('aria-controls')).toBeNull();
+    fireEvent.click(box);
+
+    const list = screen.getByRole('listbox', { name: 'Periodicidad' });
+    expect(box.getAttribute('aria-expanded')).toBe('true');
+    expect(box.getAttribute('aria-controls')).toBe(list.id);
+    for (const option of within(list).getAllByRole('option')) {
+      expect(option.parentElement).toBe(list);
+      expect(option.tabIndex).toBe(-1);
+    }
+    // Opening points at the chosen option.
+    expect(activeText(box)).toBe('Cada año');
+  });
+
+  it('opens with an arrow, walks with the arrows and picks with Enter', () => {
+    const onChange = vi.fn();
+    render(
+      <Select
+        label="Periodicidad"
+        value=""
+        emptyLabel="Sin periodicidad"
+        options={OPTIONS}
+        onChange={onChange}
+      />,
+    );
+    const box = screen.getByRole('combobox', { name: 'Periodicidad' });
+
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    expect(screen.getByRole('listbox')).toBeTruthy();
+    expect(activeText(box)).toBe('Sin periodicidad');
+
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    expect(activeText(box)).toBe('Cada año');
+    fireEvent.keyDown(box, { key: 'ArrowUp' });
+    expect(activeText(box)).toBe('Cada mes');
+
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledWith('mensual');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(box.getAttribute('aria-activedescendant')).toBeNull();
   });
 });
