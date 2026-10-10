@@ -1,3 +1,4 @@
+// CI probe (step J-7): this PR is closed without merging.
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
