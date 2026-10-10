@@ -420,7 +420,7 @@ jobs:
     needs: hygiene
     if: ${{ !cancelled() && needs.hygiene.outputs.ios == 'true' }}
     runs-on: macos-26
-    # Measured 9 min 38 s (step J-7, PR #110), almost all of it the simulator
+    # Measured 9 min 38 s and 4 min 56 s (step J-7, PR #110), almost all of it the simulator
     # build and tests. A hung run bills ten times its timeout.
     timeout-minutes: 14
     defaults:
