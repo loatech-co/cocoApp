@@ -22,8 +22,15 @@ test.describe('the Spanish routes, signed in', () => {
   test('the account keeps the section it pointed at', async ({ page }) => {
     await page.goto('/mi-cuenta#seguridad');
 
-    await expect(page).toHaveURL(/\/account#seguridad$/);
-    await expect(page.locator('#seguridad')).toBeVisible();
+    await expect(page).toHaveURL(/\/account#security$/);
+    await expect(page.locator('#security')).toBeVisible();
+  });
+
+  test("the account's old anchor still lands on its section", async ({ page }) => {
+    await page.goto('/account#ajustes');
+
+    await expect(page).toHaveURL(/\/account#settings$/);
+    await expect(page.locator('#settings')).toBeVisible();
   });
 
   test('the redirect replaces the old address in the history', async ({ page }) => {

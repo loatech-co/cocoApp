@@ -48,6 +48,12 @@ describe('the Spanish routes from before 7.2-r1', () => {
     },
   );
 
+  it("translates the account's old anchors on the way", async () => {
+    renderAt('/mi-cuenta#seguridad');
+
+    expect(await screen.findByText('/account#security')).toBeTruthy();
+  });
+
   it('redirects without a query or a hash too', async () => {
     renderAt('/mi-cuenta');
 

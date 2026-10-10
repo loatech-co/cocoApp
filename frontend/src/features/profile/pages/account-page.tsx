@@ -1,8 +1,9 @@
 import { LogOut, ShieldCheck } from 'lucide-react';
 import { useEffect, useState, type SubmitEvent } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Settings } from '@/features/profile/components/settings';
+import { ACCOUNT_SECTIONS, currentAccountHash } from '@/features/profile/model/account-sections';
 import { errorDetails, authErrorMessage, useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
 import { useIsInNativeApp } from '@/shared/lib/mobile';
@@ -49,7 +50,7 @@ export function AccountPage() {
       {/* The scroll margin is the phone top bar's height plus a little: without
           it, the section just reached sits right UNDER the brand strip, which
           is stuck on top. */}
-      <section id="ajustes" className="scroll-mt-20">
+      <section id={ACCOUNT_SECTIONS.settings} className="scroll-mt-20">
         <Settings />
       </section>
 
@@ -58,7 +59,7 @@ export function AccountPage() {
       {/* The two things someone who suspects their account is compromised does,
           together and with a name: change the password and kick everyone
           out. Apart, there was nowhere to point to from outside. */}
-      <section id="seguridad" className="flex scroll-mt-20 flex-col gap-6">
+      <section id={ACCOUNT_SECTIONS.security} className="flex scroll-mt-20 flex-col gap-6">
         <ChangePassword />
 
         <SessionCards isEmbedded={isEmbedded} />
@@ -240,7 +241,8 @@ function AdminLinks() {
 }
 
 function useScrollToHash(): void {
-  const { hash } = useLocation();
+  const { hash, pathname, search } = useLocation();
+  const navigate = useNavigate();
   /*
     ── The anchors ───────────────────────────────────────────────────────────
     The phone's account sheet offers «Ajustes» and «Seguridad» as two
@@ -250,9 +252,17 @@ function useScrollToHash(): void {
     And the view has to be taken to the spot by hand because the router does
     not: it changes the route without touching the scroll, so «Seguridad»
     left the person at the very top looking at the settings.
+
+    An old anchor (`#seguridad`) is first swapped for its current one, in
+    place, so the address shows the one that is scrolled to.
   */
   useEffect(() => {
     if (!hash) return;
+    const current = currentAccountHash(hash);
+    if (current !== hash) {
+      void navigate({ pathname, search, hash: current }, { replace: true });
+      return;
+    }
     document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [hash]);
+  }, [hash, pathname, search, navigate]);
 }

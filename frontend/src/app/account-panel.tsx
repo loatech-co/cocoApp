@@ -1,6 +1,7 @@
 import { Eye, KeyRound, LogOut, ScrollText, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { ACCOUNT_SECTIONS } from '@/features/profile/model/account-sections';
 import { useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
@@ -54,7 +55,11 @@ export function AccountPanel({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           nothing to justify the trip. The anchor goes to the exact spot and
           the page stays one.
         */}
-        <LinkRow Icon={SlidersHorizontal} to="/account#ajustes" onNavigate={onClose}>
+        <LinkRow
+          Icon={SlidersHorizontal}
+          to={`/account#${ACCOUNT_SECTIONS.settings}`}
+          onNavigate={onClose}
+        >
           {t('shell.account.settings')}
         </LinkRow>
 
@@ -64,7 +69,7 @@ export function AccountPanel({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           </LinkRow>
         )}
 
-        <LinkRow Icon={KeyRound} to="/account#seguridad" onNavigate={onClose}>
+        <LinkRow Icon={KeyRound} to={`/account#${ACCOUNT_SECTIONS.security}`} onNavigate={onClose}>
           {t('shell.account.security')}
         </LinkRow>
 

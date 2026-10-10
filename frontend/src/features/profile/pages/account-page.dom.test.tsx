@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fakeNativeApp, leaveNativeApp } from '@/test-support/fake-app';
@@ -24,10 +24,16 @@ vi.mock('@/shared/api/auth-context', () => ({
 // Settings bring their own queries; they are not what is checked here.
 vi.mock('@/features/profile/components/settings', () => ({ Settings: () => <p>ajustes</p> }));
 
-function renderShell() {
+function WhereAmI() {
+  const { pathname, hash } = useLocation();
+  return <output>{`${pathname}${hash}`}</output>;
+}
+
+function renderShell(at = '/account') {
   return render(
-    <MemoryRouter initialEntries={['/account']}>
+    <MemoryRouter initialEntries={[at]}>
       <AccountPage />
+      <WhereAmI />
     </MemoryRouter>,
   );
 }
@@ -86,5 +92,24 @@ describe('My account outside the app', () => {
     expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).toBeNull();
     expect(screen.queryByRole('navigation', { name: 'Administración' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Cerrar todo' })).toBeTruthy();
+  });
+});
+
+describe('the account anchors', () => {
+  // jsdom does not lay out, so it has no scrolling to do.
+  const scrollIntoView = vi.fn();
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = scrollIntoView;
+  });
+
+  it.each([
+    ['#ajustes', '#settings'],
+    ['#seguridad', '#security'],
+  ])('the old %s anchor is replaced by %s and scrolled to', async (old, current) => {
+    renderShell(`/account${old}`);
+
+    expect(await screen.findByText(`/account${current}`)).toBeTruthy();
+    expect(document.getElementById(current.slice(1))).toBeTruthy();
+    expect(scrollIntoView).toHaveBeenCalled();
   });
 });

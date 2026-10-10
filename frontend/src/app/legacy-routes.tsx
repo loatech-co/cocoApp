@@ -1,5 +1,7 @@
 import { Navigate, useLocation, type RouteObject } from 'react-router-dom';
 
+import { currentAccountHash } from '@/features/profile/model/account-sections';
+
 /**
  * The Spanish addresses the web had until 7.2-r1, and where each one lives now.
  *
@@ -25,11 +27,12 @@ export const LEGACY_ROUTES: readonly { from: string; to: string }[] = [
  * A `<Navigate replace>` that keeps the query string and the hash.
  *
  * A bare `<Navigate to>` drops both, and they are what a saved link carries:
- * the filters of a cut, or the `#seguridad` section of the account.
+ * the filters of a cut, or the `#security` section of the account. An old
+ * account anchor (`#seguridad`) arrives already translated.
  */
 function RedirectKeepingQuery({ to }: { to: string }) {
   const { search, hash } = useLocation();
-  return <Navigate to={{ pathname: to, search, hash }} replace />;
+  return <Navigate to={{ pathname: to, search, hash: currentAccountHash(hash) }} replace />;
 }
 
 /** The redirects as routes. They hang from the root, before any session check. */
