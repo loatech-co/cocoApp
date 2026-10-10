@@ -1,5 +1,8 @@
-// Fails on any high or critical vulnerability in production dependencies,
-// except the advisories listed below — each with its reason and when to drop it.
+// Two thresholds, one per tree, with the advisories listed below accepted in both — each with its
+// reason and when to drop it:
+// - production dependencies (what the server installs): any high or critical fails;
+// - the whole tree, development included (what Hostinger's scanner reads): a critical fails, a
+//   high is listed as a warning.
 // Run: node scripts/ci/audit.mjs
 import { execFileSync } from 'node:child_process';
 
@@ -29,36 +32,50 @@ const ACCEPTED = {
 // Hostinger's scanner still mails about it. Do not bump esbuild for it: the tree must keep ONE
 // esbuild (scripts/verify-clean-install.sh) and vite 6 pins 0.25 (checked 2026-10-06).
 
-let report;
-try {
-  report = execFileSync('npm', ['audit', '--omit=dev', '--json'], {
-    encoding: 'utf8',
-    maxBuffer: 64 * 1024 * 1024,
-  });
-} catch (error) {
-  // npm audit exits non-zero when it finds anything; the JSON is still on stdout.
-  report = error.stdout;
-}
-
-const { vulnerabilities = {} } = JSON.parse(report);
-const blocking = [];
-for (const [name, vulnerability] of Object.entries(vulnerabilities)) {
-  if (!['high', 'critical'].includes(vulnerability.severity)) continue;
-  const advisories = vulnerability.via.filter((via) => typeof via === 'object');
-  // A package flagged only through another package inherits that package's verdict.
-  if (advisories.length === 0) continue;
-  for (const advisory of advisories) {
-    if (!ACCEPTED[advisory.url])
-      blocking.push(`${name} (${advisory.severity}): ${advisory.title} ${advisory.url}`);
+/** Unaccepted advisories at the given severities, as printable lines. */
+function audit(args, severities) {
+  let report;
+  try {
+    report = execFileSync('npm', ['audit', ...args, '--json'], {
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+    });
+  } catch (error) {
+    // npm audit exits non-zero when it finds anything; the JSON is still on stdout.
+    report = error.stdout;
   }
+  const { vulnerabilities = {} } = JSON.parse(report);
+  const found = [];
+  for (const [name, vulnerability] of Object.entries(vulnerabilities)) {
+    // A package flagged only through another package inherits that package's verdict.
+    for (const advisory of vulnerability.via.filter((via) => typeof via === 'object')) {
+      if (severities.includes(advisory.severity) && !ACCEPTED[advisory.url])
+        found.push(`${name} (${advisory.severity}): ${advisory.title} ${advisory.url}`);
+    }
+  }
+  return found;
 }
 
-if (blocking.length > 0) {
-  console.error(
-    `npm audit: ${blocking.length} high/critical advisory(ies) not accepted:\n  ${blocking.join('\n  ')}`,
+const production = audit(['--omit=dev'], ['high', 'critical']);
+const critical = audit([], ['critical']);
+const high = audit([], ['high']);
+
+if (high.length > 0) {
+  console.warn(
+    `npm audit (whole tree): ${high.length} high advisory(ies), warning only:\n  ${high.join('\n  ')}`,
   );
-  process.exit(1);
 }
+if (production.length > 0) {
+  console.error(
+    `npm audit (production): ${production.length} high/critical advisory(ies) not accepted:\n  ${production.join('\n  ')}`,
+  );
+}
+if (critical.length > 0) {
+  console.error(
+    `npm audit (whole tree): ${critical.length} critical advisory(ies) not accepted:\n  ${critical.join('\n  ')}`,
+  );
+}
+if (production.length > 0 || critical.length > 0) process.exit(1);
 console.log(
-  `npm audit: no unaccepted high/critical advisories (${Object.keys(ACCEPTED).length} accepted with reason)`,
+  `npm audit: no unaccepted high/critical in production nor critical in the whole tree (${Object.keys(ACCEPTED).length} accepted with reason)`,
 );

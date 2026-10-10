@@ -27,12 +27,13 @@ import eslintReact from '@eslint-react/eslint-plugin';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import prettier from 'eslint-config-prettier/flat';
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
-import checkFile from 'eslint-plugin-check-file';
 import i18next from 'eslint-plugin-i18next';
 import { importX } from 'eslint-plugin-import-x';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+
+import paths from './scripts/lint/kebab-case-paths.js';
 
 // ── Text: the catalog (step 7.3, D5/D6) ─────────────────────────────────────
 /*
@@ -332,7 +333,7 @@ export default defineConfig(
     extends: [
       eslintReact.configs['recommended-type-checked'],
       // Naming (refs ending in `Ref`, setters named `setX`…) is step 7.2's
-      // job, together with `naming-convention` and `check-file`: renames land
+      // job, together with `naming-convention` and `kebab-case-paths`: renames land
       // there, in one place, with the rename map.
       eslintReact.configs['disable-naming-convention'],
       reactHooks.configs.flat['recommended-latest'],
@@ -446,21 +447,9 @@ export default defineConfig(
    */
   {
     files: ['api/{src,test}/**/*.ts', 'frontend/src/**/*.{ts,tsx}', 'packages/*/src/**/*.ts'],
-    plugins: { 'check-file': checkFile },
+    plugins: { paths },
     rules: {
-      'check-file/filename-naming-convention': [
-        'error',
-        { '**/*.{ts,tsx}': 'KEBAB_CASE' },
-        { ignoreMiddleExtensions: true },
-      ],
-      'check-file/folder-naming-convention': [
-        'error',
-        {
-          'api/{src,test}/**/': 'KEBAB_CASE',
-          'frontend/src/**/': 'KEBAB_CASE',
-          'packages/*/src/**/': 'KEBAB_CASE',
-        },
-      ],
+      'paths/kebab-case-paths': 'error',
       '@typescript-eslint/naming-convention': [
         'error',
         { selector: 'default', format: ['camelCase'], leadingUnderscore: 'allow' },

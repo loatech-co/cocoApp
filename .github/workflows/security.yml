@@ -41,6 +41,6 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
-      - name: High/critical advisories in production dependencies
+      - name: High/critical in production, critical in the whole tree
         if: ${{ !cancelled() }}
         run: node scripts/ci/audit.mjs

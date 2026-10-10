@@ -136,7 +136,7 @@ export default function Resumen() { … }
 `docs/plan-completo.md` §7.2 is the rule; three checks hold it, all in
 `npm run lint`:
 
-- **`eslint-plugin-check-file`**: files and folders in `kebab-case` under
+- **`paths/kebab-case-paths`** (`scripts/lint/kebab-case-paths.js`): files and folders in `kebab-case` under
   `api/{src,test}`, `frontend/src` and `packages/*/src`. The role suffix and
   `.test`/`.spec`/`.stories` are middle extensions and are not checked.
 - **`@typescript-eslint/naming-convention`**: `camelCase` values and functions,

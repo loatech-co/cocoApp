@@ -253,7 +253,7 @@ jobs:
       - name: Feature flag expiry (warns past removeBy, fails 30 days later)
         run: node scripts/ci/flags-expiry.mjs
 
-      - name: Dependency audit (high/critical, production deps)
+      - name: Dependency audit (high/critical in production, critical in the whole tree)
         run: node scripts/ci/audit.mjs
 
       # Each suite once (step R-1a). `npm test` at the root would also run the

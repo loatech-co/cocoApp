@@ -565,11 +565,18 @@ WebBridgeSmokeTests skip themselves without it.
 ## Dependency vulnerabilities
 
 **The gate is `node scripts/ci/audit.mjs`**, in `ci` on every PR and weekly in
-`security`. It audits PRODUCTION dependencies only (`npm audit --omit=dev`)
-and fails on any high or critical advisory that is not in its `ACCEPTED`
-list, where each exception carries its reason and the date it was last
-checked. A new advisory in a production dependency blocks every PR until it
-is fixed or accepted.
+`security`. Two thresholds, with the same `ACCEPTED` list, where each
+exception carries its reason and the date it was last checked:
+
+- PRODUCTION dependencies (`npm audit --omit=dev`): any high or critical
+  advisory fails.
+- The WHOLE tree, development included: a critical fails; a high is printed
+  as a warning. This is the tree Hostinger's scanner reads (step J-6c: a
+  critical `handlebars` under ts-jest went unseen while only production was
+  audited).
+
+A new advisory over either threshold blocks every PR until it is fixed or
+accepted.
 
 **Hostinger's emails are not the gate.** Its scanner reads the whole
 lockfile, DEVELOPMENT dependencies included (jest, vite, orval, storybook),
@@ -579,8 +586,8 @@ installs without devDependencies.
 
 When one arrives:
 
-1. Run `node scripts/ci/audit.mjs`. Red means a production advisory: that
-   is the urgent part, and it already blocks the PRs.
+1. Run `node scripts/ci/audit.mjs`. Red means a production advisory or a
+   critical anywhere: that is the urgent part, and it already blocks the PRs.
 2. For each package in the mail, `npm ls <name> --all` says who brings it
    and whether it is dev-only.
 3. Fix with the smallest move: a patch bump of the direct dependency, or
