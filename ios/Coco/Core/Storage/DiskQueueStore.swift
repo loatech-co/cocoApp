@@ -77,7 +77,7 @@ struct DiskQueueStore: QueueStore {
             let text = try decoder.singleValueContainer().decode(String.self)
             guard let date = (try? dateFormat.parse(text)) ?? (try? Date.ISO8601FormatStyle().parse(text)) else {
                 throw DecodingError.dataCorrupted(
-                    .init(codingPath: decoder.codingPath, debugDescription: "Fecha ilegible: \(text)"))
+                    .init(codingPath: decoder.codingPath, debugDescription: "Unreadable date: \(text)"))
             }
             return date
         }

@@ -36,22 +36,19 @@ final class VisibleTextTests: XCTestCase {
         .init(file: "CocoWidgets/OpenCaptureIntent.swift", text: nil, reason: intentContract),
         // The user does not see them.
         .init(
-            file: "Coco/App/Dependencies.swift", text: "sin sesión",
-            reason: "Nombre del estado de la sesión para el registro"),
-        .init(
-            file: "Coco/App/Dependencies.swift", text: "sin conexión",
-            reason: "Nombre del estado de la sesión para el registro"),
+            file: "Coco/App/Dependencies.swift", text: "signed out",
+            reason: "Name of the session state, for the log"),
         .init(file: "Coco/Core/Networking/APIRequest.swift", text: "Accept", reason: "Cabecera HTTP"),
         .init(file: "Coco/Core/Networking/APIRequest.swift", text: "Authorization", reason: "Cabecera HTTP"),
         .init(file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Queue", reason: "Carpeta en disco"),
         .init(file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Photos", reason: "Carpeta en disco"),
         .init(file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Quarantine", reason: "Carpeta en disco"),
         .init(
-            file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Fecha ilegible: %@",
-            reason: "Descripción de un error de decodificación, para depurar"),
+            file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Unreadable date: %@",
+            reason: "Description of a decoding error, for debugging"),
         .init(
-            file: "Coco/Features/Onboarding/AutomationSteps.swift", text: "shortcuts:// es una URL válida",
-            reason: "Mensaje de una precondición"),
+            file: "Coco/Features/Onboarding/AutomationSteps.swift", text: "shortcuts:// is a valid URL",
+            reason: "A precondition's message"),
         .init(
             file: "Coco/Features/Shortcuts/ActionParameters.swift", text: "Wallet",
             reason: "Texto de la captura que viaja a la API: es un dato, no depende del idioma del teléfono"),
