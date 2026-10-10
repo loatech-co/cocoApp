@@ -1,6 +1,6 @@
 # J-6e — los tres restos del cierre
 
-Rama `fix/j6e-closing-leftovers`, un PR.
+PR #122 (`fix/j6e-closing-leftovers`) y uno de propiedades CSS.
 
 Hecho:
 
@@ -9,7 +9,7 @@ Hecho:
   quitada también de la lista de iOS en 8.x.
 - Auditoría: `auditChangesV2` (`api/src/presenters/v2/admin.presenter.ts`) lee
   `de`/`a`/`motivo` como `from`/`to`/`reason` y `credenciales_incorrectas` como
-  `invalid_credentials`. Es el único lector: la web no pinta `changes` y no hay
+  `invalid_credentials` (escritas como datos, `Map`). Es el único lector: la web no pinta `changes` y no hay
   exportaciones que lo lean. Prueba unitaria y e2e con filas de forma vieja.
   Descripción del contrato y cliente regenerados. Plan 8.7: fila nueva con el
   criterio para reescribir las filas viejas (respaldo antes, recuento a cero).
@@ -19,8 +19,11 @@ Hecho:
   `lint:spanish` ahora lee los `@custom-variant` de las hojas de estilo
   (comprobado: `movil` falla).
 
-Decisiones: las claves viejas se escriben como datos (`Map`, `Object.fromEntries`)
-para no declarar nombres en español.
-
-Pendiente: `--hueco-de-la-barra` y otras propiedades CSS en español no las lee
-el lint (solo variantes). Borrado: base `coco_e2e_j6e_test`.
+Segundo PR: las propiedades `--*` en español pasan al inglés (`--bar-gap`,
+`--scrim`, `--stage`, `--chip-expense`, `--donut-1`, `-tinta` → `-ink`…) con
+sus utilidades (`text-stage-ink`, `leading-hero`). El CSS tiene las mismas
+reglas una a una; cambian el orden y la fusión de selectores del minificador,
+porque Tailwind ordena por nombre. `lint:spanish` lee las `--*` de las hojas y
+las que nombra el código (`var(--x)`, `'--x'`); comprobado con `--velo`.
+Pendiente: la utilidad `pb-seguro` (`@utility`) sigue en español y el lint no
+lee `@utility`. Borrado: base `coco_e2e_j6e_test`.
