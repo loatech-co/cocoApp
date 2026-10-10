@@ -6,7 +6,9 @@
 # It runs with a fine-grained PAT (RELEASE_PLEASE_TOKEN) and not GITHUB_TOKEN:
 # a PR opened with GITHUB_TOKEN does not trigger workflows, so ci.yml would
 # never run on the release PR and scripts/merge.sh could not integrate it.
-# Until the owner creates that secret the job is skipped with a warning.
+# Until the owner creates that secret AND sets the repository variable
+# RELEASE_PLEASE_ENABLED=true, the job is skipped and bills nothing (step J-7;
+# a job-level `if:` cannot read secrets, a variable it can).
 name: release-please
 
 on:
@@ -26,18 +28,10 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      HAS_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN != '' }}
+    timeout-minutes: 5
+    if: vars.RELEASE_PLEASE_ENABLED == 'true'
     steps:
-      - name: Token missing
-        if: env.HAS_TOKEN != 'true'
-        run: >-
-          echo "::warning title=release-please skipped::RELEASE_PLEASE_TOKEN is
-          not set. See CONTRIBUTING.md, Versioning."
-
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
-        if: env.HAS_TOKEN == 'true'
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           target-branch: Dev

@@ -24,10 +24,11 @@
 #   ui    all, frontend/src/shared/ui/, frontend/.storybook/, frontend/package.json
 #   e2e   all, api/, frontend/, packages/, e2e/, scripts/db/    → journeys
 #   prod  all, api/, frontend/, packages/, verify-clean-install → clean-install
+#   ios   NOT all: ios/, frontend/src/shared/lib/{native-contract,bridge}.ts,
+#         api/openapi.v2.json, this file, or a manual run          → ios (x10)
 #
 # Not on the push to Dev (step R-1a): merge.sh integrates by fast-forward, so
-# the commit that lands is the one this already passed on its PR. iOS has its
-# own manual workflow (ios.yml): a macOS minute counts as ten.
+# the commit that lands is the one this already passed on its PR.
 name: ci
 
 on:
@@ -61,6 +62,7 @@ jobs:
       ui: ${{ steps.areas.outputs.ui }}
       e2e: ${{ steps.areas.outputs.e2e }}
       prod: ${{ steps.areas.outputs.prod }}
+      ios: ${{ steps.areas.outputs.ios }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -71,9 +73,13 @@ jobs:
         id: areas
         run: |
           all=false
-          if [ "$EVENT" != pull_request ] \
-            || ! files="$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")"; then
+          unknown=false # a PR whose diff could not be read
+          if [ "$EVENT" != pull_request ]; then
             all=true
+            files=''
+          elif ! files="$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")"; then
+            all=true
+            unknown=true
             files=''
           fi
           # Counts and here-strings, never `| grep -q`: under pipefail an early
@@ -92,6 +98,16 @@ jobs:
             flag ui "$(count '^(frontend/src/shared/ui/|frontend/\.storybook/|frontend/package\.json$)')"
             flag e2e "$(count '^(api/|frontend/|packages/|e2e/|scripts/db/)')"
             flag prod "$(count '^(api/|frontend/|packages/|scripts/verify-clean-install\.sh$)')"
+            # iOS does NOT follow `all`: a macOS minute bills as ten, and the
+            # lockfile or another workflow changes nothing it reads. Only its
+            # own files, what its tests copy from the web, its job, and a
+            # manual run. Never on a push: it already passed on the PR.
+            ios_files="$(count '^(ios/|frontend/src/shared/lib/(native-contract|bridge)\.ts$|api/openapi\.v2\.json$|\.github/workflows/ci\.yml$)')"
+            if [ "$EVENT" = workflow_dispatch ] || [ "$unknown" = true ] || [ "$ios_files" -gt 0 ]; then
+              echo ios=true
+            else
+              echo ios=false
+            fi
           } | tee -a "$GITHUB_OUTPUT"
 
       # Only the commits this PR adds. The whole history is scanned weekly
@@ -394,3 +410,50 @@ jobs:
             e2e/.salida/informe
             e2e/.salida/resultados
           retention-days: 7
+
+  # The iOS gate (phase 7.6 / 7.13): swift-format, SwiftLint, the generated
+  # project and the XCTest suite on the simulator. A macOS minute bills as ten
+  # (step J-7), so it runs only when the `ios` area changed — see the top.
+  # WebBridgeSmokeTests skip themselves here: they load `frontend/dist`, which
+  # this job does not build (building it on macOS would bill ten times over).
+  ios:
+    needs: hygiene
+    if: ${{ !cancelled() && needs.hygiene.outputs.ios == 'true' }}
+    runs-on: macos-26
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: ios
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen and the pinned SwiftLint
+        run: |
+          brew install xcodegen
+          version="$(sed -n 's/^swiftlint_version: *//p' .swiftlint.yml)"
+          curl -fsSL -o /tmp/swiftlint.zip \
+            "https://github.com/realm/SwiftLint/releases/download/${version}/portable_swiftlint.zip"
+          unzip -q /tmp/swiftlint.zip -d /tmp/swiftlint
+          sudo install /tmp/swiftlint/swiftlint /usr/local/bin/swiftlint
+          swiftlint version
+
+      - name: swift-format and SwiftLint
+        run: bash scripts/lint.sh
+
+      - name: The generated project matches project.yml
+        run: |
+          xcodegen generate
+          git diff --exit-code -- Coco.xcodeproj
+
+      - name: Tests on the simulator
+        run: |
+          device="$(xcrun simctl list devices available -j \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["name"] for r in sorted(d, reverse=True) if "iOS" in r for x in d[r] if x["name"].startswith("iPhone")))')"
+          echo "Simulator: $device"
+          xcodebuild test -scheme Coco -destination "platform=iOS Simulator,name=$device" \
+            CODE_SIGNING_ALLOWED=NO | tail -n 50
+          exit "${PIPESTATUS[0]}"
