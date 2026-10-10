@@ -451,6 +451,65 @@ describe('Row-level security (e2e)', () => {
     ).toEqual({ role: 'user', status: 'active' });
   });
 
+  it('the users directory: the app creates only a pending user, or the first admin while there is none', async () => {
+    // Every shape the sign-up never writes is refused, admin or not
+    // (migration 20261010003334_guard_users_insert).
+    const refused = [
+      { role: 'admin' as const, status: 'pending' as const },
+      { role: 'user' as const, status: 'active' as const },
+      { role: 'user' as const, status: 'pending' as const, approvedAt: new Date() },
+      { role: 'user' as const, status: 'pending' as const, approvedById: ana.id },
+    ];
+    for (const [i, shape] of refused.entries()) {
+      await expect(
+        appClient.user.create({ data: { email: `refused-${i}@coco.test`, ...shape } }),
+      ).rejects.toThrow(/guard_users_access/);
+    }
+
+    // The normal sign-up.
+    const pending = await appClient.user.create({ data: { email: 'pending@coco.test' } });
+    expect(pending).toMatchObject({ role: 'user', status: 'pending', approvedAt: null });
+
+    // The bootstrap: the first admin goes through while the table has none...
+    const first = await appClient.user.create({
+      data: {
+        email: 'first-admin@coco.test',
+        role: 'admin',
+        status: 'active',
+        approvedAt: new Date(),
+      },
+    });
+    expect(first).toMatchObject({ role: 'admin', status: 'active' });
+
+    // ...and once one exists, a direct INSERT of another admin fails.
+    await expect(
+      appClient.user.create({
+        data: { email: 'second-admin@coco.test', role: 'admin', status: 'active' },
+      }),
+    ).rejects.toThrow(/guard_users_access/);
+    expect(await env.prisma.user.count({ where: { role: 'admin' } })).toBe(1);
+  });
+
+  it('the users directory: a suspended admin still closes the bootstrap', async () => {
+    await env.createUser({ role: 'admin', status: 'suspended' });
+    await expect(
+      appClient.user.create({
+        data: { email: 'late-admin@coco.test', role: 'admin', status: 'active' },
+      }),
+    ).rejects.toThrow(/guard_users_access/);
+  });
+
+  it('the users directory: a user cannot promote itself with raw SQL either', async () => {
+    await expect(
+      db.forUser(
+        ana.id,
+        (tx) =>
+          tx.$executeRaw`UPDATE public.users SET role = 'admin', status = 'active' WHERE id = ${ana.id}`,
+      ),
+    ).rejects.toThrow(/permission denied/);
+    expect((await env.prisma.user.findUniqueOrThrow({ where: { id: ana.id } })).role).toBe('user');
+  });
+
   it('role and status change only through the admin path, as an active admin', async () => {
     const users = env.app.get(UsersRepository);
     const grant = (actor: bigint) => users.setAccess(actor, ana.id, { role: 'admin' });

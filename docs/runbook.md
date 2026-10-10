@@ -144,7 +144,9 @@ sees no other user's rows.
   `npm run sql:supabase -- "SELECT rolname, rolbypassrls FROM pg_roles WHERE rolname = 'postgres'"` → `t`.
 - **`coco_app` updates only the session columns of `users`.** Role, status
   and approval go through `app_private.set_user_access`, which refuses unless
-  the unit runs as an active admin.
+  the unit runs as an active admin. Once J-5 is applied it inserts only
+  pending users, or the first admin while there is none
+  ([below](#guard-on-users-inserts-j-5)).
 - **Rotate its password** with `scripts/db/create-app-role.sh` (idempotent),
   `ADMIN_DATABASE_URL` = the owner's `DIRECT_URL`, `COCO_APP_DB_PASSWORD` from
   the environment, never on a command line; then the same value in
@@ -181,6 +183,43 @@ COCO_APP_DB_PASSWORD=<local, ≥16> MIGRATION_ROLE=coco_migrate bash scripts/db/
   (CI sets it); `api-bench.mjs` does with `COCO_BENCH_APP_DATABASE_URL`.
 - `scripts/pull-data-to-local.sh` writes through `DIRECT_URL`.
 
+### Guard on `users` inserts (J-5)
+
+Migration `20261010003334_guard_users_insert`
+([ADR 0027](adr/0027-app-role-creates-only-pending-users-or-the-first-admin.md)):
+`coco_app` creates only pending users, or the first admin while there is
+none. The code is the same with and without it, so it is applied whenever the
+owner decides, on its own, not as part of a deploy. **Applying it is an owner
+action.** From the repository root, with `api/.env.supabase` in place:
+
+1. **Full backup, restore tested.** `npm run backup`, then
+   `bash scripts/restore.sh` → exit code `0`. The backup must contain
+   `app_private` (the schemas listed in its `manifest.json`):
+   `age -d -i ~/.config/coco/respaldo.key "$COCO_DATA_DIR/respaldos/coco-<date>.tar.age" | tar -xOf - --include='*/manifest.json' | grep -c app_private`
+   → `1` or more. Without it, stop.
+2. **Counts before**, as the owner:
+   `npm run sql:supabase -- "SELECT (SELECT count(*) FROM transactions) AS transactions, (SELECT count(*) FROM categories) AS categories, (SELECT count(*) FROM soportes) AS soportes, (SELECT count(*) FROM users) AS users, (SELECT count(*) FROM users WHERE role = 'admin') AS admins"`.
+   Reference of 7.11-b-prod: 560 / 80 / 463 / 4. What matters is before =
+   after, and `admins` ≥ 1 (with an admin, the bootstrap path is closed).
+3. **Apply:** `bash scripts/deploy-migrations.sh`. `migrate status` must list
+   ONLY `20261010003334_guard_users_insert`; type `yes`. The close of the data
+   API prints `tables_without_rls = 0`, `open_grants = 0`, `policies = 14`.
+4. **`migrate diff` empty:**
+   `cd api && npx dotenv -e .env.supabase -- npx prisma migrate diff --from-config-datasource --to-schema ./prisma/schema.prisma --script`
+   → `-- This is an empty migration.`
+5. **The trigger is there:**
+   `npm run sql:supabase -- "SELECT tgname FROM pg_trigger WHERE tgrelid = 'public.users'::regclass AND NOT tgisinternal"`
+   → `guard_users_access`.
+6. **Counts after**: the query of step 2, same numbers.
+7. **`/api/v2/health` and `/api/v2/ready`** → `200` (see [Verify a deploy](#verify-a-deploy)),
+   and a sign-in with the owner's account works (it updates `last_login_at`,
+   which the trigger lets through). Do not create test accounts in production.
+
+**Undo** (removes structure: stop table first). No code depends on it, so no
+deploy is needed:
+`npm run sql:supabase -- "DROP TRIGGER guard_users_access ON public.users; DROP FUNCTION app_private.guard_users_access(); DELETE FROM _prisma_migrations WHERE migration_name = '20261010003334_guard_users_insert'"`,
+then steps 4, 6 and 7.
+
 ## Backups and restore
 
 **Back up before any migration that is not purely additive, and before any
@@ -199,9 +238,11 @@ bash scripts/restore.sh      # restore the newest one into a throwaway local dat
 One `coco-<date>.tar.age`: a tar encrypted with [age](https://age-encryption.org),
 holding
 
-- `db.dump` — `pg_dump` custom format of the `public` schema (the app) and the
-  `auth` schema (Supabase users, identities and sessions). Without `auth`, a
-  restored `public` gives back the data of accounts nobody can log into;
+- `db.dump` — `pg_dump` custom format of the `public` schema (the app), the
+  `auth` schema (Supabase users, identities and sessions) and `app_private`
+  (the functions the policies call). Without `auth`, a restored `public` gives
+  back the data of accounts nobody can log into; without `app_private`, its
+  policies fail;
 - `soportes/` — every object of the private `soportes` bucket, each one checked
   by sha256 against `soportes.huella` while downloading;
 - `conteos.tsv` — the row count of every table in both schemas;
@@ -219,6 +260,12 @@ lands in `respaldos/`.
 
 The run of 2026-10-05: 41 tables and 3,040 rows, 463 objects (31 MB), a 32 MB
 file; about 90 s to back up and 15 s to restore and count.
+
+**`coco-20261009-185546` is incomplete**: it was taken before the backup
+dumped `app_private`, so it does not restore the policies' functions. It was
+renamed `coco-20261009-185546-incompleto.tar.age` (J-5, not deleted) so
+nobody takes it as a full backup. A backup without `app_private` is never the
+precondition of a migration or a deletion.
 
 ### Where it lives: off the laptop
 
