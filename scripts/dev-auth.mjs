@@ -15,7 +15,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { startFakeGoTrue } from '../e2e/support/gotrue-falso.mjs';
+import { startFakeGoTrue } from '../e2e/support/fake-gotrue.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.DEV_AUTH_PORT ?? 9999);
