@@ -1,12 +1,13 @@
-# SwiftLint — reglas del código Swift (CONTRIBUTING.md, «iOS»). El formato es
-# de swift-format (.swift-format); aquí van las reglas que no son formato.
+# SwiftLint — the rules of the Swift code (CONTRIBUTING.md, "iOS"). Formatting
+# belongs to swift-format (.swift-format); the rules that are not formatting go
+# here.
 #
-# Versión fijada: SwiftLint sigue en 0.x y una versión nueva puede traer
-# reglas nuevas que rompan el CI sin que el código haya cambiado. Se sube a
-# propósito, en su propio PR.
+# Pinned version: SwiftLint is still 0.x and a new version can bring new rules
+# that break CI without the code having changed. It is bumped on purpose, in
+# its own PR.
 swiftlint_version: 0.65.1
 
-# Estricto: todo aviso es un error. No hay avisos que se puedan ignorar.
+# Strict: every warning is an error. There are no warnings that can be ignored.
 strict: true
 
 included:
@@ -19,9 +20,9 @@ excluded:
   - DerivedData
 
 disabled_rules:
-  # De swift-format: añade la coma final en las colecciones de varias líneas
-  # y baja la llave a su propia línea tras una firma partida. Con estas dos
-  # activas, las herramientas se pisarían.
+  # Owned by swift-format: it adds the trailing comma in multi-line
+  # collections and moves the brace to its own line after a wrapped
+  # signature. With these two on, the tools would fight each other.
   - trailing_comma
   - opening_brace
 
@@ -44,9 +45,9 @@ line_length:
   warning: 120
   ignores_urls: true
 
-# Una letra vale en un cierre corto (`c` para el contenedor de un `Codable`,
-# `a, b` al ordenar). Lo que sí se exige es camelCase: las claves snake_case
-# de la API van en `CodingKeys`, no en el nombre de la propiedad.
+# One letter is fine in a short closure (`c` for a `Codable`'s container,
+# `a, b` when sorting). What is required is camelCase: the API's snake_case
+# keys go in `CodingKeys`, not in the property's name.
 identifier_name:
   min_length: 1
   max_length: 50

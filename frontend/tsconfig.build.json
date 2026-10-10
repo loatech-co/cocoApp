@@ -1,26 +1,26 @@
 {
   "extends": "./tsconfig.json",
-  // Las pruebas no se despliegan, así que no tienen por qué poder tumbar un
-  // despliegue. `npm run typecheck` sí las cubre — ahí es donde importan.
+  // Tests are not deployed, so they have no business being able to break a
+  // deploy. `npm run typecheck` does cover them — that is where they matter.
   //
-  // Esto además evita tener que arrastrar vitest a las dependencias de
-  // producción solo para que `tsc` encuentre sus tipos al compilar.
+  // This also avoids dragging vitest into the production dependencies just so
+  // `tsc` finds its types when compiling.
   //
-  // Y la configuración del propio runner tampoco: `vitest.config.ts` entró al
-  // `include` del tsconfig base para que el lint lo analizara con tipos, y
-  // desde ahí heredaba a este. En el servidor no hay `vitest` al construir, y
-  // el build de producción se caía por el archivo de un runner que no se
-  // despliega. Pasó el 4 de octubre de 2026.
+  // Nor the runner's own configuration: `vitest.config.ts` went into the base
+  // tsconfig's `include` so the lint would analyse it with types, and from
+  // there it was inherited by this one. The server has no `vitest` at build
+  // time, and the production build fell over on the file of a runner that is
+  // not deployed. It happened on 4 October 2026.
   //
-  // Y `src/test-support/` entera: son los ayudantes que comparten las pruebas, y
-  // uno de ellos importa `vitest`. Volvió a pasar el 5 de octubre de 2026 con
-  // `app-falsa.ts`; una carpeta excluida no se olvida como un sufijo.
+  // And the whole of `src/test-support/`: they are the helpers the tests
+  // share, and one of them imports `vitest`. It happened again on 5 October
+  // 2026 with `app-falsa.ts`; an excluded folder is not forgotten like a suffix.
   //
-  // Y el catálogo de componentes: Storybook es devDependency, así que ni sus
-  // historias ni su configuración pueden entrar al build de producción.
+  // And the component catalog: Storybook is a devDependency, so neither its
+  // stories nor its configuration can enter the production build.
   //
-  // Lo mismo Orval (`orval.config.ts`): el cliente que escribe está versionado
-  // y el servidor no lo regenera, así que Orval es devDependency.
+  // The same for Orval (`orval.config.ts`): the client it writes is versioned
+  // and the server does not regenerate it, so Orval is a devDependency.
   "exclude": [
     "src/**/*.test.ts",
     "src/**/*.test.tsx",

@@ -1,60 +1,60 @@
 # ─────────────────────────────────────────────────────────────
-# Configuración de Apache para la SPA. Vive en `public/` para que Vite la
-# copie a `dist/` y viaje siempre con el sitio: si estuviera solo en el
-# servidor, el primer despliegue que use --delete la borraría.
+# Apache configuration for the SPA. It lives in `public/` so Vite copies it
+# to `dist/` and it always travels with the site: if it were only on the
+# server, the first deploy using --delete would remove it.
 # ─────────────────────────────────────────────────────────────
 
-# ── Enrutamiento de la SPA ───────────────────────────────────
-# React Router maneja las rutas en el cliente. Sin esto, entrar directo a
-# /movimientos o recargar la página daría un 404 de Apache: ese archivo no
-# existe en disco.
+# ── SPA routing ──────────────────────────────────────────────
+# React Router handles the routes in the client. Without this, going straight
+# to /transactions or reloading the page would give an Apache 404: that file
+# does not exist on disk.
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
-  # /api/ se deja pasar tal cual: lo atiende el proceso Node, no la SPA.
+  # /api/ is let through as is: the Node process serves it, not the SPA.
   RewriteCond %{REQUEST_URI} ^/api/ [NC]
   RewriteRule ^ - [L]
 
-  # Lo que exista en disco se sirve tal cual.
+  # Whatever exists on disk is served as is.
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # Todo lo demás lo resuelve la SPA.
+  # Everything else is resolved by the SPA.
   RewriteRule . /index.html [L]
 </IfModule>
 
-# ── Cabeceras de seguridad ───────────────────────────────────
-# Las mismas que pone helmet en la API. Aquí hacen falta aparte porque estos
-# archivos los sirve Apache directamente, sin pasar por Node.
+# ── Security headers ─────────────────────────────────────────
+# The same ones helmet sets in the API. They are needed separately here
+# because Apache serves these files directly, without going through Node.
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "DENY"
   Header always set Referrer-Policy "no-referrer"
   Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
 
-  # Los nombres de archivo llevan hash: un cambio produce un nombre nuevo, así
-  # que el contenido se puede cachear para siempre sin miedo.
+  # File names carry a hash: a change produces a new name, so the content can
+  # be cached forever without fear.
   <FilesMatch "\.(js|mjs|css|woff2|wasm)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 
-  # index.html NO se cachea: es lo que apunta a los assets nuevos tras un
-  # despliegue. Si se cacheara, la gente seguiría cargando la versión vieja.
+  # index.html is NOT cached: it is what points at the new assets after a
+  # deploy. If it were cached, people would keep loading the old version.
   <FilesMatch "^index\.html$">
     Header set Cache-Control "no-cache, must-revalidate"
   </FilesMatch>
 </IfModule>
 
-# ── Compresión ───────────────────────────────────────────────
-# Importa especialmente para los recursos de Tesseract: el WASM viene incrustado
-# en base64 y sin comprimir son 3,7 MB por descarga.
+# ── Compression ──────────────────────────────────────────────
+# It matters especially for the Tesseract assets: the WASM comes embedded in
+# base64 and uncompressed it is 3.7 MB per download.
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css text/plain
   AddOutputFilterByType DEFLATE application/javascript application/json
   AddOutputFilterByType DEFLATE image/svg+xml
 </IfModule>
 
-# ── Nada de listados de directorio ───────────────────────────
+# ── No directory listings ────────────────────────────────────
 Options -Indexes

@@ -1,19 +1,20 @@
-// Configuración de la CLI de Prisma (Prisma 7). Va junto a `api/package.json`,
-// que es desde donde se corre la CLI (ADR 0020).
+// The Prisma CLI's configuration (Prisma 7). It sits next to `api/package.json`,
+// which is where the CLI runs from (ADR 0020).
 //
-// Prisma 7 ya no carga `.env` por su cuenta: lo hace `dotenv/config`, que lee
-// el `.env` del directorio actual y NO pisa lo que ya esté definido. Por eso
-// `dotenv -e .env.migrate -- prisma …` sigue ganando sobre `api/.env`.
+// Prisma 7 no longer loads `.env` on its own: `dotenv/config` does, which reads
+// the current directory's `.env` and does NOT override what is already set.
+// That is why `dotenv -e .env.migrate -- prisma …` still wins over `api/.env`.
 import 'dotenv/config';
 import { defineConfig } from 'prisma/config';
 
-// Las migraciones van por la conexión directa (`DIRECT_URL`, el dueño del
-// esquema) y, si no la hay, por `DATABASE_URL`: lo mismo que hacía `directUrl`
-// en el datasource de Prisma 6. `prisma generate` no necesita ninguna, y el
-// build del servidor la corre sin base: por eso el datasource es opcional.
+// Migrations go through the direct connection (`DIRECT_URL`, the schema's
+// owner) and, if there is none, through `DATABASE_URL`: the same as
+// `directUrl` did in Prisma 6's datasource. `prisma generate` needs neither,
+// and the server's build runs it without a database: that is why the
+// datasource is optional.
 const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
-// Solo para `migrate diff --from-migrations` (scripts/new-migration.sh): la
-// base desechable donde se reproducen las migraciones. Antes era un flag.
+// Only for `migrate diff --from-migrations` (scripts/new-migration.sh): the
+// throwaway database where the migrations are replayed. It used to be a flag.
 const shadowDatabaseUrl = process.env.SHADOW_DATABASE_URL;
 
 export default defineConfig({

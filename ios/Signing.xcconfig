@@ -1,15 +1,15 @@
-// Firma. Este archivo SÍ se versiona y es el que referencia el .xcodeproj:
-// Xcode se niega a abrir un proyecto cuya configuración base no existe, así
-// que el que puede faltar no es este, sino el que incluye.
+// Signing. This file IS versioned and is the one the .xcodeproj references:
+// Xcode refuses to open a project whose base configuration does not exist, so
+// the one that may be missing is not this one but the one it includes.
 //
-// `#include?` (con la interrogación) es un include OPCIONAL de xcconfig: si
-// Local.xcconfig no está, se ignora en silencio y la app se compila para el
-// simulador sin equipo. Si está, lo que diga pisa lo de aquí.
+// `#include?` (with the question mark) is an OPTIONAL xcconfig include: if
+// Local.xcconfig is not there, it is silently ignored and the app builds for
+// the simulator with no team. If it is there, what it says overrides this.
 //
-// Lo que cada quien pone en Local.xcconfig (equipo, identidad, perfil) no se
-// escribe aquí ni en project.yml, porque `xcodegen generate` regenera el
-// .xcodeproj y lo que se configure a mano en Signing & Capabilities se
-// pierde. Ver Local.xcconfig.example.
+// What each person puts in Local.xcconfig (team, identity, profile) is not
+// written here nor in project.yml, because `xcodegen generate` regenerates the
+// .xcodeproj and whatever is set by hand in Signing & Capabilities is lost.
+// See Local.xcconfig.example.
 CODE_SIGN_STYLE = Automatic
 
 #include? "Local.xcconfig"

@@ -3,10 +3,10 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 /**
- * Las pruebas de componentes necesitan un DOM; los parsers y la lógica pura no
- * —y corren mucho más rápido sin él—. Por eso el entorno no se fija aquí de
- * forma global: cada archivo que lo necesite lo pide con la anotación
- * `@vitest-environment jsdom` en su primera línea.
+ * Component tests need a DOM; the parsers and the pure logic do not —and run
+ * much faster without it—. That is why the environment is not set globally
+ * here: every file that needs it asks for it with the
+ * `@vitest-environment jsdom` annotation on its first line.
  */
 export default defineConfig({
   plugins: [react()],
@@ -14,9 +14,9 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   test: {
-    // Lo que jsdom no trae. Se carga en TODOS los archivos, también en los que
-    // corren sin DOM: el propio archivo comprueba si hay ventana antes de
-    // tocar nada, que es más barato que mantener aquí una lista de cuáles sí.
+    // What jsdom does not bring. It loads in EVERY file, also in those that
+    // run without a DOM: the file itself checks whether there is a window
+    // before touching anything, which is cheaper than keeping a list here.
     setupFiles: ['./src/test-support/setup.ts'],
     // Plan 7.7: 70 % of lines and branches in `frontend/src`. The thresholds
     // only go up: a PR that lowers them needs a written reason in its ADR.

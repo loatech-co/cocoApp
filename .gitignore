@@ -1,23 +1,23 @@
 # ─────────────────────────────────────────────────────────────
-# Balance — Finanzas Personales
-# Regla inviolable (PRD 23.10): ningún secreto entra al historial de git.
+# Coco — personal finances
+# Unbreakable rule (PRD 23.10): no secret enters the git history.
 # ─────────────────────────────────────────────────────────────
 
-# Dependencias
+# Dependencies
 node_modules/
 .pnp
 .pnp.js
 
-# Entorno y secretos
+# Environment and secrets
 .env
 .env.*
 !.env.example
 !.env.*.example
 
-# frontend/.env.production SÍ se versiona. No es una excepción descuidada: TODO
-# lo que lleva prefijo VITE_ acaba dentro del JavaScript que descarga el
-# navegador, así que por definición ahí no puede haber un secreto. Versionarlo
-# es lo que hace que el build de producción sea reproducible.
+# frontend/.env.production IS versioned. It is not a careless exception:
+# EVERYTHING prefixed VITE_ ends up inside the JavaScript the browser
+# downloads, so by definition there cannot be a secret there. Versioning it is
+# what makes the production build reproducible.
 !frontend/.env.production
 # The local auth server's key and accounts (`npm run dev:auth`).
 api/.dev-auth.json
@@ -26,7 +26,7 @@ api/.dev-auth.json
 *.p12
 *.pfx
 
-# Credenciales de Firebase Admin (service account) — JAMÁS al repo
+# Firebase Admin credentials (service account) — NEVER to the repo
 **/serviceAccount*.json
 **/firebase-adminsdk*.json
 **/*-firebase-adminsdk-*.json
@@ -38,13 +38,13 @@ storybook-static/
 .vite/
 *.tsbuildinfo
 
-# Prisma: las migraciones SÍ se versionan; el cliente generado no
-# (Prisma 7 lo escribe en api/src/generated; `prisma generate` lo rehace)
+# Prisma: the migrations ARE versioned; the generated client is not
+# (Prisma 7 writes it to api/src/generated; `prisma generate` rebuilds it)
 api/src/generated/
 api/prisma/*.db
 api/prisma/*.db-journal
 
-# Respaldos y dumps (PRD 6.7)
+# Backups and dumps (PRD 6.7)
 *.sql.gz
 *.sql.gz.enc
 /backups/
@@ -56,7 +56,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Pruebas
+# Tests
 coverage/
 .nyc_output/
 test-results/
@@ -64,7 +64,7 @@ playwright-report/
 blob-report/
 .playwright/
 
-# Sistema operativo
+# Operating system
 .DS_Store
 Thumbs.db
 
@@ -73,28 +73,29 @@ Thumbs.db
 *.swp
 *.swo
 
-# Recursos de Tesseract: los genera scripts/prepare-tesseract.mjs.
-# Son artefactos reproducibles, no fuente.
+# Tesseract assets: scripts/prepare-tesseract.mjs generates them.
+# They are reproducible artifacts, not source.
 frontend/public/tesseract/
 
-# Las imágenes fuente SÍ se versionan: son el original del que sale lo que se
-# publica, y perderlas obligaría a recomprimir desde un WebP ya comprimido.
+# The source images ARE versioned: they are the original that what is
+# published comes from, and losing them would force recompressing from an
+# already compressed WebP.
 
-# La data financiera real y los respaldos de la base NO viven aquí: están en
-# $COCO_DATA_DIR, fuera del repositorio (ver docs/runbook.md). Dentro de
-# la carpeta del proyecto solo vive el proyecto.
+# Real financial data and the database backups do NOT live here: they are in
+# $COCO_DATA_DIR, outside the repository (see docs/runbook.md). Only the
+# project lives inside the project's folder.
 
-# Soportes: recibos reales. Ni al repositorio ni por descuido.
+# Receipts: real receipts. Never to the repository, not even by accident.
 api/.soportes/
 api/.receipts-test/
 soportes-origen/
 
-# `@coco/receipt-parser` se compila a CommonJS para que la API lo importe en tiempo
-# de ejecución; el frontend lo lee de la fuente por alias. Lo compilado no se
-# versiona: lo produce el `postinstall` y el `build`.
+# `@coco/receipt-parser` compiles to CommonJS so the API imports it at run
+# time; the frontend reads it from source through an alias. The compiled output
+# is not versioned: `postinstall` and `build` produce it.
 packages/receipt-parser/dist/
 
-# Worktrees de los ejecutores (Claude Code): copias de trabajo, nunca parte del repo.
+# The executors' worktrees (Claude Code): working copies, never part of the repo.
 .claude/worktrees/
 
 # Playwright journeys: traces, screenshots and the HTML report (e2e/)

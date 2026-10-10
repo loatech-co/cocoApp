@@ -1,10 +1,10 @@
-# Basura de Xcode: estado por persona y productos de compilación.
+# Xcode litter: per-person state and build products.
 xcuserdata/
 *.xcuserstate
 DerivedData/
 build/
 *.xcresult
-# Los Info.plist los genera xcodegen desde project.yml, pero SE VERSIONAN:
-# abrir el .xcodeproj no debe exigir tener xcodegen instalado.
-# La firma de cada quien (Team ID, perfil). Se copia de Local.xcconfig.example.
+# xcodegen generates the Info.plist files from project.yml, but they ARE
+# versioned: opening the .xcodeproj must not require xcodegen installed.
+# Each person's signing (Team ID, profile). Copied from Local.xcconfig.example.
 Local.xcconfig
