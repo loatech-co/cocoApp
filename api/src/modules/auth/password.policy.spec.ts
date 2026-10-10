@@ -48,19 +48,19 @@ describe('Password policy', () => {
   });
 
   describe('derivesFromPersonalData', () => {
-    const personal = { email: 'gerardo@ejemplo.com', displayName: 'Gerardo Viteri' };
+    const personal = { email: 'mariana@ejemplo.com', displayName: 'Mariana Prueba' };
 
     it.each([
-      ['Gerardo2026!x', 'the first name'],
-      ['xxViteri2026!', 'the last name'],
-      ['gerardo-Larga1!', 'the local part of the email'],
+      ['Mariana2026!x', 'the first name'],
+      ['xxPrueba2026!', 'the last name'],
+      ['mariana-Larga1!', 'the local part of the email'],
       ['MiCocoApp2026!', 'the product name'],
     ])('rejects %p because it contains %s', (password) => {
       expect(derivesFromPersonalData(password, personal)).toBe(true);
     });
 
     it('ignores case when comparing', () => {
-      expect(derivesFromPersonalData('GERARDO-Larga1!', personal)).toBe(true);
+      expect(derivesFromPersonalData('MARIANA-Larga1!', personal)).toBe(true);
     });
 
     it('accepts a password unrelated to the account', () => {

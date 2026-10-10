@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/atoms/alert';
 /**
  * The name to greet with.
  *
- * Only the first name: "Hola de nuevo, Gerardo Andrés Viteri" greets nobody,
+ * Only the first name: "Hola de nuevo, Ana María Prueba Gómez" greets nobody,
  * it recites an ID card. If there is no name, the email does not work
  * for greeting either, so the greeting stands alone.
  */

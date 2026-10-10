@@ -12,7 +12,7 @@ import { MAX_LENGTH, MIN_LENGTH } from '../../password.policy';
 /**
  * Normalises the email BEFORE validating it.
  *
- * Without this, ` Gerardo@X.com ` —what any autocomplete or copy-paste
+ * Without this, ` Ana@X.com ` —what any autocomplete or copy-paste
  * produces— would fail with "invalid format" and the person would have no way
  * of knowing the problem is an invisible space. It also makes sure the same
  * address written two ways is always the same account.

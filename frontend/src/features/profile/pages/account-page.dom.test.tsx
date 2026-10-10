@@ -8,7 +8,7 @@ import { fakeNativeApp, leaveNativeApp } from '@/test-support/fake-app';
 import { AccountPage } from './account-page';
 
 const auth = {
-  user: { email: 'g@coco.app', displayName: 'Gerardo' },
+  user: { email: 'g@coco.app', displayName: 'Ana' },
   isAdmin: false,
   signOut: vi.fn(() => Promise.resolve()),
   signOutEverywhere: vi.fn(() => Promise.resolve()),

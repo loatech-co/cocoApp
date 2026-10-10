@@ -8,7 +8,7 @@ import { AuthProvider, useAuth } from './auth-context';
 const STATE = {
   user: {
     id: 2,
-    displayName: 'Gerardo',
+    displayName: 'Ana',
     email: 'g@coco.app',
     role: 'admin',
     status: 'active',

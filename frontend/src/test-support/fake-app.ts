@@ -49,7 +49,7 @@ export const APP_SESSION: BridgeSession = {
   user: {
     id: 1,
     email: 'g@coco.app',
-    displayName: 'Gerardo',
+    displayName: 'Ana',
     role: 'user',
     status: 'active',
     createdAt: '2026-01-01T00:00:00.000Z',

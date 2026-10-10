@@ -64,7 +64,7 @@ export function evaluatePolicy(password: string): PolicyResult {
 /**
  * Rejects passwords built from the account's own data.
  *
- * `Gerardo2026!` passes every composition rule and is among the first things
+ * `Mariana2026!` passes every composition rule and is among the first things
  * someone who knows the account's owner would try.
  */
 export function derivesFromPersonalData(

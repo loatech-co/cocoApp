@@ -419,7 +419,7 @@ export class AuthService {
   }
 }
 
-/** Lowercase and trimmed: `Gerardo@X.com ` and `gerardo@x.com` are the same account. */
+/** Lowercase and trimmed: `Ana@X.com ` and `ana@x.com` are the same account. */
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }

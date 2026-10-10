@@ -18,7 +18,7 @@ function renderShell(extra: Partial<Parameters<typeof BottomBar>[0]> = {}) {
   const vista = render(
     <MemoryRouter>
       <BottomBar
-        name="Gerardo"
+        name="Ana"
         isSearchOpen={false}
         isShortcutsOpen={false}
         isAccountOpen={false}

@@ -28,7 +28,7 @@ import {
 const V2_SESSION = {
   accessToken: 'token-de-la-network',
   expiresIn: 900,
-  user: { ...APP_SESSION.user, displayName: 'Gerardo', createdAt: '2026-01-01T00:00:00.000Z' },
+  user: { ...APP_SESSION.user, displayName: 'Ana', createdAt: '2026-01-01T00:00:00.000Z' },
 };
 
 function fetchReplying(status: number, body: unknown = { data: V2_SESSION }) {
@@ -145,7 +145,7 @@ describe('With a bridge', () => {
 
     receiveSession(APP_SESSION);
     expect(currentToken()).toBe('token-de-la-app');
-    expect(currentState().user?.displayName).toBe('Gerardo');
+    expect(currentState().user?.displayName).toBe('Ana');
 
     sessionClosed();
     expect(currentToken()).toBeNull();
@@ -165,7 +165,7 @@ describe('Without a bridge', () => {
     expect(String((network.mock.calls[0] as unknown[])[0])).toMatch(/\/api\/v2\/auth\/refresh$/);
     expect((network.mock.calls[0] as unknown[])[1]).toMatchObject({ credentials: 'include' });
     expect(currentToken()).toBe('token-de-la-network');
-    expect(currentState().user?.displayName).toBe('Gerardo');
+    expect(currentState().user?.displayName).toBe('Ana');
   });
 
   /*
