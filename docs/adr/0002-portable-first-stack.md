@@ -3,9 +3,10 @@
 - Status: accepted; the database and identity layers are superseded by
   [0003](0003-postgres-and-auth-on-supabase.md)
 - Date: 2026-08-06
-- Deciders: the owner, from the stack analysis written for Coco before the
-  first line of code (`docs/Coco_TechStack_Analisis.md`, distilled here and
-  removed in step 7.12)
+- Deciders: the owner, from a stack analysis made before the first line of
+  code. What it concluded is all here: a personal stage of about 50 users on
+  the host already paid for, and every piece portable so that a product stage
+  is a move, not a rewrite.
 
 ## Context and problem statement
 
