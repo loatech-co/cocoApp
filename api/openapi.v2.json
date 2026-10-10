@@ -5212,8 +5212,7 @@
           "type": {
             "type": "string",
             "format": "uri",
-            "description": "Identifies the kind of problem: `https://dev-cocoapp.viteri.me/problems/<code>`.",
-            "example": "https://dev-cocoapp.viteri.me/problems/not_found"
+            "description": "Identifies the kind of problem: a URI ending in `/problems/<code>`."
           },
           "code": {
             "enum": [

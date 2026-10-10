@@ -2,6 +2,7 @@ import request from 'supertest';
 
 import { makeAccount, makeConcept, makeTransaction } from './factories';
 import { startApp, type TestEnvironment, type TestUser } from './helpers/app';
+import { PROBLEM_TYPE_BASE } from '../src/common/errors/problem-codes';
 
 /**
  * v2 errors are `application/problem+json` (RFC 9457) with a stable `code`
@@ -45,7 +46,7 @@ describe('v2 errors: problem+json with a code per rule (e2e)', () => {
     expect(response.status).toBe(status);
     expect(response.headers['content-type']).toBe('application/problem+json; charset=utf-8');
     expect(response.body).toMatchObject({
-      type: `https://dev-cocoapp.viteri.me/problems/${code}`,
+      type: `${PROBLEM_TYPE_BASE}${code}`,
       title: expect.any(String),
       status,
       detail: expect.any(String),

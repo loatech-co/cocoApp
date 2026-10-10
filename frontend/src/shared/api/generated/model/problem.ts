@@ -18,7 +18,7 @@ import type { ProblemCode } from './problemCode';
 import type { ProblemFieldError } from './problemFieldError';
 
 export interface Problem {
-  /** Identifies the kind of problem: `https://dev-cocoapp.viteri.me/problems/<code>`. */
+  /** Identifies the kind of problem: a URI ending in `/problems/<code>`. */
   type: string;
   /** Stable, machine-readable: one per business rule (`problem-codes.ts`). */
   code: ProblemCode;

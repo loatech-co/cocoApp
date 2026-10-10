@@ -36,7 +36,7 @@ final class APIClientTests: XCTestCase {
             FakeTransport([
                 .http(
                     401,
-                    #"{"type":"https://dev-cocoapp.viteri.me/problems/session_expired","title":"La sesión expiró","status":401,"detail":"La sesión expiró.","code":"session_expired"}"#
+                    #"{"type":"https://app.coco.invalid/problems/session_expired","title":"La sesión expiró","status":401,"detail":"La sesión expiró.","code":"session_expired"}"#
                 )
             ]))
         XCTAssertEqual(e, .unauthenticated)

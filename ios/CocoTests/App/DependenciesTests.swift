@@ -150,7 +150,7 @@ final class SettingsViewTests: XCTestCase {
     func testValidatesTheAPIURL() throws {
         XCTAssertEqual(SettingsView.validate("http://localhost:3000/").url, URL(string: "http://localhost:3000"))
         XCTAssertEqual(
-            SettingsView.validate("  https://dev-cocoapp.viteri.me ").url, URL(string: "https://dev-cocoapp.viteri.me"))
+            SettingsView.validate("  https://app.coco.invalid ").url, URL(string: "https://app.coco.invalid"))
         XCTAssertNil(SettingsView.validate("").reason, "empty is not an error, it just cannot be saved")
         XCTAssertNil(SettingsView.validate("").url)
         XCTAssertNotNil(SettingsView.validate("localhost").reason)

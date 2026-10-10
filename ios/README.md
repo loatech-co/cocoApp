@@ -98,8 +98,8 @@ Para trabajar con la interfaz: abrir `Coco.xcodeproj`, elegir iPhone 17, Run.
 ## Apuntar a la API local (cambiar la URL de la API)
 
 La app lee `CocoAPIBaseURL` de su Info.plist. `project.yml` lo escribe como
-`$(COCO_API_BASE_URL)`, un build setting cuyo valor base es
-`https://dev-cocoapp.viteri.me`. Hay dos formas de cambiarla:
+`$(COCO_API_BASE_URL)`, un build setting cuyo valor base es la URL de
+producción, definida ahí mismo. Hay dos formas de cambiarla:
 
 - **Sin recompilar:** Más → Ajustes → URL de la API (también desde la rueda
   de la ficha de entrar) → por ejemplo `http://localhost:3000`. Se valida

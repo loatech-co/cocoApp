@@ -5,9 +5,15 @@ rule comes first in one line; the reason is underneath. Decisions behind
 these rules are in [`docs/adr/`](adr/); the system is described in
 [`docs/architecture.md`](architecture.md).
 
-Production: the Hostinger Node.js app `dev-cocoapp.viteri.me` (API and web in
-one process), PostgreSQL, Auth and the `soportes` bucket on Supabase. The SSH
-target and key path are in `scripts/receipts/backup-from-server.sh`.
+Production: the Hostinger Node.js app on the production domain (API and web
+in one process), PostgreSQL, Auth and the `soportes` bucket on Supabase. The SSH
+target and key path are in `scripts/receipts/backup-from-server.sh`. The
+commands below write the domain as `$APP_DOMAIN`; it is the host of
+`COCO_API_BASE_URL` in `ios/project.yml`:
+
+```sh
+export APP_DOMAIN=$(sed -n 's#^ *COCO_API_BASE_URL: *https://##p' ios/project.yml)
+```
 
 **Never develop against production.** The API refuses to start outside
 production when the database is not local. Real data reaches a local machine
@@ -42,13 +48,13 @@ and ran Node 20, and hbuilds replaced whatever they copied on the next push.
 **A deploy is done when production answers with the new code, not when the
 push succeeds.** Check, in this order:
 
-1. `curl -s -o /dev/null -w '%{http_code}' https://dev-cocoapp.viteri.me/api/v2/health`
+1. `curl -s -o /dev/null -w '%{http_code}' https://$APP_DOMAIN/api/v2/health`
    → `200` (the process answers) and the same against `/api/v2/ready` → `200`
    (the database answers too; `503` if it does not). Both are public.
-2. The web bundle name changed: `curl -s https://dev-cocoapp.viteri.me/ | grep -o 'index-[^"]*\.js'`.
+2. The web bundle name changed: `curl -s https://$APP_DOMAIN/ | grep -o 'index-[^"]*\.js'`.
 3. The behaviour the change touched, from the outside.
 4. If something is off, over ONE SSH session: the HEAD of
-   `~/domains/dev-cocoapp.viteri.me/hbuilds/current/nodejs`, the hbuilds deploy
+   `~/domains/$APP_DOMAIN/hbuilds/current/nodejs`, the hbuilds deploy
    log (`<date>_deploy.log`, "Deployment completed"), the app's `stderr.log`
    (expected empty), and `grep '"level":"error"'` in the API log (below).
 
@@ -128,7 +134,7 @@ scripts/deploy-migrations.sh              # production: status, confirm, deploy,
 
 **Production connects as `coco_app`, a role without `BYPASSRLS`; migrations
 connect as the owner.** `DATABASE_URL` in `$CONFIG/.env` on the server
-(`~/domains/dev-cocoapp.viteri.me/hbuilds/config`) is `coco_app` through the
+(`~/domains/$APP_DOMAIN/hbuilds/config`) is `coco_app` through the
 transaction pooler; `DIRECT_URL` stays the owner. Design and cost:
 [ADR 0019](adr/0019-rls-for-user-cross-user-paths-and-cost.md),
 [ADR 0024](adr/0024-rls-active-in-production.md). (This section replaces the
@@ -163,7 +169,7 @@ sees no other user's rows.
 1. **Back to the owner** (an empty dashboard after a deploy means the setting
    is not reaching the policies): restore `.env.before-rls` next to the `.env`
    on the server (`cp .env.before-rls .env`, mode 600), and restart
-   (`touch ~/domains/dev-cocoapp.viteri.me/hbuilds/current/nodejs/tmp/restart.txt`).
+   (`touch ~/domains/$APP_DOMAIN/hbuilds/current/nodejs/tmp/restart.txt`).
    The policies stay, inert for the owner. Delete `.env.before-rls` after a
    week without incidents (ask).
 2. **No FORCE**: `ALTER TABLE public.<table> NO FORCE ROW LEVEL SECURITY;` for
@@ -352,7 +358,7 @@ is the only copy of the pre-Postgres database and is not a candidate.
 
 ## Rotate secrets
 
-**The server's `.env` in `~/domains/dev-cocoapp.viteri.me/hbuilds/config/`
+**The server's `.env` in `~/domains/$APP_DOMAIN/hbuilds/config/`
 is the source of truth; hPanel variables are not.**
 
 Why: `main.ts` loads that file with `override: true`. hPanel injects its own
@@ -364,7 +370,7 @@ value) and they used to win; changing them in hPanel does nothing now.
 2. Update the server `.env` and your local `api/.env.supabase`. Never write
    the value in a commit, log, issue or handoff; CI runs gitleaks over the
    whole history.
-3. Restart: `touch ~/domains/dev-cocoapp.viteri.me/hbuilds/current/nodejs/tmp/restart.txt`
+3. Restart: `touch ~/domains/$APP_DOMAIN/hbuilds/current/nodejs/tmp/restart.txt`
    (the one in `tmp/`; the one at the domain root is watched by nobody), or
    deploy.
 4. Verify `/api/v2/ready` and a real login; then revoke the old value.
@@ -620,8 +626,8 @@ within seven seconds. Anything kept in memory — a cache, a single-flight, a
 scheduler — runs once per process; idempotency lives in the database
 ([ADR 0005](adr/0005-idempotency-by-external-ref.md)).
 
-**The app's `HOME` is `~/domains/dev-cocoapp.viteri.me`, not the account's.**
-So the API log is `~/domains/dev-cocoapp.viteri.me/logs/coco-api/api.log`
+**The app's `HOME` is `~/domains/$APP_DOMAIN`, not the account's.**
+So the API log is `~/domains/$APP_DOMAIN/logs/coco-api/api.log`
 (JSON lines with `requestId`, rotated at 5 MB × 5, outside `hbuilds/` so it
 survives deploys), and `~` in the app means that folder.
 

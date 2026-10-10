@@ -3,6 +3,7 @@ import request from 'supertest';
 import { makeAccount, makeConcept } from './factories';
 import { startApp, VALID_PASSWORD, type TestEnvironment, type TestUser } from './helpers/app';
 import { PNG } from './helpers/isolation';
+import { PROBLEM_TYPE_BASE } from '../src/common/errors/problem-codes';
 
 /**
  * The v2 contract, end to end: English and camelCase on the wire, every list a
@@ -473,7 +474,7 @@ describe('API v2 (e2e)', () => {
         .send({ date: '2026-09-01', amount: '1', category_id: Number(conceptId) })
         .expect(400);
       expect(response.body).toEqual({
-        type: 'https://dev-cocoapp.viteri.me/problems/invalid_fields',
+        type: `${PROBLEM_TYPE_BASE}invalid_fields`,
         title: 'Hay campos inválidos',
         status: 400,
         detail: 'Hay campos inválidos en la solicitud.',

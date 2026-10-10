@@ -29,6 +29,7 @@ import {
   ValidationError,
   type DomainError,
 } from '../errors/domain-error';
+import { PROBLEM_TYPE_BASE } from '../errors/problem-codes';
 
 interface Sent {
   status: number;
@@ -145,7 +146,7 @@ describe('AllExceptionsFilter as problem+json (RFC 9457)', () => {
     expect(sent).toMatchObject({
       status: 422,
       body: {
-        type: 'https://dev-cocoapp.viteri.me/problems/splits_unbalanced',
+        type: `${PROBLEM_TYPE_BASE}splits_unbalanced`,
         title: 'El desglose no cuadra',
         status: 422,
         detail: 'El desglose no cuadra.',
@@ -189,7 +190,7 @@ describe('AllExceptionsFilter as problem+json (RFC 9457)', () => {
       fields: [{ field: 'splits.0.amount', message: 'mal' }],
     });
     expect(send(http).body).toEqual({
-      type: 'https://dev-cocoapp.viteri.me/problems/invalid_fields',
+      type: `${PROBLEM_TYPE_BASE}invalid_fields`,
       title: 'Hay campos inválidos',
       status: 400,
       detail: 'Hay campos inválidos en la solicitud.',
@@ -206,7 +207,7 @@ describe('AllExceptionsFilter as problem+json (RFC 9457)', () => {
 
   it('never leaks what an unexpected error says', () => {
     expect(send(new Error('SELECT * FROM users')).body).toEqual({
-      type: 'https://dev-cocoapp.viteri.me/problems/internal_error',
+      type: `${PROBLEM_TYPE_BASE}internal_error`,
       title: 'Error interno',
       status: 500,
       detail: 'Ocurrió un error inesperado. Intenta de nuevo.',

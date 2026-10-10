@@ -11,7 +11,7 @@ final class APIProblemTests: XCTestCase {
     {
         let fields = errors.map { #","errors":\#($0)"# } ?? ""
         return
-            #"{"type":"https://dev-cocoapp.viteri.me/problems/\#(code)","title":"Título","status":\#(status),"detail":"\#(detail)","code":"\#(code)"\#(fields)}"#
+            #"{"type":"https://app.coco.invalid/problems/\#(code)","title":"Título","status":\#(status),"detail":"\#(detail)","code":"\#(code)"\#(fields)}"#
     }
 
     private func error(_ status: Int, _ body: String) async -> APIError? {

@@ -5,7 +5,7 @@ import { readProblem } from './problem';
 describe('readProblem', () => {
   it('reads the code, the sentence and the fields of a problem+json', () => {
     const body = {
-      type: 'https://dev-cocoapp.viteri.me/problems/invalid_fields',
+      type: 'https://api.coco.invalid/problems/invalid_fields',
       title: 'Hay campos inválidos',
       status: 400,
       detail: 'Hay campos inválidos en la solicitud.',

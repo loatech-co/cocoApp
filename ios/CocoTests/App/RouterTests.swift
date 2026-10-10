@@ -21,7 +21,7 @@ final class RouterTests: XCTestCase {
         XCTAssertNil(Router.destination(from: try url("coco://other")))
         XCTAssertNil(Router.destination(from: try url("coco://capture/video")))
         XCTAssertNil(Router.destination(from: try url("coco://captures/1")))
-        XCTAssertNil(Router.destination(from: try url("https://dev-cocoapp.viteri.me/capture/manual")))
+        XCTAssertNil(Router.destination(from: try url("https://app.coco.invalid/capture/manual")))
         let e = Router()
         XCTAssertFalse(e.open(url: try url("coco://other")))
         XCTAssertEqual(e.tab, .home)

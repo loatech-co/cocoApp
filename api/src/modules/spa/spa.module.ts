@@ -12,9 +12,8 @@ import { join, resolve } from 'node:path';
  *
  * The refresh token lives in a `SameSite=Strict` cookie, which is what
  * neutralises CSRF on /auth. "Strict" means the browser only sends it when the
- * request comes from the SAME site. If the API lived on
- * `api-cocoapp.viteri.me` and the interface on `cocoapp.viteri.me`, the
- * browser would treat them as different sites and never send the cookie — it
+ * request comes from the SAME site. If the API lived on an `api-` subdomain
+ * and the interface on another one, the browser would treat them as different sites and never send the cookie — it
  * would have to drop to `SameSite=None`, which is exactly the protection that
  * was wanted.
  *

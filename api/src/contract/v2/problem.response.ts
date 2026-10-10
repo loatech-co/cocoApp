@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { PROBLEM_TYPE_BASE, PROBLEMS, type ProblemCode } from '../../common/errors/problem-codes';
+import { PROBLEMS, type ProblemCode } from '../../common/errors/problem-codes';
 
 /** One problem with one input field. */
 export class ProblemFieldError {
@@ -19,8 +19,7 @@ export class ProblemFieldError {
 export class Problem {
   @ApiProperty({
     format: 'uri',
-    description: `Identifies the kind of problem: \`${PROBLEM_TYPE_BASE}<code>\`.`,
-    example: `${PROBLEM_TYPE_BASE}not_found`,
+    description: 'Identifies the kind of problem: a URI ending in `/problems/<code>`.',
   })
   type!: string;
 

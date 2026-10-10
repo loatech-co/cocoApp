@@ -30,7 +30,7 @@ describe('App startup', () => {
           ok: false,
           json: () =>
             Promise.resolve({
-              type: 'https://dev-cocoapp.viteri.me/problems/unauthenticated',
+              type: 'https://api.coco.invalid/problems/unauthenticated',
               title: 'Hace falta iniciar sesión',
               status: 401,
               detail: 'x',

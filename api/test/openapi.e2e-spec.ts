@@ -7,6 +7,7 @@ import request from 'supertest';
 import { startApp, type TestEnvironment } from './helpers/app';
 import { AppModule } from '../src/app.module';
 import { configureRouting } from '../src/bootstrap';
+import { PROBLEM_TYPE_BASE } from '../src/common/errors/problem-codes';
 import { SupabaseAuthService } from '../src/modules/auth/supabase-auth.service';
 import { CONTRACT_VERSIONS, docsPath, setupApiDocs } from '../src/openapi/document';
 
@@ -124,7 +125,7 @@ describe('OpenAPI contract (api/openapi.v2.json)', () => {
 
       expect({ route, status: response.status }).toEqual({ route, status: 401 });
       expect(response.body).toEqual({
-        type: 'https://dev-cocoapp.viteri.me/problems/unauthenticated',
+        type: `${PROBLEM_TYPE_BASE}unauthenticated`,
         title: 'Hace falta iniciar sesión',
         status: 401,
         detail: expect.any(String),

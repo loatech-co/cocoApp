@@ -176,7 +176,7 @@ describe('Without a bridge', () => {
   */
   it('without the v2 cookie, renew() leaves the session empty without throwing', async () => {
     const network = fetchReplying(401, {
-      type: 'https://dev-cocoapp.viteri.me/problems/unauthenticated',
+      type: 'https://api.coco.invalid/problems/unauthenticated',
       title: 'Hace falta iniciar sesión',
       status: 401,
       detail: 'Sesión no válida.',

@@ -5,7 +5,7 @@ import os
 @testable import Coco
 
 final class WebBridgeTests: XCTestCase {
-    private let base = URL(string: "https://dev-cocoapp.viteri.me")!
+    private let base = URL(string: "https://app.coco.invalid")!
     private let local = URL(string: "http://localhost:3000")!
 
     // MARK: Allowed origin
@@ -13,10 +13,10 @@ final class WebBridgeTests: XCTestCase {
     func testAcceptsTheExactOriginWithImplicitPort() {
         XCTAssertTrue(
             WebBridge.isOriginAllowed(
-                originProtocol: "https", host: "dev-cocoapp.viteri.me", port: 0, base: base, isMainFrame: true))
+                originProtocol: "https", host: "app.coco.invalid", port: 0, base: base, isMainFrame: true))
         XCTAssertTrue(
             WebBridge.isOriginAllowed(
-                originProtocol: "https", host: "dev-cocoapp.viteri.me", port: 443, base: base, isMainFrame: true))
+                originProtocol: "https", host: "app.coco.invalid", port: 443, base: base, isMainFrame: true))
         XCTAssertTrue(
             WebBridge.isOriginAllowed(
                 originProtocol: "http", host: "localhost", port: 3000, base: local, isMainFrame: true))
@@ -32,13 +32,13 @@ final class WebBridgeTests: XCTestCase {
                 originProtocol: "https", host: "evil.example", port: 0, base: base, isMainFrame: true))
         XCTAssertFalse(
             WebBridge.isOriginAllowed(
-                originProtocol: "http", host: "dev-cocoapp.viteri.me", port: 0, base: base, isMainFrame: true))
+                originProtocol: "http", host: "app.coco.invalid", port: 0, base: base, isMainFrame: true))
         XCTAssertFalse(
             WebBridge.isOriginAllowed(
-                originProtocol: "https", host: "dev-cocoapp.viteri.me", port: 8443, base: base, isMainFrame: true))
+                originProtocol: "https", host: "app.coco.invalid", port: 8443, base: base, isMainFrame: true))
         XCTAssertFalse(
             WebBridge.isOriginAllowed(
-                originProtocol: "https", host: "dev-cocoapp.viteri.me", port: 0, base: base, isMainFrame: false))
+                originProtocol: "https", host: "app.coco.invalid", port: 0, base: base, isMainFrame: false))
         XCTAssertFalse(
             WebBridge.isOriginAllowed(
                 originProtocol: "http", host: "localhost", port: 3001, base: local, isMainFrame: true))
@@ -59,11 +59,11 @@ final class WebBridgeTests: XCTestCase {
 
     func testIsNavigationAllowed() {
         XCTAssertTrue(
-            WebBridge.isNavigationAllowed(URL(string: "https://dev-cocoapp.viteri.me/account?x=1")!, base: base))
+            WebBridge.isNavigationAllowed(URL(string: "https://app.coco.invalid/account?x=1")!, base: base))
         XCTAssertTrue(WebBridge.isNavigationAllowed(URL(string: "about:blank")!, base: base))
         XCTAssertFalse(WebBridge.isNavigationAllowed(URL(string: "https://otro.example/")!, base: base))
         XCTAssertFalse(WebBridge.isNavigationAllowed(URL(string: "mailto:ana@coco.test")!, base: base))
-        XCTAssertFalse(WebBridge.isNavigationAllowed(URL(string: "http://dev-cocoapp.viteri.me/")!, base: base))
+        XCTAssertFalse(WebBridge.isNavigationAllowed(URL(string: "http://app.coco.invalid/")!, base: base))
     }
 
     func testShouldDeliver() {
@@ -143,7 +143,7 @@ final class WebBridgeTests: XCTestCase {
     func testSignedOutAnswersErrorAndDeliversNothing() async {
         let p = bridge(session: SessionDouble(state: .signedOut, token: nil))
         let (value, error) = await p.answerSessionRequest(
-            isMainFrame: true, originProtocol: "https", host: "dev-cocoapp.viteri.me", port: 0)
+            isMainFrame: true, originProtocol: "https", host: "app.coco.invalid", port: 0)
         XCTAssertNil(value)
         XCTAssertEqual(error, "no-session")
     }
@@ -152,7 +152,7 @@ final class WebBridgeTests: XCTestCase {
     func testForeignOriginAnswersErrorEvenWithASession() async {
         let p = bridge(session: SessionDouble())
         let (value, error) = await p.answerSessionRequest(
-            isMainFrame: false, originProtocol: "https", host: "dev-cocoapp.viteri.me", port: 0)
+            isMainFrame: false, originProtocol: "https", host: "app.coco.invalid", port: 0)
         XCTAssertNil(value)
         XCTAssertEqual(error, "origin-not-allowed")
     }
@@ -161,7 +161,7 @@ final class WebBridgeTests: XCTestCase {
     func testActiveSessionAnswersTheThreeKeysAndNeverTheRefresh() async throws {
         let p = bridge(session: SessionDouble())
         let (value, error) = await p.answerSessionRequest(
-            isMainFrame: true, originProtocol: "https", host: "dev-cocoapp.viteri.me", port: 443)
+            isMainFrame: true, originProtocol: "https", host: "app.coco.invalid", port: 443)
         XCTAssertNil(error)
         let dict = try XCTUnwrap(value as? [String: Any])
         XCTAssertEqual(Set(dict.keys), ["accessToken", "expiresIn", "user"])
