@@ -20,6 +20,8 @@ Rama `docs/closing-refresh`, contrastada contra `Dev` en `ba73eee`.
 - N11: `npm run dev:auth` en los comandos de `CLAUDE.md`.
 - N12: los `export E2E_*` del README salen de `api/.env.test`.
 - N13: J-5, J-6c y J-6d en 30 líneas o menos.
+- Regla del dueño (sin su nombre ni correos): el dominio salió del ADR 0023 y del
+  registro; quedan el runbook, `ios/README.md` y la ruta de `.claude/settings.json`.
 
 **Pendiente**
 
