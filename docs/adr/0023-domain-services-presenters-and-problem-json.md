@@ -37,7 +37,7 @@ move to v2, so the format had to change before it did.
 4. **v2 errors are `application/problem+json` (RFC 9457)**:
    `{ type, title, status, detail, code, errors? }`. `code` is stable and in
    English, one per business rule (`common/errors/problem-codes.ts`, the
-   single list); `type` is `https://dev-cocoapp.viteri.me/problems/<code>`;
+   single list); `type` is `PROBLEM_TYPE_BASE` followed by the code;
    `detail` is the Spanish sentence; `errors[]` names each field at fault
    (`FieldValidationPipe` keeps the path, `splits.0.amount`). Each
    `DomainError` subclass only accepts codes of its own status (typed).
