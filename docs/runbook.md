@@ -275,13 +275,21 @@ precondition of a migration or a deletion.
 
 ### Where it lives: off the laptop
 
-`$COCO_DATA_DIR` (default `~/Documents/VS Code/Personal/coco-datos/`, with
-`datos/` and `respaldos/`) is outside the repository and inside `Documents`,
-which iCloud Drive syncs ("Desktop & Documents"; checked on 2026-10-05: the
-folder belongs to the iCloud Drive file provider and existing backups report
-uploaded). `backup.sh` checks it on every run and warns if the destination
-is not under iCloud Drive. Why outside the repository: it is real financial
-data; a stray `git add -f`, or a zip of the project, would take it along.
+`$COCO_DATA_DIR` (default `~/Coding/VS Code/Personal/coco-datos/`, with
+`datos/` and `respaldos/`) is outside the repository. Why outside: it is real
+financial data; a stray `git add -f`, or a zip of the project, would take it
+along.
+
+Until 2026-10-10 it lived under `~/Documents`, which iCloud Drive syncs
+("Desktop & Documents"; checked on 2026-10-05, the backups reported
+uploaded). On 2026-10-10 the repo and the data folder moved to `~/Coding`,
+which iCloud does **not** sync: iCloud's file provider collapsed reconciling
+the `node_modules` of the worktrees and duplicated files as `… 2`. **So the
+default destination is no longer off the laptop.** `backup.sh` checks on
+every run and warns when the destination is not under iCloud Drive; to keep
+the copy off the laptop, pass a destination (`bash scripts/backup.sh
+<folder>`) or set `COCO_DATA_DIR` to a folder iCloud syncs and that holds
+nothing from `node_modules`. Choosing that folder is an OWNER ACTION, pending.
 
 Supabase's free plan keeps backups briefly, has no point-in-time recovery and
 does not back up Storage. Ours are the ones that count.

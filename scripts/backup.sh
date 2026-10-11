@@ -30,10 +30,13 @@
 #
 # ── Where it ends up ─────────────────────────────────────────────────────────
 # $COCO_DATA_DIR/respaldos/coco-<date>.tar.age (by default
-# ~/Documents/VS Code/Personal/coco-datos/respaldos). Documents is under
-# iCloud Drive: that is the "off the laptop". Only the encrypted file is
-# uploaded; the plain copy is assembled in a private temporary folder and
-# deleted at the end. (The folder and key names on disk stay in Spanish: they
+# ~/Coding/VS Code/Personal/coco-datos/respaldos). Since 2026-10-10 the repo
+# and the data folder live in ~/Coding, which iCloud Drive does NOT sync
+# (they left ~/Documents because iCloud choked on node_modules and worktrees):
+# the "off the laptop" copy is whatever the owner points COCO_DATA_DIR or the
+# first argument at, and the check at the end warns when the target is not
+# under iCloud Drive. Only the encrypted file ever leaves the private
+# temporary folder where the plain copy is assembled and deleted at the end. (The folder and key names on disk stay in Spanish: they
 # hold every backup made so far.)
 #
 # ── Tested or it is not a backup ─────────────────────────────────────────────
@@ -46,7 +49,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Documents/VS Code/Personal/coco-datos}"
+COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Coding/VS Code/Personal/coco-datos}"
 TARGET="${1:-$COCO_DATA_DIR/respaldos}"
 ENV_FILE="${COCO_ENV_FILE:-api/.env.supabase}"
 KEYS="${COCO_KEYS_DIR:-$HOME/.config/coco}"
@@ -117,9 +120,9 @@ else
 fi
 
 # ── Is it off the laptop? ────────────────────────────────────────────────────
-# Documents syncs with iCloud Drive if the folder belongs to the iCloud file
-# provider. It warns, it does not fail: the upload is asynchronous and may
-# take a while.
+# A folder syncs with iCloud Drive if it, or a parent, belongs to the iCloud
+# file provider (~/Documents does; ~/Coding does not). It warns, it does not
+# fail: the upload is asynchronous and may take a while.
 in_icloud() {
   local folder
   folder="$(cd "$1" && pwd -P)"

@@ -12,8 +12,9 @@
 #
 # Usage: bash scripts/receipts/backup-from-server.sh [destination]
 #   default destination: $COCO_DATA_DIR/respaldos/soportes-YYYYMMDD-HHMMSS
-#   COCO_DATA_DIR defaults to ~/Documents/VS Code/Personal/coco-datos: real
-#   receipts live OUTSIDE the repository (see docs/runbook.md).
+#   COCO_DATA_DIR defaults to ~/Coding/VS Code/Personal/coco-datos: real
+#   receipts live OUTSIDE the repository, and since 2026-10-10 outside iCloud
+#   too (see docs/runbook.md, "Where it lives").
 set -euo pipefail
 
 PORT=65002
@@ -23,7 +24,7 @@ REMOTE="soportes-cocoapp"
 SSH_CMD="ssh -i ${KEY} -p ${PORT} -o BatchMode=yes -o ConnectTimeout=15"
 
 cd "$(dirname "$0")/../.."
-COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Documents/VS Code/Personal/coco-datos}"
+COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Coding/VS Code/Personal/coco-datos}"
 DEST="${1:-$COCO_DATA_DIR/respaldos/soportes-$(date +%Y%m%d-%H%M%S)}"
 mkdir -p "$DEST"
 chmod 700 "$DEST"

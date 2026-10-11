@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copies the web half of the bridge into the test bundle, under `Web/`.
 #
-# The simulator cannot read the repo where it is (Documents is protected), so
+# The simulator cannot read the repo from wherever it is checked out, so
 # what the bridge tests read from the web goes inside the bundle, like the
 # app's own sources for VisibleTextTests:
 #   - `native-contract.ts` and `bridge.ts`, read by ContractsTests;

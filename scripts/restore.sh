@@ -31,7 +31,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Documents/VS Code/Personal/coco-datos}"
+COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Coding/VS Code/Personal/coco-datos}"
 PRIVATE_KEY="${COCO_BACKUP_KEY:-${COCO_KEYS_DIR:-$HOME/.config/coco}/respaldo.key}"
 ENV_FILE="${COCO_ENV_FILE:-api/.env.supabase}"
 LOCAL_DB="${COCO_RESTORE_DB:-coco_restore_test}"
