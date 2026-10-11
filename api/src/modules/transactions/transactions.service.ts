@@ -29,6 +29,7 @@ import { splitsToWrite } from './transactions.splits';
 import {
   changesOf,
   partnerLegChanges,
+  requireNotLooseTransfer,
   requireReconciledSplits,
   requireStillTransfer,
 } from './transactions.update';
@@ -104,6 +105,7 @@ export class TransactionsService {
       dto.categoryId !== undefined && dto.categoryId !== null ? BigInt(dto.categoryId) : null;
     const amount = toMoney(dto.amount);
     const type = dto.type ?? 'expense';
+    requireNotLooseTransfer(type);
 
     if (accountId !== null) await this.requireOwnAccount(userId, accountId);
     if (categoryId !== null) await this.requireOwnCategory(userId, categoryId);
@@ -201,6 +203,7 @@ export class TransactionsService {
     const tagIds = dto.tags !== undefined ? await this.tags.resolveNames(userId, dto.tags) : null;
 
     const changes = changesOf(dto, actual, accountId, amount);
+    if (actual.transferGroupId === null) requireNotLooseTransfer(dto.type);
     const partner = await this.partnerLeg(userId, actual, dto, changes);
     const updated = await this.repository.updateWithDetails(
       userId,

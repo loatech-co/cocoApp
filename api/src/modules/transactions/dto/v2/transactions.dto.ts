@@ -16,6 +16,7 @@ import {
 } from 'class-validator';
 
 import { IfPresent } from '../../../../common/validation/if-present.decorator';
+import { IsCalendarDate } from '../../../../common/validation/is-calendar-date.decorator';
 import { IsMoney, IsPositiveMoney } from '../../../../common/validation/is-money.decorator';
 import { PageQuery } from '../../../../contract/v2/page.dto';
 import {
@@ -51,7 +52,7 @@ class TransactionFields {
    * it differs when a bill crosses months.
    */
   @IfPresent()
-  @IsDateString({}, { message: 'El periodo debe tener formato YYYY-MM-DD.' })
+  @IsCalendarDate({ message: 'El periodo debe tener formato YYYY-MM-DD.' })
   period?: string;
 
   /** The text it came from: the OCR of a receipt, a bank SMS. */
@@ -116,7 +117,7 @@ class TransactionFields {
 }
 
 export class CreateTransactionInput extends TransactionFields {
-  @IsDateString({}, { message: 'La fecha debe tener formato YYYY-MM-DD.' })
+  @IsCalendarDate({ message: 'La fecha debe tener formato YYYY-MM-DD.' })
   date!: string;
 
   /** Always positive: `type` gives the sign. */
@@ -149,7 +150,7 @@ export class CreateTransactionInput extends TransactionFields {
 
 export class UpdateTransactionInput extends TransactionFields {
   @IfPresent()
-  @IsDateString()
+  @IsCalendarDate({ message: 'La fecha debe tener formato YYYY-MM-DD.' })
   date?: string;
 
   @IfPresent()
@@ -171,7 +172,7 @@ export class UpdateTransactionInput extends TransactionFields {
 export class CreateTransferInput {
   /** The month the transfer BELONGS to, as `YYYY-MM-DD`; stored as its first day. */
   @IfPresent()
-  @IsDateString({}, { message: 'El periodo debe tener formato YYYY-MM-DD.' })
+  @IsCalendarDate({ message: 'El periodo debe tener formato YYYY-MM-DD.' })
   period?: string;
 
   @Type(() => Number)
@@ -182,7 +183,7 @@ export class CreateTransferInput {
   @IsInt()
   toAccountId!: number;
 
-  @IsDateString()
+  @IsCalendarDate({ message: 'La fecha debe tener formato YYYY-MM-DD.' })
   date!: string;
 
   @IsPositiveMoney()

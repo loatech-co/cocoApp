@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsISO8601, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsIn, IsISO8601, IsString, Matches, MaxLength } from 'class-validator';
 
 import { IfPresent } from '../../../../common/validation/if-present.decorator';
 import { TRANSACTION_SOURCES } from '../../../../contract/v2/transactions.response';
@@ -52,8 +52,8 @@ export class CaptureInput extends InterpretInput {
   @MaxLength(255)
   externalRef!: string;
 
-  /** When it was captured, ISO 8601 with offset. */
-  @IsOptional()
+  /** When it was captured, ISO 8601 with offset. Absent is fine; `null` is not. */
+  @IfPresent()
   @IsISO8601()
   capturedAt?: string;
 

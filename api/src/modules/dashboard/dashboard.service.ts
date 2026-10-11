@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { computeFlow, type AggregableMovement } from './dashboard.aggregate';
+import { restrictToBranch } from './dashboard.branch';
 import {
   toIsoDate,
   treeOf,
@@ -57,16 +58,18 @@ export class DashboardService {
       ...categoryIds(query.categoryIds),
     ];
 
-    const [accounts, movements] = await Promise.all([
+    const branch = requested.length > 0 ? branchesOf(flat, requested) : null;
+    const [accounts, rows] = await Promise.all([
       this.accounts.list(userId, false),
       this.ledger.findForSummary(userId, {
         from: start,
         to: end,
-        branch: requested.length > 0 ? branchesOf(flat, requested) : null,
+        branch,
         q: query.q,
         byName: query.q ? branchesByName(categories, query.q) : [],
       }),
     ]);
+    const movements = restrictToBranch(rows, branch);
 
     const flow = computeFlow(movements.map(toAggregable));
 

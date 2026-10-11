@@ -4,6 +4,7 @@ import type { FullTransaction, TransactionChanges } from './transactions.reposit
 import { ValidationError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
 import { checkSplitsReconcile } from '../../common/money/splits';
+import type { TransactionType } from '../../generated/prisma/client';
 
 /**
  * ── Editing without breaking the balance ─────────────────────────────────────
@@ -48,6 +49,20 @@ export function partnerLegChanges(changes: TransactionChanges): TransactionChang
     ...(description !== undefined && { description }),
     ...(status !== undefined && { status }),
   };
+}
+
+/**
+ * A transfer is two legs written together (`POST /transactions/transfer`):
+ * a loose leg with `type: 'transfer'` and no group moved money out of one
+ * account without it arriving anywhere (R4-A, A2).
+ */
+export function requireNotLooseTransfer(type: TransactionType | undefined): void {
+  if (type === 'transfer') {
+    throw new ValidationError(
+      'Una transferencia se registra con sus dos cuentas en POST /transactions/transfer.',
+      { code: 'transfer_requires_two_legs' },
+    );
+  }
 }
 
 /** A leg does not become an expense or an income: it would leave the other one alone. */

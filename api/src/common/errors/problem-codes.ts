@@ -61,6 +61,7 @@ export const PROBLEMS = {
   amount_breaks_splits: { status: 422, title: 'El monto descuadra el desglose' },
   transfer_same_account: { status: 422, title: 'Misma cuenta de origen y destino' },
   transfer_leg_locked: { status: 422, title: 'Una transferencia no cambia de forma' },
+  transfer_requires_two_legs: { status: 422, title: 'Una transferencia necesita dos cuentas' },
   account_not_owned: { status: 422, title: 'Cuenta ajena o inexistente' },
   category_not_owned: { status: 422, title: 'Categoría ajena o inexistente' },
 
