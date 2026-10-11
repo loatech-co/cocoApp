@@ -601,6 +601,22 @@ Los traspasos de la fase 7 se borraron al cerrarla (9 oct 2026). Lo que seguía 
 - **Verificación de las fases 0 a 5:** dos puntos sin evidencia de cierre, la prueba de que un concepto archivado no sale en pendientes y un inicio de sesión real del dueño en producción.
 - **Modo de trabajo:** cada ejecutor en paralelo usa sus propias bases `*_test`; las que dejan los pasos se borran al cerrarlos.
 
+### 8.9 Lo que quedó del cierre J (rondas 2 a 5 de auditoría)
+
+Las rondas están en `docs/registro-autonomo.md` §7 (paso, PR, cerrado y pendiente por ronda). Lo que sigue vivo y su destino:
+
+| Pendiente                                                                                                                  | Destino                                                                                                    |
+| -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `byName` en `findForSummary` no mira los splits; `from`/`to` de consulta con `@IsDateString` sin `strict`                  | R5-A; lo que no cierre, 8.4                                                                                |
+| D11: un comentario de migración conserva el nombre real de un soporte                                                      | Paso de reescritura (regla D3) y reset de las bases locales; hasta entonces privacidad no se da por limpia |
+| Reglas de la reescritura: ref e id de la organización de Supabase, usuario y host del hosting antiguo, `--replace-message` | Paso de reescritura (`filter-repo-pendientes.md`, en `coco-datos`)                                         |
+| iOS: `WebBridge.swift` partido por debajo de 300 líneas; tres bancos de prueba de la cola de captura                       | Próxima ronda de iOS                                                                                       |
+| Web: `session.ts` 383 líneas; `npm test -- --coverage` no produce cobertura en la raíz                                     | Ronda 5 (W) o 8.5                                                                                          |
+| `scripts/lint/spanish-identifiers.ts` ~345 líneas (el bloque Swift a su módulo)                                            | 8.5                                                                                                        |
+| Literales-valor en español (`sidenav-plegada`/`si`, `ALLOW_DESTRUCTIVE_AUTH: 'si'`)                                        | 8.7 (expandir y contraer); ya está anotado en 8.8                                                          |
+| Primer `npm run backup` real: primera corrida del filtro de privilegios y de la fila `public CREATE` contra producción     | Dueño, con el runbook («Restore») a mano                                                                   |
+| Quitar la CSP de LiteSpeed sin perder la redirección a HTTPS; `additionalDirectories` en `.claude/settings.local.json`     | Dueño                                                                                                      |
+
 ---
 
 # Anexo: especificación original de las fases 0 a 5

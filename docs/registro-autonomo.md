@@ -742,7 +742,50 @@ Prueba frágil vista una vez: `auth.e2e-spec.ts › una cuenta pendiente no pued
 
 **Credenciales en la configuración local de Claude Code (pedido del dueño, 7.11).** Se sacaron de la lista de permisos las entradas que llevaban una credencial dentro. La rotación de claves es acción del dueño.
 
-## 7. Cierre J — ronda 4 de auditoría (11 oct 2026)
+## 7. Cierre J — rondas de auditoría (9–11 oct 2026)
 
-- **D8 (alto):** `api/supabase/.temp/` (estado del `supabase link`) estaba rastreado desde la fase 7 con el ref del proyecto de desarrollo y el id de la organización de Supabase. Se saca del índice y entra en el `.gitignore` raíz; ningún script, doc ni CI lo necesitaba. El ref y el id de la organización de Supabase se suman a las reglas de la reescritura (`filter-repo-pendientes.md`, en `coco-datos`).
-- **D9 (decisión del director):** el nombre de la organización de GitHub (dueño del repo y prefijo del bundle id de iOS) es un identificador público, no un dato personal: **no se reescribe**. Solo se reescriben el ref y el id de la organización de Supabase.
+### Ronda 4 — decisiones de documentación y privacidad
+
+- **R4-D8 (alto):** `api/supabase/.temp/` (estado del `supabase link`) estaba rastreado desde la fase 7 con el ref del proyecto de desarrollo y el id de la organización de Supabase. Se saca del índice y entra en el `.gitignore` raíz; ningún script, doc ni CI lo necesitaba. El ref y el id de la organización de Supabase se suman a las reglas de la reescritura (`filter-repo-pendientes.md`, en `coco-datos`).
+- **R4-D9 (decisión del director):** el nombre de la organización de GitHub (dueño del repo y prefijo del bundle id de iOS) es un identificador público, no un dato personal: **no se reescribe**. Solo se reescriben el ref y el id de la organización de Supabase.
+
+### Ronda 2 (9 oct 2026) — segunda revisión de J-6
+
+| Paso | PR   | Cerrado                                                                   | Pendiente y destino                                                                                                    |
+| ---- | ---- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| R2-A | #126 | Seguridad, CI y servidor                                                  | Quitar la CSP de LiteSpeed sin perder la redirección a HTTPS (dueño)                                                   |
+| R2-B | #127 | Idioma y privacidad en el código                                          | Ruta absoluta en `.claude/settings.json` (dueño, pasó a `settings.local.json` en R3-D); el historial, a la reescritura |
+| R2-C | #125 | Documentos de cierre contrastados contra `Dev`; reglas de la web por tema | Nada                                                                                                                   |
+
+### Ronda 3 (10 oct 2026)
+
+| Paso  | PR   | Cerrado                                   | Pendiente y destino                                                                                                                              |
+| ----- | ---- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R3-S  | #130 | S1/B5, S2–S8                              | `NODE_ENV` leído con `config.get` → cerrado en R4-SB (S12); usuario y host del hosting antiguo → reglas de la reescritura                        |
+| R3-W  | #131 | W1, W2, W3, W5, W6; despliegue verificado | `withSession` descarta la sesión si `renew()` falla por red → ronda 4; `verify-clean-install.sh` respeta `TMPDIR` → cerrado                      |
+| R3-A  | #132 | A1–A5                                     | `byName` en `findForSummary` sin mirar los splits → ronda 5 (R5-A)                                                                               |
+| R3-W4 | #133 | W4; lint `spanish-markup.ts`              | Literales-valor en español (`texto-embebido` cerrado en R4-A; `sidenav-plegada`/`si` en 8.7); `spanish-identifiers.ts` ~345 líneas → 8.9         |
+| R3-D  | #134 | D2, D3, D4, D5, D7                        | Reemplazos y `--replace-message` → reescritura; `additionalDirectories` en `settings.local.json` (dueño)                                         |
+| R3-B  | #135 | B1, B2, B3, B4, B6; ADR 0033              | El primer `npm run backup` real es la primera corrida del filtro de privilegios sobre un volcado de Supabase (riesgo anotado)                    |
+| R3-I  | #137 | I1–I6; 255 pruebas iOS, 0 saltadas        | Archivos de iOS > 300 líneas → ronda 4; el `pre-push` usa el DerivedData por defecto fuera de Personal → `ios/.derived` (R4-I, ignorado en R5-D) |
+
+### Ronda 4 (11 oct 2026)
+
+| Paso  | PR   | Cerrado                                                      | Pendiente y destino                                                                                                                  |
+| ----- | ---- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| R4-D  | #136 | D8 (archivo fuera del índice e ignorado), D9 registrada, D10 | Ref e id de la organización de Supabase en el historial → reescritura                                                                |
+| R4-W  | #138 | W1–W4; despliegue verificado                                 | `session.ts` 383 líneas → ronda 5 / 8.9; `npm test -- --coverage` no cubre la raíz (usar `test:coverage --workspace frontend`) → 8.9 |
+| R4-A  | #139 | A1–A5 y W5 (`embedded-text`); despliegue verificado          | `byName` sin splits y `from`/`to` con `@IsDateString` sin `strict` → ronda 5 (R5-A)                                                  |
+| R4-SB | #140 | S9–S16, B1–B4; S17 no era defecto (prueba añadida)           | El primer `npm run backup` real ejercita la fila `public CREATE` contra el `nspacl` de producción (remedio en el runbook, «Restore») |
+| R4-I  | #141 | I1–I3 y tamaños; 257 pruebas iOS, 0 saltadas                 | `ios/.derived` al `.gitignore` → cerrado en R5-D; tres bancos de prueba en la cola → próxima ronda de iOS                            |
+
+### Ronda 5 (11 oct 2026) — en curso
+
+Hallazgos en `coco-datos/auditorias/ronda-5-2026-10-11.md`; la web salió limpia (sin altos ni medios). Pasos en marcha: R5-A (API), R5-D (D12–D15 y `ios/.derived`, este registro) y los de seguridad y base. D11 (un nombre real en un comentario de migración) no es de la ronda: lo resuelve el paso de reescritura con el reset de las bases locales, y hasta entonces la privacidad no se da por limpia. Los pendientes que sobreviven a la ronda viven en el plan, 8.9.
+
+### Incidentes del cierre J
+
+- **10 oct, iCloud:** la sincronización de iCloud sobre la carpeta del proyecto tumbó la sesión del director anterior. El repositorio se movió a `~/Coding` (PR #129) y las rutas se apuntaron allí.
+- **10 oct ~22:00, límite de sesión:** el límite de sesión de la API cortó seis agentes a la vez; el ejecutor de R3-A cayó justo después de integrar y el director limpió su clon y su base. Todos se relanzaron tras el reinicio.
+- **Regla del dueño:** los agentes trabajan solo dentro de `Personal/` (ni `/tmp`, ni `~/.claude`, ni producción); `TMPDIR` se exporta dentro de esa carpeta y `verify-clean-install.sh` lo respeta.
+- **Ejecutores en clones, sin worktrees:** cada ejecutor trabaja en un `git clone` propio bajo `cocoApp-work/` y lo borra al cerrar; el checkout principal no se toca.

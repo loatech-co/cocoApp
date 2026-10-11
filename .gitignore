@@ -107,3 +107,6 @@ e2e/.salida/
 
 # Supabase CLI link state: carries the dev project ref and the organization id.
 api/supabase/.temp/
+
+# iOS: DerivedData of the pre-push `xcodebuild test`, kept inside the repo folder.
+ios/.derived/

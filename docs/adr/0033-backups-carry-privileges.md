@@ -1,6 +1,6 @@
 # 0033 — Backups carry the privileges; the restore applies the ones the target can take
 
-- Status: accepted
+- Status: accepted. Amended 2026-10-11 (round 4, R4-SB)
 - Date: 2026-10-10
 - Deciders: the director of the round-3 audit, step R3-B
 
