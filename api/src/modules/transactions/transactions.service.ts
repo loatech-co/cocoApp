@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
 import type { NewTransaction } from './ledger.types';
+import { periodOf } from './period';
 import {
   transactionFromRow,
   type Transaction,
@@ -39,17 +40,6 @@ import { TagsService } from '../tags/tags.service';
 
 /** What other modules see of a transaction: they reach the domain through the service. */
 export type { Transaction } from './transactions.domain';
-
-/**
- * The first day of the month of a date.
- *
- * It is the default of `period`: most expenses belong to the month they were
- * paid in, and making every record declare it would be friction for the
- * common case. Only the bills that cross months need to say it.
- */
-function monthOf(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-}
 
 @Injectable()
 export class TransactionsService {
@@ -125,7 +115,7 @@ export class TransactionsService {
         userId,
         accountId,
         date: new Date(dto.date),
-        period: dto.period ? new Date(dto.period) : monthOf(new Date(dto.date)),
+        period: periodOf(dto.period, new Date(dto.date)),
         amount,
         type,
         categoryId,
@@ -175,7 +165,7 @@ export class TransactionsService {
     const base = {
       userId,
       date,
-      period: dto.period ? new Date(dto.period) : monthOf(date),
+      period: periodOf(dto.period, date),
       amount,
       type: 'transfer' as const,
       description: dto.description ?? null,
@@ -209,7 +199,7 @@ export class TransactionsService {
       dto.splits !== undefined ? await this.prepareSplits(userId, amount, dto.splits) : null;
     const tagIds = dto.tags !== undefined ? await this.tags.resolveNames(userId, dto.tags) : null;
 
-    const changes = changesOf(dto, accountId, amount);
+    const changes = changesOf(dto, actual, accountId, amount);
     const partner = await this.partnerLeg(userId, actual, dto, changes);
     const updated = await this.repository.updateWithDetails(
       userId,

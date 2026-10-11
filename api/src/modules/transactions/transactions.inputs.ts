@@ -19,7 +19,7 @@ export interface SplitRequest {
 
 /** What a transaction is written with, created or edited. Money as decimal strings. */
 interface TransactionFields {
-  /** `YYYY-MM`, when the money belongs to another month than its date. */
+  /** `YYYY-MM-DD`, when the money belongs to another month than its date; stored as day 1. */
   period?: string | undefined;
   type?: TransactionType | undefined;
   description?: string | undefined;

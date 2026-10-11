@@ -5696,10 +5696,14 @@
             "description": "Absent for a cost center, the top of the tree."
           },
           "color": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "`null` clears it."
           },
           "icon": {
             "type": "string",
+            "nullable": true,
+            "description": "`null` clears it.",
             "maxLength": 64
           },
           "sortOrder": {
@@ -5838,10 +5842,14 @@
             "type": "boolean"
           },
           "color": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "`null` clears it."
           },
           "icon": {
             "type": "string",
+            "nullable": true,
+            "description": "`null` clears it.",
             "maxLength": 64
           },
           "sortOrder": {
@@ -6413,7 +6421,7 @@
         "properties": {
           "period": {
             "type": "string",
-            "description": "The month the transfer BELONGS to, as `YYYY-MM-DD` of its first day."
+            "description": "The month the transfer BELONGS to, as `YYYY-MM-DD`; stored as its first day."
           },
           "fromAccountId": {
             "type": "number"
@@ -6476,7 +6484,7 @@
           },
           "period": {
             "type": "string",
-            "description": "The month the transaction BELONGS to, as `YYYY-MM-DD` of its first day.\nAbsent, it is the month of `date`; it differs when a bill crosses months."
+            "description": "The month the transaction BELONGS to, as `YYYY-MM-DD`: any day of it is\naccepted and stored as its first day. Absent, it is the month of `date`;\nit differs when a bill crosses months."
           },
           "rawText": {
             "type": "string",
@@ -6554,7 +6562,7 @@
           },
           "period": {
             "type": "string",
-            "description": "The month the transaction BELONGS to, as `YYYY-MM-DD` of its first day.\nAbsent, it is the month of `date`; it differs when a bill crosses months."
+            "description": "The month the transaction BELONGS to, as `YYYY-MM-DD`: any day of it is\naccepted and stored as its first day. Absent, it is the month of `date`;\nit differs when a bill crosses months."
           },
           "rawText": {
             "type": "string",

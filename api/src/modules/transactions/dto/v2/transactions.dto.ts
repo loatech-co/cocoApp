@@ -15,6 +15,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import { IfPresent } from '../../../../common/validation/if-present.decorator';
 import { IsMoney, IsPositiveMoney } from '../../../../common/validation/is-money.decorator';
 import { PageQuery } from '../../../../contract/v2/page.dto';
 import {
@@ -28,7 +29,7 @@ type TransactionStatus = (typeof TRANSACTION_STATUSES)[number];
 type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
 class SplitInput {
-  @IsOptional()
+  @IfPresent()
   @Type(() => Number)
   @IsInt()
   categoryId?: number;
@@ -36,7 +37,7 @@ class SplitInput {
   @IsPositiveMoney()
   amount!: string;
 
-  @IsOptional()
+  @IfPresent()
   @IsString()
   @MaxLength(255)
   note?: string;
@@ -45,10 +46,11 @@ class SplitInput {
 /** What a transaction may carry, created or edited. Every field the same in both. */
 class TransactionFields {
   /**
-   * The month the transaction BELONGS to, as `YYYY-MM-DD` of its first day.
-   * Absent, it is the month of `date`; it differs when a bill crosses months.
+   * The month the transaction BELONGS to, as `YYYY-MM-DD`: any day of it is
+   * accepted and stored as its first day. Absent, it is the month of `date`;
+   * it differs when a bill crosses months.
    */
-  @IsOptional()
+  @IfPresent()
   @IsDateString({}, { message: 'El periodo debe tener formato YYYY-MM-DD.' })
   period?: string;
 
@@ -64,45 +66,45 @@ class TransactionFields {
   capturedAt?: string | null;
 
   /** Someone has to look at it: an unsure classification or a possible duplicate. */
-  @IsOptional()
+  @IfPresent()
   @IsBoolean()
   needsReview?: boolean;
 
-  @IsOptional()
+  @IfPresent()
   @IsIn(TRANSACTION_TYPES)
   type?: TransactionType;
 
-  @IsOptional()
+  @IfPresent()
   @IsIn(TRANSACTION_STATUSES)
   status?: TransactionStatus;
 
   /** Where it comes from: the web sends `web`, the phone app one of its own. */
-  @IsOptional()
+  @IfPresent()
   @IsIn(TRANSACTION_SOURCES)
   source?: TransactionSource;
 
-  @IsOptional()
+  @IfPresent()
   @IsString()
   @MaxLength(255)
   merchant?: string;
 
-  @IsOptional()
+  @IfPresent()
   @IsString()
   @MaxLength(255)
   description?: string;
 
-  @IsOptional()
+  @IfPresent()
   @IsString()
   notes?: string;
 
   /** Names, not ids: the tags are created on the fly. */
-  @IsOptional()
+  @IfPresent()
   @IsArray()
   @ArrayMaxSize(20)
   @IsString({ each: true })
   tags?: string[];
 
-  @IsOptional()
+  @IfPresent()
   @IsArray()
   @ArrayMaxSize(50)
   @ValidateNested({ each: true })
@@ -119,14 +121,14 @@ export class CreateTransactionInput extends TransactionFields {
   amount!: string;
 
   /** Optional: keeping accounts is a setting, not a requirement. */
-  @IsOptional()
+  @IfPresent()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   accountId?: number;
 
   /** Optional: a transaction may exist without a category. */
-  @IsOptional()
+  @IfPresent()
   @Type(() => Number)
   @IsInt()
   categoryId?: number;
@@ -136,22 +138,22 @@ export class CreateTransactionInput extends TransactionFields {
    * safely, capture through `POST /transactions/capture`, which returns the
    * transaction already recorded.
    */
-  @IsOptional()
+  @IfPresent()
   @IsString()
   @MaxLength(255)
   externalRef?: string;
 }
 
 export class UpdateTransactionInput extends TransactionFields {
-  @IsOptional()
+  @IfPresent()
   @IsDateString()
   date?: string;
 
-  @IsOptional()
+  @IfPresent()
   @IsPositiveMoney()
   amount?: string;
 
-  @IsOptional()
+  @IfPresent()
   @Type(() => Number)
   @IsInt()
   accountId?: number;
@@ -164,8 +166,8 @@ export class UpdateTransactionInput extends TransactionFields {
 }
 
 export class CreateTransferInput {
-  /** The month the transfer BELONGS to, as `YYYY-MM-DD` of its first day. */
-  @IsOptional()
+  /** The month the transfer BELONGS to, as `YYYY-MM-DD`; stored as its first day. */
+  @IfPresent()
   @IsDateString({}, { message: 'El periodo debe tener formato YYYY-MM-DD.' })
   period?: string;
 
@@ -183,7 +185,7 @@ export class CreateTransferInput {
   @IsPositiveMoney()
   amount!: string;
 
-  @IsOptional()
+  @IfPresent()
   @IsString()
   @MaxLength(255)
   description?: string;

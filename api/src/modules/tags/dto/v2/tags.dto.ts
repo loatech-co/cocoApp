@@ -1,4 +1,6 @@
-import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
+
+import { IfPresent } from '../../../../common/validation/if-present.decorator';
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
@@ -8,7 +10,7 @@ export class UpsertTagDto {
   @MaxLength(255)
   name!: string;
 
-  @IsOptional()
+  @IfPresent()
   @Matches(HEX, { message: 'El color debe ser hexadecimal, formato #RRGGBB.' })
   color?: string;
 }

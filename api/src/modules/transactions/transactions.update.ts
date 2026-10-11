@@ -1,3 +1,4 @@
+import { periodChange } from './period';
 import type { TransactionEdit } from './transactions.inputs';
 import type { FullTransaction, TransactionChanges } from './transactions.repository';
 import { ValidationError } from '../../common/errors/domain-error';
@@ -59,15 +60,21 @@ export function requireStillTransfer(dto: TransactionEdit): void {
   }
 }
 
-/** The columns a PATCH changes: only what the DTO brought. */
+/**
+ * The columns a PATCH changes: only what the DTO brought. `period` is the one
+ * exception: a new `date` may move it too (`periodChange`).
+ */
 export function changesOf(
   dto: TransactionEdit,
+  actual: Pick<FullTransaction, 'date' | 'period'>,
   accountId: bigint | null,
   amount: Money,
 ): TransactionChanges {
+  const period = periodChange(dto, actual);
   return {
     ...(dto.accountId !== undefined && { accountId }),
     ...(dto.date !== undefined && { date: new Date(dto.date) }),
+    ...(period !== undefined && { period }),
     ...(dto.amount !== undefined && { amount }),
     ...(dto.type !== undefined && { type: dto.type }),
     ...(dto.categoryId !== undefined && {

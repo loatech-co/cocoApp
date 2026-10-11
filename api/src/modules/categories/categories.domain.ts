@@ -53,8 +53,8 @@ export interface CategoryChanges {
   name?: string;
   kind?: CategoryKind;
   parentId?: bigint | null;
-  color?: string;
-  icon?: string;
+  color?: string | null;
+  icon?: string | null;
   sortOrder?: number;
   isArchived?: boolean;
   isRecurring?: boolean;

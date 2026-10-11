@@ -16,6 +16,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import { IfPresent } from '../../../../common/validation/if-present.decorator';
 import { CATEGORY_KINDS, PERIODICITIES } from '../../../../contract/v2/categories.response';
 import { PageQuery } from '../../../../contract/v2/page.dto';
 import { mergeKeywords } from '../../keywords';
@@ -44,28 +45,30 @@ function cleanKeywords({ value }: { value: unknown }): unknown {
 
 /** What a category may carry, created or edited. */
 class CategoryFields {
+  /** `null` clears it. */
   @IsOptional()
   @Matches(HEX, { message: 'El color debe ser hexadecimal, formato #RRGGBB.' })
-  color?: string;
+  color?: string | null;
 
+  /** `null` clears it. */
   @IsOptional()
   @IsString()
   @MaxLength(64)
-  icon?: string;
+  icon?: string | null;
 
-  @IsOptional()
+  @IfPresent()
   @Type(() => Number)
   @IsInt()
   @Min(0)
   sortOrder?: number;
 
   /** Whether the concept is paid every so often. */
-  @IsOptional()
+  @IfPresent()
   @IsBoolean()
   isRecurring?: boolean;
 
   /** Whether the cost center refuses reclassification from the transactions table. */
-  @IsOptional()
+  @IfPresent()
   @IsBoolean()
   isStatic?: boolean;
 
@@ -90,12 +93,12 @@ class CategoryFields {
   paymentMonth?: number | null;
 
   /** Whether the transaction is created on its own on the due day. */
-  @IsOptional()
+  @IfPresent()
   @IsBoolean()
   isAutoPaid?: boolean;
 
   /** Whether it is paid in several parts rather than settled at once. */
-  @IsOptional()
+  @IfPresent()
   @IsBoolean()
   isMultiPayment?: boolean;
 
@@ -108,7 +111,7 @@ class CategoryFields {
   budget?: number | null;
 
   /** Words looked for in a receipt to recognise this concept. */
-  @IsOptional()
+  @IfPresent()
   @Transform(cleanKeywords)
   @IsArray()
   @ArrayMaxSize(MAX_KEYWORDS, {
@@ -129,20 +132,20 @@ export class CreateCategoryInput extends CategoryFields {
   kind!: CategoryKind;
 
   /** Absent for a cost center, the top of the tree. */
-  @IsOptional()
+  @IfPresent()
   @Type(() => Number)
   @IsInt()
   parentId?: number;
 }
 
 export class UpdateCategoryInput extends CategoryFields {
-  @IsOptional()
+  @IfPresent()
   @IsString()
   @MinLength(1)
   @MaxLength(255)
   name?: string;
 
-  @IsOptional()
+  @IfPresent()
   @IsIn(CATEGORY_KINDS)
   kind?: CategoryKind;
 
@@ -152,7 +155,7 @@ export class UpdateCategoryInput extends CategoryFields {
   @IsInt()
   parentId?: number | null;
 
-  @IsOptional()
+  @IfPresent()
   @IsBoolean()
   isArchived?: boolean;
 }

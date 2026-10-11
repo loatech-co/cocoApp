@@ -1,6 +1,7 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 
+import { IfPresent } from '../../../../common/validation/if-present.decorator';
 import { MAX_LENGTH, MIN_LENGTH } from '../../password.policy';
 
 /**
@@ -71,7 +72,7 @@ export class ChangePasswordDto {
  * send it; the web's refresh token travels in its httpOnly cookie.
  */
 export class RefreshInput {
-  @IsOptional()
+  @IfPresent()
   @IsString()
   @MaxLength(4096)
   refreshToken?: string;

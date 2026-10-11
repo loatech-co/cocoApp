@@ -29,8 +29,9 @@ export interface UpdateTransactionInput {
    */
   categoryId?: number | null;
   /**
-   * The month the transaction BELONGS to, as `YYYY-MM-DD` of its first day.
-   * Absent, it is the month of `date`; it differs when a bill crosses months.
+   * The month the transaction BELONGS to, as `YYYY-MM-DD`: any day of it is
+   * accepted and stored as its first day. Absent, it is the month of `date`;
+   * it differs when a bill crosses months.
    */
   period?: string;
   /**

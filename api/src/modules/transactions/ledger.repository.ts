@@ -2,7 +2,15 @@ import { Injectable } from '@nestjs/common';
 
 import type { AutoCharge, MonthlyHistory, SummaryFilter, SummaryMovement } from './ledger.types';
 import { ZERO, toMoney, type Money } from '../../common/money/money';
+import type { Prisma } from '../../generated/prisma/client';
 import { Database } from '../../prisma/database';
+
+/** A row with what a concept filter has to see of it. */
+interface ConceptRow {
+  categoryId: bigint | null;
+  amount: Prisma.Decimal;
+  splits: { categoryId: bigint | null; amount: Prisma.Decimal }[];
+}
 
 /** The reads and writes other modules need from the transactions table. */
 @Injectable()
@@ -40,7 +48,7 @@ export class LedgerRepository {
           // By PERIOD, not by payment date: March's bill paid on April 6
           // belongs to March, and March is where one looks for it.
           period: { gte: from, lte: to },
-          ...(branch && { categoryId: { in: branch } }),
+          ...(branch && { AND: [inConcepts(branch)] }),
           ...(q && {
             OR: [
               { description: { contains: q, mode: 'insensitive' as const } },
@@ -79,36 +87,70 @@ export class LedgerRepository {
     { before, since }: { before: Date; since: Date },
   ): Promise<MonthlyHistory> {
     const history = await this.db.forUser(userId, async (tx) => {
-      // The last period of each concept: an aggregate in the database, no rows loaded.
-      const ultimos = await tx.transaction.groupBy({
-        by: ['categoryId'],
-        where: { userId, categoryId: { in: [...categoryIds] }, period: { lt: before } },
-        _max: { period: true },
-      });
-
-      const ranges = ultimos.flatMap(({ categoryId, _max }) =>
-        categoryId === null || _max.period === null
-          ? []
-          : [{ categoryId, period: { gte: sinceForConcept(_max.period, since), lt: before } }],
-      );
+      const lastPeriods = await this.lastPeriodByConcept(tx, userId, categoryIds, before);
+      const ranges = [...lastPeriods].map(([categoryId, last]) => ({
+        ...inConcepts([categoryId]),
+        period: { gte: sinceForConcept(last, since), lt: before },
+      }));
       if (ranges.length === 0) return [];
 
       return tx.transaction.findMany({
-        where: { userId, OR: ranges },
-        select: { categoryId: true, amount: true, period: true },
+        where: { userId, type: 'expense', OR: ranges },
+        select: { categoryId: true, amount: true, period: true, splits: SPLIT_PARTS },
       });
     });
 
+    const wanted = new Set(categoryIds.map(String));
     const historyByCategory: MonthlyHistory = new Map();
-    for (const t of history) {
-      const key = t.categoryId?.toString();
-      if (key === undefined) continue;
-      const monthKey = t.period.toISOString().slice(0, 7);
-      const months = historyByCategory.get(key) ?? new Map<string, Money>();
-      months.set(monthKey, (months.get(monthKey) ?? ZERO).plus(toMoney(t.amount)));
-      historyByCategory.set(key, months);
+    for (const row of history) {
+      const monthKey = row.period.toISOString().slice(0, 7);
+      for (const part of conceptParts(row)) {
+        if (!wanted.has(part.key)) continue;
+        const months = historyByCategory.get(part.key) ?? new Map<string, Money>();
+        months.set(monthKey, (months.get(monthKey) ?? ZERO).plus(part.amount));
+        historyByCategory.set(part.key, months);
+      }
     }
     return historyByCategory;
+  }
+
+  /**
+   * The last period each concept was paid in, whether the row carries the
+   * concept itself or one of its splits does. Two aggregates, no rows loaded.
+   */
+  private async lastPeriodByConcept(
+    tx: Prisma.TransactionClient,
+    userId: bigint,
+    categoryIds: readonly bigint[],
+    before: Date,
+  ): Promise<Map<bigint, Date>> {
+    const ids = [...categoryIds];
+    const [own, viaSplits] = await Promise.all([
+      tx.transaction.groupBy({
+        by: ['categoryId'],
+        where: { userId, type: 'expense', categoryId: { in: ids }, period: { lt: before } },
+        _max: { period: true },
+      }),
+      tx.transactionSplit.findMany({
+        where: {
+          categoryId: { in: ids },
+          transaction: { userId, type: 'expense', period: { lt: before } },
+        },
+        orderBy: { transaction: { period: 'desc' } },
+        distinct: ['categoryId'],
+        select: { categoryId: true, transaction: { select: { period: true } } },
+      }),
+    ]);
+
+    const last = new Map<bigint, Date>();
+    const keep = (categoryId: bigint | null, period: Date | null) => {
+      if (categoryId === null || period === null) return;
+      const known = last.get(categoryId);
+      if (known === undefined || known < period) last.set(categoryId, period);
+    };
+    for (const group of own) keep(group.categoryId, group._max.period);
+    for (const split of viaSplits) keep(split.categoryId, split.transaction.period);
+    return last;
   }
 
   /**
@@ -124,19 +166,22 @@ export class LedgerRepository {
       tx.transaction.findMany({
         where: {
           userId,
-          categoryId: { in: [...categoryIds] },
+          type: 'expense',
+          ...inConcepts(categoryIds),
           period: { gte: month, lte: month },
           status: 'cleared',
         },
-        select: { categoryId: true, amount: true },
+        select: { categoryId: true, amount: true, splits: SPLIT_PARTS },
       }),
     );
 
+    const wanted = new Set(categoryIds.map(String));
     const paid = new Map<string, Money>();
-    for (const t of paidRows) {
-      const key = t.categoryId?.toString();
-      if (key === undefined) continue;
-      paid.set(key, (paid.get(key) ?? ZERO).plus(toMoney(t.amount)));
+    for (const row of paidRows) {
+      for (const part of conceptParts(row)) {
+        if (!wanted.has(part.key)) continue;
+        paid.set(part.key, (paid.get(part.key) ?? ZERO).plus(part.amount));
+      }
     }
     return paid;
   }
@@ -149,11 +194,14 @@ export class LedgerRepository {
   ): Promise<Set<string | undefined>> {
     const existing = await this.db.forUser(userId, (tx) =>
       tx.transaction.findMany({
-        where: { userId, categoryId: { in: [...categoryIds] }, period },
-        select: { categoryId: true },
+        where: { userId, type: 'expense', ...inConcepts(categoryIds), period },
+        select: { categoryId: true, amount: true, splits: SPLIT_PARTS },
       }),
     );
-    return new Set(existing.map((t) => t.categoryId?.toString()));
+    const wanted = new Set(categoryIds.map(String));
+    return new Set(
+      existing.flatMap((row) => conceptParts(row).map((p) => p.key)).filter((k) => wanted.has(k)),
+    );
   }
 
   /**
@@ -181,4 +229,29 @@ export class LedgerRepository {
 function sinceForConcept(last: Date, since: Date): Date {
   const lastMonthStart = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), 1));
   return lastMonthStart < since ? lastMonthStart : since;
+}
+
+const SPLIT_PARTS = { select: { categoryId: true, amount: true } } as const;
+
+/**
+ * A row belongs to a concept through its own category or through one of its
+ * splits: a split payment is still a payment of that concept.
+ */
+function inConcepts(categoryIds: readonly bigint[]): Prisma.TransactionWhereInput {
+  const ids = [...categoryIds];
+  return { OR: [{ categoryId: { in: ids } }, { splits: { some: { categoryId: { in: ids } } } }] };
+}
+
+/**
+ * What a row pays to which concept. With splits, the splits are the source,
+ * as in the dashboard breakdown: counting the header whole would count a
+ * purchase split across concepts for each of them in full.
+ */
+function conceptParts(row: ConceptRow): { key: string; amount: Money }[] {
+  const parts = row.splits.length > 0 ? row.splits : [row];
+  return parts.flatMap((part) =>
+    part.categoryId === null
+      ? []
+      : [{ key: part.categoryId.toString(), amount: toMoney(part.amount) }],
+  );
 }

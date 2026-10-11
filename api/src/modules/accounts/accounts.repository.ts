@@ -64,7 +64,7 @@ export class AccountsRepository {
    * the sign afterwards gives exactly the same result as walking every row,
    * and avoids pulling years of history into memory just to list accounts.
    */
-  async balanceMovements(userId: bigint, until?: Date): Promise<Map<string, BalanceMovement[]>> {
+  async balanceMovements(userId: bigint): Promise<Map<string, BalanceMovement[]>> {
     const groups = await this.db.forUser(userId, (tx) =>
       tx.transaction.groupBy({
         by: ['accountId', 'type', 'transferDir', 'status'],
@@ -75,7 +75,6 @@ export class AccountsRepository {
           // ignored are not fetched. Balances stay exact for the accounts that
           // exist; there is simply no balance for what belongs to none.
           accountId: { not: null },
-          ...(until ? { date: { lte: until } } : {}),
         },
         _sum: { amount: true },
       }),

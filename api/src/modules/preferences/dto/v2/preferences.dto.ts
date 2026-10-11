@@ -1,8 +1,10 @@
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean } from 'class-validator';
+
+import { IfPresent } from '../../../../common/validation/if-present.decorator';
 
 export class UpdatePreferencesInput {
   /** Whether this user keeps accounts at all. */
-  @IsOptional()
+  @IfPresent()
   @IsBoolean()
   accountsEnabled?: boolean;
 }

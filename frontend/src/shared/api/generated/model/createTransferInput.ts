@@ -16,7 +16,7 @@
  */
 
 export interface CreateTransferInput {
-  /** The month the transfer BELONGS to, as `YYYY-MM-DD` of its first day. */
+  /** The month the transfer BELONGS to, as `YYYY-MM-DD`; stored as its first day. */
   period?: string;
   fromAccountId: number;
   toAccountId: number;

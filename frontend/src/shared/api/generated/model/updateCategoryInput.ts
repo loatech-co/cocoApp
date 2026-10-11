@@ -30,9 +30,17 @@ export interface UpdateCategoryInput {
    */
   parentId?: number | null;
   isArchived?: boolean;
-  color?: string;
-  /** @maxLength 64 */
-  icon?: string;
+  /**
+   * `null` clears it.
+   * @nullable
+   */
+  color?: string | null;
+  /**
+   * `null` clears it.
+   * @maxLength 64
+   * @nullable
+   */
+  icon?: string | null;
   /** @minimum 0 */
   sortOrder?: number;
   /** Whether the concept is paid every so often. */

@@ -50,6 +50,11 @@ de [CLAUDE.md](../../CLAUDE.md).
 El CI lo regenera y falla si difiere: la web genera su cliente de ahí.
 [API contract](../../CONTRIBUTING.md#api-contract-openapi).
 
+**Un campo que puede faltar lleva `@IfPresent()`; `@IsOptional()` solo si `null`
+significa algo** (quitar la categoría, el presupuesto, el icono), y entonces el
+tipo dice `| null`. `@IsOptional()` deja pasar `null` sin validar: `date: null`
+llegaba a 1970 y `amount: null` a un 500 (ronda 3, A2).
+
 **Toda ruta nueva entra en la prueba de aislamiento.**
 
 `user-isolation.e2e-spec.ts` ataca cada ruta con otro usuario; una ruta fuera
