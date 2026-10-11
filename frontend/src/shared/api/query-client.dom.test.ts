@@ -25,6 +25,12 @@ describe('shouldRetry()', () => {
     expect(shouldRetry(0, new TypeError('Failed to fetch'))).toBe(true);
     expect(shouldRetry(1, new TypeError('Failed to fetch'))).toBe(false);
   });
+
+  it('retries the status 0 the client gives a renewal lost to the network, once', () => {
+    const offline = new ApiClientError(0, 'network_error', 'x');
+    expect(shouldRetry(0, offline)).toBe(true);
+    expect(shouldRetry(1, offline)).toBe(false);
+  });
 });
 
 describe('refocus(): the phone app came back to the foreground', () => {

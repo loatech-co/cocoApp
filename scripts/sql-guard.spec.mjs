@@ -90,4 +90,17 @@ describe('the guard of npm run sql', () => {
     assert.equal(withoutQuotes('SELECT \'a\', "b", $$c$$ FROM t'), 'SELECT  ,  ,   FROM t');
     assert.equal(withoutQuotes("DO $$ x 'y' z $$", true).replace(/\s+/g, ' '), 'DO x z ');
   });
+
+  it('reads an escape string, where a backslash-quote does not end it (S20)', () => {
+    assert.deepEqual(splitStatements("SELECT E'a\\';b'; SELECT 1"), [
+      "SELECT E'a\\';b'",
+      'SELECT 1',
+    ]);
+    assert.equal(withoutQuotes("SELECT E'it\\'s; DELETE FROM t' FROM t"), 'SELECT   FROM t');
+    passes("SELECT E'\\'; DELETE FROM t'");
+    assert.deepEqual(splitStatements("SELECT x LIKE'a\\'; DELETE FROM t"), [
+      "SELECT x LIKE'a\\'",
+      'DELETE FROM t',
+    ]);
+  });
 });

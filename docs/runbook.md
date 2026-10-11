@@ -381,17 +381,29 @@ bash scripts/restore.sh [coco-<date>.tar.age | decrypted folder]
   of `coco_app` (`scripts/restore/check-app-role.sql`: no `DELETE` on
   `users`, `UPDATE` on three of its columns only, no `UPDATE`/`DELETE` on
   `audit_log`, nothing on `_prisma_migrations`, no `CREATE` on `public`, no
-  `EXECUTE` on `guard_users_access`; and the grants that must be there:
-  tables, every sequence, `USAGE` on `public` and `app_private`, `EXECUTE`
-  on `set_user_access`, `is_own_category` and `auto_paid_owner_ids`, and the
-  default privileges for the next table a migration creates). Exit code 0
-  only if everything matches. The throwaway database is dropped whatever
-  happens, also halfway through a failure: it holds real data, decrypted.
-- **`--target <url>`:** restores into another plain Postgres after typing the
-  name of the target database letter by letter. `coco_app` must exist there
-  first (`scripts/db/create-app-role.sh`): the policies and the grants name it.
-  The URL reaches `psql` and `pg_restore` as `PG*` variables, never on their
-  command line.
+  `EXECUTE` on `guard_users_access`; the grants that must be there: tables,
+  every sequence, `USAGE` on `public` and `app_private`, `EXECUTE` on
+  `set_user_access`, `is_own_category` and `auto_paid_owner_ids`, and the
+  default privileges for the next table a migration creates; and row-level
+  security forced on every table of `public` with all its policies, the same
+  count `verify-data-api-closed.sh` expects — `scripts/db/expected-policies.sh`).
+  Exit code 0 only if everything matches; when not, the message names the
+  failed checks. A function the backup does not have because its migration
+  was still pending (`guard_users_access` until J-5 reaches production) is
+  not a failure: it only has to be narrow once it exists. The throwaway
+  database is dropped whatever happens, also halfway through a failure: it
+  holds real data, decrypted.
+- **`--target`:** restores into another plain Postgres after typing the name
+  of the target database letter by letter. The URL is read from
+  `COCO_RESTORE_TARGET_URL` (or from the variable named after the flag,
+  `--target NAME`), never from the command line, where `ps` shows it; it is
+  handed to `psql` and `pg_restore` as `PG*` variables, through one process
+  (`scripts/db/pg-env.mjs`) and not exported to every child. `coco_app` must
+  exist there first (`scripts/db/create-app-role.sh`): the policies and the
+  grants name it. Connect as the role that will run the migrations there
+  (`coco_migrate` locally): every restored object and the
+  `ALTER DEFAULT PRIVILEGES` below end up owned by the role that connects,
+  and a migration run by another role would not inherit them.
 - **Privileges** ([ADR 0033](adr/0033-backups-carry-privileges.md)): objects
   go in first without them, then the GRANTs and REVOKEs of `public` and
   `app_private` in a second pass, keeping only the ones whose grantee exists

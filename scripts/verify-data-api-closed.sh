@@ -13,14 +13,19 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-EXPECTED_POLICIES="${EXPECTED_POLICIES:-14}"
+# shellcheck source=scripts/db/expected-policies.sh
+. scripts/db/expected-policies.sh
 SQL="$(cat scripts/check-data-api.sql)"
 
 if [ "${1:-}" = "--local" ]; then
-  URL="$(sed -n 's/^DATABASE_URL=//p' api/.env.migrate | tr -d '"'"'"'')"
-  # Header, then the one data row, then "(1 row)": the same shape as the
-  # Management API output below, so one parser serves both.
-  OUTPUT="$(psql "$URL" -v ON_ERROR_STOP=1 -A -F ' ' -c "$SQL")"
+  # The URL goes to psql as PG* variables inside this subshell, never on its
+  # command line. Header, then the one data row, then "(1 row)": the same
+  # shape as the Management API output below, so one parser serves both.
+  OUTPUT="$(
+    LOCAL_URL="$(sed -n 's/^DATABASE_URL=//p' api/.env.migrate | tr -d '"'"'"'')"
+    eval "$(LOCAL_URL="$LOCAL_URL" node scripts/db/pg-env.mjs LOCAL_URL)"
+    psql -v ON_ERROR_STOP=1 -A -F ' ' -c "$SQL"
+  )"
 else
   OUTPUT="$(npm run --silent sql:supabase -- "$SQL")"
 fi

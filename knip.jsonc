@@ -8,8 +8,9 @@
   "workspaces": {
     ".": {
       // Operational scripts, run by hand (`npm run sql`, `npx tsx …`).
-      // (scripts/lint/*.ts is an entry through its npm script, lint:spanish.)
-      "entry": ["scripts/**/*.{mjs,mts}", "e2e/support/server.mjs"],
+      // (scripts/lint/*.ts is an entry through its npm script, lint:spanish;
+      // the .spec.ts next to it runs with `npm test`.)
+      "entry": ["scripts/**/*.{mjs,mts}", "scripts/**/*.spec.ts", "e2e/support/server.mjs"],
       "project": ["scripts/**/*.{mjs,mts,ts}", "e2e/**/*.{ts,mjs}"],
       // The Playwright journeys (e2e/): the config and specs are found by the
       // playwright plugin through it.

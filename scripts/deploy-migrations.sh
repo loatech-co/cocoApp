@@ -30,6 +30,9 @@
 # against a local database; --dry-run stops before the confirmation.
 set -euo pipefail
 
+# A relative --backup path is relative to where the command was typed, not to
+# the api/ folder the script moves to.
+INVOKED_FROM="$PWD"
 MAX_BACKUP_AGE_HOURS="${MAX_BACKUP_AGE_HOURS:-24}"
 COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Coding/VS Code/Personal/coco-datos}"
 BACKUP=""
@@ -38,7 +41,11 @@ ENV_FILE=".env.supabase"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --backup) BACKUP="${2:?--backup needs a file}"; shift 2 ;;
+    --backup)
+      BACKUP="${2:?--backup needs a file}"
+      [[ "$BACKUP" == /* ]] || BACKUP="$INVOKED_FROM/$BACKUP"
+      shift 2
+      ;;
     --dry-run) DRY_RUN=1; shift ;;
     --env-file) ENV_FILE="${2:?--env-file needs a file}"; shift 2 ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
@@ -79,9 +86,12 @@ echo ""
 echo "▸ Backup…"
 # Only a finished archive counts: `coco-<date>-incompleto.tar.age`, a
 # `.partial` or any other recent file is not the backup the stop table asks for.
+# The newest by its name, which carries the date (the same choice restore.sh
+# makes), not by mtime: a copy brought back from the off-laptop disk is new
+# on disk and old in fact.
 if [ -z "$BACKUP" ]; then
-  BACKUP="$(ls -t "$COCO_DATA_DIR"/respaldos/coco-[0-9]*-[0-9]*.tar.age 2>/dev/null |
-    grep -E '/coco-[0-9]{8}-[0-9]{6}\.tar\.age$' | head -1 || true)"
+  BACKUP="$(find "$COCO_DATA_DIR/respaldos" -maxdepth 1 -name 'coco-[0-9]*-[0-9]*.tar.age' 2>/dev/null |
+    grep -E '/coco-[0-9]{8}-[0-9]{6}\.tar\.age$' | sort | tail -1 || true)"
 fi
 if [ -z "$BACKUP" ] || [ ! -f "$BACKUP" ]; then
   echo "No backup found (${BACKUP:-$COCO_DATA_DIR/respaldos/coco-<date>.tar.age}). Nothing is applied." >&2

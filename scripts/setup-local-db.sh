@@ -29,8 +29,11 @@ ADMIN_DATABASE_URL="${ADMIN_DATABASE_URL:-postgresql://$(id -un)@127.0.0.1:5432/
 MIGRATE_PASSWORD=local-only-migrate-password
 APP_PASSWORD=local-only-coco-app-password
 
-HOST=$(node -e 'console.log(new URL(process.argv[1]).hostname)' "$ADMIN_DATABASE_URL")
-PORT=$(node -e 'console.log(new URL(process.argv[1]).port || 5432)' "$ADMIN_DATABASE_URL")
+# The URL is split into the PG* variables libpq reads (scripts/db/pg-env.mjs):
+# nothing below puts it on a command line, where `ps` would show it.
+eval "$(ADMIN_DATABASE_URL="$ADMIN_DATABASE_URL" node "$ROOT/scripts/db/pg-env.mjs" ADMIN_DATABASE_URL)"
+HOST="$PGHOST"
+PORT="$PGPORT"
 case "$HOST" in
   localhost | 127.0.0.1 | ::1) ;;
   *)
@@ -39,7 +42,7 @@ case "$HOST" in
     ;;
 esac
 
-psql_admin() { psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 -q "$@"; }
+psql_admin() { psql -v ON_ERROR_STOP=1 -q "$@"; }
 role_can_login() {
   [ "$(echo "SELECT count(*) FROM pg_roles WHERE rolname = :'r' AND rolcanlogin" |
     psql_admin -At -v r="$1")" = 1 ]

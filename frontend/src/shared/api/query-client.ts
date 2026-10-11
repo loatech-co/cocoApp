@@ -10,7 +10,9 @@ const MAX_RETRIES = 1;
  * Whether a failed query is worth asking again.
  *
  * Only what can change on its own: the network (`fetch` rejects with a
- * `TypeError`) and the server (5xx). A 4xx is an ANSWER —no session, no
+ * `TypeError`; `apiRequest` says `ApiClientError` with status 0 when the
+ * renewal after a 401 failed for the network's sake) and the server (5xx). A
+ * 4xx is an ANSWER —no session, no
  * permission, it does not exist, the filter is invalid— and asking again gets
  * the same answer one second later, with the skeleton on screen meanwhile.
  * A 401 is worse: `apiRequest` already renewed once, and a second round would
@@ -18,7 +20,7 @@ const MAX_RETRIES = 1;
  */
 export function shouldRetry(failureCount: number, error: unknown): boolean {
   if (failureCount >= MAX_RETRIES) return false;
-  if (error instanceof ApiClientError) return error.status >= 500;
+  if (error instanceof ApiClientError) return error.status === 0 || error.status >= 500;
   return true;
 }
 

@@ -115,10 +115,14 @@ function isBridgeSession(value: unknown): value is BridgeSession {
  * Asks the app for an access token.
  *
  * Rejects with `BridgeError` if there is no bridge, if the app does not answer
- * within `TIMEOUT_MS`, if it answers that it has no session, or if it answers
- * something that is not a session. The caller —`session.renew()`— treats any
- * rejection the same way: it clears the memory and lets `RequireAuth` wait for
- * the app to push one. What it NEVER does is tell the app to wipe its keychain.
+ * within `TIMEOUT_MS`, if it answers that it has no session (or that it is
+ * offline: both arrive as the app's rejection and share the `no-session`
+ * reason), or if it answers something that is not a session. The caller
+ * —`session.renew()`— reads none of these reasons: a `BridgeError` is never
+ * the server refusing the session, so it keeps the token it still has and
+ * tries again shortly, and only clears the memory when there was no token to
+ * keep, leaving `RequireAuth` to wait for the app to push one. What it NEVER
+ * does is tell the app to wipe its keychain.
  */
 export function requestSession(): Promise<BridgeSession> {
   const handler = window.webkit?.messageHandlers?.cocoSession;

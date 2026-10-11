@@ -46,12 +46,22 @@ first one.
    sequence, `USAGE` on both schemas and no `CREATE` on `public`, `EXECUTE`
    on the three policy helpers and not on `guard_users_access`, and the
    default privileges above, read from `pg_default_acl` of the owner of
-   `public.users` (round 4, B2). A dump without privileges (every backup
-   before this ADR) restores its data and fails this check.
+   `public.users` (round 4, B2), and row-level security forced on every
+   table of `public` with the policy count `verify-data-api-closed.sh`
+   expects (round 5, B3). A dump without privileges (every backup before
+   this ADR) restores its data and fails this check. Functions are looked up
+   with `to_regprocedure`, so one a pending migration has not created yet is
+   not an error: a narrowed function that is missing passes (nothing to
+   narrow), a granted one that is missing fails. Otherwise no backup taken
+   while a migration waited in production could pass its restore test, and
+   that migration asks for a tested backup first (round 5, B1).
 4. **A Supabase project is not a target of `restore.sh`.** The script refuses
    it; the runbook keeps the manual recipe for a new project, marked as never
    rehearsed. `--i-know-this-is-production` is gone with it: restoring into
-   production is an owner stop (`CLAUDE.md`).
+   production is an owner stop (`CLAUDE.md`). The target URL never travels
+   on a command line: `--target` reads it from `COCO_RESTORE_TARGET_URL` (or
+   a variable named after the flag) and exports it to the one process that
+   splits it into `PG*` variables (round 5, S18 and B5).
 5. **`backup.sh` keeps `.partial` until the restore test passes** and the
    throwaway database of `restore.sh` is dropped from its exit trap, also on
    failure (findings B4 and B2).

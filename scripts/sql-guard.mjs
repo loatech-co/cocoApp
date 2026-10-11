@@ -39,6 +39,19 @@ const CLAUSE_LEADERS = new Set([
 
 /** A single-, double- or dollar-quoted piece at the start of the text. */
 const QUOTED = /^('(?:[^']|'')*'|"(?:[^"]|"")*"|(\$[A-Za-z_]*\$)([\s\S]*?)\2)/;
+/** An escape string, `E'…'`, where `\'` does not close it. */
+const ESCAPE_QUOTED = /^[eE]'(?:[^'\\]|\\[\s\S]|'')*'/;
+
+/**
+ * The quoted piece that starts at `i`, or null. An `E` that is the tail of a
+ * word (`LIKE'x'`) is not the escape prefix: that is a plain string after a
+ * keyword.
+ */
+function quotedAt(sql, i) {
+  const rest = sql.slice(i);
+  const afterWord = i > 0 && /\w/.test(sql[i - 1]);
+  return (afterWord ? null : rest.match(ESCAPE_QUOTED)) ?? rest.match(QUOTED);
+}
 
 /** Removes line and block comments, leaving quoted text alone. */
 export function stripComments(sql) {
@@ -46,7 +59,7 @@ export function stripComments(sql) {
   let i = 0;
   while (i < sql.length) {
     const rest = sql.slice(i);
-    const quote = rest.match(QUOTED);
+    const quote = quotedAt(sql, i);
     if (quote) {
       out += quote[0];
       i += quote[0].length;
@@ -71,7 +84,7 @@ export function splitStatements(sql) {
   let i = 0;
   while (i < sql.length) {
     const rest = sql.slice(i);
-    const quote = rest.match(QUOTED);
+    const quote = quotedAt(sql, i);
     if (quote) {
       current += quote[0];
       i += quote[0].length;
@@ -97,7 +110,7 @@ export function withoutQuotes(sql, openDollar = false) {
   let out = '';
   let i = 0;
   while (i < sql.length) {
-    const quote = sql.slice(i).match(QUOTED);
+    const quote = quotedAt(sql, i);
     if (quote) {
       out += openDollar && quote[2] ? ` ${withoutQuotes(quote[3])} ` : ' ';
       i += quote[0].length;

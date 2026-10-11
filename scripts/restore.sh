@@ -14,9 +14,12 @@
 #       `backup` is a coco-<date>.tar.age or an already decrypted folder; by
 #       default, the newest one in $COCO_DATA_DIR/respaldos.
 #
-#   bash scripts/restore.sh [backup] --target <url>
-#       Restores into another plain Postgres. It asks you to type the name of
-#       the target database, letter by letter. A Supabase project is NOT a
+#   COCO_RESTORE_TARGET_URL=<url> bash scripts/restore.sh [backup] --target [NAME]
+#       Restores into another plain Postgres. The URL is read from the
+#       environment variable NAME (COCO_RESTORE_TARGET_URL by default), never
+#       from the command line: argv is visible in `ps` to every process on the
+#       machine for as long as the restore runs. It asks you to type the name
+#       of the target database, letter by letter. A Supabase project is NOT a
 #       supported target (ADR 0033): `auth` and the bucket belong to the
 #       platform there, and that path was never rehearsed. Restoring into
 #       production is an owner STOP (docs/runbook.md, "Restore").
@@ -32,8 +35,10 @@
 # is already in _prisma_migrations and never runs again, so without this the
 # first table the next migration created would be born without a grant.
 #
-# Connections go in as PG* variables, never as a URL on a command line: argv
-# is visible in `ps`, and --target carries a password.
+# Connections go in as PG* variables, never as a URL on a command line, and
+# the target URL is exported to the one process that splits it, not to every
+# child: a password in the environment of pg_restore, psql or node is a
+# password in a crash report.
 #
 # The names inside a backup (`conteos.tsv`, `sumas.sha256`, `soportes/`) are
 # a stored format and stay as they are: every backup already on disk has them.
@@ -49,6 +54,8 @@ PRIVATE_KEY="${COCO_BACKUP_KEY:-${COCO_KEYS_DIR:-$HOME/.config/coco}/respaldo.ke
 ENV_FILE="${COCO_ENV_FILE:-api/.env.supabase}"
 LOCAL_DB="${COCO_RESTORE_DB:-coco_restore_test}"
 APP_ROLE=coco_app
+# shellcheck source=scripts/db/expected-policies.sh
+. scripts/db/expected-policies.sh
 
 export PATH="/opt/homebrew/opt/postgresql@17/bin:/opt/homebrew/opt/libpq/bin:$PATH"
 
@@ -59,12 +66,21 @@ stop() {
 
 BACKUP=""
 TARGET=""
+TARGET_VAR=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --target)
-      [ $# -ge 2 ] || stop "--target needs a url."
-      TARGET="$2"
-      shift 2
+      TARGET_VAR=COCO_RESTORE_TARGET_URL
+      # An optional NAME of the variable that holds the URL, like pg-env.mjs.
+      if [ $# -ge 2 ] && [[ "$2" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
+        TARGET_VAR="$2"
+        shift
+      elif [ $# -ge 2 ] && [[ "$2" == *://* ]]; then
+        stop "--target takes no url: put it in COCO_RESTORE_TARGET_URL (or --target NAME), never on the command line."
+      fi
+      TARGET="${!TARGET_VAR:-}"
+      [ -n "$TARGET" ] || stop "--target reads the url from \$$TARGET_VAR, which is empty."
+      shift
       ;;
     -*) stop "Unknown option: $1" ;;
     *)
@@ -109,8 +125,9 @@ else
 
   read -r -p "Type the name of the target database ($DB) to confirm: " CONFIRMATION </dev/tty
   [ "$CONFIRMATION" = "$DB" ] || stop "It does not match. Nothing was restored."
-  export TARGET
-  eval "$(node scripts/db/pg-env.mjs TARGET)"
+  # Exported to that one node process only (a prefix assignment), not to the
+  # whole script: the PG* variables it prints are what the children get.
+  eval "$(COCO_RESTORE_TARGET_URL="$TARGET" node scripts/db/pg-env.mjs COCO_RESTORE_TARGET_URL)"
 fi
 
 # ── 2. Open the backup ───────────────────────────────────────────────────────
@@ -217,11 +234,14 @@ set -e
 # ── 7. The privileges of the application role ───────────────────────────────
 # scripts/restore/check-app-role.sql: what the migrations narrowed must still
 # be narrow, what they granted must be there (tables, columns, sequences,
-# schemas, functions), and the defaults above must cover the next table. A
-# dump restored without its privileges passes the counts and fails here.
+# schemas, functions), the defaults above must cover the next table, and
+# row-level security must be forced on every table with all its policies. A
+# dump restored without its privileges passes the counts and fails here. A
+# function a pending migration has not created yet is not a failure (B1).
 echo "▸ Checking the privileges of ${APP_ROLE}…"
-WRONG="$(psql -X -A -t -v ON_ERROR_STOP=1 -v role="$APP_ROLE" -f scripts/restore/check-app-role.sql)"
-[ -z "$WRONG" ] || stop "The privileges of $APP_ROLE are NOT as the migrations left them: $WRONG."
+WRONG="$(psql -X -A -t -v ON_ERROR_STOP=1 -v role="$APP_ROLE" -v expected_policies="$EXPECTED_POLICIES" \
+  -f scripts/restore/check-app-role.sql)"
+[ -z "$WRONG" ] || stop "The privileges of $APP_ROLE are NOT as the migrations left them (scripts/restore/check-app-role.sql): $WRONG."
 echo "   as the migrations left them"
 
 echo "Restore verified."

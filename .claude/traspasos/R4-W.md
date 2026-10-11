@@ -17,7 +17,7 @@ typecheck, lint (+ `lint:spanish`), prettier, knip, depcruise, unitarias 17+57+8
 ## Pendiente (fuera del paso)
 
 - W5: `'texto-embebido'` → `'embedded-text'` en `read-receipt.ts`, `classify.ts` y la API a la vez.
-- `session.ts` tiene 383 líneas (límite 300); no se tocó para no crecer el paso.
+- ~~`session.ts` tiene 383 líneas (límite 300); no se tocó para no crecer el paso.~~ Falsa alarma (ronda 5, W4): `max-lines` descuenta blancos y comentarios y quedan 190 efectivas.
 - `npm test -- --coverage` no produce cobertura (los args van al `node --test` final); se usó `test:coverage --workspace frontend`.
 
 ## Borrado
