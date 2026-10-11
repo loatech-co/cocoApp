@@ -67,6 +67,8 @@ final actor NativeSession: Session {
         let (response, userJSON) = try Self.decodeSession(data)
         guard let refresh = response.refreshToken else { throw APIError.unreadableResponse }
         try keychain.write(refresh, for: .refreshToken)
+        // A new family: whatever the previous one left unsaved is no longer a session.
+        unsavedRefreshToken = nil
         publish(tokens: Self.tokens(from: response, userJSON: userJSON, now: clock()))
         return response.user
     }
@@ -96,7 +98,7 @@ final actor NativeSession: Session {
     /// whoever tapped «salir» does not see their session again because of a network failure.
     func signOut() async {
         closing = true
-        refreshInFlight?.cancel()
+        cancelRefreshInFlight()
         if let refresh = unsavedRefreshToken ?? ((try? storedRefreshToken()) ?? nil) {
             try? await api.sendWithoutBody(RequestBuilder.logout(refreshToken: refresh), token: nil)
         }
@@ -106,11 +108,18 @@ final actor NativeSession: Session {
     /// Local only: the web reported that the server already closed the family.
     func discard() async {
         closing = true
-        refreshInFlight?.cancel()
+        cancelRefreshInFlight()
         closeLocally()
     }
 
     // MARK: Refresh
+
+    /// Cancels and empties the slot at once: a caller arriving before the cancelled
+    /// waiter resumes must not inherit a refresh that will never answer.
+    private func cancelRefreshInFlight() {
+        refreshInFlight?.cancel()
+        refreshInFlight = nil
+    }
 
     private func sharedRefresh() async throws -> TokenPair {
         guard !closing else { throw SessionError.signedOut }

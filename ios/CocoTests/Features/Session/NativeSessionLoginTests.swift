@@ -1,3 +1,4 @@
+import Security
 import XCTest
 
 @testable import Coco
@@ -82,5 +83,28 @@ final class NativeSessionLoginTests: NativeSessionTestCase {
             #"{"meta":{"user":{"no":"este"}},"data":{"nota":"} {","user":{"a":"{\"x\":1}","b":[1,{"c":2}]},"otro":{}}}"#
         let raw = JSONSlicer.object(key: "user", inside: "data", at: Data(json.utf8))
         XCTAssertEqual(raw.flatMap { String(bytes: $0, encoding: .utf8) }, #"{"a":"{\"x\":1}","b":[1,{"c":2}]}"#)
+    }
+
+    // MARK: After an unsaved rotation
+
+    /// A refresh whose rotated token the Keychain refused to write, then a sign-in: the
+    /// new family starts clean and the next refresh uses what the sign-in wrote, not
+    /// the token the old family left in memory.
+    func testSignInDropsTheUnsavedTokenOfThePreviousFamily() async throws {
+        let a = harness(replies: [
+            .http(200, Self.sessionJSON(access: "a1", refresh: "r1")),
+            .http(200, Self.sessionJSON(access: "a2", refresh: "r2")),
+            .http(200, Self.sessionJSON(access: "a3", refresh: "r3")),
+        ])
+        a.keychain.writeFailure = KeychainError.system(errSecInteractionNotAllowed)
+        await a.session.restore()
+        XCTAssertEqual(a.keychain.values[.refreshToken], "r0")
+        a.keychain.writeFailure = nil
+        _ = try await a.session.signIn(email: "ana@coco.co", password: "secreta")
+        XCTAssertEqual(a.keychain.values[.refreshToken], "r2")
+        a.clock.advance(3600)
+        _ = try await a.session.validAccessToken()
+        XCTAssertEqual(a.transport.received.last.map(body), #"{"refreshToken":"r2"}"#)
+        XCTAssertEqual(a.keychain.values[.refreshToken], "r3")
     }
 }

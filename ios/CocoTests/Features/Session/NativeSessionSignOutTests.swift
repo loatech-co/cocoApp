@@ -92,4 +92,69 @@ final class NativeSessionSignOutTests: NativeSessionTestCase {
         XCTAssertEqual(restored, .active(Self.profile))
     }
 
+    // MARK: The slot after a cancel
+
+    /// `discard` cancels the refresh in flight and empties the slot at once. Whoever
+    /// asks before the cancelled waiter resumes must open its own path (here: no token,
+    /// so `signedOut`), not wait on a task that will never answer.
+    func testACallerArrivingRightAfterDiscardDoesNotInheritTheCancelledRefresh() async throws {
+        let transport = DeafTransport()
+        let keychain = InMemoryKeychain(values: [.refreshToken: "r0"])
+        let base = try XCTUnwrap(URL(string: "https://api.coco.invalid"))
+        let api = APIClient(configuration: APIConfiguration(base: base), transport: transport, version: "0.1.0")
+        let session = NativeSession(api: api, keychain: keychain, clock: Date.init)
+        let first = Task { try await session.validAccessToken() }
+        var arrivals = transport.arrivals.makeAsyncIterator()
+        _ = await arrivals.next()
+        await session.discard()
+        // The deaf transport keeps `first` alive: without an empty slot this would hang.
+        let second = Task { try await session.validAccessToken() }
+        let guardrail = Task {
+            try await Task.sleep(for: .seconds(2))
+            transport.release()
+        }
+        let asked = await second.result
+        guardrail.cancel()
+        transport.release()
+        XCTAssertThrowsError(try asked.get()) { XCTAssertEqual($0 as? SessionError, .signedOut) }
+        XCTAssertEqual(transport.received.compactMap { $0.url?.path() }, ["/api/v2/auth/refresh"])
+        _ = await first.result
+        let state = await session.state
+        XCTAssertEqual(state, .signedOut)
+    }
+}
+
+/// A transport that never answers and ignores cancellation: a request only ends
+/// when the test releases it. It keeps the window between a cancel and the
+/// waiter's return open as long as the test needs.
+/// `@unchecked Sendable`: a test double; what changes goes under `lock`.
+private final class DeafTransport: Transport, @unchecked Sendable {
+    private let lock = NSLock()
+    private var _received: [URLRequest] = []
+    private var waiting: [CheckedContinuation<Void, Never>] = []
+    private let continuation: AsyncStream<URLRequest>.Continuation
+    let arrivals: AsyncStream<URLRequest>
+
+    init() {
+        (arrivals, continuation) = AsyncStream.makeStream(of: URLRequest.self)
+    }
+
+    var received: [URLRequest] { lock.withLock { _received } }
+
+    func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        lock.withLock { _received.append(request) }
+        continuation.yield(request)
+        await withCheckedContinuation { c in lock.withLock { waiting.append(c) } }
+        try Task.checkCancellation()
+        throw APIError.unreadableResponse
+    }
+
+    func release() {
+        let pending = lock.withLock {
+            let p = waiting
+            waiting = []
+            return p
+        }
+        for c in pending { c.resume() }
+    }
 }

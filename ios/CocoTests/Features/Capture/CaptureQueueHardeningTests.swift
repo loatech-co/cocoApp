@@ -6,29 +6,7 @@ import XCTest
 /// budget reach the in-flight request, that an unreadable 2xx is not
 /// repeated, that the disk does not swallow errors and that an unreadable file is not
 /// lost.
-final class CaptureQueueHardeningTests: XCTestCase {
-    private var root: URL = URL(fileURLWithPath: "/")
-    private var sender = SenderDouble()
-    private var notifier = NotifierDouble()
-
-    override func setUpWithError() throws {
-        root = try TemporaryDirectory.directory()
-        sender = SenderDouble()
-        notifier = NotifierDouble()
-    }
-
-    override func tearDownWithError() throws {
-        try? FileManager.default.removeItem(at: root)
-    }
-
-    private func queue(store: QueueStore? = nil) -> CaptureQueue {
-        CaptureQueue(
-            store: store ?? DiskQueueStore(root: root), sender: sender, session: SessionDouble(),
-            notifier: notifier, retryPolicy: Retry(jitter: 0), spacing: .zero, shrinkPhoto: { $0 })
-    }
-
-    private let body = CaptureBody(merchant: "D1", amount: "45000", date: "2026-10-05")
-
+final class CaptureQueueHardeningTests: CaptureQueueTestCase {
     // MARK: Cancellation and budget
 
     /// A request that takes longer than the budget is cut when it runs out, and the

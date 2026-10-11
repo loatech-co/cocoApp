@@ -4,34 +4,7 @@ import XCTest
 
 /// What the queue does with each family of v2 problems: it is decided by the
 /// `code`, read from a `problem+json` body like the one the API sends.
-final class CaptureQueueProblemTests: XCTestCase {
-    private var root: URL = URL(fileURLWithPath: "/")
-    private var store: DiskQueueStore = .init(root: URL(fileURLWithPath: "/"))
-    private var sender = SenderDouble()
-    private var session = SessionDouble()
-    private var notifier = NotifierDouble()
-    private let now = CaptureQueueTestCase.ControlledNow()
-    private let body = CaptureBody(merchant: "D1", amount: "45000", date: "2026-10-05")
-
-    override func setUpWithError() throws {
-        root = try TemporaryDirectory.directory()
-        store = DiskQueueStore(root: root)
-        sender = SenderDouble()
-        session = SessionDouble()
-        notifier = NotifierDouble()
-    }
-
-    override func tearDownWithError() throws {
-        try? FileManager.default.removeItem(at: root)
-    }
-
-    private func queue() -> CaptureQueue {
-        let clock = now
-        return CaptureQueue(
-            store: store, sender: sender, session: session, notifier: notifier, retryPolicy: Retry(jitter: 0),
-            clock: { clock.read() }, spacing: .zero, shrinkPhoto: { $0 })
-    }
-
+final class CaptureQueueProblemTests: CaptureQueueTestCase {
     /// The error the client would give with that response.
     private func problem(_ status: Int, _ code: String, detail: String = "No cuadra") -> SenderDouble.Reply {
         .failure(APIError.from(status: status, body: Data(APIProblemTests.problem(status, code, detail: detail).utf8)))
