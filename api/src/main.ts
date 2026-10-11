@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { AppModule } from './app.module';
 import { configureApp, parseOrigins } from './bootstrap';
 import { whyTheEnvironmentIsInvalid } from './common/config/env';
-import { renamedEnvWarnings, whyRefuseToStart } from './common/env';
+import { readEnv, renamedEnvWarnings, whyRefuseToStart } from './common/env';
 import { defaultLogDirectory, JsonLogger, parseLogLevel } from './common/logging/json-logger';
 import { installSafetyNet } from './common/process/safety-net';
 import { installBigIntSerializer } from './common/serialization/bigint';
@@ -49,7 +49,7 @@ import { CONTRACT_VERSIONS, docsPath, setupApiDocs } from './openapi/document';
  * hPanel; the `.env` file that ships with the deployment has to change.
  */
 function loadConfiguration(): void {
-  const file = join(__dirname, '..', process.env.NODE_ENV === 'test' ? '.env.test' : '.env');
+  const file = join(__dirname, '..', readEnv('NODE_ENV') === 'test' ? '.env.test' : '.env');
   const { parsed } = loadDotenv({ path: file, override: true });
   if (!parsed) {
     Logger.warn(`${file} not found; using the environment variables.`, 'Bootstrap');
@@ -110,7 +110,7 @@ async function bootstrap(): Promise<void> {
   // the release folder (phase 6.8). Installed before anything else logs.
   const jsonLogger = new JsonLogger({
     directory: defaultLogDirectory(process.env),
-    minLevel: parseLogLevel(process.env.LOG_LEVEL),
+    minLevel: parseLogLevel(readEnv('LOG_LEVEL')),
   });
   Logger.overrideLogger(jsonLogger);
 
@@ -129,13 +129,15 @@ async function bootstrap(): Promise<void> {
 
   // Swagger UI at /api/docs/v2, never in production: the contract is already in
   // api/openapi.v2.json, and a live console beside real data is surface for nothing.
-  const areDocsServed = setupApiDocs(app, config.get<string>('NODE_ENV'));
+  // Through `isProduction` (readEnv), not `config.get('NODE_ENV')`: a quoted
+  // `"production"` would have served it.
+  const areDocsServed = setupApiDocs(app);
 
   // Closes Prisma cleanly when the host recycles the process.
   app.enableShutdownHooks();
 
   // Hostinger injects the port through an environment variable: never a fixed one.
-  const port = Number(config.get<string>('PORT') ?? 3000);
+  const port = Number(readEnv('PORT') ?? 3000);
   await app.listen(port, '0.0.0.0');
 
   logger.log(`API listening on http://localhost:${port}/api/v2`);

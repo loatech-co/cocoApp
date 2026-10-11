@@ -119,6 +119,9 @@ describe('JsonLogger', () => {
     expect(defaultLogDirectory({ NODE_ENV: 'production' })).toMatch(/logs\/coco-api$/);
     expect(defaultLogDirectory({ NODE_ENV: 'development' })).toBeUndefined();
     expect(defaultLogDirectory({ NODE_ENV: 'production', LOG_DIR: '/x' })).toBe('/x');
+    // The server hands the values with their quotes inside (S12).
+    expect(defaultLogDirectory({ NODE_ENV: '"production"' })).toMatch(/logs\/coco-api$/);
+    expect(defaultLogDirectory({ NODE_ENV: '"production"', LOG_DIR: '"/x"' })).toBe('/x');
     expect(parseLogLevel('debug')).toBe('debug');
     expect(parseLogLevel('nonsense')).toBe('log');
   });

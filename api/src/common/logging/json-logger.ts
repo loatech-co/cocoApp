@@ -12,6 +12,7 @@ import {
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
+import { isProduction, readEnv } from '../env';
 import { currentRequestId } from './request-context';
 
 /**
@@ -59,8 +60,9 @@ export function parseLogLevel(value: string | undefined): LogLevel {
 
 /** Production default: outside the release folder, which every deploy replaces. */
 export function defaultLogDirectory(env: NodeJS.ProcessEnv): string | undefined {
-  if (env.LOG_DIR) return env.LOG_DIR;
-  return env.NODE_ENV === 'production' ? join(homedir(), 'logs', 'coco-api') : undefined;
+  const directory = readEnv('LOG_DIR', env);
+  if (directory) return directory;
+  return isProduction(env) ? join(homedir(), 'logs', 'coco-api') : undefined;
 }
 
 export class JsonLogger implements LoggerService {

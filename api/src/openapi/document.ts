@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 
+import { isProduction } from '../common/env';
 import { BEARER_SCHEME } from '../contract/v2/openapi.decorators';
 
 /** The contract versions the API serves, each with its own document. */
@@ -114,11 +115,15 @@ export function createOpenApiDocument(
  * Serves Swagger UI for each version at `/api/docs/v<n>` unless the process
  * runs in production.
  *
+ * Production is read through `isProduction`, never as a raw `NODE_ENV`: the
+ * server hands the value with its quotes inside (`"production"`), and a raw
+ * comparison would serve a live console beside real data.
+ *
  * Returns whether it did, so the caller can log it and a test can pin the
  * production case.
  */
-export function setupApiDocs(app: INestApplication, nodeEnv: string | undefined): boolean {
-  if (nodeEnv === 'production') return false;
+export function setupApiDocs(app: INestApplication, env: NodeJS.ProcessEnv = process.env): boolean {
+  if (isProduction(env)) return false;
   for (const version of CONTRACT_VERSIONS) {
     SwaggerModule.setup(docsPath(version), app, () => createOpenApiDocument(app, version));
   }

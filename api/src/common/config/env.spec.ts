@@ -120,6 +120,16 @@ describe('whyTheEnvironmentIsInvalid', () => {
       );
     });
 
+    it('rejects a proxy hop count that is not a number, before trustProxyHops sees it (S17)', () => {
+      expect(whyTheEnvironmentIsInvalid({ ...CI_TEST_ENV, TRUST_PROXY_HOPS: 'one' })).toContain(
+        'TRUST_PROXY_HOPS must be the number of proxies',
+      );
+      expect(whyTheEnvironmentIsInvalid({ ...CI_TEST_ENV, TRUST_PROXY_HOPS: '-1' })).toContain(
+        'TRUST_PROXY_HOPS must be the number of proxies',
+      );
+      expect(whyTheEnvironmentIsInvalid({ ...CI_TEST_ENV, TRUST_PROXY_HOPS: '"2"' })).toBeNull();
+    });
+
     it('validates a renamed variable set only under its old name', () => {
       expect(
         whyTheEnvironmentIsInvalid({ ...CI_TEST_ENV, [RENAMED_ENV.RECEIPTS_STORAGE]: 's3' }),

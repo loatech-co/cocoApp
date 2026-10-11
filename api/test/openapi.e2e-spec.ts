@@ -153,7 +153,7 @@ describe('OpenAPI contract (api/openapi.v2.json)', () => {
     configureRouting(app);
 
     try {
-      expect(setupApiDocs(app, 'test')).toBe(true);
+      expect(setupApiDocs(app, { NODE_ENV: 'test' })).toBe(true);
 
       const server = app.getHttpServer();
       for (const { version, document } of DOCUMENTS) {
