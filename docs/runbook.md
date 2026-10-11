@@ -115,9 +115,13 @@ scripts/deploy-migrations.sh              # production: status, backup gate, con
   to go on unless the newest `coco-*.tar.age` in `$COCO_DATA_DIR/respaldos`
   (or the file named with `--backup <file>`) is younger than 24 h
   (`MAX_BACKUP_AGE_HOURS`). The restore test (`scripts/restore.sh`, exit `0`)
-  it cannot see: that is on whoever types `yes`. `--dry-run` runs the gates and
-  stops before the confirmation; `--env-file <file in api/>` points them at a
-  local database to rehearse.
+  it cannot see: that is on whoever types `yes`. Only a finished
+  `coco-<yyyymmdd>-<hhmmss>.tar.age` counts: `-incompleto` or `.partial`
+  files do not. `--dry-run` runs the gates and stops before the confirmation;
+  `--env-file <file in api/>` points them at a local database to rehearse,
+  and ONLY with `--dry-run`: the close and the check at the end always target
+  production (`sql:supabase` derives the project from `api/.env.supabase`),
+  so a real run with another env file is refused before anything happens.
 - **Read `migrate status` before confirming:** the pending list must be
   exactly the migrations you expect. Never pipe a blind `yes` into the script —
   that confirmation is the only check between a typo and production.
@@ -374,21 +378,35 @@ bash scripts/restore.sh [coco-<date>.tar.age | decrypted folder]
   `coco_restore_test` (or `$COCO_RESTORE_DB`, which must end in
   `_restore_test`), checks every file's sha256, compares the rows of every
   table of `public` and `auth` with `conteos.tsv`, and checks the privileges
-  of `coco_app` (no `DELETE` on `users`, `UPDATE` on three of its columns
-  only, no `UPDATE`/`DELETE` on `audit_log`, nothing on `_prisma_migrations`,
-  and the grants that must be there). Exit code 0 only if everything matches.
-  The throwaway database is dropped whatever happens, also halfway through a
-  failure: it holds real data, decrypted.
+  of `coco_app` (`scripts/restore/check-app-role.sql`: no `DELETE` on
+  `users`, `UPDATE` on three of its columns only, no `UPDATE`/`DELETE` on
+  `audit_log`, nothing on `_prisma_migrations`, no `CREATE` on `public`, no
+  `EXECUTE` on `guard_users_access`; and the grants that must be there:
+  tables, every sequence, `USAGE` on `public` and `app_private`, `EXECUTE`
+  on `set_user_access`, `is_own_category` and `auto_paid_owner_ids`, and the
+  default privileges for the next table a migration creates). Exit code 0
+  only if everything matches. The throwaway database is dropped whatever
+  happens, also halfway through a failure: it holds real data, decrypted.
 - **`--target <url>`:** restores into another plain Postgres after typing the
   name of the target database letter by letter. `coco_app` must exist there
   first (`scripts/db/create-app-role.sh`): the policies and the grants name it.
+  The URL reaches `psql` and `pg_restore` as `PG*` variables, never on their
+  command line.
 - **Privileges** ([ADR 0033](adr/0033-backups-carry-privileges.md)): objects
   go in first without them, then the GRANTs and REVOKEs of `public` and
   `app_private` in a second pass, keeping only the ones whose grantee exists
   on the target (or `PUBLIC`); the rest is listed ("skipped for roles missing
-  here: service_role (14)"), not applied. `auth` keeps none and
-  `ALTER DEFAULT PRIVILEGES` stay out: they belong to the owner role, which
-  the RLS migration sets.
+  here: service_role (14)"), not applied. `auth` keeps none. The dump's
+  `ALTER DEFAULT PRIVILEGES` stay out (they hang off the owner role, which
+  `--no-owner` leaves behind); `restore.sh` sets them again as the role it
+  connects with, which owns every restored table, because the RLS migration
+  that set them is already in `_prisma_migrations` and never runs again.
+- **If a restore test fails with `public CREATE`** after a real production
+  backup: the dump carried a `CREATE` on `public` granted `TO PUBLIC`.
+  Check it once in production, `npm run sql:supabase -- "SELECT nspacl FROM
+pg_namespace WHERE nspname = 'public'"`, and if `=C` or `=UC` is there,
+  `REVOKE CREATE ON SCHEMA public FROM PUBLIC` (owner action: `coco_app`
+  must not create tables).
 - **A Supabase project is NOT a supported target** and `restore.sh` refuses
   it: `auth` and Storage belong to the platform there, `auth.schema_migrations`
   of a new project collides with the backup's, and that path was never
@@ -408,6 +426,8 @@ node scripts/restore/filter-privileges.mjs --roles <roles of the target> | psql`
      `scripts/receipts/copy-to-storage.mjs --from coco-<date>/soportes` (it
      verifies every file by sha256);
   6. point `DATABASE_URL` / `DIRECT_URL` at it (see [Rotate secrets](#rotate-secrets)).
+- A relative backup path (or a relative target folder for `backup.sh`) is
+  taken from where the command was typed.
 - The older `coco-<date>.sql` files (public only, plain SQL) restore with
   `createdb coco_restore && psql -v ON_ERROR_STOP=1 -d coco_restore -f <file>`.
 

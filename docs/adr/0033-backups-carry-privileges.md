@@ -33,13 +33,21 @@ first one.
    through `scripts/restore/filter-privileges.mjs`, which keeps a GRANT or
    REVOKE only if its grantee is `PUBLIC` or a role of the target
    (`pg_roles`) and reports the rest. `auth` keeps none (they are the
-   platform's) and `DEFAULT ACL` entries stay out: they hang off the owner
-   role, which `--no-owner` already leaves behind, and the RLS migration owns
-   them.
-3. **The restore verifies the privileges of `coco_app`** and exits `1` if
-   they are wider or narrower than the migrations left them. A dump without
-   privileges (every backup before this ADR) restores its data and fails this
-   check.
+   platform's) and the dump's `DEFAULT ACL` entries stay out: they hang off
+   the owner role, which `--no-owner` already leaves behind. The restore then
+   runs the two `ALTER DEFAULT PRIVILEGES … TO coco_app` of migration
+   `20261006000000` itself, as the role it connects with (the owner of every
+   restored object): that migration is already in `_prisma_migrations` and
+   never runs again, so without this the first table the next migration
+   created would be born without a grant (round 4, B1).
+3. **The restore verifies the privileges of `coco_app`**
+   (`scripts/restore/check-app-role.sql`) and exits `1` if they are wider or
+   narrower than the migrations left them: tables and columns, every
+   sequence, `USAGE` on both schemas and no `CREATE` on `public`, `EXECUTE`
+   on the three policy helpers and not on `guard_users_access`, and the
+   default privileges above, read from `pg_default_acl` of the owner of
+   `public.users` (round 4, B2). A dump without privileges (every backup
+   before this ADR) restores its data and fails this check.
 4. **A Supabase project is not a target of `restore.sh`.** The script refuses
    it; the runbook keeps the manual recipe for a new project, marked as never
    rehearsed. `--i-know-this-is-production` is gone with it: restoring into
@@ -59,8 +67,19 @@ first one.
   on a target that has the role they come back. Neither case touches what
   `coco_app` may do.
 - Older backups are still complete for data; the runbook says how to use one.
+- The `CREATE` on `public` row is the one check that cannot be rehearsed
+  locally against production's real `nspacl` (the filter keeps grants `TO
+PUBLIC`): if the first real backup after round 4 fails there, the runbook
+  ("Restore") says what the owner revokes in production.
+- Connections never travel as a URL on a command line: `pg_dump`, `psql` and
+  `pg_restore` get the `PG*` variables (`scripts/db/pg-env.mjs`), because
+  argv is visible in `ps` and the URL carries the password (round 4, S10).
 
 Rehearsed on 2026-10-10 against a local source database with seed rows, a
 temporary role granted everything (present at backup time, dropped before a
 second restore: 14 statements skipped), a tampered manifest (exit 1, database
 dropped) and a restore test made to fail inside `backup.sh` (no archive left).
+Again on 2026-10-11 (round 4): a full backup verified with the wider check
+(37 privilege statements, defaults included); `USAGE` on `app_private`
+revoked in the source → the restore test names it and no archive is left;
+relative paths; an `-incompleto` file newer than the real backup ignored.
