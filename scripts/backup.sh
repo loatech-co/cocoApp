@@ -104,13 +104,15 @@ npx dotenv -e "$ENV_FILE" -- node scripts/backup/extract.mjs --out "$PLAIN"
 echo "▸ Encrypting with age…"
 tar -C "$WORKDIR" -cf - "$NAME" | age -r "$RECIPIENT" -o "$ARCHIVE.partial"
 chmod 600 "$ARCHIVE.partial"
-mv "$ARCHIVE.partial" "$ARCHIVE"
-echo "   $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1))"
+echo "   $ARCHIVE.partial ($(du -h "$ARCHIVE.partial" | cut -f1))"
 
+# The file keeps its .partial name until the restore test passes: a backup
+# that failed its test must never look like a valid one (R3-B4). If the test
+# fails, the trap removes it.
 echo "▸ Testing the restore…"
 if [ -f "$PRIVATE_KEY" ]; then
   # Tests what was really stored: the encrypted file.
-  bash scripts/restore.sh "$ARCHIVE"
+  bash scripts/restore.sh "$ARCHIVE.partial"
 else
   # Without the private key on this machine it cannot be decrypted. The
   # plain copy is tested instead, with a warning: that the encryption opens
@@ -118,6 +120,7 @@ else
   bash scripts/restore.sh "$PLAIN"
   echo "⚠️  The private key is not at $PRIVATE_KEY: the plain copy was tested, not the encrypted file." >&2
 fi
+mv "$ARCHIVE.partial" "$ARCHIVE"
 
 # ── Is it off the laptop? ────────────────────────────────────────────────────
 # A folder syncs with iCloud Drive if it, or a parent, belongs to the iCloud

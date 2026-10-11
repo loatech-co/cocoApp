@@ -52,6 +52,7 @@ TABLES=(
   tags
   import_batches
   transactions
+  soportes
   transaction_splits
   transaction_tags
   import_rows

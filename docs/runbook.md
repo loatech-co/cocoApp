@@ -273,9 +273,11 @@ holding
 
 - `db.dump` — `pg_dump` custom format of the `public` schema (the app), the
   `auth` schema (Supabase users, identities and sessions) and `app_private`
-  (the functions the policies call). Without `auth`, a restored `public` gives
-  back the data of accounts nobody can log into; without `app_private`, its
-  policies fail;
+  (the functions the policies call), with their GRANTs and REVOKEs (only
+  ownership is left out). Without `auth`, a restored `public` gives back the
+  data of accounts nobody can log into; without `app_private`, its policies
+  fail; without the privileges, `coco_app` comes back with everything or
+  with nothing ([ADR 0033](adr/0033-backups-carry-privileges.md));
 - `soportes/` — every object of the private `soportes` bucket, each one checked
   by sha256 against `soportes.huella` while downloading;
 - `conteos.tsv` — the row count of every table in both schemas;
@@ -293,6 +295,17 @@ lands in `respaldos/`.
 
 The run of 2026-10-05: 41 tables and 3,040 rows, 463 objects (31 MB), a 32 MB
 file; about 90 s to back up and 15 s to restore and count.
+
+The file is `coco-<date>.tar.age.partial` until the restore test passes, and
+only then takes its final name: a backup whose test failed is removed, never
+left looking like a valid one.
+
+**Backups taken before 2026-10-10 (R3-B) carry no privileges.** Their data
+restores whole, but `restore.sh` ends with "The privileges of coco_app are
+NOT as the migrations left them" and exit `1`: they are not the
+precondition of a migration or a deletion. To use one, restore it with
+`--target` and re-run the GRANT/REVOKE statements of migrations
+`20261006000000`, `20261006000200` and `20261006000300` by hand.
 
 **`coco-20261009-185546` is incomplete**: it was taken before the backup
 dumped `app_private`, so it does not restore the policies' functions. It was
@@ -360,21 +373,41 @@ bash scripts/restore.sh [coco-<date>.tar.age | decrypted folder]
 - **No `--target`:** restores into the local throwaway database
   `coco_restore_test` (or `$COCO_RESTORE_DB`, which must end in
   `_restore_test`), checks every file's sha256, compares the rows of every
-  table of `public` and `auth` with `conteos.tsv`, and drops the database.
-  Exit code 0 only if everything matches.
-- **`--target <url>`:** restores elsewhere after typing the name of the
-  target database letter by letter. A production URL (the ref in
-  `api/.env.supabase`; without that file, any Supabase URL) is refused unless
-  `--i-know-this-is-production` is also passed. **Restoring into production is
-  a stop for the owner.**
-- Into a Supabase project, `auth` goes in data-only (Supabase owns the schema),
-  so it is for a NEW project with an empty `auth`. Then run
-  `close-data-api.sql` and point `DATABASE_URL` / `DIRECT_URL` at it
-  (see [Rotate secrets](#rotate-secrets)). This path has not been run yet.
-- The bucket is not uploaded by `restore.sh`. Decrypt by hand and re-upload:
-  `age -d -i ~/.config/coco/respaldo.key coco-<date>.tar.age | tar -xf -`, then
-  `scripts/receipts/copy-to-storage.mjs --from coco-<date>/soportes` (it
-  verifies every file by sha256).
+  table of `public` and `auth` with `conteos.tsv`, and checks the privileges
+  of `coco_app` (no `DELETE` on `users`, `UPDATE` on three of its columns
+  only, no `UPDATE`/`DELETE` on `audit_log`, nothing on `_prisma_migrations`,
+  and the grants that must be there). Exit code 0 only if everything matches.
+  The throwaway database is dropped whatever happens, also halfway through a
+  failure: it holds real data, decrypted.
+- **`--target <url>`:** restores into another plain Postgres after typing the
+  name of the target database letter by letter. `coco_app` must exist there
+  first (`scripts/db/create-app-role.sh`): the policies and the grants name it.
+- **Privileges** ([ADR 0033](adr/0033-backups-carry-privileges.md)): objects
+  go in first without them, then the GRANTs and REVOKEs of `public` and
+  `app_private` in a second pass, keeping only the ones whose grantee exists
+  on the target (or `PUBLIC`); the rest is listed ("skipped for roles missing
+  here: service_role (14)"), not applied. `auth` keeps none and
+  `ALTER DEFAULT PRIVILEGES` stay out: they belong to the owner role, which
+  the RLS migration sets.
+- **A Supabase project is NOT a supported target** and `restore.sh` refuses
+  it: `auth` and Storage belong to the platform there, `auth.schema_migrations`
+  of a new project collides with the backup's, and that path was never
+  rehearsed. If the project is lost, the owner restores into a new one by hand:
+  1. create the project, run `scripts/db/create-app-role.sh` against it;
+  2. `pg_restore --no-owner --no-privileges --exit-on-error --schema=app_private --schema=public -d <url> db.dump`,
+     then the privileges as `restore.sh` does them (`pg_restore -l`, keep the
+     `ACL` lines of `public` and `app_private`, `pg_restore -L … -f - |
+node scripts/restore/filter-privileges.mjs --roles <roles of the target> | psql`),
+     and `ALTER DEFAULT PRIVILEGES IN SCHEMA public …` from migration
+     `20261006000000` as the owner;
+  3. `auth`: `pg_restore --data-only --schema=auth -L <list without auth.schema_migrations>`;
+     the users keep their ids, so `users.auth_id` still matches;
+  4. `scripts/close-data-api.sql`, then `bash scripts/verify-data-api-closed.sh`;
+  5. the bucket: decrypt by hand and re-upload,
+     `age -d -i ~/.config/coco/respaldo.key coco-<date>.tar.age | tar -xf -`, then
+     `scripts/receipts/copy-to-storage.mjs --from coco-<date>/soportes` (it
+     verifies every file by sha256);
+  6. point `DATABASE_URL` / `DIRECT_URL` at it (see [Rotate secrets](#rotate-secrets)).
 - The older `coco-<date>.sql` files (public only, plain SQL) restore with
   `createdb coco_restore && psql -v ON_ERROR_STOP=1 -d coco_restore -f <file>`.
 

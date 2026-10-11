@@ -3,7 +3,10 @@
 //
 //   <out>/db.dump        pg_dump custom format of the `public`, `auth` and
 //                        `app_private` schemas (the last holds the helpers the
-//                        row-level security policies call, ADR 0024)
+//                        row-level security policies call, ADR 0024), with
+//                        their GRANTs and REVOKEs: the ones that narrow
+//                        `coco_app` are part of the schema (ADR 0033). Only
+//                        ownership is left out (--no-owner).
 //   <out>/conteos.tsv    "schema.table<TAB>rows" for every table in both schemas
 //   <out>/soportes/…     every object of the private `soportes` bucket
 //   <out>/sumas.sha256   sha256 of every downloaded object (shasum -c format)
@@ -74,7 +77,6 @@ function dump(snapshot, file) {
         '--schema=auth',
         '--schema=app_private',
         '--no-owner',
-        '--no-privileges',
         `--file=${file}`,
       ],
       { stdio: ['ignore', 'inherit', 'inherit'] },
