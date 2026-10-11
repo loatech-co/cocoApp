@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { useHistory } from '@/features/transactions/api/transactions';
 import { rangeOf, type Filters, type Preset } from '@/features/transactions/model/filters';
+import { todayInBogota } from '@/shared/lib/format';
 import { monthOfIso, type VisibleMonth } from '@/shared/ui/molecules/calendar';
 
 /** The two dates in order, however they come: it can be painted backwards. */
@@ -18,7 +19,7 @@ export interface Draft {
 /** The month worth showing on opening: where the range ends. */
 function draftMonth(b: Draft): VisibleMonth {
   // In "Todo" the range can reach far; opening over there helps nobody.
-  return monthOfIso(b.preset === 'all' ? new Date().toISOString().slice(0, 10) : b.to);
+  return monthOfIso(b.preset === 'all' ? todayInBogota() : b.to);
 }
 
 /** The half-picked range: the draft, the first click and the month in view. */

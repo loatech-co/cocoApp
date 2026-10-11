@@ -185,6 +185,16 @@ function usePasswordChange() {
 /** Signing out: here, inside the app, and on every device. */
 function SessionCards({ isEmbedded }: { isEmbedded: boolean }) {
   const { signOut, signOutEverywhere } = useAuth();
+  // Closing everywhere can fail —an expired token, the server— and the
+  // person must see it: a silent failure would leave the other devices in
+  // while this one looked signed out.
+  const [error, setError] = useState<string | null>(null);
+
+  function onSignOutEverywhere(): void {
+    setError(null);
+    void signOutEverywhere().catch((cause: unknown) => setError(authErrorMessage(cause)));
+  }
+
   return (
     <>
       {isEmbedded && (
@@ -208,7 +218,12 @@ function SessionCards({ isEmbedded }: { isEmbedded: boolean }) {
           <CardDescription>{t('profile.account.signOutAllHelp')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" onClick={() => void signOutEverywhere()}>
+          {error && (
+            <div className="mb-4">
+              <ErrorAlert message={error} />
+            </div>
+          )}
+          <Button variant="outline" onClick={onSignOutEverywhere}>
             <LogOut aria-hidden="true" />
             {t('profile.account.signOutAll')}
           </Button>

@@ -19,7 +19,10 @@ export const keys = {
   receipts: (transactionId: number) => ['soportes', transactionId] as const,
 };
 
-/** What changes when a movement changes: its lists, the accounts and the summary. */
+/**
+ * What changes when a movement changes: its lists, the accounts, the summary
+ * and the history's ends (the first or last movement may be the one that moved).
+ */
 export function useInvalidateDerived() {
   const queryClient = useQueryClient();
   return () => invalidateDerived(queryClient);
@@ -30,4 +33,5 @@ export function invalidateDerived(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: ['transactions'] });
   void queryClient.invalidateQueries({ queryKey: keys.accounts });
   void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+  void queryClient.invalidateQueries({ queryKey: keys.history });
 }

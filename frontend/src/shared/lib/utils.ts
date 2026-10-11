@@ -44,3 +44,16 @@ export function digitsOnly(typed: string): string {
   // Two commas are not a number. The first stays and the rest is appended after it.
   return rest.length > 0 ? `${integerPart},${rest.join('')}` : integerPart;
 }
+
+/**
+ * An amount as the API writes it (`'45000.50'`) turned into what the money
+ * field understands: digits and a decimal COMMA, without the `.00` that
+ * nobody typed.
+ *
+ * The field keeps digits and commas only: handed `'45000.5'` it painted
+ * «450.005» and the first keystroke saved a value a hundred times larger.
+ */
+export function typedAmount(amount: string): string {
+  const [integerPart = '', cents = ''] = amount.split('.');
+  return /^0*$/.test(cents) ? integerPart : `${integerPart},${cents}`;
+}

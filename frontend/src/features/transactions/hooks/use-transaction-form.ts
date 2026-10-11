@@ -8,7 +8,6 @@ import {
   type Origin,
 } from '@/features/transactions/model/precedence';
 import {
-  todayInBogota,
   initialAmountAndDate,
   type ReceiptCandidate,
 } from '@/features/transactions/model/transaction-form';
@@ -17,6 +16,7 @@ import {
   type Transaction,
   type TransactionType,
 } from '@/shared/api/generated/model';
+import { todayInBogota } from '@/shared/lib/format';
 import { useOnChange } from '@/shared/lib/on-change';
 import type { Reading } from '@coco/receipt-parser';
 

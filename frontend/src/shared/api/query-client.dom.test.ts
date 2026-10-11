@@ -45,11 +45,12 @@ describe('refocus(): the phone app came back to the foreground', () => {
 });
 
 describe('invalidateDerived(): what `captured` refreshes', () => {
-  it('marks movements, accounts and the summary stale, and nothing else', () => {
+  it('marks movements, accounts, the summary and the history stale, and nothing else', () => {
     const client = createQueryClient();
     client.setQueryData(keys.transactions({ page: 1 }), {});
     client.setQueryData(keys.dashboard(), {});
     client.setQueryData(keys.accounts, []);
+    client.setQueryData(keys.history, {});
     client.setQueryData(keys.categories, []);
 
     invalidateDerived(client);
@@ -58,6 +59,7 @@ describe('invalidateDerived(): what `captured` refreshes', () => {
     expect(stale(keys.transactions({ page: 1 }))).toBe(true);
     expect(stale(keys.dashboard())).toBe(true);
     expect(stale(keys.accounts)).toBe(true);
+    expect(stale(keys.history)).toBe(true);
     expect(stale(keys.categories)).toBe(false);
   });
 });

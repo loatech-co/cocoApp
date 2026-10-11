@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-import { WEEKDAYS, longDay, LONG_MONTHS } from '@/shared/lib/format';
+import { WEEKDAYS, longDay, LONG_MONTHS, todayInBogota } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
@@ -75,13 +75,13 @@ export function Calendar({
   className,
 }: CalendarProps) {
   const [ownView, setOwnView] = useState<VisibleMonth>(() =>
-    monthOfIso(from ?? to ?? toIso(new Date())),
+    monthOfIso(from ?? to ?? todayInBogota()),
   );
   const current = view ?? ownView;
   const changeView = onViewChange ?? setOwnView;
 
   const cells = monthCells(current.year, current.month);
-  const today = toIso(new Date());
+  const today = todayInBogota();
 
   function moveMonth(steps: number): void {
     const d = utc(current.year, current.month + steps, 1);

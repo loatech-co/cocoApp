@@ -17,7 +17,7 @@ const auth = {
 
 vi.mock('@/shared/api/auth-context', () => ({
   useAuth: () => auth,
-  authErrorMessage: () => '',
+  authErrorMessage: (cause: unknown) => (cause instanceof Error ? cause.message : ''),
   errorDetails: () => [],
 }));
 
@@ -41,6 +41,7 @@ function renderShell(at = '/account') {
 beforeEach(() => {
   auth.isAdmin = false;
   auth.signOut.mockClear();
+  auth.signOutEverywhere.mockReset().mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -92,6 +93,17 @@ describe('My account outside the app', () => {
     expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).toBeNull();
     expect(screen.queryByRole('navigation', { name: 'Administración' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Cerrar todo' })).toBeTruthy();
+  });
+
+  it('shows the failure when closing everywhere does not go through', async () => {
+    leaveNativeApp();
+    auth.signOutEverywhere.mockRejectedValue(new Error('no se pudo cerrar'));
+    renderShell();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar todo' }));
+
+    expect(await screen.findByText('no se pudo cerrar')).toBeTruthy();
+    expect(auth.signOutEverywhere).toHaveBeenCalledTimes(1);
   });
 });
 

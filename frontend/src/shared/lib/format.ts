@@ -28,6 +28,22 @@ const inUtc = (options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat =>
   new Intl.DateTimeFormat(LOCALE, { ...options, timeZone: 'UTC' });
 
 const monthName = inUtc({ month: 'long' });
+
+/** The app's clock is Bogotá's (UTC−5), which has no daylight saving time. */
+const BOGOTA_OFFSET_MS = 5 * 60 * 60 * 1000;
+
+/**
+ * Today in America/Bogota, as `YYYY-MM-DD`.
+ *
+ * A bare `new Date().toISOString()` gives the UTC day, which between 19:00
+ * and midnight in Bogotá is already TOMORROW: the calendar ringed a day that
+ * had not started and the ranges ended on it. And the browser's local day is
+ * no better: it moves with whoever travels. The app's day is Bogotá's, the
+ * same for everyone, and it is computed in exactly one place.
+ */
+export function todayInBogota(): string {
+  return new Date(Date.now() - BOGOTA_OFFSET_MS).toISOString().slice(0, 10);
+}
 const weekdayName = inUtc({ weekday: 'long' });
 const longDayFormat = inUtc({ day: 'numeric', month: 'long', year: 'numeric' });
 const longMonthFormat = inUtc({ month: 'long', year: 'numeric' });

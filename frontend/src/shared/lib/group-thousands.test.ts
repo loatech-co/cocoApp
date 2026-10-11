@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupThousands, digitsOnly } from './utils';
+import { groupThousands, digitsOnly, typedAmount } from './utils';
 
 /**
  * The value field is typed with the dots in place.
@@ -55,5 +55,19 @@ describe('What is kept of what was typed', () => {
     for (const typed of ['1.504.200', '453.132', '1.234,50']) {
       expect(groupThousands(digitsOnly(typed))).toBe(typed);
     }
+  });
+});
+
+describe('typedAmount()', () => {
+  it('turns the API decimal into digits with a comma, and drops the empty cents', () => {
+    expect(typedAmount('45000.50')).toBe('45000,50');
+    expect(typedAmount('120000.00')).toBe('120000');
+    expect(typedAmount('7')).toBe('7');
+  });
+
+  it('what it returns is what the field shows and keeps, without multiplying', () => {
+    const typed = typedAmount('45000.50');
+    expect(groupThousands(typed)).toBe('45.000,50');
+    expect(digitsOnly(groupThousands(typed))).toBe(typed);
   });
 });

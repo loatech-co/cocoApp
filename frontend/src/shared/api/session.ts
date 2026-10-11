@@ -61,6 +61,13 @@ const AUTH = {
  */
 const RENEWAL_MARGIN_MS = 60_000;
 
+/**
+ * How soon to try again when a renewal fails for a reason that is not the
+ * server's «no»: a network drop, a 5xx in the middle of a deploy. Short,
+ * because the token keeps counting down meanwhile.
+ */
+const RENEWAL_RETRY_MS = 5_000;
+
 export interface SessionState {
   user: Profile | null;
   /** `true` until the first attempt to restore the session finishes. */
@@ -155,13 +162,20 @@ function clearSession(): void {
  * fifteen minutes —and with it a flicker or a visible retry—. Renewing a
  * minute early means that never happens in normal use.
  */
-function scheduleRenewal(): void {
+function scheduleRenewal(afterMs = expiresAt - Date.now() - RENEWAL_MARGIN_MS): void {
   if (renewalTimer) clearTimeout(renewalTimer);
 
-  const delay = Math.max(expiresAt - Date.now() - RENEWAL_MARGIN_MS, 5_000);
-  renewalTimer = setTimeout(() => {
-    void renew();
-  }, delay);
+  renewalTimer = setTimeout(
+    () => {
+      void renew();
+    },
+    Math.max(afterMs, 5_000),
+  );
+}
+
+/** The server itself rejected the refresh: the session is over, not delayed. */
+function isAuthRejection(error: unknown): boolean {
+  return error instanceof SessionError && (error.status === 401 || error.status === 403);
 }
 
 export function isTokenExpiring(): boolean {
@@ -232,10 +246,19 @@ export async function signUp(
  * because that is the normal case of someone opening the app without having
  * signed in.
  *
- * The `catch` does NOT tell the app. A bridge failure —network, timeout— says
- * nothing about the keychain, and reporting «session closed» because of a
- * network drop would make it delete a perfectly valid refresh. The web clears
- * its memory and `RequireAuth` waits for the app to push the session.
+ * ── What a failure means depends on who failed ──────────────────────────────
+ * A 401 or 403 is the server saying the refresh is gone: the memory is
+ * cleared and the sign-in screen follows. Anything else —a network drop, a
+ * 5xx in the middle of a deploy— says nothing about the cookie: the token
+ * that is still there stays, and the renewal is tried again shortly. Sending
+ * someone to sign in because the server was restarting threw away a session
+ * the cookie would have restored in seconds.
+ *
+ * The `catch` does NOT tell the app either. A bridge failure —network,
+ * timeout— says nothing about the keychain, and reporting «session closed»
+ * because of a network drop would make it delete a perfectly valid refresh.
+ * Without a token to keep, the web clears its memory and `RequireAuth` waits
+ * for the app to push the session.
  */
 export async function renew(): Promise<boolean> {
   renewalInFlight ??= (async () => {
@@ -246,8 +269,9 @@ export async function renew(): Promise<boolean> {
         isInNativeApp() ? await requestSession() : await callAuth<Session>(AUTH.refresh),
       );
       return true;
-    } catch {
-      clearSession();
+    } catch (error) {
+      if (isAuthRejection(error) || accessToken === null) clearSession();
+      else scheduleRenewal(RENEWAL_RETRY_MS);
       return false;
     } finally {
       renewalInFlight = null;
@@ -282,22 +306,36 @@ export async function signOut(): Promise<void> {
   }
 }
 
+/**
+ * Closes every session of the account, this one included.
+ *
+ * The token is renewed first if it is about to expire: this call does not go
+ * through the API client, so nobody else would. And a 401 is a FAILURE, not
+ * a session that was already closed: with an expired token the server has
+ * closed nothing, and the other devices would stay signed in while this one
+ * reported success.
+ */
 export async function signOutEverywhere(): Promise<void> {
+  if (isTokenExpiring()) await renew();
+
   const response = await fetch(`${API_ORIGIN}${AUTH.logoutAll}`, {
     method: 'POST',
     credentials: 'include',
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
+  if (!response.ok) {
+    throw new SessionError(response.status, 'logout_all_failed', t('errors.signOutAllFailed'));
+  }
+
   clearSession();
   // The server already killed the whole family, the keychain's included: the
   // app only has to discard it, without calling anything.
   if (isInNativeApp()) notifyApp({ type: 'sessionClosed' });
-  if (!response.ok && response.status !== 401) {
-    throw new SessionError(response.status, 'logout_all_failed', t('errors.signOutAllFailed'));
-  }
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  if (isTokenExpiring()) await renew();
+
   const response = await fetch(`${API_ORIGIN}${AUTH.changePassword}`, {
     method: 'POST',
     credentials: 'include',

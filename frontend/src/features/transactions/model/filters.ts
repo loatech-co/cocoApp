@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useHistory } from '@/features/transactions/api/transactions';
+import { todayInBogota } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 
 /**
@@ -62,16 +63,11 @@ export const PRESETS: { value: Preset; label: string; help: string }[] = [
  * then "today" would change depending on where the person is. The app's month has
  * to start and end the same for everyone.
  */
-function todayInBogota(): Date {
-  const now = new Date();
-  return new Date(now.getTime() - 5 * 60 * 60 * 1000);
-}
-
 const aISO = (date: Date): string => date.toISOString().slice(0, 10);
 
 /** Today in Bogotá, as `YYYY-MM-DD`. */
 function todayIso(): string {
-  return aISO(todayInBogota());
+  return todayInBogota();
 }
 
 /**
@@ -100,7 +96,7 @@ export function rangeOf(
   preset: Preset,
   history?: { first: string | null; last: string | null },
 ): { from: string; to: string } {
-  const today = todayInBogota();
+  const today = new Date(todayInBogota());
   const a = today.getUTCFullYear();
   const m = today.getUTCMonth();
   const d = today.getUTCDate();

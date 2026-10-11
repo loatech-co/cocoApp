@@ -138,4 +138,21 @@ describe('Calendar', () => {
 
     expect(monthShown()).toMatch(/ de \d{4}$/);
   });
+
+  it('rings today by the Bogotá clock: late in the evening UTC has already turned', () => {
+    vi.useFakeTimers();
+    // 02:30 UTC on the 15th is 21:30 on the 14th in Bogotá.
+    vi.setSystemTime(new Date('2026-03-15T02:30:00Z'));
+    try {
+      render(<Calendar onSelectDay={vi.fn()} />);
+
+      expect(monthShown()).toBe('marzo de 2026');
+      const ringed = (name: string) =>
+        screen.getByRole('button', { name }).className.includes('ring-accent-ink');
+      expect(ringed('14 de marzo de 2026')).toBe(true);
+      expect(ringed('15 de marzo de 2026')).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

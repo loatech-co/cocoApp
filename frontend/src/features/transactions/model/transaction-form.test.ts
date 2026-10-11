@@ -10,7 +10,6 @@ import {
 } from '@coco/receipt-parser';
 
 import {
-  todayInBogota,
   initialAmountAndDate,
   capitalize,
   typeName,
@@ -63,17 +62,6 @@ function reading(parts: Partial<Reading>): Reading {
   };
 }
 
-describe('todayInBogota', () => {
-  afterEach(() => vi.useRealTimers());
-
-  it('is still the previous day in the first hours after UTC midnight', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-03-01T03:00:00Z'));
-
-    expect(todayInBogota()).toBe('2026-02-28');
-  });
-});
-
 describe('typeName and capitalize', () => {
   it('names an income and everything else as an expense', () => {
     expect(typeName('income')).toBe('ingreso');
@@ -104,10 +92,18 @@ describe('initialAmountAndDate', () => {
   it('opens a transaction with its own amount and date', () => {
     const transaction = { amount: '45000.50', date: '2026-04-02' } as Transaction;
 
+    // With the decimal COMMA the field reads: with the dot it painted
+    // «450.005» and the first keystroke saved a hundred times more.
     expect(initialAmountAndDate(transaction, payment({}))).toEqual({
-      amount: '45000.5',
+      amount: '45000,50',
       date: '2026-04-02',
     });
+  });
+
+  it('keeps the cents of an expected amount too', () => {
+    expect(initialAmountAndDate(null, payment({ expectedAmount: '12500.25' })).amount).toBe(
+      '12500,25',
+    );
   });
 
   it('confirms a pending payment with the expected amount on its due date', () => {

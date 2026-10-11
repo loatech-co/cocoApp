@@ -4,7 +4,9 @@ import {
   type Transaction,
   type TransactionType,
 } from '@/shared/api/generated/model';
+import { todayInBogota } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
+import { typedAmount } from '@/shared/lib/utils';
 import {
   searchInTree,
   normalize,
@@ -33,10 +35,6 @@ export interface AutoProposal {
   categoryId: number | undefined;
   origin: Origin;
   candidates?: ReceiptCandidate[];
-}
-
-export function todayInBogota(): string {
-  return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 /** `expense` → "gasto". The type, said the way it is said. */
@@ -84,9 +82,9 @@ export function initialAmountAndDate(
 
   return {
     amount: transaction
-      ? String(Number(transaction.amount))
+      ? typedAmount(transaction.amount)
       : !isPayingIntoConcept && payment?.expectedAmount != null
-        ? String(Number(payment.expectedAmount))
+        ? typedAmount(payment.expectedAmount)
         : '',
     date:
       transaction?.date ??

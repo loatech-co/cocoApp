@@ -2,7 +2,7 @@ import { Filter } from 'lucide-react';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { type PendingPayment } from '@/shared/api/generated/model';
-import { shortDay, formatCOP } from '@/shared/lib/format';
+import { shortDay, formatCOP, todayInBogota } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
@@ -11,11 +11,6 @@ import { Checkbox } from '@/shared/ui/atoms/checkbox';
 import { Progress } from '@/shared/ui/atoms/progress';
 import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 import { Menu, MenuTitle } from '@/shared/ui/molecules/menu';
-
-/** Today in America/Bogota, to know what is already overdue. */
-function today(): string {
-  return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
-}
 
 /**
  * What is left to pay this month.
@@ -44,7 +39,7 @@ export function PendingPayments({
   onSelect?: (payment: PendingPayment) => void;
   className?: string;
 }) {
-  const now = today();
+  const now = todayInBogota();
 
   /*
     ── One cost center at a time can be hidden ───────────────────────────────

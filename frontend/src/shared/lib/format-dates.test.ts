@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   WEEKDAYS,
@@ -9,6 +9,7 @@ import {
   shortMonth,
   longMonth,
   longRange,
+  todayInBogota,
 } from './format';
 
 /**
@@ -47,5 +48,22 @@ describe('dates, written the way Coco writes them', () => {
   it('gives back what it cannot read instead of throwing', () => {
     expect(longDay('no-es-fecha')).toBe('no-es-fecha');
     expect(longMonth('2026-13')).toBe('2026-13');
+  });
+});
+
+describe('todayInBogota()', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('is still yesterday late in the Bogotá evening, when UTC already turned', () => {
+    vi.useFakeTimers();
+    // 02:30 UTC on the 15th is 21:30 on the 14th in Bogotá.
+    vi.setSystemTime(new Date('2026-03-15T02:30:00Z'));
+    expect(todayInBogota()).toBe('2026-03-14');
+  });
+
+  it('turns the day at midnight in Bogotá, not at midnight UTC', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-15T05:00:00Z'));
+    expect(todayInBogota()).toBe('2026-03-15');
   });
 });
