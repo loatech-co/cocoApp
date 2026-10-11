@@ -59,7 +59,7 @@ export function useShortcutsSurface({ isOpen, library, defaults, onGo }: Shortcu
   body: ReactNode;
 } {
   const routes = useShortcuts(defaults);
-  const [mode, setMode] = useState<Mode>('galeria');
+  const [mode, setMode] = useState<Mode>('gallery');
   const [search, setSearch] = useState('');
   const drag = useShortcutDrag(mode);
 
@@ -67,7 +67,7 @@ export function useShortcutsSurface({ isOpen, library, defaults, onGo }: Shortcu
   // the middle of an edit is a screen that reopens wrong.
   useOnChange([isOpen], () => {
     if (!isOpen) {
-      setMode('galeria');
+      setMode('gallery');
       setSearch('');
       drag.setDrag(null);
     }
@@ -84,7 +84,7 @@ export function useShortcutsSurface({ isOpen, library, defaults, onGo }: Shortcu
   );
 
   const body =
-    mode === 'eligiendo' ? (
+    mode === 'choosing' ? (
       <ShortcutPicker
         available={availableFor(library, routes, search)}
         search={search}
@@ -138,12 +138,12 @@ function ShortcutsHeader({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex min-h-10.5 items-center gap-2">
-        {mode === 'eligiendo' && (
+        {mode === 'choosing' && (
           <Button
             type="button"
             variant="ghost"
             size="sm-icon"
-            onClick={() => setMode('arreglando')}
+            onClick={() => setMode('arranging')}
             aria-label={t('shell.shortcuts.back')}
           >
             <ChevronLeft className="size-4" aria-hidden="true" />
@@ -151,15 +151,15 @@ function ShortcutsHeader({
         )}
 
         <h2 className="min-w-0 flex-1 truncate font-display text-lg font-semibold">
-          {mode === 'eligiendo' ? t('shell.shortcuts.add') : t('shell.shortcuts.title')}
+          {mode === 'choosing' ? t('shell.shortcuts.add') : t('shell.shortcuts.title')}
         </h2>
 
-        {mode === 'galeria' ? (
-          <Button type="button" variant="tool" size="sm" onClick={() => setMode('arreglando')}>
+        {mode === 'gallery' ? (
+          <Button type="button" variant="tool" size="sm" onClick={() => setMode('arranging')}>
             {t('common.edit')}
           </Button>
         ) : (
-          <Button type="button" variant="accent" size="sm" onClick={() => setMode('galeria')}>
+          <Button type="button" variant="accent" size="sm" onClick={() => setMode('gallery')}>
             {t('shell.shortcuts.done')}
           </Button>
         )}
@@ -167,7 +167,7 @@ function ShortcutsHeader({
 
       {/* The header goes past the 78 floor only because its CONTENT is taller,
           which is the only reason it should. */}
-      {mode === 'eligiendo' && <FindPage search={search} setSearch={setSearch} />}
+      {mode === 'choosing' && <FindPage search={search} setSearch={setSearch} />}
     </div>
   );
 }

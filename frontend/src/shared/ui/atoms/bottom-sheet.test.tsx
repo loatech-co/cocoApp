@@ -33,13 +33,13 @@ describe('The bottom sheet', () => {
     render(<Host />);
     const panel = screen.getByRole('dialog', { hidden: true });
 
-    expect(panel.dataset.abierta).toBe('no');
+    expect(panel.dataset.open).toBe('no');
 
     // The SAME node after opening. A rebuilt one would have no previous
     // position to travel from: it would appear, it would never arrive.
     fireEvent.click(screen.getByText('abrir'));
     expect(screen.getByRole('dialog').isSameNode(panel)).toBe(true);
-    expect(panel.dataset.abierta).toBe('si');
+    expect(panel.dataset.open).toBe('yes');
   });
 
   it('is not tabbable when closed', () => {

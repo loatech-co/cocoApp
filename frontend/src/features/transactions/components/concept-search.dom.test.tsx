@@ -50,7 +50,7 @@ function renderSearch(props: Partial<Parameters<typeof ConceptSearch>[0]> = {}) 
   const onCreateConcept = vi.fn();
   render(
     <ConceptSearch
-      id="concepto"
+      id="concept"
       tree={TREE}
       value={undefined}
       onSelect={onSelect}

@@ -84,8 +84,8 @@ export function BottomSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        data-superficie="panel"
-        data-abierta={isOpen ? 'si' : 'no'}
+        data-surface="panel"
+        data-open={isOpen ? 'yes' : 'no'}
         // Closed is not just invisible: it is not tabbable. A hidden panel that
         // keeps its eight links in the keyboard order is a page that
         // has twice as many stops as it shows.
@@ -245,7 +245,7 @@ function SheetContent({
           others so it does not end up under it. */}
       <div
         key={visits}
-        data-cuerpo
+        data-body
         className="min-h-0 flex-1 touch-pan-y overscroll-contain px-6 pb-[calc(30px+env(safe-area-inset-bottom,0px))] [overflow-y:auto]"
       >
         {children}

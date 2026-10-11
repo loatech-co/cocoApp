@@ -26,7 +26,7 @@ afterEach(cleanup);
  */
 describe('The field with a floating label', () => {
   it('puts the control BEFORE the label', () => {
-    // The order matters: the `.campo` selectors in `index.css` look for the
+    // The order matters: the `.field` selectors in `index.css` look for the
     // label as `> label` inside a box that already contains the control.
     // With the label first, the markup still reads the same and none of
     // the rules match.
@@ -36,7 +36,7 @@ describe('The field with a floating label', () => {
       </Field>,
     );
 
-    const box = container.querySelector('.campo');
+    const box = container.querySelector('.field');
     expect(box).not.toBeNull();
     expect(box?.children).toHaveLength(2);
     expect(box?.children[0]!.tagName).toBe('INPUT');
@@ -45,13 +45,13 @@ describe('The field with a floating label', () => {
 
   it('ties the label to the control', () => {
     const { container } = render(
-      <Field label="Concepto" id="mi-campo">
-        <Input id="mi-campo" />
+      <Field label="Concepto" id="my-field">
+        <Input id="my-field" />
       </Field>,
     );
 
-    expect(container.querySelector('label')?.getAttribute('for')).toBe('mi-campo');
-    expect(container.querySelector('input')?.id).toBe('mi-campo');
+    expect(container.querySelector('label')?.getAttribute('for')).toBe('my-field');
+    expect(container.querySelector('input')?.id).toBe('my-field');
   });
 
   it('a text field ALWAYS has a placeholder, even if nobody passes one', () => {
@@ -108,10 +108,10 @@ describe('The field with a floating label', () => {
         onChange={() => {}}
       />,
     );
-    expect(empty.container.querySelector('[data-lleno]')?.getAttribute('data-lleno')).toBe('no');
-    // With `data-vacio` set, the CSS hides it while the label takes its
+    expect(empty.container.querySelector('[data-filled]')?.getAttribute('data-filled')).toBe('no');
+    // With `data-empty` set, the CSS hides it while the label takes its
     // place; without it both texts would show stepping on each other.
-    expect(empty.container.querySelector('[data-vacio]')).not.toBeNull();
+    expect(empty.container.querySelector('[data-empty]')).not.toBeNull();
 
     cleanup();
 
@@ -124,17 +124,19 @@ describe('The field with a floating label', () => {
         onChange={() => {}}
       />,
     );
-    expect(filled.container.querySelector('[data-lleno]')?.getAttribute('data-lleno')).toBe('si');
-    expect(filled.container.querySelector('[data-vacio]')).toBeNull();
+    expect(filled.container.querySelector('[data-filled]')?.getAttribute('data-filled')).toBe(
+      'yes',
+    );
+    expect(filled.container.querySelector('[data-empty]')).toBeNull();
   });
 
   it('the text field reserves room for its icons', () => {
-    const Person = () => <svg data-prueba="persona" />;
+    const Person = () => <svg data-probe="person" />;
 
     const left = render(<Input icon={Person} />);
     expect(left.container.querySelector('input')?.className).toContain('pl-9');
-    // `data-icono` is what shifts the label so it does not fall on top.
-    expect(left.container.querySelector('[data-icono]')).not.toBeNull();
+    // `data-icon` is what shifts the label so it does not fall on top.
+    expect(left.container.querySelector('[data-icon]')).not.toBeNull();
 
     cleanup();
 

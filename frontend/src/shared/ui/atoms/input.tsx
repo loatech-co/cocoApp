@@ -77,9 +77,9 @@ export function Input({
 
       {Icon && (
         <span
-          // `data-icono` is what tells the floating label it has to
-          // start further to the right. `.campo` reads it in `index.css`.
-          data-icono=""
+          // `data-icon` is what tells the floating label it has to
+          // start further to the right. `.field` reads it in `index.css`.
+          data-icon=""
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         >
           <Icon className="size-4" aria-hidden={true} />

@@ -44,7 +44,7 @@ describe('Input', () => {
   it('hides its informative icon from assistive tech', () => {
     const { container } = render(<Input aria-label="Buscar" icon={Search} />);
 
-    expect(container.querySelector('[data-icono] svg')?.getAttribute('aria-hidden')).toBe('true');
+    expect(container.querySelector('[data-icon] svg')?.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('keeps its actions reachable as buttons', () => {

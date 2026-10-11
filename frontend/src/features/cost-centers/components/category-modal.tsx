@@ -123,9 +123,9 @@ export function CategoryModal({ isOpen, level, category, parentId, onClose }: Ca
   return (
     <Modal isOpen={isOpen} title={title} description={help} onClose={onClose}>
       <form onSubmit={(e) => void form.onSubmit(e)} className="flex flex-1 flex-col gap-4">
-        <Field label={t('common.name')} id="categoria-nombre">
+        <Field label={t('common.name')} id="category-name">
           <Input
-            id="categoria-nombre"
+            id="category-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('centers.categoryModal.namePlaceholder')}

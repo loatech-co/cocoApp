@@ -68,11 +68,11 @@ export function KeywordsFields({
     <div className={cn('flex flex-col gap-2', className)}>
       <Field
         label={t('centers.keywords.label')}
-        id="concepto-palabras-clave"
+        id="concept-keywords"
         description={t('centers.keywords.help')}
       >
         <Input
-          id="concepto-palabras-clave"
+          id="concept-keywords"
           value={draft}
           onChange={(e) => {
             setDraft(e.target.value);

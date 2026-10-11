@@ -136,10 +136,10 @@ function PasswordField({
           required
           value={password}
           onChange={(event) => onChange(event.target.value)}
-          aria-describedby="requisitos-password"
+          aria-describedby="password-requirements"
         />
       </Field>
-      <div id="requisitos-password">
+      <div id="password-requirements">
         <PasswordPolicy password={password} />
         <p className="mt-2 text-xs text-muted-foreground">{t('auth.register.passwordHelp')}</p>
       </div>
@@ -152,9 +152,9 @@ function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
   const isPolicyOk = meetsPolicy(password);
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <Field label={t('auth.fields.name')} id="nombre">
+      <Field label={t('auth.fields.name')} id="full-name">
         <Input
-          id="nombre"
+          id="full-name"
           autoComplete="name"
           required
           minLength={2}

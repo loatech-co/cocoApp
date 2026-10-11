@@ -207,9 +207,9 @@ function ReassignTarget({
         </AlertDescription>
       </Alert>
 
-      <Field label={t('centers.deletion.destination')} id="destino-del-borrado">
+      <Field label={t('centers.deletion.destination')} id="deletion-target">
         <Select
-          id="destino-del-borrado"
+          id="deletion-target"
           label={t('centers.deletion.destination')}
           emptyLabel={t('centers.deletion.chooseDestination')}
           value={target}

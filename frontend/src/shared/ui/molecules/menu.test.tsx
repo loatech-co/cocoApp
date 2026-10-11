@@ -249,11 +249,11 @@ describe('Menu', () => {
     fireEvent.click(trigger);
 
     const sheet = screen.getByRole('dialog', { name: 'Ordenar' });
-    expect(sheet.getAttribute('data-abierta')).toBe('si');
+    expect(sheet.getAttribute('data-open')).toBe('yes');
 
     fireEvent.keyDown(document, { key: 'Escape' });
 
-    expect(sheet.getAttribute('data-abierta')).toBe('no');
+    expect(sheet.getAttribute('data-open')).toBe('no');
   });
 
   it('keeps a list hanging from its trigger on a phone', () => {

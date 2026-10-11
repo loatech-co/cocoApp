@@ -660,7 +660,7 @@
   /* Figures, in the same family and tabular: a column of amounts has to
      align by digit. */
   .tabular,
-  .cifra {
+  .figure {
     font-family: var(--font-display);
   }
 
@@ -795,7 +795,7 @@
    · focus is anywhere in the field (`:focus-within`),
    · the dropdown is open (`aria-expanded`),
    · the text field has something typed (`:placeholder-shown` reversed),
-   · the dropdown has something chosen (`data-lleno`).
+   · the dropdown has something chosen (`data-filled`).
 
    Written with utilities, the five properties of the raised position would
    have to be repeated once per trigger, and the day one changes, it changes
@@ -827,12 +827,12 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer components {
-  .campo {
+  .field {
     position: relative;
   }
 
   /* ── At rest: where the placeholder would be ───────────────────────────── */
-  .campo > label {
+  .field > label {
     position: absolute;
     top: 50%;
     left: 0.75rem;
@@ -852,24 +852,24 @@
   }
 
   /* With an icon on the left, the label starts after it. */
-  .campo:has([data-icono]) > label {
+  .field:has([data-icon]) > label {
     left: 2.25rem;
   }
 
   /* A text area does not have one line: the label aligns with the FIRST one,
      not with the middle of the three. */
-  .campo:has(textarea) > label {
+  .field:has(textarea) > label {
     top: 1.125rem;
   }
 
   /* ── Raised ──────────────────────────────────────────────────────────────
      It does not touch `left`: that way it stays aligned with the value,
      whether indented by an icon or not. */
-  .campo:focus-within > label,
-  .campo:has([aria-expanded='true']) > label,
-  .campo:has(input:not(:placeholder-shown)) > label,
-  .campo:has(textarea:not(:placeholder-shown)) > label,
-  .campo:has([data-lleno='si']) > label {
+  .field:focus-within > label,
+  .field:has([aria-expanded='true']) > label,
+  .field:has(input:not(:placeholder-shown)) > label,
+  .field:has(textarea:not(:placeholder-shown)) > label,
+  .field:has([data-filled='yes']) > label {
     top: 0.4375rem;
     transform: none;
     font-size: var(--text-2xs);
@@ -896,7 +896,7 @@
     keyboard—, so the field did not paint its ring and the label did turn
     green. The label said «focused» and the box said no.
   */
-  .campo:has(:focus-visible) > label {
+  .field:has(:focus-visible) > label {
     color: var(--ring);
   }
 
@@ -922,16 +922,16 @@
     And its equivalent in a dropdown.
 
     A `<select>` in this app has no placeholder: it has the «nothing chosen»
-    text, which plays the same role. It is marked with `data-vacio` and hidden
+    text, which plays the same role. It is marked with `data-empty` and hidden
     at rest for the same reason as the placeholder: the label is there.
   */
-  .campo [data-vacio] {
+  .field [data-empty] {
     opacity: 0;
     transition: opacity 150ms ease-out;
   }
 
-  .campo:focus-within [data-vacio],
-  .campo:has([aria-expanded='true']) [data-vacio] {
+  .field:focus-within [data-empty],
+  .field:has([aria-expanded='true']) [data-empty] {
     opacity: 1;
   }
 }
@@ -1077,7 +1077,7 @@
      would compete at equal specificity with `mobile:` and would depend on the
      order in which Tailwind emits the two. An attribute selector beats
      `:root` on specificity, so it does not depend on where it is written. */
-  html[data-embebido='si'] {
+  html[data-embedded='yes'] {
     --bar-gap: 0px;
     --bar-clearance: 12px;
   }
@@ -1097,7 +1097,7 @@
      away with the hamburger menu: it was for a FULL-SCREEN panel, which
      covered both. A sheet takes the bottom part and leaves the top bar in
      view, and the bar stays behind its scrim, which is where it belongs. */
-  html:has([data-superficie='panel'][data-abierta='si']) {
+  html:has([data-surface='panel'][data-open='yes']) {
     overflow: hidden;
   }
 }
@@ -1116,7 +1116,7 @@
    frame, or a browser without `ResizeObserver`— the height is still `auto`,
    and with `interpolate-size` a keyword can at least be interpolated. Where
    it is not supported, the size just jumps. */
-[data-superficie='panel'] {
+[data-surface='panel'] {
   interpolate-size: allow-keywords;
 }
 
@@ -1133,7 +1133,7 @@
   }
 }
 
-[data-superficie='panel'] [data-cuerpo] > * {
+[data-surface='panel'] [data-body] > * {
   animation: panel-content-enters 0.18s ease both;
 }
 
@@ -1155,11 +1155,11 @@
    surface that forgets to honor it is a surface that moves for someone motion
    makes unwell. */
 @media (prefers-reduced-motion: reduce) {
-  [data-armazon='barra'],
-  [data-armazon='techo'],
-  [data-superficie],
-  [data-superficie] *,
-  [data-superficie] [data-cuerpo] > * {
+  [data-frame='bar'],
+  [data-frame='top'],
+  [data-surface],
+  [data-surface] *,
+  [data-surface] [data-body] > * {
     transition-duration: 0.01ms;
     animation-duration: 0.01ms;
   }

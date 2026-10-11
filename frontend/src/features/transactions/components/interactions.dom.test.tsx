@@ -117,7 +117,7 @@ afterEach(cleanup);
 
 function openNewSheet(): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  client.setQueryData([...keys.categories, 'todas'], TREE);
+  client.setQueryData([...keys.categories, 'all'], TREE);
 
   render(
     <QueryClientProvider client={client}>
@@ -130,7 +130,7 @@ function openNewSheet(): void {
 
 const typeAmount = () =>
   gesture(() =>
-    fireEvent.change(document.getElementById('mov-valor')!, { target: { value: '120000' } }),
+    fireEvent.change(document.getElementById('tx-amount')!, { target: { value: '120000' } }),
   );
 
 async function save(): Promise<void> {
@@ -139,7 +139,7 @@ async function save(): Promise<void> {
   // submit resolve. With the synchronous version it would look at the network from before.
   // eslint-disable-next-line @typescript-eslint/require-await -- see above
   await act(async () => {
-    gesture(() => fireEvent.submit(document.getElementById('mov-valor')!.closest('form')!));
+    gesture(() => fireEvent.submit(document.getElementById('tx-amount')!.closest('form')!));
   });
 }
 

@@ -14,9 +14,9 @@ const OPTIONS = [
 function Controlled(props: { start?: string; size?: 'sm' | 'md'; disabled?: boolean }) {
   const [value, setValue] = useState(props.start ?? '');
   return (
-    <Field label="Centro de costos" id="select-centro" className="max-w-sm">
+    <Field label="Centro de costos" id="cost-center-select" className="max-w-sm">
       <Select
-        id="select-centro"
+        id="cost-center-select"
         label="Centro de costos"
         value={value}
         onChange={setValue}
@@ -59,6 +59,6 @@ export const WithIcon: Story = {
 };
 
 export const FocusVisible: Story = {
-  parameters: { pseudo: { focusVisible: ['button'], focusWithin: ['.campo'] } },
+  parameters: { pseudo: { focusVisible: ['button'], focusWithin: ['.field'] } },
   render: () => <Controlled start="hogar" />,
 };

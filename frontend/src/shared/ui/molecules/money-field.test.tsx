@@ -75,7 +75,7 @@ describe('MoneyField', () => {
       <MoneyField aria-label="Valor" value="" onValueChange={vi.fn()} />,
     );
 
-    const sign = container.querySelector('[data-icono] [aria-hidden="true"]');
+    const sign = container.querySelector('[data-icon] [aria-hidden="true"]');
     expect(sign?.textContent).toBe('$');
   });
 });

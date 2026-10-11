@@ -59,8 +59,8 @@ interface SelectProps {
  * `<input>`: a button can have children, so they go in the same row and the
  * text shrinks by itself.
  *
- * ── What `data-lleno` is and what `data-vacio` is ───────────────────────────
- * Both are read by the floating label of `.campo`, in `index.css`: the first
+ * ── What `data-filled` is and what `data-empty` is ───────────────────────────
+ * Both are read by the floating label of `.field`, in `index.css`: the first
  * to rise when something is selected, the second to hide the «not chosen»
  * text while the label is taking its place.
  */
@@ -224,7 +224,7 @@ function SelectTriggerContent({ select, isInField }: { select: SelectProps; isIn
   return (
     <>
       {Icon && (
-        <span data-icono="" className="shrink-0 text-muted-foreground">
+        <span data-icon="" className="shrink-0 text-muted-foreground">
           <Icon className={isSmall ? 'size-3.5' : 'size-4'} aria-hidden={true} />
         </span>
       )}
@@ -238,8 +238,8 @@ function SelectTriggerContent({ select, isInField }: { select: SelectProps; isIn
         is where it is looked for.
       */}
       <span
-        data-lleno={selected ? 'si' : 'no'}
-        data-vacio={selected ? undefined : ''}
+        data-filled={selected ? 'yes' : 'no'}
+        data-empty={selected ? undefined : ''}
         className={cn(
           'min-w-0 flex-1 truncate text-left',
           !selected && 'text-muted-foreground',

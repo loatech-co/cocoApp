@@ -33,8 +33,8 @@ function Demo({ hasActions = false, hasDescription = true }) {
           : {})}
         onClose={close}
       >
-        <Field label="Nombre" id="modal-nombre">
-          <Input id="modal-nombre" placeholder="Ej. Hogar" />
+        <Field label="Nombre" id="modal-name">
+          <Input id="modal-name" placeholder="Ej. Hogar" />
         </Field>
         <ModalFooter>
           <Button variant="outline" onClick={close}>

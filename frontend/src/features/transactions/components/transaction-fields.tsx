@@ -37,11 +37,11 @@ export function TransactionFields(props: ComponentProps<typeof TransactionClassi
       <TransactionClassification {...props} />
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label={t('transactions.fields.amount')} id="mov-valor">
+        <Field label={t('transactions.fields.amount')} id="tx-amount">
           {/* Groups the thousands while typing and keeps the cursor. The long why
               is in the component. */}
           <MoneyField
-            id="mov-valor"
+            id="tx-amount"
             value={sheet.amount}
             onValueChange={sheet.setAmount}
             placeholder="0"
@@ -49,8 +49,8 @@ export function TransactionFields(props: ComponentProps<typeof TransactionClassi
           />
         </Field>
 
-        <Field label={t('transactions.fields.date')} id="mov-fecha">
-          <DateSelector id="mov-fecha" value={sheet.date} onSelect={sheet.setDate} required />
+        <Field label={t('transactions.fields.date')} id="tx-date">
+          <DateSelector id="tx-date" value={sheet.date} onSelect={sheet.setDate} required />
         </Field>
       </div>
 
@@ -62,12 +62,12 @@ export function TransactionFields(props: ComponentProps<typeof TransactionClassi
         a note about this transaction is one more field of the ones filled in
         when recording it, and it goes where the next one goes, not where there is room to spare.
       */}
-      <Field label={t('transactions.fields.notes')} id="mov-notas">
+      <Field label={t('transactions.fields.notes')} id="tx-notes">
         {/* No placeholder. It said «Opcional», which is not an example of what goes
             there but a note about validation: this field has no
             `required`, and that is already known because the form is submitted without it. */}
         <Textarea
-          id="mov-notas"
+          id="tx-notes"
           value={sheet.notes}
           onChange={(e) => sheet.setNotes(e.target.value)}
           rows={3}

@@ -62,7 +62,7 @@ export function TransactionClassification({
   return (
     <>
       <ConceptSearch
-        id="mov-concepto"
+        id="tx-concept"
         tree={tree}
         value={sheet.categoryId}
         disabled={isStatic}
@@ -117,9 +117,9 @@ function ClassificationCascade(props: ClassificationProps) {
     <>
       <CostCenterField costCenter={costCenter} tree={tree} isStatic={isStatic} onSelect={choose} />
 
-      <Field label={t('centers.levels.category')} id="mov-categoria">
+      <Field label={t('centers.levels.category')} id="tx-category">
         <Combo
-          id="mov-categoria"
+          id="tx-category"
           label={t('centers.levels.category')}
           value={category ? String(category.id) : ''}
           options={(costCenter?.children ?? []).map((g) => ({
@@ -138,9 +138,9 @@ function ClassificationCascade(props: ClassificationProps) {
         />
       </Field>
 
-      <Field label={t('transactions.fields.concept')} id="mov-concepto-cascada">
+      <Field label={t('transactions.fields.concept')} id="tx-concept-cascade">
         <Combo
-          id="mov-concepto-cascada"
+          id="tx-concept-cascade"
           label={t('transactions.fields.concept')}
           value={concept ? String(concept.id) : ''}
           options={(category?.children ?? []).map((c) => ({
@@ -175,9 +175,9 @@ function CostCenterField({
   onSelect: (id?: number) => void;
 }) {
   return (
-    <Field label={t('centers.levels.costCenter')} id="mov-centro">
+    <Field label={t('centers.levels.costCenter')} id="tx-cost-center">
       <Combo
-        id="mov-centro"
+        id="tx-cost-center"
         label={t('centers.levels.costCenter')}
         value={costCenter ? String(costCenter.id) : ''}
         options={tree.map((c) => ({ value: String(c.id), label: c.name }))}

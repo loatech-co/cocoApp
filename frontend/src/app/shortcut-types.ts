@@ -8,4 +8,4 @@ export interface ShortcutPage {
 }
 
 /** Gallery, arranging and picking a page: the only editing mode and its step. */
-export type Mode = 'galeria' | 'arreglando' | 'eligiendo';
+export type Mode = 'gallery' | 'arranging' | 'choosing';

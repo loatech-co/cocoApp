@@ -329,7 +329,7 @@ function SearchAndSheet({ shell }: { shell: ShellState }) {
 function PhoneTop() {
   return (
     <header
-      data-armazon="techo"
+      data-frame="top"
       // The brand ALONE, and centered. It used to share the row with the
       // menu button, which no longer exists: with a single element, leaving
       // it on the left leaves half the strip empty to its right and the top

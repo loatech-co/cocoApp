@@ -53,7 +53,7 @@ export function useMergeCategory() {
  */
 export function useCategoryUsage(id: number | undefined) {
   return useQuery({
-    queryKey: ['categories', 'usos', id] as const,
+    queryKey: ['categories', 'usages', id] as const,
     enabled: id !== undefined,
     // `enabled` guarantees the id; the `?? 0` only satisfies the type.
     queryFn: async () => (await categoriesUsage(id ?? 0)).data,

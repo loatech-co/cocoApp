@@ -103,9 +103,9 @@ function ResetPassword({ user, onDone }: { user: Profile; onDone: () => void }) 
 
   return (
     <Block className="p-4">
-      <Field label={t('admin.userRow.newPassword')} id={`nueva-${user.id}`}>
+      <Field label={t('admin.userRow.newPassword')} id={`new-password-${user.id}`}>
         <Input
-          id={`nueva-${user.id}`}
+          id={`new-password-${user.id}`}
           type="text"
           autoComplete="off"
           value={password}

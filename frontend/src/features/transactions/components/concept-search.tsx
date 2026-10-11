@@ -206,8 +206,8 @@ function ConceptSearchValue({
   return (
     <>
       <span
-        data-lleno={chosen ? 'si' : 'no'}
-        data-vacio={chosen ? undefined : ''}
+        data-filled={chosen ? 'yes' : 'no'}
+        data-empty={chosen ? undefined : ''}
         className={cn(
           'flex min-w-0 flex-1 items-baseline gap-2 text-left',
           !chosen && 'text-muted-foreground',

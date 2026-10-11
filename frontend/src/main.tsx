@@ -17,7 +17,7 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
 // webview: the CSS reads this mark so as not to reserve room for one that is
 // not there. It is set before the first render, so no paint sees it change.
 if (isInNativeApp()) {
-  document.documentElement.dataset.embebido = 'si';
+  document.documentElement.dataset.embedded = 'yes';
 }
 
 // A new deploy makes the hashed chunks of an open tab stale: it reloads once

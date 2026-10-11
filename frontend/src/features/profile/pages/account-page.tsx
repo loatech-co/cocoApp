@@ -97,38 +97,38 @@ function ChangePassword() {
 }
 
 function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) {
-  const { actual, setActual, newPassword, setNewPassword, isSending, onSubmit } = form;
+  const { current, setCurrent, newPassword, setNewPassword, isSending, onSubmit } = form;
   return (
     <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-4">
-      <Field label={t('profile.account.currentPassword')} id="actual">
+      <Field label={t('profile.account.currentPassword')} id="current">
         <Input
-          id="actual"
+          id="current"
           type="password"
           autoComplete="current-password"
           required
-          value={actual}
-          onChange={(event) => setActual(event.target.value)}
+          value={current}
+          onChange={(event) => setCurrent(event.target.value)}
         />
       </Field>
 
       <div className="flex flex-col gap-2">
-        <Field label={t('admin.userRow.newPassword')} id="nueva">
+        <Field label={t('admin.userRow.newPassword')} id="new-password">
           <Input
-            id="nueva"
+            id="new-password"
             type="password"
             autoComplete="new-password"
             required
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
-            aria-describedby="requisitos-nueva"
+            aria-describedby="new-password-requirements"
           />
         </Field>
-        <div id="requisitos-nueva">
+        <div id="new-password-requirements">
           <PasswordPolicy password={newPassword} />
         </div>
       </div>
 
-      <Button type="submit" disabled={isSending || !meetsPolicy(newPassword) || !actual}>
+      <Button type="submit" disabled={isSending || !meetsPolicy(newPassword) || !current}>
         {t('profile.account.changePassword')}
       </Button>
     </form>
@@ -147,7 +147,7 @@ function PasswordErrors({ error, problems }: { error: string; problems: string[]
 function usePasswordChange() {
   const { changePassword } = useAuth();
 
-  const [actual, setActual] = useState('');
+  const [current, setCurrent] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [problems, setProblems] = useState<string[]>([]);
@@ -160,7 +160,7 @@ function usePasswordChange() {
     setProblems([]);
     setIsSending(true);
 
-    void changePassword(actual, newPassword)
+    void changePassword(current, newPassword)
       .then(() => setIsDone(true))
       .catch((cause: unknown) => {
         setError(authErrorMessage(cause));
@@ -170,8 +170,8 @@ function usePasswordChange() {
   }
 
   return {
-    actual,
-    setActual,
+    current,
+    setCurrent,
     newPassword,
     setNewPassword,
     error,

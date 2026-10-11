@@ -57,7 +57,7 @@ describe('The bottom bar', () => {
   it('the shell recognizes it', () => {
     const { container } = renderShell();
     // The `:has()` rule in index.css points at this.
-    expect(container.querySelector('[data-armazon="barra"]')).toBeTruthy();
+    expect(container.querySelector('[data-frame="bar"]')).toBeTruthy();
   });
 
   it('the (+) records an expense without going through any menu', () => {

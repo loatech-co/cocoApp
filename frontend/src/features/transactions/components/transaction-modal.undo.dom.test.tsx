@@ -125,7 +125,7 @@ afterEach(() => {
 
 function openNewSheet() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  client.setQueryData([...keys.categories, 'todas'], TREE);
+  client.setQueryData([...keys.categories, 'all'], TREE);
 
   const vista = render(
     <QueryClientProvider client={client}>
@@ -169,7 +169,7 @@ async function attach(container: HTMLElement): Promise<void> {
 }
 
 async function record(): Promise<void> {
-  const value = document.getElementById('mov-valor') as HTMLInputElement;
+  const value = document.getElementById('tx-amount') as HTMLInputElement;
   fireEvent.change(value, { target: { value: '120000' } });
 
   /*

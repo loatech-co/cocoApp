@@ -78,7 +78,7 @@ export function BottomBar({
   onAccount,
 }: BottomBarProps) {
   return (
-    <nav data-armazon="barra" aria-label={t('shell.bottomBar.label')} className={BAR_CLASSES}>
+    <nav data-frame="bar" aria-label={t('shell.bottomBar.label')} className={BAR_CLASSES}>
       <div className="flex flex-1">
         <BarSlotLink
           to={DASHBOARD.to}

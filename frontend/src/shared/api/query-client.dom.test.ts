@@ -92,9 +92,9 @@ describe('clearCacheOnUserChange()', () => {
     const client = createQueryClient();
     const stop = clearCacheOnUserChange(client);
 
-    client.setQueryData(['previa'], 'antes');
+    client.setQueryData(['previous'], 'before');
     receiveSession(APP_SESSION);
-    expect(client.getQueryData(['previa'])).toBe('antes');
+    expect(client.getQueryData(['previous'])).toBe('before');
 
     client.setQueryData(keys.accounts, [{ id: 1 }]);
     receiveSession({ ...APP_SESSION, user: { ...APP_SESSION.user, id: 999 } });

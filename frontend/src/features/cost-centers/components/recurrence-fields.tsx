@@ -159,9 +159,9 @@ function DayField({ day, onChange }: { day: number; onChange: (day: number) => v
   useOnChange([day], () => setDraft(String(day)));
 
   return (
-    <Field label={t('centers.recurrence.dayOfMonth')} id="dia-de-pago">
+    <Field label={t('centers.recurrence.dayOfMonth')} id="payment-day">
       <Input
-        id="dia-de-pago"
+        id="payment-day"
         // `text` and not `number`: a numeric field returns the empty string
         // when its content is not a valid number —«3e», «--»—, so what is
         // typed and what is read stop matching right while typing.
@@ -297,7 +297,7 @@ function BudgetField({ value, onChange }: RecurrenceFieldProps) {
   return (
     <Field
       label={t('centers.recurrence.budget')}
-      id="presupuesto"
+      id="budget"
       description={
         value.budget.trim() === ''
           ? t('centers.recurrence.budgetEmptyHelp')
@@ -306,7 +306,7 @@ function BudgetField({ value, onChange }: RecurrenceFieldProps) {
       className={value.periodicity === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3'}
     >
       <MoneyField
-        id="presupuesto"
+        id="budget"
         value={value.budget}
         onValueChange={(budget) => onChange({ ...value, budget })}
         placeholder={t('centers.recurrence.optional')}
@@ -331,9 +331,9 @@ function RecurrenceDetails({ value, onChange }: RecurrenceFieldProps) {
         value.periodicity === 'monthly' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
       )}
     >
-      <Field label={t('centers.recurrence.howOften')} id="periodicidad">
+      <Field label={t('centers.recurrence.howOften')} id="periodicity">
         <Select
-          id="periodicidad"
+          id="periodicity"
           label={t('centers.recurrence.periodicity.label')}
           value={value.periodicity}
           options={PERIODICITIES.map((p) => ({ value: p, label: LABELS[p] }))}
@@ -342,9 +342,9 @@ function RecurrenceDetails({ value, onChange }: RecurrenceFieldProps) {
       </Field>
 
       {value.periodicity !== 'monthly' && (
-        <Field label={monthLabel(value.periodicity)} id="mes-de-pago">
+        <Field label={monthLabel(value.periodicity)} id="payment-month">
           <Select
-            id="mes-de-pago"
+            id="payment-month"
             label={t('centers.recurrence.month')}
             value={String(value.paymentMonth)}
             options={MONTHS.map((m, i) => ({ value: String(i + 1), label: m }))}

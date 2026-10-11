@@ -15,8 +15,8 @@ export const keys = {
   tags: ['tags'] as const,
   transactions: (filters?: object) => ['transactions', filters ?? {}] as const,
   dashboard: (filters?: object) => ['dashboard', filters ?? {}] as const,
-  history: ['historia'] as const,
-  receipts: (transactionId: number) => ['soportes', transactionId] as const,
+  history: ['history'] as const,
+  receipts: (transactionId: number) => ['receipts', transactionId] as const,
 };
 
 /**

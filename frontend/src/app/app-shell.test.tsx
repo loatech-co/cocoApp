@@ -73,8 +73,8 @@ describe('The shell below the breakpoint', () => {
   it('the top bar and the bar appear, and the body keeps its gap', () => {
     const { container } = renderShell();
 
-    expect(container.querySelector('[data-armazon="techo"]')).toBeTruthy();
-    expect(document.querySelector('[data-armazon="barra"]')).toBeTruthy();
+    expect(container.querySelector('[data-frame="top"]')).toBeTruthy();
+    expect(document.querySelector('[data-frame="bar"]')).toBeTruthy();
 
     const body = container.querySelector('main')!;
     expect(body.className).toContain('mobile:pb-[var(--bar-gap)]');
@@ -88,16 +88,16 @@ describe('The shell below the breakpoint', () => {
 
     // What slides cannot be rebuilt on every render: it would appear instead
     // of arriving. Shortcuts, search and the account.
-    const sheets = document.querySelectorAll('[data-superficie="panel"]');
+    const sheets = document.querySelectorAll('[data-surface="panel"]');
     expect(sheets.length).toBeGreaterThanOrEqual(3);
     for (const sheet of sheets) {
-      expect(sheet.getAttribute('data-abierta')).toBe('no');
+      expect(sheet.getAttribute('data-open')).toBe('no');
     }
   });
 
   it('the top bar carries the brand and nothing else: there is no hamburger', () => {
     const { container } = renderShell();
-    const top = container.querySelector('[data-armazon="techo"]')!;
+    const top = container.querySelector('[data-frame="top"]')!;
 
     // The full-screen menu was the fourth way to reach the same pages.
     // Everyday things are in the bar, any page in the shortcuts and admin
@@ -128,10 +128,10 @@ describe('The shell above the breakpoint', () => {
     const { container } = renderShell();
 
     expect(container.querySelector('aside')).toBeTruthy();
-    expect(container.querySelector('[data-armazon="techo"]')).toBeNull();
-    expect(document.querySelector('[data-armazon="barra"]')).toBeNull();
+    expect(container.querySelector('[data-frame="top"]')).toBeNull();
+    expect(document.querySelector('[data-frame="bar"]')).toBeNull();
     // And no sheet: on desktop the rail carries what they carry.
-    expect(document.querySelector('[data-superficie="panel"]')).toBeNull();
+    expect(document.querySelector('[data-surface="panel"]')).toBeNull();
   });
 });
 
@@ -148,8 +148,8 @@ describe('The shell embedded in the app', () => {
 
     // The native bar and the «Más» tab play that role. They are not hidden
     // with CSS: a hidden fixed bar still takes its place in the tab order.
-    expect(container.querySelector('[data-armazon="techo"]')).toBeNull();
-    expect(document.querySelector('[data-armazon="barra"]')).toBeNull();
+    expect(container.querySelector('[data-frame="top"]')).toBeNull();
+    expect(document.querySelector('[data-frame="bar"]')).toBeNull();
     expect(document.querySelector('[aria-label="Registrar un gasto"]')).toBeNull();
     expect(document.body.textContent).not.toContain('Atajos');
     expect(container.querySelector('aside')).toBeNull();
@@ -158,13 +158,13 @@ describe('The shell embedded in the app', () => {
   it('it does mount the search, and window.__coco.openSearch() opens it', () => {
     renderShell();
 
-    const sheets = document.querySelectorAll('[data-superficie="panel"]');
+    const sheets = document.querySelectorAll('[data-surface="panel"]');
     // Only one: the search. Shortcuts and account are not there.
     expect(sheets.length).toBe(1);
-    expect(sheets[0]!.getAttribute('data-abierta')).toBe('no');
+    expect(sheets[0]!.getAttribute('data-open')).toBe('no');
 
     act(() => window.__coco!.openSearch());
-    expect(sheets[0]!.getAttribute('data-abierta')).toBe('si');
+    expect(sheets[0]!.getAttribute('data-open')).toBe('yes');
   });
 
   it('window.__coco.navigate() changes the page without reloading', () => {

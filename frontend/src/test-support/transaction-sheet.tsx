@@ -98,7 +98,7 @@ export function testQueryClient(tree?: CategoryTree[]): QueryClient {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
-  if (tree) client.setQueryData([...keys.categories, 'todas'], tree);
+  if (tree) client.setQueryData([...keys.categories, 'all'], tree);
   return client;
 }
 

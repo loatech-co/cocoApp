@@ -13,7 +13,7 @@ import { InsideField } from '@/shared/ui/foundations/field';
  * disappears and what was typed remains. When the field is left, the label stays
  * up if there is something and goes down if not.
  *
- * The state machine is in `index.css`, under `.campo`, and not here: they are
+ * The state machine is in `index.css`, under `.field`, and not here: they are
  * four different triggers that mean the same thing and this component knows none
  * of them. The why is written there.
  *
@@ -51,10 +51,10 @@ export function Field({
         The control goes FIRST and the label after, even though it looks the
         other way round: the label is absolutely positioned on top of it, and
         putting it first in the markup would force the control to be the
-        next sibling, which is exactly what the `.campo` selectors do not
+        next sibling, which is exactly what the `.field` selectors do not
         need to know.
       */}
-      <div className="campo">
+      <div className="field">
         <InsideField.Provider value={true}>{children}</InsideField.Provider>
         <label htmlFor={id}>{label}</label>
       </div>

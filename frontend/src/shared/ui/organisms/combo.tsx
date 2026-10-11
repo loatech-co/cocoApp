@@ -339,8 +339,8 @@ function ComboTriggerContent({
         would center it in the content box instead of in the field.
       */}
       <span
-        data-lleno={selected ? 'si' : 'no'}
-        data-vacio={selected ? undefined : ''}
+        data-filled={selected ? 'yes' : 'no'}
+        data-empty={selected ? undefined : ''}
         className={cn(
           'min-w-0 flex-1 truncate text-left',
           !selected && 'text-muted-foreground',

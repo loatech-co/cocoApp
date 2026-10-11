@@ -159,7 +159,7 @@ describe('Select', () => {
     );
 
     const trigger = screen.getByRole('combobox', { name: 'Etiqueta' });
-    expect(trigger.querySelector('[data-icono]')).not.toBeNull();
+    expect(trigger.querySelector('[data-icon]')).not.toBeNull();
     expect(trigger.textContent).toContain('acción');
   });
 });

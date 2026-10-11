@@ -35,7 +35,7 @@ export function ShortcutGrid({
       ref={grid}
       // While arranging, the grid keeps the pointer: without this, a downward
       // drag to move a tile would close the panel.
-      data-no-swipe={mode === 'arreglando' ? '' : undefined}
+      data-no-swipe={mode === 'arranging' ? '' : undefined}
       className="grid grid-cols-3 gap-3"
     >
       {tiles.map((page, index) => (
@@ -43,10 +43,10 @@ export function ShortcutGrid({
           key={page.route}
           page={page}
           index={index}
-          isArranging={mode === 'arreglando'}
+          isArranging={mode === 'arranging'}
           isDragged={activeDrag?.index === index}
           offset={activeDrag?.index === index ? activeDrag : null}
-          onHold={() => setMode('arreglando')}
+          onHold={() => setMode('arranging')}
           onRemove={() => removeShortcut(page.route)}
           onGo={onGo}
           onDown={handleDown}
@@ -55,9 +55,9 @@ export function ShortcutGrid({
         />
       ))}
 
-      {(mode === 'arreglando' || tiles.length === 0) && (
+      {(mode === 'arranging' || tiles.length === 0) && (
         <div className="col-span-3">
-          <AddSurface shape="row" onClick={() => setMode('eligiendo')}>
+          <AddSurface shape="row" onClick={() => setMode('choosing')}>
             {t('shell.shortcuts.add')}
           </AddSurface>
         </div>
@@ -127,7 +127,7 @@ function Tile(props: TileProps) {
   );
 
   return (
-    <div className="relative" data-baldosa>
+    <div className="relative" data-tile>
       {isArranging ? (
         <MovableTile
           isDragging={isDragged}

@@ -7,9 +7,9 @@ import { Field } from '../atoms/field';
 function Controlled({ start, isInvalid = false }: { start: string; isInvalid?: boolean }) {
   const [value, setValue] = useState(start);
   return (
-    <Field label="Valor" id="campo-valor" className="max-w-sm">
+    <Field label="Valor" id="amount-field" className="max-w-sm">
       <MoneyField
-        id="campo-valor"
+        id="amount-field"
         value={value}
         onValueChange={setValue}
         aria-invalid={isInvalid}
@@ -39,6 +39,6 @@ export const Disabled: Story = {
 };
 
 export const FocusVisible: Story = {
-  parameters: { pseudo: { focusVisible: ['input'], focusWithin: ['.campo'] } },
+  parameters: { pseudo: { focusVisible: ['input'], focusWithin: ['.field'] } },
   render: () => <Controlled start="1250000" />,
 };

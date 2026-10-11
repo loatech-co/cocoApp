@@ -7,7 +7,9 @@
  * (variables, parameters, functions, classes, types, members, object keys),
  * plus the `@custom-variant`, `@utility` and `@keyframes` names and the `--*`
  * custom properties of every stylesheet, the custom properties code names
- * (`var(--x)`, `'--x'`), and every file and folder name there. A name is
+ * (`var(--x)`, `'--x'`), the markup and cache-key names of
+ * `spanish-markup.ts` (`data-*`, `id`, class selectors, `queryKey`), and every
+ * file and folder name there. A name is
  * split into words
  * (camelCase, PascalCase, snake_case, kebab-case), accents are stripped
  * (`categoría` → `categoria`) and it fails if a word is in SPANISH_WORDS.
@@ -30,6 +32,7 @@ import path from 'node:path';
 
 import ts from 'typescript';
 
+import { markupNamesInCode, markupNamesInCss } from './spanish-markup.ts';
 import { SPANISH_WORDS } from './spanish-words.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
@@ -256,6 +259,7 @@ function cssNames(text: string): { name: string; line: number }[] {
     ...matchedNames(text, CSS_VARIANT),
     ...matchedNames(text, CSS_AT_NAME),
     ...matchedNames(text, CSS_PROPERTY),
+    ...markupNamesInCss(text),
   ];
 }
 
@@ -311,7 +315,11 @@ function scan(): Hit[] {
       ? cssNames(text)
       : isSwift
         ? swiftNames(text)
-        : [...declaredNames(file, text), ...matchedNames(text, CODE_PROPERTY)];
+        : [
+            ...declaredNames(file, text),
+            ...matchedNames(text, CODE_PROPERTY),
+            ...markupNamesInCode(file, text),
+          ];
     for (const { name, line } of names) {
       if (spanishIn(name).length > 0) hits.push({ folder, entry: name, where: `${file}:${line}` });
     }

@@ -109,9 +109,9 @@ function ConceptForm({ form, concept, tree, twin, onClose }: ConceptFormProps) {
 
   return (
     <form onSubmit={(e) => void form.onSubmit(e)} className="flex flex-1 flex-col gap-4">
-      <Field label={t('common.name')} id="concepto-nombre">
+      <Field label={t('common.name')} id="concept-name">
         <Input
-          id="concepto-nombre"
+          id="concept-name"
           value={form.name}
           onChange={(e) => form.setName(e.target.value)}
           placeholder={t('centers.conceptModal.namePlaceholder')}
@@ -242,11 +242,11 @@ function SiblingCategoryField({
   return (
     <Field
       label={t('centers.levels.category')}
-      id="concepto-categoria"
+      id="concept-category"
       description={t('centers.conceptModal.categoryHelp')}
     >
       <Select
-        id="concepto-categoria"
+        id="concept-category"
         label={t('centers.levels.category')}
         value={form.category}
         options={siblings}

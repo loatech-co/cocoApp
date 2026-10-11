@@ -29,8 +29,8 @@ function Panel({ onClose }: { onClose: () => void }) {
   useSwipeToClose({ element: box, direction: 'down', isEnabled: true, onClose });
   return (
     <div ref={box} data-testid="panel">
-      <div data-testid="dentro">contenido</div>
-      <div data-no-swipe data-testid="suyo">
+      <div data-testid="inside">contenido</div>
+      <div data-no-swipe data-testid="own">
         una rejilla que se arregla
       </div>
     </div>
@@ -43,7 +43,7 @@ describe('Swipe to close', () => {
     const { getByTestId } = render(<Panel onClose={close} />);
     const panel = getByTestId('panel');
 
-    gesture(getByTestId('dentro'), [
+    gesture(getByTestId('inside'), [
       [100, 100],
       [100, 140],
       [100, 100 + CLOSE_THRESHOLD - 1],
@@ -57,7 +57,7 @@ describe('Swipe to close', () => {
     const close = vi.fn();
     const { getByTestId } = render(<Panel onClose={close} />);
 
-    gesture(getByTestId('dentro'), [
+    gesture(getByTestId('inside'), [
       [100, 100],
       [100, 160],
       [100, 100 + CLOSE_THRESHOLD + 1],
@@ -71,7 +71,7 @@ describe('Swipe to close', () => {
     const { getByTestId } = render(<Panel onClose={close} />);
     const panel = getByTestId('panel');
 
-    gesture(getByTestId('dentro'), [
+    gesture(getByTestId('inside'), [
       [100, 100],
       [100, 160],
       [100, 400],
@@ -88,7 +88,7 @@ describe('Swipe to close', () => {
   it('a re-render in the middle of the drag does not erase the gesture', () => {
     const { getByTestId, rerender } = render(<Panel onClose={() => {}} />);
     const panel = getByTestId('panel');
-    const inner = getByTestId('dentro');
+    const inner = getByTestId('inside');
 
     inner.dispatchEvent(
       new MouseEvent('pointerdown', { clientX: 100, clientY: 100, bubbles: true }),
@@ -114,7 +114,7 @@ describe('Swipe to close', () => {
     const { getByTestId } = render(<Panel onClose={close} />);
     const panel = getByTestId('panel');
 
-    gesture(getByTestId('dentro'), [
+    gesture(getByTestId('inside'), [
       [100, 400],
       [100, 200],
       [100, 100],
@@ -128,7 +128,7 @@ describe('Swipe to close', () => {
     const close = vi.fn();
     const { getByTestId } = render(<Panel onClose={close} />);
 
-    gesture(getByTestId('dentro'), [
+    gesture(getByTestId('inside'), [
       [100, 100],
       [200, 120],
       [400, 140],
@@ -141,7 +141,7 @@ describe('Swipe to close', () => {
     const close = vi.fn();
     const { getByTestId } = render(<Panel onClose={close} />);
 
-    gesture(getByTestId('suyo'), [
+    gesture(getByTestId('own'), [
       [100, 100],
       [100, 200],
       [100, 400],

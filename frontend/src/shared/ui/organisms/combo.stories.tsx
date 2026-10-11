@@ -19,9 +19,9 @@ function Controlled(props: { start?: string; canCreate?: boolean; disabled?: boo
     setValue(created.value);
   };
   return (
-    <Field label="Concepto" id="combo-concepto" className="max-w-sm">
+    <Field label="Concepto" id="concept-combo" className="max-w-sm">
       <Combo
-        id="combo-concepto"
+        id="concept-combo"
         label="Concepto"
         value={value}
         options={options}
@@ -63,6 +63,6 @@ export const Creating: Story = { args: { isCreating: true, onCreate: () => undef
 export const Disabled: Story = { render: () => <Controlled start="1" disabled /> };
 
 export const FocusVisible: Story = {
-  parameters: { pseudo: { focusVisible: ['button'], focusWithin: ['.campo'] } },
+  parameters: { pseudo: { focusVisible: ['button'], focusWithin: ['.field'] } },
   render: () => <Controlled start="1" />,
 };

@@ -15,7 +15,7 @@ interface Drag {
 
 /** Which tile the finger is over, measuring the real grid. */
 function indexUnder(grid: HTMLDivElement | null, x: number, y: number): number | null {
-  const cells = grid?.querySelectorAll('[data-baldosa]');
+  const cells = grid?.querySelectorAll('[data-tile]');
   if (!cells) return null;
 
   for (let i = 0; i < cells.length; i += 1) {
@@ -33,7 +33,7 @@ export function useShortcutDrag(mode: Mode) {
   const grid = useRef<HTMLDivElement>(null);
 
   function handleDown(e: ReactPointerEvent<HTMLElement>, index: number): void {
-    if (mode !== 'arreglando') return;
+    if (mode !== 'arranging') return;
     e.preventDefault();
     // jsdom does not ship it, even though the type says every element has it.
     if ('setPointerCapture' in e.currentTarget) e.currentTarget.setPointerCapture(e.pointerId);

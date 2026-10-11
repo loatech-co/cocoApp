@@ -38,7 +38,7 @@ export const Filled: Story = {
  * read as a bug of the component; in a browser it shows in both themes.
  */
 export const FocusVisible: Story = {
-  parameters: { pseudo: { focus: ['input'], focusVisible: ['input'], focusWithin: ['.campo'] } },
+  parameters: { pseudo: { focus: ['input'], focusVisible: ['input'], focusWithin: ['.field'] } },
 };
 
 export const WithHelp: Story = {

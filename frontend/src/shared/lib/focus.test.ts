@@ -153,11 +153,11 @@ describe('The focus signal is written with :focus-visible', () => {
 
 describe('The floating label separates rising from tinting', () => {
   it('rises with :focus-within, because otherwise the text is overwritten', () => {
-    expect(css).toContain('.campo:focus-within > label');
+    expect(css).toContain('.field:focus-within > label');
   });
 
   it('tints with :focus-visible, because that already is the signal', () => {
-    expect(css).toContain('.campo:has(:focus-visible) > label');
-    expect(css).not.toContain('.campo:focus-within > label {\n    color:');
+    expect(css).toContain('.field:has(:focus-visible) > label');
+    expect(css).not.toContain('.field:focus-within > label {\n    color:');
   });
 });

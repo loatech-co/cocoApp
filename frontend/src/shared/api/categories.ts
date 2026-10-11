@@ -16,7 +16,7 @@ export type CategoryTree = Category & { children?: CategoryTree[] };
 
 export function useCategories(kind?: Category['kind']): UseQueryResult<CategoryTree[]> {
   return useQuery({
-    queryKey: [...keys.categories, kind ?? 'todas'],
+    queryKey: [...keys.categories, kind ?? 'all'],
     queryFn: () => allPages(async (page) => categoriesList({ ...page, ...(kind ? { kind } : {}) })),
   });
 }

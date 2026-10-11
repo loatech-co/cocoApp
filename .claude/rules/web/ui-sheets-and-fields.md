@@ -181,7 +181,7 @@ un marcador: cuando hay algo escrito no se va. Lo que se gana es el renglón
 que ocupaba encima de cada campo —seis campos son seis renglones— y que el
 nombre y el valor se lean como una cosa y no como dos.
 
-**Dónde vive la lógica.** En `index.css`, bajo `.campo`: son cuatro
+**Dónde vive la lógica.** En `index.css`, bajo `.field`: son cuatro
 disparadores que significan lo mismo —foco, desplegable abierto, algo escrito,
 algo elegido— y con utilidades habría que repetir la posición subida en cada uno.
 
@@ -208,7 +208,7 @@ saber cuántas son para reservarles sitio con su relleno derecho, y contar
 los hijos de un fragmento no se puede hacer de forma fiable.
 
 Un icono a la izquierda corre la etiqueta flotante para que no le caiga
-encima; lo dice con `data-icono`, que lee `.campo`.
+encima; lo dice con `data-icon`, que lee `.field`.
 
 **El selector de fecha es la excepción:** su calendario va a la DERECHA y no
 lleva flecha. El calendario no es informativo —no hace falta un dibujo para

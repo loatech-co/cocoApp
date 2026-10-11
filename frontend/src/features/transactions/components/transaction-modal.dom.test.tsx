@@ -98,7 +98,7 @@ describe('The sheet of a transaction being edited', () => {
     renderSheet({ transaction: TRANSACTION }, client);
 
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
-    client.setQueryData([...keys.categories, 'todas'], TREE);
+    client.setQueryData([...keys.categories, 'all'], TREE);
 
     expect(await screen.findByText(/Servicios públicos › Costos fijos/)).toBeDefined();
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);

@@ -70,7 +70,7 @@ export function TrendLines({
       <ExpenseFill />
       <Guides />
 
-      <path d={area(expenses, ceiling, total)} fill="url(#tendencia-relleno)" />
+      <path d={area(expenses, ceiling, total)} fill="url(#trend-fill)" />
       <path
         d={line(expenses, ceiling, total)}
         fill="none"
@@ -99,7 +99,7 @@ export function TrendLines({
 function ExpenseFill() {
   return (
     <defs>
-      <linearGradient id="tendencia-relleno" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
         {/* `--expense` and `--income`, not `--chart-1` and `--chart-2`.
           The chart ramp is a series of colors that tell apart
           FROM EACH OTHER; here the two series are not just any two series,
