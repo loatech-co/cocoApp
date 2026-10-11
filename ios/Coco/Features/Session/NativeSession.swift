@@ -24,6 +24,14 @@ final actor NativeSession: Session {
     /// The single-flight: whoever arrives while a refresh is in flight
     /// waits for THAT one, it does not open another.
     private var refreshInFlight: Task<TokenPair, Error>?
+    /// Set while `signOut` is telling the server: the actor is reentrant across that
+    /// `await`, and a refresh opened meanwhile would revive the family after
+    /// `closeLocally()`. Cleared by `closeLocally()`.
+    private var closing = false
+    /// A rotated refresh token the Keychain refused to write. The server already
+    /// consumed the previous one, so this is the only one that still works: the next
+    /// refresh uses it and tries to write its successor again.
+    private var unsavedRefreshToken: String?
     private(set) var currentState: SessionState = .loading
 
     nonisolated let changes: AsyncStream<SessionState>
@@ -87,8 +95,9 @@ final actor NativeSession: Session {
     /// Tells the server with the refresh token and wipes the Keychain no matter what:
     /// whoever tapped «salir» does not see their session again because of a network failure.
     func signOut() async {
+        closing = true
         refreshInFlight?.cancel()
-        if let refresh = try? storedRefreshToken() {
+        if let refresh = unsavedRefreshToken ?? ((try? storedRefreshToken()) ?? nil) {
             try? await api.sendWithoutBody(RequestBuilder.logout(refreshToken: refresh), token: nil)
         }
         closeLocally()
@@ -96,6 +105,7 @@ final actor NativeSession: Session {
 
     /// Local only: the web reported that the server already closed the family.
     func discard() async {
+        closing = true
         refreshInFlight?.cancel()
         closeLocally()
     }
@@ -103,12 +113,15 @@ final actor NativeSession: Session {
     // MARK: Refresh
 
     private func sharedRefresh() async throws -> TokenPair {
+        guard !closing else { throw SessionError.signedOut }
         if let inFlight = refreshInFlight {
             return try await inFlight.value
         }
         let task = Task { try await self.refresh(retryingNetwork: true) }
         refreshInFlight = task
-        defer { refreshInFlight = nil }
+        // Only this task's slot: a later refresh may already be in flight when a
+        // cancelled waiter resumes.
+        defer { if refreshInFlight == task { refreshInFlight = nil } }
         return try await task.value
     }
 
@@ -130,10 +143,11 @@ final actor NativeSession: Session {
                 // Cancelled while the answer was on its way: the family is closed, or closing,
                 // on this phone. The rotated token is not kept and nothing is published.
                 try Task.checkCancellation()
+                if closing { throw APIError.cancelled }
                 // If for whatever reason no refresh token came, the previous one is still
                 // the last one known: it is not overwritten with anything.
                 if let newRefresh = response.refreshToken {
-                    try keychain.write(newRefresh, for: .refreshToken)
+                    store(refreshToken: newRefresh)
                 }
                 let tokens = Self.tokens(from: response, userJSON: userJSON, now: clock())
                 publish(tokens: tokens)
@@ -160,6 +174,7 @@ final actor NativeSession: Session {
     /// cannot be read (locked after a reboot, for instance) is NOT: the token may
     /// well still be there, so the state goes offline and nothing is wiped.
     private func refreshTokenOrPublish() throws -> String {
+        if let unsavedRefreshToken { return unsavedRefreshToken }
         let stored: String?
         do {
             stored = try storedRefreshToken()
@@ -180,6 +195,20 @@ final actor NativeSession: Session {
         return refresh
     }
 
+    /// The server has already rotated: whatever the Keychain says, this token is
+    /// the session now. A failed write is logged and the token kept in memory;
+    /// `.offline` here would hide a live session and lose the only valid token.
+    private func store(refreshToken: String) {
+        do {
+            try keychain.write(refreshToken, for: .refreshToken)
+            unsavedRefreshToken = nil
+        } catch {
+            unsavedRefreshToken = refreshToken
+            let ns = error as NSError
+            AppLog.session.error("Keychain write failed: \(ns.domain, privacy: .public) \(ns.code)")
+        }
+    }
+
     private func isValid(_ t: TokenPair) -> Bool {
         t.expiresAt.timeIntervalSince(clock()) >= margin
     }
@@ -192,6 +221,8 @@ final actor NativeSession: Session {
     private func closeLocally() {
         try? keychain.delete(.refreshToken)
         tokens = nil
+        unsavedRefreshToken = nil
+        closing = false
         publish(.signedOut)
     }
 

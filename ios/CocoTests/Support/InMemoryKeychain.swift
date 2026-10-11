@@ -13,6 +13,8 @@ final class InMemoryKeychain: KeychainStore {
         var writes: [(KeychainKey, String)] = []
         /// If set, every operation fails with it: it simulates a broken Keychain.
         var failure: Error?
+        /// If set, only `write` fails with it: reads keep answering.
+        var writeFailure: Error?
     }
 
     private let state: OSAllocatedUnfairLock<State>
@@ -35,6 +37,11 @@ final class InMemoryKeychain: KeychainStore {
         set { state.withLock { $0.failure = newValue } }
     }
 
+    var writeFailure: Error? {
+        get { state.withLock { $0.writeFailure } }
+        set { state.withLock { $0.writeFailure = newValue } }
+    }
+
     func read(_ key: KeychainKey) throws -> String? {
         try state.withLock { s in
             if let failure = s.failure { throw failure }
@@ -44,7 +51,7 @@ final class InMemoryKeychain: KeychainStore {
 
     func write(_ value: String, for key: KeychainKey) throws {
         try state.withLock { s in
-            if let failure = s.failure { throw failure }
+            if let failure = s.failure ?? s.writeFailure { throw failure }
             s.values[key] = value
             s.writes.append((key, value))
         }

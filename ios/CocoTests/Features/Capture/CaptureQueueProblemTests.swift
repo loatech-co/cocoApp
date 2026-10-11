@@ -10,7 +10,7 @@ final class CaptureQueueProblemTests: XCTestCase {
     private var sender = SenderDouble()
     private var session = SessionDouble()
     private var notifier = NotifierDouble()
-    private let now = CaptureQueueTests.ControlledNow()
+    private let now = CaptureQueueTestCase.ControlledNow()
     private let body = CaptureBody(merchant: "D1", amount: "45000", date: "2026-10-05")
 
     override func setUpWithError() throws {

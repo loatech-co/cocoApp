@@ -7,9 +7,9 @@ import Foundation
 final actor CaptureQueue {
     let store: QueueStore
     private let sender: CaptureSender
-    private let session: Session
-    private let notifier: Notifier
-    private let retryPolicy: Retry
+    let session: Session
+    let notifier: Notifier
+    let retryPolicy: Retry
     let clock: @Sendable () -> Date
     private let spacing: Duration
     private let photoBytesLimit: Int
@@ -18,14 +18,14 @@ final actor CaptureQueue {
     /// Publishes the whole queue after each transition; whoever listens takes from there
     /// the number of pending items.
     nonisolated let changes: AsyncStream<QueueSnapshot>
-    private let continuation: AsyncStream<QueueSnapshot>.Continuation
+    let continuation: AsyncStream<QueueSnapshot>.Continuation
 
     private var inFlight: Task<SendSummary, Never>?
     private var lastSend: ContinuousClock.Instant?
     /// The last thing that could be read: if the disk fails, the badge does not drop to 0.
-    private var lastRead: [PendingCapture] = []
+    var lastRead: [PendingCapture] = []
     /// A read or write failed and no write has gone well since.
-    private var diskError = false
+    var diskError = false
 
     init(
         store: QueueStore,
@@ -141,7 +141,7 @@ final actor CaptureQueue {
         return summary
     }
 
-    private enum SendOutcome {
+    enum SendOutcome {
         case done(SavedResult)
         case failed, unconfirmed, retry, noNetwork, cancelled
     }
@@ -218,80 +218,6 @@ final actor CaptureQueue {
         }
     }
 
-    private func finish(_ capture: inout PendingCapture, with result: SavedResult) async -> SendOutcome {
-        if let path = capture.photoPath {
-            do { try store.deletePhoto(at: path) } catch { report(.deleteSentPhoto, error, visible: false) }
-            capture.photoPath = nil
-        }
-        capture.phase = .done(result)
-        capture.textResult = nil
-        capture.lastError = nil
-        persist(capture, step: .saveDone)
-        await notifier.captureSaved(result, source: capture.source)
-        await publish()
-        return .done(result)
-    }
-
-    private func handleFailure(_ capture: inout PendingCapture, error: Error) async -> SendOutcome {
-        let api = APIError.from(error)
-        let output: SendOutcome
-        switch api {
-        case .cancelled:
-            // Neither an attempt nor an error: the capture stays on disk as it was and the
-            // next run picks it up.
-            return .cancelled
-        case .unauthenticated, .sessionRevoked:
-            // Without growing the wait: it is not the network's fault, it is the session's.
-            // Revoked, refreshing does not help: it is closed here and the capture waits
-            // for the person to sign in again.
-            let revoked = api == .sessionRevoked
-            if revoked { await session.discard() }
-            capture.phase = .awaitingSession
-            capture.lastError = revoked ? L10n.Problem.sessionRevoked : L10n.Queue.errorSessionExpired
-            output = .retry
-        case .duplicate(let problem):
-            // It was already recorded (a resend): it counts as done, unless
-            // a photo is left without knowing which transaction it goes to. The API does not allow
-            // looking it up by `externalRef`, so the photo is kept and the
-            // capture stays «Por revisar», visible in Captures.
-            if let result = Self.alreadyRegistered(capture, problem, at: clock()) {
-                return await finish(&capture, with: result)
-            }
-            AppLog.queue.warning("Duplicate with a photo and no known transaction: capture left unconfirmed")
-            capture.phase = .unconfirmed(at: clock())
-            capture.lastError = L10n.Queue.errorDuplicateWithPhoto
-            output = .unconfirmed
-        case .rejected(let problem):
-            let message = problem.userMessage()
-            capture.phase = .failed(reason: message)
-            capture.lastError = message
-            await notifier.captureFailed(reason: message)
-            output = .failed
-        case .unreadableSuccess(let status):
-            // The server created it: retrying it would depend on idempotency
-            // not to duplicate the expense. It stays «hecha, revisar».
-            AppLog.queue.warning("Unreadable \(status, privacy: .public) response: capture left unconfirmed")
-            capture.phase = .unconfirmed(at: clock())
-            capture.lastError = nil
-            output = .unconfirmed
-        case .unreadableResponse:
-            let reason = L10n.Queue.errorUnreadableResponse
-            capture.phase = .failed(reason: reason)
-            capture.lastError = reason
-            await notifier.captureFailed(reason: reason)
-            output = .failed
-        case .noNetwork, .timedOut, .server:
-            capture.attempts += 1
-            capture.nextAttempt = clock().addingTimeInterval(
-                Self.seconds(retryPolicy.delay(attempt: capture.attempts - 1)))
-            capture.lastError = Self.describe(api)
-            output = api.isNetworkError ? .noNetwork : .retry
-        }
-        persist(capture, step: .saveFailure)
-        await publish()
-        return output
-    }
-
     private func keepSpacing() async {
         if let last = lastSend {
             let elapsed = ContinuousClock.now - last
@@ -311,68 +237,4 @@ final actor CaptureQueue {
             }
             .sorted { $0.createdAt < $1.createdAt }
     }
-}
-
-// MARK: Disk and reading
-
-// Shared by sending and the person's actions
-// (`CaptureQueue+Actions.swift`); it is not called from outside the queue.
-extension CaptureQueue {
-    func search(_ id: UUID) -> PendingCapture? {
-        load().first { $0.id == id }
-    }
-
-    func countPending() -> Int {
-        load().filter(\.isPending).count
-    }
-
-    func makeSnapshot() -> QueueSnapshot {
-        let captures = load().sorted { $0.createdAt > $1.createdAt }
-        var unreadable = 0
-        do { unreadable = try store.quarantined() } catch { report(.countQuarantine, error) }
-        return QueueSnapshot(captures: captures, unreadable: unreadable, diskError: diskError)
-    }
-
-    func publish() async {
-        let snapshot = makeSnapshot()
-        continuation.yield(snapshot)
-        await notifier.setBadge(snapshot.captures.filter(\.isPending).count)
-    }
-
-    // MARK: Disk
-
-    /// What is on disk; if it cannot be read, the last thing that was read —and the
-    /// failure stays logged and in sight—, not an empty queue.
-    @discardableResult
-    func load() -> [PendingCapture] {
-        do {
-            lastRead = try store.all()
-        } catch {
-            report(.readQueue, error)
-        }
-        return lastRead
-    }
-
-    func persist(_ capture: PendingCapture, step: DiskStep) {
-        do {
-            try store.save(capture)
-            diskError = false
-        } catch {
-            report(step, error)
-        }
-    }
-
-    /// Which step failed and the error type, never the content of the capture.
-    /// `visible`: whether Captures has to warn. A photo left over on disk does not
-    /// change anything the person sees.
-    func report(_ step: DiskStep, _ error: Error, visible: Bool = true) {
-        if visible { diskError = true }
-        let ns = error as NSError
-        let what = String(describing: step)
-        AppLog.queue.error("Failed: \(what, privacy: .public) \(ns.domain, privacy: .public) \(ns.code)")
-    }
-
-    /// Waits for `task` at most `limit`, without cancelling it: returns nil if
-    /// the deadline passes or if the waiter is cancelled. The run goes on and whatever
-    /// it achieves stays on disk.
 }
