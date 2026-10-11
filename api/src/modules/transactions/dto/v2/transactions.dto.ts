@@ -62,7 +62,7 @@ class TransactionFields {
 
   /** When it was captured, ISO 8601 with offset. */
   @IsOptional()
-  @IsISO8601()
+  @IsISO8601({ strict: true })
   capturedAt?: string | null;
 
   /** Someone has to look at it: an unsure classification or a possible duplicate. */

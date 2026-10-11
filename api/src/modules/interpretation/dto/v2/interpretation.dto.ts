@@ -54,7 +54,7 @@ export class CaptureInput extends InterpretInput {
 
   /** When it was captured, ISO 8601 with offset. Absent is fine; `null` is not. */
   @IfPresent()
-  @IsISO8601()
+  @IsISO8601({ strict: true })
   capturedAt?: string;
 
   /** The concept the user chose: stored as is, not classified. Digits, as a string. */

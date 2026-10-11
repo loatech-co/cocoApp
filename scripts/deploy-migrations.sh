@@ -15,7 +15,8 @@
 # fix gone wrong). Leaving it as a manual step in the runbook meant the script
 # accepted a deploy without one. Now it looks for the newest
 # `coco-*.tar.age` in $COCO_DATA_DIR/respaldos —or the one named with
-# --backup— and stops unless it is younger than MAX_BACKUP_AGE_HOURS (24).
+# --backup— and stops unless the stamp in its name is younger than
+# MAX_BACKUP_AGE_HOURS (24): the name, not the mtime, is what a copy keeps.
 # That the restore was tested is still on whoever types `yes`: the script
 # cannot see it.
 #
@@ -102,12 +103,22 @@ if ! grep -qE '^coco-[0-9]{8}-[0-9]{6}\.tar\.age$' <<<"$(basename "$BACKUP")"; t
   echo "$BACKUP is not a finished backup (coco-<yyyymmdd>-<hhmmss>.tar.age). Nothing is applied." >&2
   exit 1
 fi
-if [ -z "$(find "$BACKUP" -mmin "-$((MAX_BACKUP_AGE_HOURS * 60))" 2>/dev/null)" ]; then
-  echo "The backup is older than ${MAX_BACKUP_AGE_HOURS} h: $BACKUP. Nothing is applied." >&2
+# The age comes from the stamp in the name (local time, as backup.sh writes
+# it), not from the file's mtime: a `cp` without -p of an old backup is new on
+# disk and old in fact (round 6, S22). node parses the stamp because
+# `date -j -f` is macOS only and `date -d` Linux only.
+STAMP="$(basename "$BACKUP" .tar.age)"
+BACKUP_AGE_HOURS="$(STAMP="${STAMP#coco-}" node -e '
+  const [, y, mo, d, h, mi, s] = process.env.STAMP.match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/);
+  const taken = new Date(+y, mo - 1, +d, +h, +mi, +s);
+  console.log(Math.floor((Date.now() - taken.getTime()) / 3_600_000));
+')"
+if [ "$BACKUP_AGE_HOURS" -ge "$MAX_BACKUP_AGE_HOURS" ]; then
+  echo "The backup is ${BACKUP_AGE_HOURS} h old by its name, ${MAX_BACKUP_AGE_HOURS} h or more: $BACKUP. Nothing is applied." >&2
   echo "Run \`npm run backup\` and \`bash scripts/restore.sh\` again." >&2
   exit 1
 fi
-echo "Backup younger than ${MAX_BACKUP_AGE_HOURS} h: $BACKUP"
+echo "Backup younger than ${MAX_BACKUP_AGE_HOURS} h by its name (${BACKUP_AGE_HOURS} h): $BACKUP"
 echo "Its restore must have been tested just before (scripts/restore.sh): the script cannot check that."
 
 if [ "$DRY_RUN" = 1 ]; then

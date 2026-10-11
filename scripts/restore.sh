@@ -35,10 +35,11 @@
 # is already in _prisma_migrations and never runs again, so without this the
 # first table the next migration created would be born without a grant.
 #
-# Connections go in as PG* variables, never as a URL on a command line, and
-# the target URL is exported to the one process that splits it, not to every
-# child: a password in the environment of pg_restore, psql or node is a
-# password in a crash report.
+# Connections go in as PG* variables, never as a URL on a command line. The
+# target URL goes to the one process that splits it, is dropped from the
+# script's environment, and its password reaches libpq through a 0600 file
+# (PGPASSFILE), not as PGPASSWORD: a password in the environment of
+# pg_restore, psql or node is a password in a crash report.
 #
 # The names inside a backup (`conteos.tsv`, `sumas.sha256`, `soportes/`) are
 # a stored format and stay as they are: every backup already on disk has them.
@@ -80,6 +81,9 @@ while [ $# -gt 0 ]; do
       fi
       TARGET="${!TARGET_VAR:-}"
       [ -n "$TARGET" ] || stop "--target reads the url from \$$TARGET_VAR, which is empty."
+      # `NAME=<url> bash scripts/restore.sh` puts the url in the environment of
+      # the whole script, and so of every child: it is read once and dropped.
+      unset "$TARGET_VAR"
       shift
       ;;
     -*) stop "Unknown option: $1" ;;
@@ -101,6 +105,21 @@ if [ -z "$BACKUP" ]; then
     grep -E '/coco-[0-9]{8}-[0-9]{6}\.tar\.age$' | sort | tail -1 || true)"
   [ -n "$BACKUP" ] || stop "There is no coco-<date>.tar.age in $COCO_DATA_DIR/respaldos."
 fi
+
+# The work folder, before the target: with --target it also holds the
+# password file (below), and it goes with everything else in `cleanup`.
+WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/coco-restore.XXXXXX")"
+chmod 700 "$WORKDIR"
+# Cleans up and keeps the exit status: bash 3.2 (the one macOS ships) can
+# otherwise exit 0 after a failure when an EXIT trap runs. The throwaway
+# database goes too, whatever happened: it holds real data, decrypted.
+cleanup() {
+  local status=$?
+  rm -rf "$WORKDIR"
+  [ -n "$TARGET" ] || dropdb --if-exists "$LOCAL_DB" >/dev/null 2>&1 || true
+  exit "$status"
+}
+trap cleanup EXIT
 
 # ── 1. The target, before opening anything ───────────────────────────────────
 database_name() { sed -E 's#^[a-z]+://[^/]*/([^?]*).*#\1#' <<<"$1"; }
@@ -125,25 +144,22 @@ else
 
   read -r -p "Type the name of the target database ($DB) to confirm: " CONFIRMATION </dev/tty
   [ "$CONFIRMATION" = "$DB" ] || stop "It does not match. Nothing was restored."
-  # Exported to that one node process only (a prefix assignment), not to the
-  # whole script: the PG* variables it prints are what the children get.
+  # The url goes to the one node process that splits it (a prefix
+  # assignment). The PG* variables it prints are what the children get, except
+  # the password: that one moves to a 0600 file in the work folder (PGPASSFILE,
+  # the `*:*:*:*:password` form, `\` and `:` escaped), so no pg_restore, psql
+  # or node below carries it in its environment (round 6, S24). Bash expansion
+  # only: no child sees PGPASSWORD before it is dropped.
   eval "$(COCO_RESTORE_TARGET_URL="$TARGET" node scripts/db/pg-env.mjs COCO_RESTORE_TARGET_URL)"
+  PGPASSFILE="$WORKDIR/pgpass"
+  ESCAPED="${PGPASSWORD//\\/\\\\}"
+  ESCAPED="${ESCAPED//:/\\:}"
+  (umask 077 && printf '*:*:*:*:%s\n' "$ESCAPED" >"$PGPASSFILE")
+  unset PGPASSWORD ESCAPED
+  export PGPASSFILE
 fi
 
 # ── 2. Open the backup ───────────────────────────────────────────────────────
-WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/coco-restore.XXXXXX")"
-chmod 700 "$WORKDIR"
-# Cleans up and keeps the exit status: bash 3.2 (the one macOS ships) can
-# otherwise exit 0 after a failure when an EXIT trap runs. The throwaway
-# database goes too, whatever happened: it holds real data, decrypted.
-cleanup() {
-  local status=$?
-  rm -rf "$WORKDIR"
-  [ -n "$TARGET" ] || dropdb --if-exists "$LOCAL_DB" >/dev/null 2>&1 || true
-  exit "$status"
-}
-trap cleanup EXIT
-
 if [ -d "$BACKUP" ]; then
   FOLDER="$BACKUP"
 else

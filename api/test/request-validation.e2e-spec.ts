@@ -107,6 +107,27 @@ describe('Request validation of transactions and captures (e2e)', () => {
     }
   });
 
+  it('refuses a capture time that is not an existing instant', async () => {
+    // `@IsISO8601()` without `strict` let `2026-02-30T10:00:00Z` through and
+    // V8 rolled it over to March 2 in silence, which moved the duplicate
+    // window to the wrong day (round 6, A1).
+    const bad = '2026-02-30T10:00:00Z';
+    const capture = await http
+      .post('/api/v2/transactions/capture')
+      .set('Authorization', auth)
+      .send({ text: 'Compra', source: 'sms', externalRef: 'sms-feb30', capturedAt: bad })
+      .expect(400);
+    expect((capture.body.errors as { field: string }[]).map((e) => e.field)).toEqual([
+      'capturedAt',
+    ]);
+    const create = await http
+      .post('/api/v2/transactions')
+      .set('Authorization', auth)
+      .send({ date: '2026-02-10', amount: '1', type: 'expense', capturedAt: bad })
+      .expect(400);
+    expect((create.body.errors as { field: string }[]).map((e) => e.field)).toContain('capturedAt');
+  });
+
   it('refuses null as the capture time', async () => {
     const response = await http
       .post('/api/v2/transactions/capture')

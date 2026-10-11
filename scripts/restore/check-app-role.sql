@@ -40,6 +40,9 @@ SELECT string_agg(name, ', ') FROM (VALUES
   -- narrowed
   ('users DELETE', has_table_privilege(:'role', 'public.users', 'DELETE')),
   ('users.role UPDATE', has_column_privilege(:'role', 'public.users', 'role', 'UPDATE')),
+  ('users.status UPDATE', has_column_privilege(:'role', 'public.users', 'status', 'UPDATE')),
+  ('users.approved_at UPDATE', has_column_privilege(:'role', 'public.users', 'approved_at', 'UPDATE')),
+  ('users.approved_by_id UPDATE', has_column_privilege(:'role', 'public.users', 'approved_by_id', 'UPDATE')),
   ('audit_log UPDATE', has_table_privilege(:'role', 'public.audit_log', 'UPDATE')),
   ('audit_log DELETE', has_table_privilege(:'role', 'public.audit_log', 'DELETE')),
   ('_prisma_migrations SELECT', has_table_privilege(:'role', 'public._prisma_migrations', 'SELECT')),

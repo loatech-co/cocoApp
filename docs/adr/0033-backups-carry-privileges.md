@@ -60,8 +60,11 @@ first one.
    rehearsed. `--i-know-this-is-production` is gone with it: restoring into
    production is an owner stop (`CLAUDE.md`). The target URL never travels
    on a command line: `--target` reads it from `COCO_RESTORE_TARGET_URL` (or
-   a variable named after the flag) and exports it to the one process that
-   splits it into `PG*` variables (round 5, S18 and B5).
+   a variable named after the flag), drops it from the script's environment,
+   and hands it to the one process that splits it into `PG*` variables (round
+   5, S18 and B5). The password reaches libpq through a 0600 `PGPASSFILE` in
+   the work folder, not as `PGPASSWORD` in the environment of every child
+   (round 6, S24).
 5. **`backup.sh` keeps `.partial` until the restore test passes** and the
    throwaway database of `restore.sh` is dropped from its exit trap, also on
    failure (findings B4 and B2).

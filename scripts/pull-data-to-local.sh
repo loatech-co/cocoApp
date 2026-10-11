@@ -66,9 +66,11 @@ LIST=$(IFS=,; echo "${TABLES[*]}")
 # Neither URL goes on a command line, where `ps` shows the password to every
 # process on the machine: each tool gets its connection as the PG* variables
 # libpq reads, inside a subshell so the two never mix.
-export SOURCE TARGET
-as_source() { (eval "$(node scripts/db/pg-env.mjs SOURCE)"; "$@"); }
-as_target() { (eval "$(node scripts/db/pg-env.mjs TARGET)"; "$@"); }
+# Neither URL is exported: each goes to the one node process that splits it
+# (a prefix assignment), so the environment of pg_dump and psql carries the
+# PG* variables of its own side and nothing of the other (round 6, S23).
+as_source() { (eval "$(SOURCE="$SOURCE" node scripts/db/pg-env.mjs SOURCE)"; "$@"); }
+as_target() { (eval "$(TARGET="$TARGET" node scripts/db/pg-env.mjs TARGET)"; "$@"); }
 
 echo "▸ Emptying the local database…"
 as_target psql -q -c "TRUNCATE $LIST RESTART IDENTITY CASCADE;"

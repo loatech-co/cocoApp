@@ -191,8 +191,11 @@ sees no other user's rows.
 - **After a migration**, `bash scripts/verify-data-api-closed.sh` (what
   `deploy-migrations.sh` runs last) exits `0`: `policies = 14` and
   `unforced = 0`, every public table except `_prisma_migrations` forced.
-  `--local` asks the local database the same (there `_prisma_migrations`
-  shows up without RLS, because `close-data-api.sql` never runs locally).
+  `--local [NAME]` asks the local database the same, or the one whose URL is
+  in the variable `NAME`; it tolerates `_prisma_migrations` without RLS, and
+  only that table, because `close-data-api.sql` never runs locally. CI runs it
+  and `scripts/db/verify-app-role.sh` against the test database after every
+  `db:test:push`, so a table born without its policy fails the pull request.
 
 ### Undo, from the cheapest
 
@@ -397,8 +400,10 @@ bash scripts/restore.sh [coco-<date>.tar.age | decrypted folder]
   of the target database letter by letter. The URL is read from
   `COCO_RESTORE_TARGET_URL` (or from the variable named after the flag,
   `--target NAME`), never from the command line, where `ps` shows it; it is
-  handed to `psql` and `pg_restore` as `PG*` variables, through one process
-  (`scripts/db/pg-env.mjs`) and not exported to every child. `coco_app` must
+  dropped from the script's environment once read, and handed to `psql` and
+  `pg_restore` as `PG*` variables through one process (`scripts/db/pg-env.mjs`);
+  the password goes in a 0600 `PGPASSFILE` inside the work folder, never as
+  `PGPASSWORD` in a child's environment. `coco_app` must
   exist there first (`scripts/db/create-app-role.sh`): the policies and the
   grants name it. Connect as the role that will run the migrations there
   (`coco_migrate` locally): every restored object and the
