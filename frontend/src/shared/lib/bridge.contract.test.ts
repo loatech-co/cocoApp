@@ -20,6 +20,7 @@ import { USER_AGENT_APP, type BridgeEvent } from './native-contract';
 
 const webFolder = join(import.meta.dirname, '../../../../ios/Coco/Features/Web');
 const bridgeSwift = readFileSync(join(webFolder, 'WebBridge.swift'), 'utf8');
+const typesSwift = readFileSync(join(webFolder, 'WebBridgeTypes.swift'), 'utf8');
 const noticeSwift = readFileSync(join(webFolder, 'WebNotice.swift'), 'utf8');
 
 function handler(name: 'sessionHandler' | 'eventsHandler'): string {
@@ -61,7 +62,7 @@ describe('the bridge names match the iOS app', () => {
 
   it('the app understands every event the web sends', () => {
     expectTypeOf<(typeof WEB_EVENTS)[number]>().toEqualTypeOf<BridgeEvent['type']>();
-    expect(swiftCases(bridgeSwift, 'enum WebEvent:').sort()).toEqual([...WEB_EVENTS].sort());
+    expect(swiftCases(typesSwift, 'enum WebEvent:').sort()).toEqual([...WEB_EVENTS].sort());
   });
 
   it('window.__coco has exactly what the app calls', () => {
@@ -75,7 +76,7 @@ describe('the bridge names match the iOS app', () => {
     const remove = registerBridge({ navigate: () => {}, openSearch: () => {}, captured: () => {} });
 
     const called = [
-      ...swiftCases(bridgeSwift, 'enum WebFunction:'),
+      ...swiftCases(typesSwift, 'enum WebFunction:'),
       ...swiftCases(noticeSwift, 'enum WebNotice:'),
     ];
     expect(Object.keys(window.__coco!).sort()).toEqual(called.sort());

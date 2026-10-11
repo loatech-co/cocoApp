@@ -16,10 +16,14 @@
   misma cifra con una compra partida; `q` por nombre de concepto encuentra la
   fila que solo lo nombra en una parte.
 - A3: `range.count` del tablero ya no cuenta transferencias (como `trend`).
-- A4: cabecera de `transactions.update.ts` ajustada.
-- A5: `api/tsconfig.typecheck.json` mapea `@coco/receipt-parser` a `src`;
+- A4: cabecera de `transactions.update.ts` ajustada. A5: `api/tsconfig.typecheck.json` mapea `@coco/receipt-parser` a `src`;
   `npm run typecheck --workspace api` pasa sin `dist`. El build y el runtime
   siguen por `dist`.
+
+- Fuera del paso, bloqueo: R4-iOS movió `WebEvent`/`WebFunction` a
+  `WebBridgeTypes.swift` y `bridge.contract.test.ts` seguía leyendo
+  `WebBridge.swift` (`npm test` rojo en Dev; CI no corre en push a Dev).
+  La prueba lee el archivo nuevo.
 
 **Pendiente:** nada nuevo.
 
