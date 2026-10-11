@@ -100,7 +100,7 @@ export function interpret(input: InterpretationInput, context: InterpretationCon
   // payee out of it even with no amount or date to read.
   const reading = classify({
     text: freeText || merchant,
-    source: 'texto-embebido',
+    source: 'embedded-text',
     fileName: input.fileName ?? undefined,
     period: input.period ?? undefined,
     signatures: [...treeSignatures(context.tree), ...SIGNATURES],

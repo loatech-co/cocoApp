@@ -95,7 +95,7 @@ describe('Keywords classify a receipt', () => {
 
     const reading = classify({
       text: 'INMOBILIARIA DEL VALLE S.A.S.\nCanon de arrendamiento\nTotal a pagar $1.200.000',
-      source: 'texto-embebido',
+      source: 'embedded-text',
       signatures: withTree(tree),
     });
 
@@ -124,7 +124,7 @@ describe('Keywords classify a receipt', () => {
 
     const reading = classify({
       text: 'CELSIA S.A. E.S.P.\nFactura de energía\nTotal a pagar $180.000',
-      source: 'texto-embebido',
+      source: 'embedded-text',
       signatures: withTree(tree),
     });
 
@@ -137,7 +137,7 @@ describe('Keywords classify a receipt', () => {
   it('without keywords, the catalog still rules', () => {
     const reading = classify({
       text: 'CELSIA S.A. E.S.P.\nFactura de energía\nTotal a pagar $180.000',
-      source: 'texto-embebido',
+      source: 'embedded-text',
       signatures: withTree(treeWith(concept(1, 'Energía'))),
     });
 

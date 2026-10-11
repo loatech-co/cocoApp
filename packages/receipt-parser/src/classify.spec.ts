@@ -17,7 +17,7 @@ describe('classify', () => {
   it('recognises the creditor by NIT, alias and file name, and explains it', () => {
     const reading = classify({
       text: 'ENEL Colombia NIT 860.063.875-8\nPagado en Bancolombia\nTotal a pagar $ 152.300',
-      source: 'texto-embebido',
+      source: 'embedded-text',
       fileName: 'FACT-enel-marzo.pdf',
       period: '2026-03',
       signatures: [
@@ -39,7 +39,7 @@ describe('classify', () => {
     });
     expect(reading.reason).toBe(
       'Energía por NIT 8600638758 + “enel” en el texto + “enel”, “FACT” en el nombre ' +
-        '(texto-embebido). Ignoré bancolombia por ser recaudador.',
+        '(embedded-text). Ignoré bancolombia por ser recaudador.',
     );
     expect(reading.inTree).toBeNull();
   });
@@ -49,16 +49,16 @@ describe('classify', () => {
       text: 'enel\nTotal 152.300',
       signatures: [makeSignature()],
     };
-    const clean = classify({ ...base, source: 'texto-embebido' });
+    const clean = classify({ ...base, source: 'embedded-text' });
     const ocr = classify({ ...base, source: 'ocr' });
     const tied = classify({
       ...base,
-      source: 'texto-embebido',
+      source: 'embedded-text',
       signatures: [makeSignature(), makeSignature({ concept: 'Otra' })],
     });
     const outOfRange = classify({
       ...base,
-      source: 'texto-embebido',
+      source: 'embedded-text',
       signatures: [makeSignature({ range: { min: 1, max: 10 } })],
     });
 
@@ -71,7 +71,7 @@ describe('classify', () => {
   it('lets the higher priority win even with fewer points', () => {
     const reading = classify({
       text: 'enel 860063875 planilla',
-      source: 'texto-embebido',
+      source: 'embedded-text',
       signatures: [
         makeSignature({ nits: ['860063875'] }),
         makeSignature({ concept: 'Prioritaria', alias: ['planilla'], priority: 9 }),
@@ -84,7 +84,7 @@ describe('classify', () => {
   it('discards a signature whose exclusion appears in the text', () => {
     const reading = classify({
       text: 'enel solar',
-      source: 'texto-embebido',
+      source: 'embedded-text',
       signatures: [makeSignature({ excludes: ['solar'] })],
     });
     expect(reading.concept).toBeNull();
@@ -95,7 +95,7 @@ describe('classify', () => {
   it('skips the IBC line when the winner is the payroll form', () => {
     const reading = classify({
       text: 'Planilla PILA\nIBC 1.300.000\nTotal pagado 520.000',
-      source: 'texto-embebido',
+      source: 'embedded-text',
     });
     expect(reading.concept).toBe('PILA / Seguridad Social');
     expect(reading.value).toBe(520000);
@@ -130,7 +130,7 @@ describe('classify', () => {
   });
 
   describe('when no signature matches', () => {
-    const withoutSignatures = { source: 'texto-embebido' as const, signatures: [] };
+    const withoutSignatures = { source: 'embedded-text' as const, signatures: [] };
 
     it('resolves a known merchant to one concept of the tree', () => {
       const reading = classify({

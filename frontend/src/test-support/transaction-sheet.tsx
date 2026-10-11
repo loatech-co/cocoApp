@@ -79,7 +79,7 @@ export const SPLIT_PAYMENT: PendingPayment = {
 /** What the fake reader returns for a Celsia receipt. */
 export const CELSIA_READING: Awaited<ReturnType<typeof readReceipt>> = {
   text: 'CELSIA S.A. E.S.P. Total a pagar 214.500',
-  source: 'texto-embebido',
+  source: 'embedded-text',
   reading: {
     concept: 'Celsia (Energía)',
     category: null,

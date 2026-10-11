@@ -24,7 +24,7 @@ import type { Reading } from '@coco/receipt-parser';
 
 export interface ParsedReceipt {
   text: string;
-  source: 'texto-embebido' | 'ocr';
+  source: 'embedded-text' | 'ocr';
   reading: Reading;
 }
 
@@ -198,7 +198,7 @@ export async function readReceipt(
 async function extractText(
   file: File,
   onProgress: ((p: ReadingProgress) => void) | undefined,
-): Promise<{ text: string; source: 'texto-embebido' | 'ocr' }> {
+): Promise<{ text: string; source: 'embedded-text' | 'ocr' }> {
   const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
 
   if (!isPdf) {
@@ -221,7 +221,7 @@ async function extractText(
     if (image) return { text: await ocr(image, onProgress), source: 'ocr' };
   }
 
-  return { text, source: 'texto-embebido' };
+  return { text, source: 'embedded-text' };
 }
 
 /** What the server understands of the text. */
@@ -253,7 +253,7 @@ async function interpretText(
  * confidence is translated from the certainty: high without review is certain; the rest,
  * below the threshold, so that the sheet says so.
  */
-function readingFrom(i: Interpretation, source: 'texto-embebido' | 'ocr'): Reading {
+function readingFrom(i: Interpretation, source: 'embedded-text' | 'ocr'): Reading {
   const c = i.classification;
   return {
     concept: c.conceptId !== null ? c.name : null,

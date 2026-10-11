@@ -44,11 +44,11 @@ const ownSignatures = conceptSignatures([
 ]);
 
 const read = (text: string, tree: SearchableNode[] = TREE) =>
-  classify({ text, source: 'texto-embebido', signatures: ownSignatures, tree });
+  classify({ text, source: 'embedded-text', signatures: ownSignatures, tree });
 
 /** No real tree: the property is not even passed. */
 const readWithoutTree = (text: string) =>
-  classify({ text, source: 'texto-embebido', signatures: ownSignatures });
+  classify({ text, source: 'embedded-text', signatures: ownSignatures });
 
 describe('The dictionary as the last source of the reading', () => {
   it("recognizes a merchant and takes it to the person's concept: medium certainty here, because there are two «Mercado»", () => {

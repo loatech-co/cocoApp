@@ -87,7 +87,7 @@ const TREE = [
 */
 const EMPTY_READING: Awaited<ReturnType<typeof readReceipt>> = {
   text: '',
-  source: 'texto-embebido',
+  source: 'embedded-text',
   reading: {
     concept: null,
     category: null,
