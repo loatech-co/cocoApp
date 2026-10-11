@@ -47,7 +47,7 @@ export function requireReconciledSplits(
  * changes in both, in the same database transaction. Not the account: each
  * leg has its own.
  */
-export function partnerLegChanges(changes: TransactionChanges): TransactionChanges {
+function partnerLegChanges(changes: TransactionChanges): TransactionChanges {
   const { date, period, amount, description, status } = changes;
   return {
     ...(date !== undefined && { date }),
@@ -73,7 +73,7 @@ export function requireNotLooseTransfer(type: TransactionType | undefined): void
 }
 
 /** A leg does not become an expense or an income: it would leave the other one alone. */
-export function requireStillTransfer(dto: TransactionEdit): void {
+function requireStillTransfer(dto: TransactionEdit): void {
   if (dto.type !== undefined && dto.type !== 'transfer') {
     throw new ValidationError(
       'Una transferencia no puede cambiar de tipo. Bórrala y registra el movimiento de nuevo.',
