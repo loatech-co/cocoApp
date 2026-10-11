@@ -42,8 +42,8 @@
 # Neither the password nor ADMIN_DATABASE_URL (it carries one) go on a
 # command line, where `ps` shows them to every process on the machine: psql
 # reads the password from the environment with \getenv (psql 15+), and the
-# connection as the PG* variables libpq reads, split here from the URL by a
-# node that reads it from its own environment.
+# connection as the PG* variables libpq reads, split from the URL by
+# scripts/db/pg-env.mjs, which reads it from its own environment.
 set -euo pipefail
 
 : "${ADMIN_DATABASE_URL:?ADMIN_DATABASE_URL is required (a role that can create roles)}"
@@ -56,21 +56,7 @@ fi
 
 export COCO_APP_DB_PASSWORD
 
-# shellcheck disable=SC2016 # the single-quoted program runs in node, not in bash.
-eval "$(node -e '
-  const u = new URL(process.env.ADMIN_DATABASE_URL);
-  const quoted = (s) => "\x27" + s.replace(/\x27/g, "\x27\\\x27\x27") + "\x27";
-  const vars = {
-    PGHOST: u.hostname.replace(/^\[|\]$/g, ""),
-    PGPORT: u.port || "5432",
-    PGUSER: decodeURIComponent(u.username),
-    PGPASSWORD: decodeURIComponent(u.password),
-    PGDATABASE: decodeURIComponent(u.pathname.slice(1)),
-  };
-  const ssl = u.searchParams.get("sslmode");
-  if (ssl) vars.PGSSLMODE = ssl;
-  console.log(Object.entries(vars).map(([k, v]) => `export ${k}=${quoted(v)}`).join("\n"));
-')"
+eval "$(node "$(dirname "$0")/pg-env.mjs" ADMIN_DATABASE_URL)"
 
 psql -v ON_ERROR_STOP=1 -q <<'SQL'
 \getenv app_password COCO_APP_DB_PASSWORD

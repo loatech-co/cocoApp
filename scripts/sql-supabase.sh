@@ -45,15 +45,32 @@ fi
 # and building the body by hand would break them.
 BODY=$(jq -n --arg q "$SQL" '{query: $q}')
 
-RESPONSE=$(curl -s -X POST \
+# The Authorization header goes in through a curl config read from stdin
+# (`-K -`), never as an argument: argv is visible in `ps` to every process on
+# the machine, and a `-H "Authorization: Bearer …"` would print the token
+# there for as long as the request lasts. A double quote inside the token
+# would end the config value early, so it is escaped.
+#
+# `-sS --fail-with-body`: silent progress, but errors are said and an HTTP
+# error is an exit code (its body is kept, so the message below still
+# prints). Without it a dropped network left RESPONSE empty and the script
+# ended with exit 0 and a cheerful "0 row(s)".
+HEADER="Authorization: Bearer ${SUPABASE_ACCESS_TOKEN//\"/\\\"}"
+set +e
+RESPONSE=$(printf 'header = "%s"\n' "$HEADER" | curl -sS --fail-with-body -K - -X POST \
   "https://api.supabase.com/v1/projects/${PROJECT}/database/query" \
-  -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d "$BODY" --max-time 60)
+CURL_STATUS=$?
+set -e
 
 # An API error arrives as an object with "message"; a result, as a list.
 if echo "$RESPONSE" | jq -e 'type == "object" and has("message")' >/dev/null 2>&1; then
   echo "Error: $(echo "$RESPONSE" | jq -r '.message')" >&2
+  exit 1
+fi
+if [ "$CURL_STATUS" -ne 0 ] || [ -z "$RESPONSE" ]; then
+  echo "The Management API did not answer (curl exit ${CURL_STATUS}). Nothing can be said about the query." >&2
   exit 1
 fi
 

@@ -42,6 +42,8 @@ import { dirname, join } from 'node:path';
 
 import pg from 'pg';
 
+import { pgEnvFromUrl } from '../db/pg-env.mjs';
+
 const args = process.argv.slice(2);
 const out = args[args.indexOf('--out') + 1];
 if (!args.includes('--out') || !out) {
@@ -64,13 +66,16 @@ const sha256 = (buffer) => createHash('sha256').update(buffer).digest('hex');
 const started = Date.now();
 const seconds = (from) => Math.round((Date.now() - from) / 100) / 10;
 
-/** Runs pg_dump against the exported snapshot; rejects on a non-zero exit. */
+/**
+ * Runs pg_dump against the exported snapshot; rejects on a non-zero exit.
+ * The connection goes in as PG* variables, not as the URL on its command
+ * line: argv is visible in `ps`, and the URL carries the password.
+ */
 function dump(snapshot, file) {
   return new Promise((resolve, reject) => {
     const child = spawn(
       'pg_dump',
       [
-        databaseUrl,
         `--snapshot=${snapshot}`,
         '--format=custom',
         '--schema=public',
@@ -79,7 +84,10 @@ function dump(snapshot, file) {
         '--no-owner',
         `--file=${file}`,
       ],
-      { stdio: ['ignore', 'inherit', 'inherit'] },
+      {
+        stdio: ['ignore', 'inherit', 'inherit'],
+        env: { ...process.env, ...pgEnvFromUrl(databaseUrl) },
+      },
     );
     child.on('error', reject);
     child.on('exit', (code) =>

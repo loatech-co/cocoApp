@@ -45,6 +45,15 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Another env file is for REHEARSING the gates against a local database, and
+# only that: `sql:supabase` and verify-data-api-closed.sh always derive the
+# project from api/.env.supabase, so a real run with --env-file would migrate
+# one database and then close and verify the data API of PRODUCTION.
+if [ "$ENV_FILE" != ".env.supabase" ] && [ "$DRY_RUN" = 0 ]; then
+  echo "--env-file $ENV_FILE only goes with --dry-run: the close and the check at the end always target production." >&2
+  exit 1
+fi
+
 cd "$(dirname "$0")/../api"
 
 echo "▸ Current state in Supabase…"
@@ -68,12 +77,19 @@ fi
 # ── The backup gate ─────────────────────────────────────────────────────────
 echo ""
 echo "▸ Backup…"
+# Only a finished archive counts: `coco-<date>-incompleto.tar.age`, a
+# `.partial` or any other recent file is not the backup the stop table asks for.
 if [ -z "$BACKUP" ]; then
-  BACKUP="$(ls -t "$COCO_DATA_DIR"/respaldos/coco-*.tar.age 2>/dev/null | head -1 || true)"
+  BACKUP="$(ls -t "$COCO_DATA_DIR"/respaldos/coco-[0-9]*-[0-9]*.tar.age 2>/dev/null |
+    grep -E '/coco-[0-9]{8}-[0-9]{6}\.tar\.age$' | head -1 || true)"
 fi
 if [ -z "$BACKUP" ] || [ ! -f "$BACKUP" ]; then
-  echo "No backup found (${BACKUP:-$COCO_DATA_DIR/respaldos/coco-*.tar.age}). Nothing is applied." >&2
+  echo "No backup found (${BACKUP:-$COCO_DATA_DIR/respaldos/coco-<date>.tar.age}). Nothing is applied." >&2
   echo "Run \`npm run backup\` and \`bash scripts/restore.sh\` first (CLAUDE.md, stop table)." >&2
+  exit 1
+fi
+if ! grep -qE '^coco-[0-9]{8}-[0-9]{6}\.tar\.age$' <<<"$(basename "$BACKUP")"; then
+  echo "$BACKUP is not a finished backup (coco-<yyyymmdd>-<hhmmss>.tar.age). Nothing is applied." >&2
   exit 1
 fi
 if [ -z "$(find "$BACKUP" -mmin "-$((MAX_BACKUP_AGE_HOURS * 60))" 2>/dev/null)" ]; then

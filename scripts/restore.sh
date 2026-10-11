@@ -26,13 +26,22 @@
 # privileges of `public` and `app_private` are applied in a second pass,
 # keeping only the statements whose grantee exists on the target (or PUBLIC):
 # a local Postgres has no `service_role`. `auth` keeps none (Supabase's), and
-# ALTER DEFAULT PRIVILEGES stay out: they hang off the owner role, which
-# --no-owner leaves behind, and the RLS migration owns them.
+# the dump's ALTER DEFAULT PRIVILEGES stay out: they hang off the owner role,
+# which --no-owner leaves behind. The restore sets them again as the role it
+# connects with, which now owns every table: the RLS migration that set them
+# is already in _prisma_migrations and never runs again, so without this the
+# first table the next migration created would be born without a grant.
+#
+# Connections go in as PG* variables, never as a URL on a command line: argv
+# is visible in `ps`, and --target carries a password.
 #
 # The names inside a backup (`conteos.tsv`, `sumas.sha256`, `soportes/`) are
 # a stored format and stay as they are: every backup already on disk has them.
 set -euo pipefail
 
+# A relative backup path is relative to where the command was typed, not to
+# the repository root the script moves to.
+INVOKED_FROM="$PWD"
 cd "$(dirname "$0")/.."
 
 COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Coding/VS Code/Personal/coco-datos}"
@@ -59,16 +68,22 @@ while [ $# -gt 0 ]; do
       ;;
     -*) stop "Unknown option: $1" ;;
     *)
-      BACKUP="$1"
+      case "$1" in
+        /*) BACKUP="$1" ;;
+        *) BACKUP="$INVOKED_FROM/$1" ;;
+      esac
       shift
       ;;
   esac
 done
 
 if [ -z "$BACKUP" ]; then
-  # The name carries the date: the last one in alphabetical order is the newest.
-  BACKUP="$(find "$COCO_DATA_DIR/respaldos" -maxdepth 1 -name 'coco-*.tar.age' | sort | tail -1)"
-  [ -n "$BACKUP" ] || stop "There is no coco-*.tar.age in $COCO_DATA_DIR/respaldos."
+  # The name carries the date: the last one in alphabetical order is the
+  # newest. Only finished names: `coco-<date>-incompleto.tar.age` or a
+  # `.partial` left by hand would otherwise pass for a backup.
+  BACKUP="$(find "$COCO_DATA_DIR/respaldos" -maxdepth 1 -name 'coco-[0-9]*-[0-9]*.tar.age' |
+    grep -E '/coco-[0-9]{8}-[0-9]{6}\.tar\.age$' | sort | tail -1 || true)"
+  [ -n "$BACKUP" ] || stop "There is no coco-<date>.tar.age in $COCO_DATA_DIR/respaldos."
 fi
 
 # ── 1. The target, before opening anything ───────────────────────────────────
@@ -76,7 +91,7 @@ database_name() { sed -E 's#^[a-z]+://[^/]*/([^?]*).*#\1#' <<<"$1"; }
 
 if [ -z "$TARGET" ]; then
   [[ "$LOCAL_DB" == *_restore_test ]] || stop "The local database must end in _restore_test (it is: $LOCAL_DB)."
-  CONNECTION="$LOCAL_DB"
+  export PGDATABASE="$LOCAL_DB"
 else
   DB="$(database_name "$TARGET")"
   [ -n "$DB" ] || stop "Could not read the database name from the --target url."
@@ -94,7 +109,8 @@ else
 
   read -r -p "Type the name of the target database ($DB) to confirm: " CONFIRMATION </dev/tty
   [ "$CONFIRMATION" = "$DB" ] || stop "It does not match. Nothing was restored."
-  CONNECTION="$TARGET"
+  export TARGET
+  eval "$(node scripts/db/pg-env.mjs TARGET)"
 fi
 
 # ── 2. Open the backup ───────────────────────────────────────────────────────
@@ -143,7 +159,7 @@ else
 fi
 # The policies and the grants name the application role: without it the
 # restore would fail halfway, or come back with nobody allowed in.
-ROLES="$(psql -X -A -t -v ON_ERROR_STOP=1 -d "$CONNECTION" -c "SELECT string_agg(rolname, ',') FROM pg_roles")"
+ROLES="$(psql -X -A -t -v ON_ERROR_STOP=1 -c "SELECT string_agg(rolname, ',') FROM pg_roles")"
 [[ ",$ROLES," == *",$APP_ROLE,"* ]] ||
   stop "The role $APP_ROLE does not exist on the target: create it first (scripts/db/create-app-role.sh)."
 
@@ -151,7 +167,7 @@ START=$SECONDS
 # --clean on a freshly created database too: since Postgres 15 every database
 # is born with a `public` schema, and the dump's CREATE SCHEMA would clash
 # with it.
-pg_restore --no-owner --no-privileges --exit-on-error --clean --if-exists -d "$CONNECTION" "$FOLDER/db.dump"
+pg_restore --no-owner --no-privileges --exit-on-error --clean --if-exists -d "$PGDATABASE" "$FOLDER/db.dump"
 
 # ── 5. The privileges of public and app_private ──────────────────────────────
 # `pg_restore -l` lists one line per entry: "<id>; <oid> <oid> ACL <schema>
@@ -162,15 +178,22 @@ pg_restore -l "$FOLDER/db.dump" |
 if [ -s "$WORKDIR/acl.list" ]; then
   pg_restore -L "$WORKDIR/acl.list" --no-owner -f - "$FOLDER/db.dump" |
     node scripts/restore/filter-privileges.mjs --roles "$ROLES" |
-    psql -X -q -o /dev/null -v ON_ERROR_STOP=1 --single-transaction -d "$CONNECTION"
+    psql -X -q -o /dev/null -v ON_ERROR_STOP=1 --single-transaction
 else
   echo "⚠️  The dump carries no privileges: it predates ADR 0033." >&2
 fi
+# The defaults for what the NEXT migration creates, owned by the connecting
+# role because every restored object is (--no-owner): the same two statements
+# as migration 20261006000000.
+psql -X -q -v ON_ERROR_STOP=1 -v role="$APP_ROLE" <<'SQL'
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO :"role";
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO :"role";
+SQL
 echo "   restored in $((SECONDS - START)) s"
 
 # ── 6. Count ─────────────────────────────────────────────────────────────────
 echo "▸ Counting rows…"
-psql -X -q -A -t -F $'\t' -v ON_ERROR_STOP=1 -d "$CONNECTION" >"$WORKDIR/restored.tsv" <<'SQL'
+psql -X -q -A -t -F $'\t' -v ON_ERROR_STOP=1 >"$WORKDIR/restored.tsv" <<'SQL'
 SELECT format('SELECT %L, count(*) FROM %I.%I', n.nspname || '.' || c.relname, n.nspname, c.relname)
 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
 WHERE n.nspname IN ('public', 'auth') AND c.relkind IN ('r', 'p') AND NOT c.relispartition
@@ -191,25 +214,13 @@ MATCHES=$?
 set -e
 [ $MATCHES -eq 0 ] || stop "The counts do NOT match the manifest: the restore is not complete."
 
-# ── 7. The privileges of the application role ────────────────────────────────
-# What the migrations narrowed (20261006000000, …200 and …300) must still be
-# narrow, and what they granted must be there: a dump restored without its
-# privileges passes the first half and fails the second.
+# ── 7. The privileges of the application role ───────────────────────────────
+# scripts/restore/check-app-role.sql: what the migrations narrowed must still
+# be narrow, what they granted must be there (tables, columns, sequences,
+# schemas, functions), and the defaults above must cover the next table. A
+# dump restored without its privileges passes the counts and fails here.
 echo "▸ Checking the privileges of ${APP_ROLE}…"
-WRONG="$(psql -X -A -t -v ON_ERROR_STOP=1 -d "$CONNECTION" -v role="$APP_ROLE" <<'SQL'
-SELECT string_agg(name, ', ') FROM (VALUES
-  ('users DELETE', has_table_privilege(:'role', 'public.users', 'DELETE')),
-  ('users.role UPDATE', has_column_privilege(:'role', 'public.users', 'role', 'UPDATE')),
-  ('audit_log UPDATE', has_table_privilege(:'role', 'public.audit_log', 'UPDATE')),
-  ('audit_log DELETE', has_table_privilege(:'role', 'public.audit_log', 'DELETE')),
-  ('_prisma_migrations SELECT', has_table_privilege(:'role', 'public._prisma_migrations', 'SELECT')),
-  ('no users SELECT', NOT has_table_privilege(:'role', 'public.users', 'SELECT')),
-  ('no users.last_login_at UPDATE', NOT has_column_privilege(:'role', 'public.users', 'last_login_at', 'UPDATE')),
-  ('no audit_log INSERT', NOT has_table_privilege(:'role', 'public.audit_log', 'INSERT')),
-  ('no transactions DELETE', NOT has_table_privilege(:'role', 'public.transactions', 'DELETE'))
-) AS checks(name, wrong) WHERE wrong
-SQL
-)"
+WRONG="$(psql -X -A -t -v ON_ERROR_STOP=1 -v role="$APP_ROLE" -f scripts/restore/check-app-role.sql)"
 [ -z "$WRONG" ] || stop "The privileges of $APP_ROLE are NOT as the migrations left them: $WRONG."
 echo "   as the migrations left them"
 

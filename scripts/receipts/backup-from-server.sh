@@ -29,7 +29,12 @@ PORT="${COCO_LEGACY_SSH_PORT:-22}"
 KEY="$COCO_LEGACY_SSH_KEY"
 SERVER="$COCO_LEGACY_SSH_TARGET"
 REMOTE="soportes-cocoapp"
-SSH_CMD="ssh -i ${KEY} -p ${PORT} -o BatchMode=yes -o ConnectTimeout=15"
+SSH_CMD=(ssh -i "$KEY" -p "$PORT" -o BatchMode=yes -o ConnectTimeout=15)
+# rsync -e takes ONE string and splits it on spaces, honouring single and
+# double quotes (a quote inside is doubled) but not backslashes: every word
+# goes single-quoted, so a key in a path with a space survives.
+rsync_word() { local q="'"; printf "'%s'" "${1//$q/$q$q}"; }
+RSYNC_SSH="$(for word in "${SSH_CMD[@]}"; do rsync_word "$word"; printf ' '; done)"
 
 cd "$(dirname "$0")/../.."
 COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Coding/VS Code/Personal/coco-datos}"
@@ -38,10 +43,10 @@ mkdir -p "$DEST"
 chmod 700 "$DEST"
 
 echo "▸ ${SERVER}:~/${REMOTE}/ → ${DEST}/"
-rsync -a --stats -e "$SSH_CMD" "$SERVER:~/${REMOTE}/" "$DEST/" | grep -E "Number of (regular )?files|Total file size" || true
+rsync -a --stats -e "$RSYNC_SSH" "$SERVER:~/${REMOTE}/" "$DEST/" | grep -E "Number of (regular )?files|Total file size" || true
 
 LOCAL_COUNT=$(find "$DEST" -type f | wc -l | tr -d ' ')
-REMOTE_COUNT=$($SSH_CMD "$SERVER" "find ~/${REMOTE} -type f | wc -l" | tr -d ' ')
+REMOTE_COUNT=$("${SSH_CMD[@]}" "$SERVER" "find ~/${REMOTE} -type f | wc -l" | tr -d ' ')
 echo "   server ${REMOTE_COUNT} · local ${LOCAL_COUNT} · $(du -sh "$DEST" | cut -f1)"
 
 if [ "$LOCAL_COUNT" -lt "$REMOTE_COUNT" ]; then

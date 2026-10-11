@@ -47,10 +47,17 @@
 # Usage: npm run backup [-- <target folder>]
 set -euo pipefail
 
+# A relative target folder is relative to where the command was typed, not to
+# the repository root the script moves to.
+INVOKED_FROM="$PWD"
 cd "$(dirname "$0")/.."
 
 COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Coding/VS Code/Personal/coco-datos}"
 TARGET="${1:-$COCO_DATA_DIR/respaldos}"
+case "$TARGET" in
+  /*) ;;
+  *) TARGET="$INVOKED_FROM/$TARGET" ;;
+esac
 ENV_FILE="${COCO_ENV_FILE:-api/.env.supabase}"
 KEYS="${COCO_KEYS_DIR:-$HOME/.config/coco}"
 PRIVATE_KEY="${COCO_BACKUP_KEY:-$KEYS/respaldo.key}"

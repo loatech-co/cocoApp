@@ -63,24 +63,31 @@ TABLES=(
 
 LIST=$(IFS=,; echo "${TABLES[*]}")
 
+# Neither URL goes on a command line, where `ps` shows the password to every
+# process on the machine: each tool gets its connection as the PG* variables
+# libpq reads, inside a subshell so the two never mix.
+export SOURCE TARGET
+as_source() { (eval "$(node scripts/db/pg-env.mjs SOURCE)"; "$@"); }
+as_target() { (eval "$(node scripts/db/pg-env.mjs TARGET)"; "$@"); }
+
 echo "▸ Emptying the local database…"
-psql "$TARGET" -q -c "TRUNCATE $LIST RESTART IDENTITY CASCADE;"
+as_target psql -q -c "TRUNCATE $LIST RESTART IDENTITY CASCADE;"
 
 echo "▸ Pulling the data from Supabase…"
 DUMP=$(mktemp -t coco-data)
 trap 'rm -f "$DUMP"' EXIT
 
 for t in "${TABLES[@]}"; do
-  pg_dump "$SOURCE" --data-only --no-owner --no-privileges --table="public.$t" >> "$DUMP"
+  as_source pg_dump --data-only --no-owner --no-privileges --table="public.$t" >> "$DUMP"
 done
 
 # A single transaction: if something fails halfway, the local database is
 # left empty rather than half-full, which is worse than empty because it
 # looks like it worked.
-psql "$TARGET" -q --single-transaction -v ON_ERROR_STOP=1 -f "$DUMP"
+as_target psql -q --single-transaction -v ON_ERROR_STOP=1 -f "$DUMP"
 
 echo "▸ Checking…"
-psql "$TARGET" -q -c "
+as_target psql -q -c "
   SELECT 'transactions' AS table_name, count(*) FROM transactions
   UNION ALL SELECT 'categories', count(*) FROM categories
   UNION ALL SELECT 'users', count(*) FROM users;"
