@@ -98,6 +98,8 @@ packages/receipt-parser/dist/
 
 # The executors' worktrees (Claude Code): working copies, never part of the repo.
 .claude/worktrees/
+# Per-machine Claude Code settings (absolute paths, local permissions).
+.claude/settings.local.json
 
 # Playwright journeys: traces, screenshots and the HTML report (e2e/)
 e2e/.output/

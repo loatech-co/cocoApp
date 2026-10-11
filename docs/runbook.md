@@ -136,6 +136,19 @@ scripts/deploy-migrations.sh              # production: status, backup gate, con
   before RLS went live (7.11-b); today it means the policies are gone. Never
   apply a migration to production any other way: a new table is born open to
   the public `anon` key until that script runs.
+- **Never edit an applied migration**, not even a comment: `migrate dev`
+  checksums the file and every local database then reports it as modified.
+  The Spanish comments in the three 2026-09 migrations stay for that reason
+  (`docs/standards/audit.md`, surprise 8). The single planned exception is
+  the example file name in `20260916030000_nombre_sin_i_de_n`, which quotes
+  a real receipt: the history rewrite replaces it by a fictional name in
+  every commit and in HEAD (the rule file lives in `$COCO_DATA_DIR`, not
+  here). Production is untouched (`migrate deploy` does not re-check
+  applied checksums); each local checkout then runs
+  `bash scripts/setup-local-db.sh --clean` and
+  `npm run prisma:migrate:reset --workspace api` (and `npm run test:e2e
+--workspace api` once, so `coco_test` is rebuilt too) to recreate the
+  local databases from the rewritten files.
 - Prove the old code survives: generate the Prisma client from the deployed
   commit and run it against a local database that already has the migration.
 - Structure changes only by migration. `npm run sql` / `npm run sql:supabase`

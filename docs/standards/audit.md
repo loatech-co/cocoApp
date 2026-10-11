@@ -439,3 +439,12 @@ Lint runs with `--max-warnings 0` in api.
 6. **`@prisma/adapter-pg ^7.10` is declared next to Prisma 6.19.3**, which deserves a look before the Prisma 7 step.
 7. **There is no CI of any kind** (no `.github/`). Since the phase rule requires green CI from step 2 on, 7.6 CI should come first.
 8. **Applied migration folders must keep their Spanish names.** Renaming them breaks `_prisma_migrations`.
+   The same exception covers the **Spanish comments inside applied migrations**
+   (`20260915010000_tags_nombre_insensible`, `20260915190000_periodo`,
+   `20260916030000_nombre_sin_i_de_n`): `prisma migrate dev` checksums the
+   whole file, so translating a comment makes every local database report a
+   modified migration and forces a reset. They stay as they are; new
+   migrations are written in English. The one exception to the exception is
+   content that breaks the personal-data rule (an example file name quoting a
+   real receipt): that is replaced by a fictional one in the history rewrite
+   and in HEAD, accepting the reset, per the runbook ("Migrations").

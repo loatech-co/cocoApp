@@ -651,7 +651,7 @@ Referencia contra la que se verifica la Parte 1. Es el texto que se le entregó 
 #### 1.1 Modelo
 
 - Nueva columna en `categories`: `varios_pagos`, `BOOLEAN NOT NULL DEFAULT false`.
-- Genera la migración con `scripts/nueva-migracion.sh`, solo contra la base local.
+- Genera la migración con `scripts/new-migration.sh`, solo contra la base local.
 - Agrega el campo al contrato compartido en `packages/types`.
 
 #### 1.2 Validación (DTO)
