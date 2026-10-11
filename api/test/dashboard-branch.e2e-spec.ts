@@ -99,4 +99,53 @@ describe('Dashboard filtered by a branch with mixed splits (e2e)', () => {
     expect(sum(branch.expenseByCostCenter)).toBe(150);
     expect(branch.expenseByCostCenter).toHaveLength(1);
   });
+
+  it('reads the same figure in the list filtered by the branch', async () => {
+    const home = await makeConcept(env.prisma, user.id);
+    const leisure = await makeConcept(env.prisma, user.id, {
+      center: { name: 'Ocio' },
+      category: { name: 'Salidas' },
+      concept: { name: 'Cine' },
+    });
+    await makeTransaction(env.prisma, user.id, {
+      type: 'expense',
+      amount: '300',
+      splits: {
+        create: [
+          { categoryId: home.concept.id, amount: '100' },
+          { categoryId: leisure.concept.id, amount: '200' },
+        ],
+      },
+    });
+    await makeTransaction(env.prisma, user.id, {
+      type: 'expense',
+      amount: '50',
+      categoryId: home.concept.id,
+    });
+    await makeTransaction(env.prisma, user.id, {
+      type: 'expense',
+      amount: '70',
+      categoryId: home.concept.id,
+      splits: { create: [{ categoryId: leisure.concept.id, amount: '70' }] },
+    });
+
+    // The list used to match the header alone: the split purchase was missing
+    // and its footer disagreed with the dashboard flow (R5-A, A2).
+    const list = await http
+      .get(`/api/v2/transactions?from=2026-09-01&to=2026-09-30&categoryId=${home.center.id}`)
+      .set('Authorization', auth)
+      .expect(200);
+    const dashboard = await summary(`&categoryId=${home.center.id}`);
+
+    expect(list.body.data).toHaveLength(3);
+    expect(Number(list.body.meta.sumExpense)).toBe(150);
+    expect(Number(list.body.meta.sumExpense)).toBe(Number(dashboard.range.expense));
+
+    // Searching the concept's name also finds the row that only names it in a split.
+    const byName = await http
+      .get('/api/v2/transactions?from=2026-09-01&to=2026-09-30&q=cine')
+      .set('Authorization', auth)
+      .expect(200);
+    expect(byName.body.data).toHaveLength(2);
+  });
 });

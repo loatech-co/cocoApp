@@ -1,13 +1,15 @@
 import { Type } from 'class-transformer';
-import { IsDateString, IsInt, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+
+import { IsCalendarDate } from '../../../../common/validation/is-calendar-date.decorator';
 
 export class DashboardQuery {
   @IsOptional()
-  @IsDateString({}, { message: 'La fecha desde debe tener formato YYYY-MM-DD.' })
+  @IsCalendarDate({ message: 'La fecha desde debe ser un día real con formato YYYY-MM-DD.' })
   from?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'La fecha hasta debe tener formato YYYY-MM-DD.' })
+  @IsCalendarDate({ message: 'La fecha hasta debe ser un día real con formato YYYY-MM-DD.' })
   to?: string;
 
   /** Only this category and its whole branch. */

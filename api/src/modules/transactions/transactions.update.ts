@@ -16,7 +16,9 @@ import type { TransactionType } from '../../generated/prisma/client';
 /**
  * ── Editing without breaking the balance ─────────────────────────────────────
  * What a PATCH cannot leave half done: the splits of a transaction and the
- * other leg of a transfer. Pure functions; the service applies them.
+ * other leg of a transfer. The checks are pure; `partnerLeg` and
+ * `prepareSplits` read through the repository they receive, and the service
+ * applies what they return.
  */
 
 /**

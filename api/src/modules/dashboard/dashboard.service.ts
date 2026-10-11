@@ -86,7 +86,8 @@ export class DashboardService {
         income: serialize(flow.income),
         expense: serialize(flow.expense),
         net: serialize(flow.net),
-        count: movements.length,
+        // Transfers only change pockets: the trend skips them, so does the count.
+        count: movements.filter((m) => m.type !== 'transfer').length,
       },
       byCategory: parts.byCategory,
       expenseByCostCenter: parts.byCostCenter,

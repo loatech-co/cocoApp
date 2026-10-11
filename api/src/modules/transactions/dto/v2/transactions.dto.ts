@@ -3,7 +3,6 @@ import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
-  IsDateString,
   IsIn,
   IsInt,
   IsISO8601,
@@ -197,11 +196,11 @@ export class CreateTransferInput {
 
 export class ListTransactionsQuery extends PageQuery {
   @IsOptional()
-  @IsDateString()
+  @IsCalendarDate()
   from?: string;
 
   @IsOptional()
-  @IsDateString()
+  @IsCalendarDate()
   to?: string;
 
   @IsOptional()

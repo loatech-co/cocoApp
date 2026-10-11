@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 
 import type { TransactionFilters } from './transactions.inputs';
 import { parseOrder } from './transactions.sort';
+import { sumsInBranch, sumsOfRows } from './transactions.sums';
+import { inConcepts } from './transactions.where';
 import { categoryIds, branchesOf } from '../../common/categories/categories.tree';
 import { DuplicateError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
@@ -61,7 +63,7 @@ export class TransactionsRepository {
     sumOf: (type: TransactionType) => Money;
   }> {
     const [rows, total, sums] = await this.db.forUser(userId, async (tx) => {
-      const where = await this.buildWhere(tx, userId, query);
+      const { where, branch } = await this.buildWhere(tx, userId, query);
       return Promise.all([
         tx.transaction.findMany({
           where,
@@ -71,12 +73,11 @@ export class TransactionsRepository {
           take: page.take,
         }),
         tx.transaction.count({ where }),
-        tx.transaction.groupBy({ by: ['type'], where, _sum: { amount: true } }),
+        branch ? sumsInBranch(tx, where, branch) : sumsOfRows(tx, where),
       ]);
     });
 
-    const sumOf = (type: TransactionType): Money =>
-      toMoney(sums.find((s) => s.type === type)?._sum.amount ?? 0);
+    const sumOf = (type: TransactionType): Money => sums.get(type) ?? toMoney(0);
     return { rows, total, sumOf };
   }
 
@@ -234,11 +235,12 @@ export class TransactionsRepository {
     return owned === unique.length;
   }
 
+  /** The filter as Prisma reads it, and the branch it was narrowed to, if any. */
   private async buildWhere(
     tx: UserTx,
     userId: bigint,
     query: TransactionFilters,
-  ): Promise<Prisma.TransactionWhereInput> {
+  ): Promise<{ where: Prisma.TransactionWhereInput; branch: bigint[] | null }> {
     const where: Prisma.TransactionWhereInput = { userId, ...plainFilters(query) };
 
     const requested = [
@@ -246,9 +248,12 @@ export class TransactionsRepository {
       ...categoryIds(query.categoryIds),
     ];
     // Filtering by "Costos fijos" has to bring EVERYTHING below it: the
-    // transactions hang from the concept, which is the leaf.
+    // transactions hang from the concept, which is the leaf. Through the
+    // header or through a split: the same condition the dashboard reads.
+    let branch: bigint[] | null = null;
     if (requested.length > 0) {
-      where.categoryId = { in: branchesOf(await categoryNodes(tx, userId), requested) };
+      branch = branchesOf(await categoryNodes(tx, userId), requested);
+      where.AND = [inConcepts(branch)];
     }
 
     if (query.q) {
@@ -265,11 +270,11 @@ export class TransactionsRepository {
         { description: { contains: query.q, mode: 'insensitive' } },
         { merchant: { contains: query.q, mode: 'insensitive' } },
         { notes: { contains: query.q, mode: 'insensitive' } },
-        ...(byCategoryName.length > 0 ? [{ categoryId: { in: byCategoryName } }] : []),
+        ...(byCategoryName.length > 0 ? [inConcepts(byCategoryName)] : []),
       ];
     }
 
-    return where;
+    return { where, branch };
   }
 }
 

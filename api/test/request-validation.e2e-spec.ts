@@ -92,6 +92,21 @@ describe('Request validation of transactions and captures (e2e)', () => {
       .expect(201);
   });
 
+  it('refuses a query range that is not an existing plain day', async () => {
+    // `@IsDateString()` let `2026-02-30` through and Prisma blew up on the
+    // invalid Date: a 500 for a client mistake (R5-A, A1).
+    for (const path of ['/api/v2/transactions', '/api/v2/dashboard']) {
+      for (const bad of ['2026-02-30', '2026-02-10T10:00:00Z']) {
+        await http.get(`${path}?from=${bad}`).set('Authorization', auth).expect(400);
+        await http.get(`${path}?to=${bad}`).set('Authorization', auth).expect(400);
+      }
+      await http
+        .get(`${path}?from=2024-02-01&to=2024-02-29`)
+        .set('Authorization', auth)
+        .expect(200);
+    }
+  });
+
   it('refuses null as the capture time', async () => {
     const response = await http
       .post('/api/v2/transactions/capture')

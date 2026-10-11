@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import type { AutoCharge, MonthlyHistory, SummaryFilter, SummaryMovement } from './ledger.types';
+import { inConcepts } from './transactions.where';
 import { ZERO, toMoney, type Money } from '../../common/money/money';
 import type { Prisma } from '../../generated/prisma/client';
 import { Database } from '../../prisma/database';
@@ -54,7 +55,7 @@ export class LedgerRepository {
               { description: { contains: q, mode: 'insensitive' as const } },
               { merchant: { contains: q, mode: 'insensitive' as const } },
               { notes: { contains: q, mode: 'insensitive' as const } },
-              ...(byName.length > 0 ? [{ categoryId: { in: byName } }] : []),
+              ...(byName.length > 0 ? [inConcepts(byName)] : []),
             ],
           }),
         },
@@ -232,15 +233,6 @@ function sinceForConcept(last: Date, since: Date): Date {
 }
 
 const SPLIT_PARTS = { select: { categoryId: true, amount: true } } as const;
-
-/**
- * A row belongs to a concept through its own category or through one of its
- * splits: a split payment is still a payment of that concept.
- */
-function inConcepts(categoryIds: readonly bigint[]): Prisma.TransactionWhereInput {
-  const ids = [...categoryIds];
-  return { OR: [{ categoryId: { in: ids } }, { splits: { some: { categoryId: { in: ids } } } }] };
-}
 
 /**
  * What a row pays to which concept. With splits, the splits are the source,
