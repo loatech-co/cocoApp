@@ -22,9 +22,10 @@ interface TransactionFields {
   /** `YYYY-MM-DD`, when the money belongs to another month than its date; stored as day 1. */
   period?: string | undefined;
   type?: TransactionType | undefined;
-  description?: string | undefined;
-  merchant?: string | undefined;
-  notes?: string | undefined;
+  /** `null` clears the text. */
+  description?: string | null | undefined;
+  merchant?: string | null | undefined;
+  notes?: string | null | undefined;
   status?: TransactionStatus | undefined;
   source?: TransactionSource | undefined;
   rawText?: string | null | undefined;
@@ -42,7 +43,7 @@ export interface TransactionRequest extends TransactionFields {
   /** `YYYY-MM-DD`. */
   date: string;
   amount: string;
-  categoryId?: number | undefined;
+  categoryId?: number | null | undefined;
   /** The idempotency key of a capture. */
   externalRef?: string | undefined;
 }

@@ -44,7 +44,7 @@ describe('Null in optional fields (e2e)', () => {
     await rejects(path, { amount: null }, 'amount');
     await rejects(path, { accountId: null }, 'accountId');
     await rejects(path, { period: null }, 'period');
-    await rejects(path, { description: null }, 'description');
+    await rejects(path, { type: null }, 'type');
 
     const untouched = await env.prisma.transaction.findUniqueOrThrow({ where: { id: tx.id } });
     expect(untouched.date.toISOString().slice(0, 10)).toBe('2026-09-10');
@@ -58,19 +58,44 @@ describe('Null in optional fields (e2e)', () => {
       .expect(400);
   });
 
-  it('still clears a category, a capture time and a budget with null', async () => {
+  it('still clears the texts, the category, a capture time and a budget with null', async () => {
     const { concept } = await makeConcept(env.prisma, user.id, { concept: { budget: '100' } });
     const tx = await makeTransaction(env.prisma, user.id, {
       categoryId: concept.id,
+      description: 'antes',
+      merchant: 'antes',
       capturedAt: new Date('2026-09-10T10:00:00Z'),
     });
 
     const cleared = await http
       .patch(`/api/v2/transactions/${tx.id}`)
       .set('Authorization', auth)
-      .send({ categoryId: null, capturedAt: null, rawText: null })
+      .send({
+        categoryId: null,
+        description: null,
+        merchant: null,
+        capturedAt: null,
+        rawText: null,
+      })
       .expect(200);
-    expect(cleared.body.data.categoryId).toBeNull();
+    expect(cleared.body.data).toMatchObject({
+      categoryId: null,
+      description: null,
+      merchant: null,
+    });
+
+    // The web sends every empty text and the missing category as `null` on creation too.
+    await http
+      .post('/api/v2/transactions')
+      .set('Authorization', auth)
+      .send({
+        date: '2026-09-10',
+        amount: '1000',
+        description: null,
+        notes: null,
+        categoryId: null,
+      })
+      .expect(201);
 
     const noBudget = await http
       .patch(`/api/v2/categories/${concept.id}`)

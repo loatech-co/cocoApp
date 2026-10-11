@@ -6475,7 +6475,8 @@
           },
           "categoryId": {
             "type": "number",
-            "description": "Optional: a transaction may exist without a category."
+            "nullable": true,
+            "description": "Optional: a transaction may exist without a category; `null` says so too."
           },
           "externalRef": {
             "type": "string",
@@ -6516,14 +6517,20 @@
           },
           "merchant": {
             "type": "string",
+            "nullable": true,
+            "description": "`null` clears it.",
             "maxLength": 255
           },
           "description": {
             "type": "string",
+            "nullable": true,
+            "description": "`null` clears it.",
             "maxLength": 255
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "`null` clears it."
           },
           "tags": {
             "description": "Names, not ids: the tags are created on the fly.",
@@ -6594,14 +6601,20 @@
           },
           "merchant": {
             "type": "string",
+            "nullable": true,
+            "description": "`null` clears it.",
             "maxLength": 255
           },
           "description": {
             "type": "string",
+            "nullable": true,
+            "description": "`null` clears it.",
             "maxLength": 255
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "`null` clears it."
           },
           "tags": {
             "description": "Names, not ids: the tags are created on the fly.",

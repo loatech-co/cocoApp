@@ -83,19 +83,22 @@ class TransactionFields {
   @IsIn(TRANSACTION_SOURCES)
   source?: TransactionSource;
 
-  @IfPresent()
+  /** `null` clears it. */
+  @IsOptional()
   @IsString()
   @MaxLength(255)
-  merchant?: string;
+  merchant?: string | null;
 
-  @IfPresent()
+  /** `null` clears it. */
+  @IsOptional()
   @IsString()
   @MaxLength(255)
-  description?: string;
+  description?: string | null;
 
-  @IfPresent()
+  /** `null` clears it. */
+  @IsOptional()
   @IsString()
-  notes?: string;
+  notes?: string | null;
 
   /** Names, not ids: the tags are created on the fly. */
   @IfPresent()
@@ -127,11 +130,11 @@ export class CreateTransactionInput extends TransactionFields {
   @Min(1)
   accountId?: number;
 
-  /** Optional: a transaction may exist without a category. */
-  @IfPresent()
+  /** Optional: a transaction may exist without a category; `null` says so too. */
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
-  categoryId?: number;
+  categoryId?: number | null;
 
   /**
    * The client's own id, unique per user: a repeat here is a 409. To retry

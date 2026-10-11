@@ -28,8 +28,11 @@ export interface CreateTransactionInput {
    * @minimum 1
    */
   accountId?: number;
-  /** Optional: a transaction may exist without a category. */
-  categoryId?: number;
+  /**
+   * Optional: a transaction may exist without a category; `null` says so too.
+   * @nullable
+   */
+  categoryId?: number | null;
   /**
    * The client's own id, unique per user: a repeat here is a 409. To retry
    * safely, capture through `POST /transactions/capture`, which returns the
@@ -60,11 +63,23 @@ export interface CreateTransactionInput {
   status?: CreateTransactionInputStatus;
   /** Where it comes from: the web sends `web`, the phone app one of its own. */
   source?: CreateTransactionInputSource;
-  /** @maxLength 255 */
-  merchant?: string;
-  /** @maxLength 255 */
-  description?: string;
-  notes?: string;
+  /**
+   * `null` clears it.
+   * @maxLength 255
+   * @nullable
+   */
+  merchant?: string | null;
+  /**
+   * `null` clears it.
+   * @maxLength 255
+   * @nullable
+   */
+  description?: string | null;
+  /**
+   * `null` clears it.
+   * @nullable
+   */
+  notes?: string | null;
   /**
    * Names, not ids: the tags are created on the fly.
    * @maxItems 20

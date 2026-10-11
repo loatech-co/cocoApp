@@ -51,11 +51,23 @@ export interface UpdateTransactionInput {
   status?: UpdateTransactionInputStatus;
   /** Where it comes from: the web sends `web`, the phone app one of its own. */
   source?: UpdateTransactionInputSource;
-  /** @maxLength 255 */
-  merchant?: string;
-  /** @maxLength 255 */
-  description?: string;
-  notes?: string;
+  /**
+   * `null` clears it.
+   * @maxLength 255
+   * @nullable
+   */
+  merchant?: string | null;
+  /**
+   * `null` clears it.
+   * @maxLength 255
+   * @nullable
+   */
+  description?: string | null;
+  /**
+   * `null` clears it.
+   * @nullable
+   */
+  notes?: string | null;
   /**
    * Names, not ids: the tags are created on the fly.
    * @maxItems 20

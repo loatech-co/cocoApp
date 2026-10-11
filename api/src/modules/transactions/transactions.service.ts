@@ -100,7 +100,8 @@ export class TransactionsService {
   async prepareCreate(userId: bigint, dto: TransactionRequest): Promise<NewTransaction> {
     // Without an account is a valid case, not an error: tracking them is optional.
     const accountId = dto.accountId !== undefined ? BigInt(dto.accountId) : null;
-    const categoryId = dto.categoryId !== undefined ? BigInt(dto.categoryId) : null;
+    const categoryId =
+      dto.categoryId !== undefined && dto.categoryId !== null ? BigInt(dto.categoryId) : null;
     const amount = toMoney(dto.amount);
     const type = dto.type ?? 'expense';
 

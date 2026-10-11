@@ -168,7 +168,7 @@ export function useSaveTransaction(
     try {
       if (existing != null) await update.mutateAsync({ id: existing, changes: body });
       else {
-        const created = await create.mutateAsync(body as never);
+        const created = await create.mutateAsync(body);
         id = (created as { id: number }).id;
         wasJustCreated = true;
       }
