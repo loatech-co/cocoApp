@@ -14,7 +14,21 @@
 # visible in `ps` to any other process on the machine.
 set -euo pipefail
 
-PROJECT="${SUPABASE_PROJECT_REF:-yocafgrrbtmldygjxkva}"
+# The project ref is NOT a default in the repository: it comes from
+# SUPABASE_PROJECT_REF or, failing that, from SUPABASE_URL (the environment
+# first, then api/.env.supabase). A ref written here would name production in
+# every clone and in the history.
+ENV_FILE="$(dirname "$0")/../api/.env.supabase"
+PROJECT="${SUPABASE_PROJECT_REF:-}"
+if [ -z "$PROJECT" ]; then
+  URL="${SUPABASE_URL:-}"
+  [ -z "$URL" ] && [ -f "$ENV_FILE" ] && URL="$(grep -E '^SUPABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')"
+  PROJECT="$(sed -nE 's#^[a-z]+://([^./]+)\.supabase\.(co|in).*#\1#p' <<<"$URL")"
+fi
+if [ -z "$PROJECT" ]; then
+  echo "Which project? Set SUPABASE_PROJECT_REF, or SUPABASE_URL (environment or api/.env.supabase)." >&2
+  exit 1
+fi
 
 SQL="${1:-}"
 if [ -z "$SQL" ]; then

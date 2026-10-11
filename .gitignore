@@ -87,6 +87,7 @@ frontend/public/tesseract/
 
 # Receipts: real receipts. Never to the repository, not even by accident.
 api/.soportes/
+api/.soportes-test/
 api/.receipts-test/
 soportes-origen/
 
@@ -100,3 +101,4 @@ packages/receipt-parser/dist/
 
 # Playwright journeys: traces, screenshots and the HTML report (e2e/)
 e2e/.output/
+e2e/.salida/

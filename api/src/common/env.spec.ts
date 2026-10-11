@@ -26,8 +26,8 @@ describe('Reading from the environment', () => {
   });
 
   it('strips the double quotes around the value', () => {
-    process.env.PRUEBA = '"/home/u523998927/soportes-cocoapp"';
-    expect(readEnv('PRUEBA')).toBe('/home/u523998927/soportes-cocoapp');
+    process.env.PRUEBA = '"/srv/coco/receipts"';
+    expect(readEnv('PRUEBA')).toBe('/srv/coco/receipts');
   });
 
   it('and the single ones', () => {
@@ -36,8 +36,8 @@ describe('Reading from the environment', () => {
   });
 
   it('leaves a plain value alone', () => {
-    process.env.PRUEBA = '/home/u523998927/soportes-cocoapp';
-    expect(readEnv('PRUEBA')).toBe('/home/u523998927/soportes-cocoapp');
+    process.env.PRUEBA = '/srv/coco/receipts';
+    expect(readEnv('PRUEBA')).toBe('/srv/coco/receipts');
   });
 
   it('does not touch quotes that do NOT wrap the value', () => {

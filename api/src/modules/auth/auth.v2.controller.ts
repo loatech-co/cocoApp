@@ -1,5 +1,4 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ApiHeader } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
@@ -14,6 +13,7 @@ import {
 import { ChangePasswordDto, LoginDto, RefreshInput, RegisterDto } from './dto/v2/auth.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { isProduction } from '../../common/env';
 import { AuthenticationError } from '../../common/errors/domain-error';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { Me, Registration, Session } from '../../contract/v2/auth.response';
@@ -77,9 +77,10 @@ export class AuthV2Controller {
   constructor(
     private readonly auth: AuthService,
     private readonly flags: FlagsService,
-    config: ConfigService,
   ) {
-    this.inProduction = config.get<string>('NODE_ENV') === 'production';
+    // `isProduction`, not `config.get()`: a quoted NODE_ENV would leave the
+    // refresh cookie without `secure` in production.
+    this.inProduction = isProduction();
   }
 
   @Public()

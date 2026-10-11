@@ -39,8 +39,11 @@
 #   postgresql://coco_app.<project-ref>:<password>@<pooler-host>:6543/postgres
 # The same role over the direct host is just `coco_app`.
 #
-# The password never goes on a command line (it would show in `ps`): psql
-# reads it from the environment with \getenv (psql 15+).
+# Neither the password nor ADMIN_DATABASE_URL (it carries one) go on a
+# command line, where `ps` shows them to every process on the machine: psql
+# reads the password from the environment with \getenv (psql 15+), and the
+# connection as the PG* variables libpq reads, split here from the URL by a
+# node that reads it from its own environment.
 set -euo pipefail
 
 : "${ADMIN_DATABASE_URL:?ADMIN_DATABASE_URL is required (a role that can create roles)}"
@@ -53,7 +56,23 @@ fi
 
 export COCO_APP_DB_PASSWORD
 
-psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 -q <<'SQL'
+# shellcheck disable=SC2016 # the single-quoted program runs in node, not in bash.
+eval "$(node -e '
+  const u = new URL(process.env.ADMIN_DATABASE_URL);
+  const quoted = (s) => "\x27" + s.replace(/\x27/g, "\x27\\\x27\x27") + "\x27";
+  const vars = {
+    PGHOST: u.hostname.replace(/^\[|\]$/g, ""),
+    PGPORT: u.port || "5432",
+    PGUSER: decodeURIComponent(u.username),
+    PGPASSWORD: decodeURIComponent(u.password),
+    PGDATABASE: decodeURIComponent(u.pathname.slice(1)),
+  };
+  const ssl = u.searchParams.get("sslmode");
+  if (ssl) vars.PGSSLMODE = ssl;
+  console.log(Object.entries(vars).map(([k, v]) => `export ${k}=${quoted(v)}`).join("\n"));
+')"
+
+psql -v ON_ERROR_STOP=1 -q <<'SQL'
 \getenv app_password COCO_APP_DB_PASSWORD
 SELECT 'CREATE ROLE coco_app' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'coco_app')
 \gexec
@@ -68,19 +87,18 @@ END $$;
 SQL
 
 if [ -n "${MIGRATION_ROLE:-}" ]; then
-  HOST=$(node -e 'console.log(new URL(process.argv[1]).hostname)' "$ADMIN_DATABASE_URL")
-  case "$HOST" in
+  case "$PGHOST" in
     localhost | 127.0.0.1 | ::1 | '') ;;
     *)
-      echo "create-app-role: MIGRATION_ROLE is for a local database, not '$HOST'" >&2
+      echo "create-app-role: MIGRATION_ROLE is for a local database, not '$PGHOST'" >&2
       exit 1
       ;;
   esac
   # Through stdin, not -c: psql does not interpolate variables in -c.
   echo 'ALTER ROLE :"role" BYPASSRLS;' |
-    psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 -q -v role="$MIGRATION_ROLE"
+    psql -v ON_ERROR_STOP=1 -q -v role="$MIGRATION_ROLE"
 fi
 
 echo "SELECT rolname, 'login=' || rolcanlogin, 'bypassrls=' || rolbypassrls
       FROM pg_roles WHERE rolname IN ('coco_app', current_user, :'role') ORDER BY rolname;" |
-  psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 -At -F ' ' -v role="${MIGRATION_ROLE:-coco_app}"
+  psql -v ON_ERROR_STOP=1 -At -F ' ' -v role="${MIGRATION_ROLE:-coco_app}"

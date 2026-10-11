@@ -6,7 +6,7 @@ import type { RequestHandler } from 'express';
 import helmet from 'helmet';
 
 import { requestContext } from './common/logging/request-context';
-import { proxyHeadersProbe, trustProxyHops } from './common/proxy/client-ip';
+import { logsProxyHeaders, proxyHeadersProbe, trustProxyHops } from './common/proxy/client-ip';
 import { FieldValidationPipe } from './common/validation/field-validation.pipe';
 
 /** Every API route lives under `/api/v<version>`. */
@@ -50,14 +50,11 @@ export function configureApp(
 ): void {
   // `req.ip` is the client, not LiteSpeed: the rate limiter and audit_log
   // key on it. See `client-ip.ts` for why it is a hop count.
-  (app as NestExpressApplication).set(
-    'trust proxy',
-    trustProxyHops(config.get<string>('TRUST_PROXY_HOPS')),
-  );
+  (app as NestExpressApplication).set('trust proxy', trustProxyHops());
 
   // First middleware: every later line of the request carries its id (6.8).
   app.use(requestContext(accessLog));
-  app.use(proxyHeadersProbe(config.get<string>('LOG_PROXY_HEADERS') === 'true', accessLog));
+  app.use(proxyHeadersProbe(logsProxyHeaders(), accessLog));
 
   configureRouting(app);
 

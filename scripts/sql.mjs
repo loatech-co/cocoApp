@@ -20,6 +20,8 @@
 import { createPrisma } from './db/prisma-client.mjs';
 import { readFileSync } from 'node:fs';
 
+import { destructiveStatement } from './sql-guard.mjs';
+
 const args = process.argv.slice(2);
 const force = args.includes('--force');
 const json = args.includes('--json');
@@ -40,14 +42,13 @@ const sql = (fromFile ? readFileSync(rest[0], 'utf8') : rest.join(' ')).trim();
 // The guard does not protect from a syntax error, it protects from
 // carelessness: a DELETE without WHERE empties a whole table, and outside a
 // transaction there is no undoing it. Asking for --force makes you type it on
-// purpose.
-const destructive =
-  /^\s*(DROP\s+(DATABASE|SCHEMA|TABLE)|TRUNCATE)\b/i.test(sql) ||
-  (/^\s*(DELETE|UPDATE)\b/i.test(sql) && !/\bWHERE\b/i.test(sql));
+// purpose. It judges every statement (sql-guard.mjs), so a comment, a
+// `BEGIN;` or a chained statement do not hide one.
+const destructive = destructiveStatement(sql);
 
-if (destructive && !force) {
+if (destructive !== undefined && !force) {
   console.error(
-    `Destructive statement without --force:\n  ${sql.split('\n')[0]}\n\n` +
+    `Destructive statement without --force:\n  ${destructive.split('\n')[0]}\n\n` +
       `If it is on purpose, run it again with --force.`,
   );
   process.exit(1);

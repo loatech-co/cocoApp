@@ -75,7 +75,9 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
 -- `tables_without_rls` and `open_grants` must come out as zero. Since step
 -- 7.11-b `policies` comes out as 14, all of them `TO coco_app`: the role the
 -- API connects as (ADR 0019). None names `anon` or `authenticated`, so for
--- them there is still no policy, same as before.
+-- them there is still no policy, same as before. These lines are for the eye;
+-- what fails the deploy is scripts/verify-data-api-closed.sh, which adds the
+-- FORCE check.
 SELECT
   count(*) FILTER (WHERE NOT rowsecurity) AS tables_without_rls,
   (SELECT count(*) FROM pg_policies WHERE schemaname = 'public') AS policies,

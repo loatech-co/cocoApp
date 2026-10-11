@@ -16,7 +16,7 @@
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && node --test \"scripts/**/*.spec.mjs\"",
     "lint": "npm run lint --workspaces --if-present && eslint e2e --max-warnings 0 && npm run lint:spanish",
     "lint:spanish": "tsx scripts/lint/spanish-identifiers.ts",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p e2e",

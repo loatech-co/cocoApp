@@ -1,6 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 import { isIP } from 'node:net';
 
+import { readEnv } from '../env';
+
 /**
  * Who is calling, seen from behind LiteSpeed.
  *
@@ -25,8 +27,19 @@ import { isIP } from 'node:net';
  */
 const DEFAULT_TRUST_PROXY_HOPS = 1;
 
-export function trustProxyHops(value: string | undefined): number {
+/**
+ * Read through `readEnv`, not `config.get()`: the server hands half of its
+ * variables with the quotes inside the value, and `Number('"1"')` is NaN, a
+ * `trust proxy` that trusts nobody and a limiter that blocks everyone.
+ */
+export function trustProxyHops(env: NodeJS.ProcessEnv = process.env): number {
+  const value = readEnv('TRUST_PROXY_HOPS', env);
   return value === undefined ? DEFAULT_TRUST_PROXY_HOPS : Number(value);
+}
+
+/** `LOG_PROXY_HEADERS=true`, quotes or not. */
+export function logsProxyHeaders(env: NodeJS.ProcessEnv = process.env): boolean {
+  return readEnv('LOG_PROXY_HEADERS', env) === 'true';
 }
 
 /** How many proxy-header samples a process logs before going quiet. */

@@ -7,9 +7,11 @@ these rules are in [`docs/adr/`](adr/); the system is described in
 
 Production: the Hostinger Node.js app on the production domain (API and web
 in one process), PostgreSQL, Auth and the `soportes` bucket on Supabase. The SSH
-target and key path are in `scripts/receipts/backup-from-server.sh`. The
-commands below write the domain as `$APP_DOMAIN`; it is the host of
-`COCO_API_BASE_URL` in `ios/project.yml`:
+target, port and key path of the old hosting are NOT in the repository:
+`scripts/receipts/backup-from-server.sh` reads them from
+`COCO_LEGACY_SSH_TARGET`, `COCO_LEGACY_SSH_PORT` and `COCO_LEGACY_SSH_KEY` (the
+owner keeps them in the password manager). The commands below write the domain
+as `$APP_DOMAIN`; it is the host of `COCO_API_BASE_URL` in `ios/project.yml`:
 
 ```sh
 export APP_DOMAIN=$(sed -n 's#^ *COCO_API_BASE_URL: *https://##p' ios/project.yml)
@@ -106,9 +108,16 @@ by expand and contract.** Dropping anything follows the stop table in
 ```bash
 scripts/new-migration.sh <verb>_<object>   # create and apply LOCALLY
 npm run test:e2e --workspace api              # coco_test gets it too
-scripts/deploy-migrations.sh              # production: status, confirm, deploy, close the data API
+scripts/deploy-migrations.sh              # production: status, backup gate, confirm, deploy, close and verify the data API
 ```
 
+- **Backup first, and the script checks it:** `deploy-migrations.sh` refuses
+  to go on unless the newest `coco-*.tar.age` in `$COCO_DATA_DIR/respaldos`
+  (or the file named with `--backup <file>`) is younger than 24 h
+  (`MAX_BACKUP_AGE_HOURS`). The restore test (`scripts/restore.sh`, exit `0`)
+  it cannot see: that is on whoever types `yes`. `--dry-run` runs the gates and
+  stops before the confirmation; `--env-file <file in api/>` points them at a
+  local database to rehearse.
 - **Read `migrate status` before confirming:** the pending list must be
   exactly the migrations you expect. Never pipe a blind `yes` into the script —
   that confirmation is the only check between a typo and production.
@@ -116,9 +125,12 @@ scripts/deploy-migrations.sh              # production: status, confirm, deploy,
   later than every existing one. One came out with a local time earlier than
   the previous migration and had to be renamed (and its local
   `_prisma_migrations` row fixed) before it was applied anywhere else.
-- The script ends with `scripts/close-data-api.sql`; of its three counts,
-  `tables_without_rls` and `open_grants` must print `0` and `policies` must
-  print `14`, all of them `TO coco_app`
+- The script ends with `scripts/close-data-api.sql` and then
+  `scripts/verify-data-api-closed.sh`, which exits `1` unless
+  `tables_without_rls = 0`, `open_grants = 0`, `policies = 14` (all of them
+  `TO coco_app`; `EXPECTED_POLICIES` when the schema grows) and
+  `unforced = 0` (FORCE ROW LEVEL SECURITY on every table but
+  `_prisma_migrations`)
   ([ADR 0007](adr/0007-close-supabase-data-api-by-script.md),
   [ADR 0024](adr/0024-rls-active-in-production.md)). `policies = 0` was right
   before RLS went live (7.11-b); today it means the policies are gone. Never
@@ -159,10 +171,11 @@ sees no other user's rows.
   `DATABASE_URL` on the server. Through Supavisor the user is
   `coco_app.<project-ref>`; host, port (6543) and parameters stay as they were.
 - **A restore needs `coco_app` first**: the policies and grants name it.
-- **After a migration**, `scripts/close-data-api.sql` prints
-  `policies = 14`, and every public table except `_prisma_migrations` is
-  forced:
-  `SELECT count(*) FILTER (WHERE NOT relforcerowsecurity) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relname <> '_prisma_migrations'` → `0`.
+- **After a migration**, `bash scripts/verify-data-api-closed.sh` (what
+  `deploy-migrations.sh` runs last) exits `0`: `policies = 14` and
+  `unforced = 0`, every public table except `_prisma_migrations` forced.
+  `--local` asks the local database the same (there `_prisma_migrations`
+  shows up without RLS, because `close-data-api.sql` never runs locally).
 
 ### Undo, from the cheapest
 
@@ -208,8 +221,9 @@ action.** From the repository root, with `api/.env.supabase` in place:
    Reference of 7.11-b-prod: 560 / 80 / 463 / 4. What matters is before =
    after, and `admins` ≥ 1 (with an admin, the bootstrap path is closed).
 3. **Apply:** `bash scripts/deploy-migrations.sh`. `migrate status` must list
-   ONLY `20261010003334_guard_users_insert`; type `yes`. The close of the data
-   API prints `tables_without_rls = 0`, `open_grants = 0`, `policies = 14`.
+   ONLY `20261010003334_guard_users_insert`; the backup gate names the file
+   of step 1; type `yes`. The close of the data API ends with
+   `The data API is closed.`
 4. **`migrate diff` empty:**
    `cd api && npx dotenv -e .env.supabase -- npx prisma migrate diff --from-config-datasource --to-schema ./prisma/schema.prisma --script`
    → `-- This is an empty migration.`
