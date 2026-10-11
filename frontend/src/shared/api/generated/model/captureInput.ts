@@ -52,7 +52,7 @@ export interface CaptureInput {
    * @maxLength 255
    */
   externalRef: string;
-  /** When it was captured, ISO 8601 with offset. */
+  /** When it was captured, ISO 8601 with offset. Absent is fine; `null` is not. */
   capturedAt?: string;
   /**
    * The concept the user chose: stored as is, not classified. Digits, as a string.

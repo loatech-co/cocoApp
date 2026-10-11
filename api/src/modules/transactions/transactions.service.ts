@@ -11,30 +11,22 @@ import {
   type Transfer,
 } from './transactions.domain';
 import type {
-  SplitRequest,
   TransactionEdit,
   TransactionFilters,
   TransactionRequest,
   TransferRequest,
 } from './transactions.inputs';
-import {
-  TransactionsRepository,
-  type SplitToWrite,
-  type FullTransaction,
-  type TransactionChanges,
-  type TransferPartner,
-} from './transactions.repository';
+import { TransactionsRepository, type FullTransaction } from './transactions.repository';
 import { parsePagination } from './transactions.sort';
-import { splitsToWrite } from './transactions.splits';
 import {
   changesOf,
-  partnerLegChanges,
+  partnerLeg,
+  prepareSplits,
   requireNotLooseTransfer,
   requireReconciledSplits,
-  requireStillTransfer,
 } from './transactions.update';
 import { NotFoundError, ValidationError } from '../../common/errors/domain-error';
-import { serialize, toMoney, type Money } from '../../common/money/money';
+import { serialize, toMoney } from '../../common/money/money';
 import type { TransactionType } from '../../generated/prisma/client';
 import { ReceiptsService } from '../receipts/receipts.service';
 import { TagsService } from '../tags/tags.service';
@@ -110,7 +102,7 @@ export class TransactionsService {
     if (accountId !== null) await this.requireOwnAccount(userId, accountId);
     if (categoryId !== null) await this.requireOwnCategory(userId, categoryId);
 
-    const splits = await this.prepareSplits(userId, amount, dto.splits);
+    const splits = await prepareSplits(this.repository, userId, amount, dto.splits);
     const tagIds = dto.tags?.length ? await this.tags.resolveNames(userId, dto.tags) : [];
 
     return {
@@ -199,12 +191,14 @@ export class TransactionsService {
     // they do not and the amount changes, the existing splits have to reconcile.
     requireReconciledSplits(actual, dto, amount);
     const splits =
-      dto.splits !== undefined ? await this.prepareSplits(userId, amount, dto.splits) : null;
+      dto.splits !== undefined
+        ? await prepareSplits(this.repository, userId, amount, dto.splits)
+        : null;
     const tagIds = dto.tags !== undefined ? await this.tags.resolveNames(userId, dto.tags) : null;
 
     const changes = changesOf(dto, actual, accountId, amount);
     if (actual.transferGroupId === null) requireNotLooseTransfer(dto.type);
-    const partner = await this.partnerLeg(userId, actual, dto, changes);
+    const partner = await partnerLeg(this.repository, userId, actual, dto, changes);
     const updated = await this.repository.updateWithDetails(
       userId,
       id,
@@ -242,57 +236,6 @@ export class TransactionsService {
   }
 
   // ── Apoyo ──────────────────────────────────────────────────────────────────
-
-  /**
-   * Editing a transfer leg edits both (like deleting): a different amount on
-   * each leg breaks the balances of both accounts.
-   */
-  private async partnerLeg(
-    userId: bigint,
-    actual: FullTransaction,
-    dto: TransactionEdit,
-    changes: TransactionChanges,
-  ): Promise<TransferPartner | null> {
-    if (actual.transferGroupId === null) return null;
-    requireStillTransfer(dto);
-    if (dto.accountId !== undefined) {
-      const partnerAccount = await this.repository.partnerAccount(
-        userId,
-        actual.transferGroupId,
-        actual.id,
-      );
-      if (partnerAccount !== null && partnerAccount === BigInt(dto.accountId)) {
-        throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.', {
-          code: 'transfer_same_account',
-        });
-      }
-    }
-    return {
-      userId,
-      transferGroupId: actual.transferGroupId,
-      changes: partnerLegChanges(changes),
-    };
-  }
-
-  /**
-   * Checks the splits reconcile and requires each category to be the user's
-   * (422): without it a split hung one's own transaction from someone else's
-   * concept.
-   */
-  private async prepareSplits(
-    userId: bigint,
-    headerAmount: Money,
-    splits: readonly SplitRequest[] | undefined,
-  ): Promise<SplitToWrite[]> {
-    const listos = splitsToWrite(headerAmount, splits);
-    const ids = listos.flatMap((split) => (split.categoryId !== null ? [split.categoryId] : []));
-    if (!(await this.repository.categoriesBelongTo(userId, ids))) {
-      throw new ValidationError('La categoría indicada no existe o no es tuya.', {
-        code: 'category_not_owned',
-      });
-    }
-    return listos;
-  }
 
   private async requireTransaction(userId: bigint, id: bigint): Promise<FullTransaction> {
     const transaction = await this.repository.findOwned(userId, id);

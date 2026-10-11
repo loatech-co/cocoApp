@@ -57,6 +57,7 @@ export const ProblemCode = {
   amount_breaks_splits: 'amount_breaks_splits',
   transfer_same_account: 'transfer_same_account',
   transfer_leg_locked: 'transfer_leg_locked',
+  transfer_requires_two_legs: 'transfer_requires_two_legs',
   account_not_owned: 'account_not_owned',
   category_not_owned: 'category_not_owned',
   account_has_transactions: 'account_has_transactions',

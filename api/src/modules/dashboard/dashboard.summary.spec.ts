@@ -1,4 +1,6 @@
-import { treeOf, breakdown, pendingThisMonth, liveRecurring, trend } from './dashboard.summary';
+import { liveRecurring, pendingThisMonth } from './dashboard.pending';
+import { treeOf, breakdown } from './dashboard.summary';
+import { trend } from './dashboard.trend';
 import { serialize } from '../../common/money/money';
 import { Prisma } from '../../generated/prisma/client';
 import type { SummaryCategory } from '../categories/category-lookup.service';

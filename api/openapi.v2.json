@@ -58,7 +58,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -507,7 +507,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -736,7 +736,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -954,7 +954,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1060,7 +1060,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1331,7 +1331,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2097,7 +2097,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2204,7 +2204,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2522,7 +2522,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2740,7 +2740,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3520,7 +3520,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3693,7 +3693,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3912,7 +3912,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4556,7 +4556,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4671,7 +4671,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5136,7 +5136,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5252,6 +5252,7 @@
               "amount_breaks_splits",
               "transfer_same_account",
               "transfer_leg_locked",
+              "transfer_requires_two_legs",
               "account_not_owned",
               "category_not_owned",
               "account_has_transactions",
@@ -6849,7 +6850,7 @@
           },
           "capturedAt": {
             "type": "string",
-            "description": "When it was captured, ISO 8601 with offset."
+            "description": "When it was captured, ISO 8601 with offset. Absent is fine; `null` is not."
           },
           "categoryId": {
             "type": "string",

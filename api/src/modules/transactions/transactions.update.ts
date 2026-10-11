@@ -1,6 +1,13 @@
 import { periodChange } from './period';
-import type { TransactionEdit } from './transactions.inputs';
-import type { FullTransaction, TransactionChanges } from './transactions.repository';
+import type { SplitRequest, TransactionEdit } from './transactions.inputs';
+import type {
+  FullTransaction,
+  SplitToWrite,
+  TransactionChanges,
+  TransactionsRepository,
+  TransferPartner,
+} from './transactions.repository';
+import { splitsToWrite } from './transactions.splits';
 import { ValidationError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
 import { checkSplitsReconcile } from '../../common/money/splits';
@@ -106,4 +113,57 @@ export function changesOf(
     }),
     ...(dto.needsReview !== undefined && { needsReview: dto.needsReview }),
   };
+}
+
+/**
+ * Editing a transfer leg edits both (like deleting): a different amount on
+ * each leg breaks the balances of both accounts.
+ */
+export async function partnerLeg(
+  repository: TransactionsRepository,
+  userId: bigint,
+  actual: FullTransaction,
+  dto: TransactionEdit,
+  changes: TransactionChanges,
+): Promise<TransferPartner | null> {
+  if (actual.transferGroupId === null) return null;
+  requireStillTransfer(dto);
+  if (dto.accountId !== undefined) {
+    const partnerAccount = await repository.partnerAccount(
+      userId,
+      actual.transferGroupId,
+      actual.id,
+    );
+    if (partnerAccount !== null && partnerAccount === BigInt(dto.accountId)) {
+      throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.', {
+        code: 'transfer_same_account',
+      });
+    }
+  }
+  return {
+    userId,
+    transferGroupId: actual.transferGroupId,
+    changes: partnerLegChanges(changes),
+  };
+}
+
+/**
+ * Checks the splits reconcile and requires each category to be the user's
+ * (422): without it a split hung one's own transaction from someone else's
+ * concept.
+ */
+export async function prepareSplits(
+  repository: TransactionsRepository,
+  userId: bigint,
+  headerAmount: Money,
+  splits: readonly SplitRequest[] | undefined,
+): Promise<SplitToWrite[]> {
+  const listos = splitsToWrite(headerAmount, splits);
+  const ids = listos.flatMap((split) => (split.categoryId !== null ? [split.categoryId] : []));
+  if (!(await repository.categoriesBelongTo(userId, ids))) {
+    throw new ValidationError('La categoría indicada no existe o no es tuya.', {
+      code: 'category_not_owned',
+    });
+  }
+  return listos;
 }

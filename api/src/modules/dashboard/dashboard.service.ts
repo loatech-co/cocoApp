@@ -2,17 +2,16 @@ import { Injectable } from '@nestjs/common';
 
 import { computeFlow, type AggregableMovement } from './dashboard.aggregate';
 import { restrictToBranch } from './dashboard.branch';
+import { liveRecurring, pendingThisMonth } from './dashboard.pending';
 import {
   toIsoDate,
   treeOf,
   breakdown,
-  pendingThisMonth,
   defaultRange,
-  liveRecurring,
-  trend,
   totalsOf,
   type Tree,
 } from './dashboard.summary';
+import { trend } from './dashboard.trend';
 import type { Dashboard, DashboardFilters, PendingPayment } from './dashboard.types';
 import { historyWindow } from './pending';
 import { categoryIds, branchesOf } from '../../common/categories/categories.tree';
