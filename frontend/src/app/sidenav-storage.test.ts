@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { readSidenavCollapsed, writeSidenavCollapsed } from './sidenav-storage';
 
@@ -37,5 +37,28 @@ describe('sidenav storage', () => {
 
     expect(readSidenavCollapsed()).toBe(false);
     expect(localStorage.getItem('sidenav-plegada')).toBeNull();
+  });
+});
+
+describe('sidenav storage when the browser blocks it', () => {
+  const blocked = new DOMException('The operation is insecure.', 'SecurityError');
+
+  beforeEach(() => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw blocked;
+    });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw blocked;
+    });
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('reads as expanded instead of throwing', () => {
+    expect(readSidenavCollapsed()).toBe(false);
+  });
+
+  it('writes without throwing', () => {
+    expect(() => writeSidenavCollapsed(true)).not.toThrow();
   });
 });

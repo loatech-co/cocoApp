@@ -6,12 +6,15 @@
  *
  * - `data-*` attributes: the name and its literal values, in JSX
  *   (`data-x={a ? 'y' : 'n'}` included), in CSS selectors, in any string (a
- *   Playwright locator) and in a `dataset.x` read.
+ *   Playwright locator), in a `dataset.x` read and in what `dataset.x = …`
+ *   assigns (round 4, W4).
  * - `id`, `htmlFor` and the `aria-*` references to an id: their literal
  *   values (the head of a template too).
  * - Stylesheets: class selectors (`.x`) and id selectors (`#x`).
  * - Cache keys: every string in a `queryKey`, in a `keys` / `*Keys` object
  *   and in the first argument of the query-client calls that take a key.
+ * - Storage keys: the first argument of `getItem` / `setItem` / `removeItem`
+ *   (round 4, W4), except the legacy keys still read to migrate them.
  *
  * It walks the syntax tree, so comments are not read: they are the «P» half
  * of every slice, like in `spanish-identifiers.ts`.
@@ -42,6 +45,11 @@ const KEY_CALLS = new Set([
   'refetchQueries',
   'cancelQueries',
 ]);
+const STORAGE_CALLS = new Set(['getItem', 'setItem', 'removeItem']);
+/** Keys browsers already hold, read once to migrate them; each with its reason. */
+const LEGACY_STORAGE_KEYS = new Set([
+  'sidenav-plegada', // written until 7.2-r1; `app/sidenav-storage.ts` moves it, gone in 7.10
+]);
 const IDENTIFIER_LIKE = /^[A-Za-z_][\w-]*$/;
 
 function matched(text: string, pattern: RegExp, lineAt: (index: number) => number): Found[] {
@@ -57,6 +65,14 @@ function matched(text: string, pattern: RegExp, lineAt: (index: number) => numbe
 const isLiteral = (n: ts.Node): n is ts.StringLiteral | ts.NoSubstitutionTemplateLiteral =>
   ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n);
 
+/** `el.dataset.x`: the `x` is a `data-x` attribute. */
+const isDatasetAccess = (n: ts.Node): n is ts.PropertyAccessExpression =>
+  ts.isPropertyAccessExpression(n) &&
+  ts.isPropertyAccessExpression(n.expression) &&
+  n.expression.name.text === 'dataset';
+
+const isAssignment = (n: ts.BinaryExpression) => n.operatorToken.kind === ts.SyntaxKind.EqualsToken;
+
 /** What a TypeScript / JavaScript file carries in its markup and keys. */
 export function markupNamesInCode(file: string, text: string): Found[] {
   const kind = file.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
@@ -67,10 +83,11 @@ export function markupNamesInCode(file: string, text: string): Found[] {
     if (IDENTIFIER_LIKE.test(name)) found.push({ name, line: lineOf(at) });
   };
   /** The string literals and template heads under a node. */
-  const literalsUnder = (node: ts.Node) => {
+  const literalsUnder = (node: ts.Node, except = new Set<string>()) => {
     const visit = (n: ts.Node) => {
-      if (isLiteral(n)) push(n.text, n);
-      else if (ts.isTemplateHead(n)) push(n.text.replace(/-$/, ''), n);
+      if (isLiteral(n)) {
+        if (!except.has(n.text)) push(n.text, n);
+      } else if (ts.isTemplateHead(n)) push(n.text.replace(/-$/, ''), n);
       ts.forEachChild(n, visit);
     };
     visit(node);
@@ -94,12 +111,13 @@ export function markupNamesInCode(file: string, text: string): Found[] {
       const callee = node.expression;
       if (ts.isPropertyAccessExpression(callee) && KEY_CALLS.has(callee.name.text)) {
         literalsUnder(node.arguments[0]!);
+      } else if (ts.isPropertyAccessExpression(callee) && STORAGE_CALLS.has(callee.name.text)) {
+        literalsUnder(node.arguments[0]!, LEGACY_STORAGE_KEYS);
       }
     } else if (ts.isPropertyAccessExpression(node)) {
-      const owner = node.expression;
-      if (ts.isPropertyAccessExpression(owner) && owner.name.text === 'dataset') {
-        push(node.name.text, node);
-      }
+      if (isDatasetAccess(node)) push(node.name.text, node);
+    } else if (ts.isBinaryExpression(node) && isAssignment(node) && isDatasetAccess(node.left)) {
+      literalsUnder(node.right);
     } else if (isLiteral(node) || ts.isTemplateLiteralToken(node)) {
       found.push(...matched(node.text, DATA_ATTRIBUTE, () => lineOf(node)));
     }

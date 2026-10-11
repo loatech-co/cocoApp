@@ -107,7 +107,26 @@ export async function apiUpload<TData>(
 ): Promise<TData> {
   if (isTokenExpiring()) await renew();
 
-  return new Promise<TData>((resolve, reject) => {
+  let reply = await upload(url, data, onProgress);
+
+  // Same policy as `withSession`: renew once and resend; the second 401 is final.
+  if (reply.status === 401) {
+    await renewAfterRejection();
+    reply = await upload(url, data, onProgress);
+    if (reply.status === 401) discardSession();
+  }
+
+  if (reply.status >= 200 && reply.status < 300) return (reply.body as { data: TData }).data;
+  throw errorFromBody(reply.status, reply.body, t('errors.uploadFailed'));
+}
+
+/** One XMLHttpRequest with the current token; rejects only when the network fails. */
+function upload(
+  url: string,
+  data: FormData,
+  onProgress?: (fraction: number) => void,
+): Promise<{ status: number; body: unknown }> {
+  return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('POST', `${API_ORIGIN}${url}`);
 
@@ -119,27 +138,21 @@ export async function apiUpload<TData>(
     };
 
     request.onload = () => {
-      const body: unknown = ((): unknown => {
-        try {
-          return JSON.parse(request.responseText);
-        } catch {
-          return null;
-        }
-      })();
-
-      if (request.status >= 200 && request.status < 300) {
-        resolve((body as { data: TData }).data);
-        return;
-      }
-
-      if (request.status === 401) discardSession();
-      reject(errorFromBody(request.status, body, t('errors.uploadFailed')));
+      resolve({ status: request.status, body: parsed(request.responseText) });
     };
 
     request.onerror = () => reject(new ApiClientError(0, 'network_error', t('errors.offline')));
 
     request.send(data);
   });
+}
+
+function parsed(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 /** Goes out to the network with the token, renewing it first if needed and once after a 401. */
@@ -149,15 +162,30 @@ async function withSession(url: string, init: RequestInit): Promise<Response> {
   let response = await send(url, init);
 
   if (response.status === 401) {
-    const wasRenewed = await renew();
-    if (!wasRenewed) {
-      discardSession();
-      throw new ApiClientError(401, 'unauthenticated', t('errors.sessionExpired'));
-    }
+    await renewAfterRejection();
     response = await send(url, init);
   }
 
   return response;
+}
+
+/**
+ * The server rejected the token: renews, or throws what the failure means.
+ *
+ * `renew()` already decides the fate of the session: the server's «no» ends
+ * it, and anything else —a network drop, a 5xx— keeps the token and retries
+ * shortly (round 3, W2). So a failed renewal with a token still in memory is
+ * NOT an expired session; it is the network, and the session must survive it
+ * (round 4, W1). Discarding it here would send the user to the sign-in screen
+ * for a train tunnel.
+ */
+async function renewAfterRejection(): Promise<void> {
+  if (await renew()) return;
+
+  if (currentToken() === null) {
+    throw new ApiClientError(401, 'unauthenticated', t('errors.sessionExpired'));
+  }
+  throw new ApiClientError(0, 'network_error', t('errors.offline'));
 }
 
 async function errorFrom(response: Response, fallback: string): Promise<ApiClientError> {
