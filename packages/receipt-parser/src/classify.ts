@@ -93,12 +93,8 @@ export interface Reading {
 export interface ReadingInput {
   /** The receipt's text: embedded in the PDF or out of the OCR. */
   text: string;
-  /**
-   * How it was obtained. Embedded text is exact; OCR confuses letters.
-   * `'texto-embebido'` is the old name, read until every emitter says
-   * `'embedded-text'` (expand and contract, R4-A W5).
-   */
-  source: 'embedded-text' | 'texto-embebido' | 'ocr';
+  /** How it was obtained. Embedded text is exact; OCR confuses letters. */
+  source: 'embedded-text' | 'ocr';
   /** The file name and, if there is one, its folder's. */
   fileName?: string | undefined;
   /** The month the expense belongs to, `YYYY-MM`. Helps choose the date. */
