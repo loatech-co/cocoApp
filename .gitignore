@@ -104,3 +104,6 @@ packages/receipt-parser/dist/
 # Playwright journeys: traces, screenshots and the HTML report (e2e/)
 e2e/.output/
 e2e/.salida/
+
+# Supabase CLI link state: carries the dev project ref and the organization id.
+api/supabase/.temp/
