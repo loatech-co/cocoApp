@@ -66,6 +66,17 @@ final class WebBridgeTests: XCTestCase {
         XCTAssertFalse(WebBridge.isNavigationAllowed(URL(string: "http://app.coco.invalid/")!, base: base))
     }
 
+    func testOnlyWebAndMailLinksLeaveTheApp() throws {
+        let allowed = ["https://ayuda.example/", "http://ayuda.example/", "mailto:ana@coco.test", "HTTPS://x.example"]
+        for link in allowed {
+            XCTAssertTrue(WebBridge.isExternalOpenAllowed(try XCTUnwrap(URL(string: link))), link)
+        }
+        let dropped = ["tel:+570000000", "sms:570000000", "shortcuts://run-shortcut", "coco://capture/manual"]
+        for link in dropped + ["about:blank"] {
+            XCTAssertFalse(WebBridge.isExternalOpenAllowed(try XCTUnwrap(URL(string: link))), link)
+        }
+    }
+
     func testShouldDeliver() {
         let t0 = Date(timeIntervalSince1970: 1_800_000_000)
         XCTAssertTrue(WebBridge.shouldDeliver(last: nil, now: t0, consecutiveDeliveries: 0))

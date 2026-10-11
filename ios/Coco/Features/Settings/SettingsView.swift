@@ -7,16 +7,21 @@ struct SettingsView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var urlText: String
+    /// What is saved in UserDefaults, which is not the base in use until the app
+    /// restarts: «Guardar» compares with this one, so saving twice is not possible.
+    @State private var storedBase: URL
     @State private var testNotificationResult: String?
     @State private var saved = false
 
     init(d: Dependencies) {
         self.d = d
-        _urlText = State(initialValue: d.configuration.base.absoluteString)
+        let stored = APIConfiguration.current(defaults: d.defaults).base
+        _urlText = State(initialValue: stored.absoluteString)
+        _storedBase = State(initialValue: stored)
     }
 
     private var validation: Validation { Self.validate(urlText) }
-    private var hasChanged: Bool { validation.url != nil && validation.url != d.configuration.base }
+    private var hasChanged: Bool { Self.hasChanged(validated: validation.url, stored: storedBase) }
 
     var body: some View {
         NavigationStack {
@@ -76,6 +81,7 @@ struct SettingsView: View {
     private func save() {
         guard let url = validation.url else { return }
         APIConfiguration.save(base: url, defaults: d.defaults)
+        storedBase = url
         saved = true
         AppLog.app.info("API URL changed to \(url.absoluteString, privacy: .public)")
         Task { await d.signOut() }
@@ -83,8 +89,9 @@ struct SettingsView: View {
 
     private func reset() {
         APIConfiguration.reset(defaults: d.defaults)
-        urlText = APIConfiguration.current(defaults: d.defaults).base.absoluteString
-        saved = urlText != d.configuration.base.absoluteString
+        storedBase = APIConfiguration.current(defaults: d.defaults).base
+        urlText = storedBase.absoluteString
+        saved = storedBase != d.configuration.base
         if saved { Task { await d.signOut() } }
     }
 
@@ -125,6 +132,12 @@ struct SettingsView: View {
             return Validation(url: nil, reason: L10n.Settings.apiUrlErrorPath)
         }
         return Validation(url: APIConfiguration(base: url).base, reason: nil)
+    }
+
+    /// A valid URL that differs from the saved one.
+    nonisolated static func hasChanged(validated: URL?, stored: URL) -> Bool {
+        guard let validated else { return false }
+        return validated != stored
     }
 
     nonisolated static func expiryText(_ expiresAt: Date?, now: Date = .now) -> String {

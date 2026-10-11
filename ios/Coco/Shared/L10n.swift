@@ -221,6 +221,7 @@ enum L10n {
         static func dialogQueuedMany(_ queued: String, pending: Int) -> String {
             format("shortcuts.dialog.queuedMany", queued, String(pending))
         }
+        static func smsSenderNote(_ sender: String) -> String { format("shortcuts.sms.senderNote", sender) }
     }
 
     enum Tabs {

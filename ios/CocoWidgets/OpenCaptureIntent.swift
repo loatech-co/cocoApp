@@ -1,19 +1,33 @@
 import AppIntents
 import Foundation
 
+/// Where the app lands: the quick form, or the form with the camera already up.
+/// An `AppEnum`, so Shortcuts offers a picker with these two and never a free
+/// text that the app would have to discard.
+enum CaptureDestination: String, AppEnum {
+    case manual
+    case photo
+
+    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Destino")
+    static let caseDisplayRepresentations: [CaptureDestination: DisplayRepresentation] = [
+        .manual: "Formulario",
+        .photo: "Cámara",
+    ]
+}
+
 /// The URLs with which the shortcuts open the app. The app resolves them in
 /// `onOpenURL` (if there is no session, first sign in and then the destination).
 enum CaptureURL {
     /// The quick form.
-    static let manual = url(destination: "manual")
+    static let manual = url(destination: .manual)
     /// The form with the camera already up.
-    static let photo = url(destination: "photo")
+    static let photo = url(destination: .photo)
 
-    static func url(destination: String) -> URL {
+    static func url(destination: CaptureDestination) -> URL {
         // The destinations are fixed and made of letters: if this fails it is a programming
         // error, not something that comes from outside.
-        guard let url = URL(string: "coco://capture/\(destination)") else {
-            preconditionFailure("Invalid capture URL for the destination «\(destination)»")
+        guard let url = URL(string: "coco://capture/\(destination.rawValue)") else {
+            preconditionFailure("Invalid capture URL for the destination «\(destination.rawValue)»")
         }
         return url
     }
@@ -34,12 +48,12 @@ struct OpenCaptureIntent: AppIntent {
     static let openAppWhenRun = true
 
     /// `manual` opens the form; `photo`, the form with the camera up.
-    @Parameter(title: "Destino", default: "manual")
-    var destination: String
+    @Parameter(title: "Destino", default: .manual)
+    var destination: CaptureDestination
 
     init() {}
 
-    init(destination: String) {
+    init(destination: CaptureDestination) {
         self.destination = destination
     }
 

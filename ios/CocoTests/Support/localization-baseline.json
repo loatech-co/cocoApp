@@ -797,6 +797,11 @@
       "value": "No se pudo registrar: %@"
     },
     {
+      "key": "shortcuts.sms.senderNote",
+      "source": "ios/Coco/Features/Shortcuts/ActionParameters.swift:38",
+      "value": "De: %@"
+    },
+    {
       "key": "web.error.sessionNotOpened",
       "source": "ios/Coco/Features/Web/WebContainer.swift:43",
       "value": "No se pudo abrir la sesión web"

@@ -1860,6 +1860,17 @@
         }
       }
     },
+    "shortcuts.sms.senderNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De: %@"
+          }
+        }
+      }
+    },
     "tabs.captures" : {
       "extractionState" : "manual",
       "localizations" : {

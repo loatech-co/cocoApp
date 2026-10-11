@@ -258,7 +258,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         if Self.isNavigationAllowed(url, base: configuration.base) {
             decisionHandler(.allow)
         } else {
-            openExternal(url)
+            openOutside(url)
             decisionHandler(.cancel)
         }
     }
@@ -302,8 +302,14 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         _ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for action: WKNavigationAction,
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
-        if let url = action.request.url { openExternal(url) }
+        if let url = action.request.url { openOutside(url) }
         return nil
+    }
+
+    /// What leaves the app goes to the browser or to Mail, and nothing else.
+    private func openOutside(_ url: URL) {
+        guard Self.isExternalOpenAllowed(url) else { return }
+        openExternal(url)
     }
 
     // MARK: Pure
@@ -351,15 +357,6 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         return string
     }
 
-    /// Only the API's host (and `about:blank`, which WebKit uses internally).
-    nonisolated static func isNavigationAllowed(_ url: URL, base: URL) -> Bool {
-        guard let scheme = url.scheme?.lowercased() else { return false }
-        if scheme == "about" { return true }
-        guard scheme == "http" || scheme == "https", let host = url.host() else { return false }
-        return isOriginAllowed(
-            originProtocol: scheme, host: host, port: url.port ?? 0, base: base, isMainFrame: true)
-    }
-
     /// One delivery every 30 s and never more than two in a row without the
     /// document changing.
     nonisolated static func shouldDeliver(last: Date?, now: Date, consecutiveDeliveries: Int) -> Bool {
@@ -373,5 +370,26 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
             withJSONObject: session.asDictionary(), options: [.withoutEscapingSlashes])
         guard let text = String(data: data, encoding: .utf8) else { throw SessionError.signedOut }
         return text
+    }
+}
+
+// MARK: Where a URL may go
+
+extension WebBridge {
+    /// Only the API's host (and `about:blank`, which WebKit uses internally).
+    nonisolated static func isNavigationAllowed(_ url: URL, base: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased() else { return false }
+        if scheme == "about" { return true }
+        guard scheme == "http" || scheme == "https", let host = url.host() else { return false }
+        return isOriginAllowed(
+            originProtocol: scheme, host: host, port: url.port ?? 0, base: base, isMainFrame: true)
+    }
+
+    /// A link out of the API's host opens in the browser or in Mail. Any other
+    /// scheme (`tel:`, `sms:`, `shortcuts://`, the app's own `coco://`) is dropped:
+    /// the web does not get to decide which app opens next.
+    nonisolated static func isExternalOpenAllowed(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased() else { return false }
+        return scheme == "http" || scheme == "https" || scheme == "mailto"
     }
 }

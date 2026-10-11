@@ -158,6 +158,15 @@ final class SettingsViewTests: XCTestCase {
         XCTAssertNotNil(SettingsView.validate("https://x.y/api/v2").reason, "the app appends /api/v2")
     }
 
+    /// After saving, the field holds the URL that is now saved: «Guardar» goes back
+    /// to disabled and a second tap cannot sign out again.
+    func testSaveIsOnlyEnabledWhileTheURLDiffersFromTheSavedOne() throws {
+        let stored = try XCTUnwrap(URL(string: "https://api.coco.invalid"))
+        XCTAssertTrue(SettingsView.hasChanged(validated: URL(string: "https://otra.example"), stored: stored))
+        XCTAssertFalse(SettingsView.hasChanged(validated: stored, stored: stored))
+        XCTAssertFalse(SettingsView.hasChanged(validated: nil, stored: stored))
+    }
+
     func testExpiryText() throws {
         let now = try XCTUnwrap(Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 5, hour: 12)))
         XCTAssertEqual(SettingsView.expiryText(nil), "No disponible (simulador o sin perfil)")

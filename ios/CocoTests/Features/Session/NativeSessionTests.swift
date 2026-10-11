@@ -1,3 +1,4 @@
+import Security
 import XCTest
 
 @testable import Coco
@@ -53,6 +54,14 @@ final class NativeSessionTests: XCTestCase {
             try await Task.sleep(for: .milliseconds(30))
             log.record("red")
             return try await inner.data(for: request)
+        }
+    }
+
+    /// A transport that never answers: it only ends when its task is cancelled.
+    private final class BlockingTransport: Transport, Sendable {
+        func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+            try await Task.sleep(for: .seconds(60))
+            throw APIError.unreadableResponse
         }
     }
 
@@ -334,6 +343,44 @@ final class NativeSessionTests: XCTestCase {
         XCTAssertNil(a.keychain.values[.refreshToken])
         let state = await a.session.state
         XCTAssertEqual(state, .signedOut)
+    }
+
+    /// `discard` while a refresh is still waiting for the network: the cancelled
+    /// refresh must not publish `offline` on top of the `signedOut` (the sign-in
+    /// cover would close and the web would show up with no session).
+    func testDiscardWhileARefreshIsInFlightLeavesTheSessionSignedOut() async throws {
+        let keychain = InMemoryKeychain(values: [.refreshToken: "r0"])
+        let base = try XCTUnwrap(URL(string: "https://api.coco.invalid"))
+        let api = APIClient(
+            configuration: APIConfiguration(base: base), transport: BlockingTransport(), version: "0.1.0")
+        let session = NativeSession(api: api, keychain: keychain, clock: Date.init)
+        let refreshing = Task { try await session.validAccessToken() }
+        try await Task.sleep(for: .milliseconds(100))
+        await session.discard()
+        let result = await refreshing.result
+        XCTAssertThrowsError(try result.get()) { XCTAssertEqual($0 as? APIError, .cancelled) }
+        let state = await session.state
+        XCTAssertEqual(state, .signedOut)
+        XCTAssertNil(keychain.values[.refreshToken])
+    }
+
+    // MARK: A Keychain that cannot be read
+
+    /// Before the first unlock after a reboot the Keychain refuses to answer. That
+    /// is not «no token»: the session goes offline and the token stays.
+    func testAKeychainThatCannotBeReadGoesOfflineInsteadOfSigningOut() async {
+        let a = harness(replies: [.http(200, Self.sessionJSON(access: "a1", refresh: "r1"))])
+        a.keychain.failure = KeychainError.system(errSecInteractionNotAllowed)
+        await a.session.restore()
+        let state = await a.session.state
+        XCTAssertEqual(state, .offline(last: nil))
+        XCTAssertTrue(a.transport.received.isEmpty)
+        a.keychain.failure = nil
+        XCTAssertEqual(a.keychain.values[.refreshToken], "r0")
+        // Once it answers again, the same token restores the session.
+        await a.session.restore()
+        let restored = await a.session.state
+        XCTAssertEqual(restored, .active(Self.profile))
     }
 
     func testStateChangesArePublished() async throws {

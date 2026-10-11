@@ -35,7 +35,7 @@ enum ActionParameters {
         return CaptureBody(
             text: cleaned,
             date: BogotaDate.day(now),
-            note: trimmedOrNil(sender).map { "De: \($0)" }
+            note: trimmedOrNil(sender).map(L10n.Shortcuts.smsSenderNote)
         )
     }
 

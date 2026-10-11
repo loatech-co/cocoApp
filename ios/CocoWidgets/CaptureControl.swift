@@ -10,7 +10,7 @@ struct CaptureControl: ControlWidget {
 
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: Self.kind) {
-            ControlWidgetButton(action: OpenCaptureIntent(destination: "manual")) {
+            ControlWidgetButton(action: OpenCaptureIntent(destination: .manual)) {
                 Label(L10n.Widget.captureTitle, systemImage: "plus.circle.fill")
             }
         }

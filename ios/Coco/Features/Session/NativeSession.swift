@@ -49,10 +49,6 @@ final actor NativeSession: Session {
     /// At launch: if there is a refresh token in the Keychain it is refreshed; if not, there is no
     /// session. A network failure leaves the Keychain intact and goes offline.
     func restore() async {
-        guard let refresh = try? keychain.read(.refreshToken), !refresh.isEmpty else {
-            publish(.signedOut)
-            return
-        }
         // The errors already left the state where it belongs (signedOut or offline).
         _ = try? await sharedRefresh()
     }
@@ -92,7 +88,7 @@ final actor NativeSession: Session {
     /// whoever tapped «salir» does not see their session again because of a network failure.
     func signOut() async {
         refreshInFlight?.cancel()
-        if let refresh = try? keychain.read(.refreshToken), !refresh.isEmpty {
+        if let refresh = try? storedRefreshToken() {
             try? await api.sendWithoutBody(RequestBuilder.logout(refreshToken: refresh), token: nil)
         }
         closeLocally()
@@ -120,12 +116,10 @@ final actor NativeSession: Session {
     /// A `URLError` NEVER wipes the Keychain: it retries once with the same
     /// refresh token (within GoTrue's reuse interval it returns the same
     /// session) and, if it fails again, keeps everything and goes offline.
-    /// ONLY a real 401 wipes the Keychain.
+    /// ONLY a real 401 wipes the Keychain. A cancelled refresh (`signOut`, `discard`)
+    /// publishes nothing: whoever cancelled it already decided the state.
     private func refresh(retryingNetwork: Bool) async throws -> TokenPair {
-        guard let refresh = try? keychain.read(.refreshToken), !refresh.isEmpty else {
-            closeLocally()
-            throw SessionError.signedOut
-        }
+        let refresh = try refreshTokenOrPublish()
         var attempts = retryingNetwork ? 2 : 1
         while true {
             attempts -= 1
@@ -133,6 +127,9 @@ final actor NativeSession: Session {
                 let data = try await api.sendRaw(
                     RequestBuilder.refresh(refreshToken: refresh), token: nil)
                 let (response, userJSON) = try Self.decodeSession(data)
+                // Cancelled while the answer was on its way: the family is closed, or closing,
+                // on this phone. The rotated token is not kept and nothing is published.
+                try Task.checkCancellation()
                 // If for whatever reason no refresh token came, the previous one is still
                 // the last one known: it is not overwritten with anything.
                 if let newRefresh = response.refreshToken {
@@ -146,6 +143,10 @@ final actor NativeSession: Session {
                 throw SessionError.signedOut
             } catch let error as APIError where error.isNetworkError && attempts > 0 {
                 continue
+            } catch APIError.cancelled {
+                throw APIError.cancelled
+            } catch is CancellationError {
+                throw APIError.cancelled
             } catch {
                 // Network (already retried), server down or an odd response: none
                 // of that says the session died. The Keychain is kept.
@@ -153,6 +154,30 @@ final actor NativeSession: Session {
                 throw SessionError.offline
             }
         }
+    }
+
+    /// The token to refresh with. No token is a closed session; a Keychain that
+    /// cannot be read (locked after a reboot, for instance) is NOT: the token may
+    /// well still be there, so the state goes offline and nothing is wiped.
+    private func refreshTokenOrPublish() throws -> String {
+        let stored: String?
+        do {
+            stored = try storedRefreshToken()
+        } catch {
+            publish(.offline(last: tokens?.profile))
+            throw SessionError.offline
+        }
+        guard let stored else {
+            closeLocally()
+            throw SessionError.signedOut
+        }
+        return stored
+    }
+
+    /// `nil` when there is no token; it throws when the Keychain could not be read.
+    private func storedRefreshToken() throws -> String? {
+        guard let refresh = try keychain.read(.refreshToken), !refresh.isEmpty else { return nil }
+        return refresh
     }
 
     private func isValid(_ t: TokenPair) -> Bool {
@@ -203,113 +228,5 @@ final actor NativeSession: Session {
             let userJSON = try? JSONSerialization.data(withJSONObject: user)
         else { throw APIError.unreadableResponse }
         return (response, userJSON)
-    }
-}
-
-/// Cuts out, byte by byte, the object value of a key inside another object
-/// of a JSON. It interprets nothing: it only counts braces and respects strings.
-enum JSONSlicer {
-    // A byte scanner: one case per structural character and a state that
-    // crosses them all. Splitting it into functions forces passing that state from hand
-    // to hand and reads worse than the whole loop.
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
-    static func object(key: String, inside parent: String, at data: Data) -> Data? {
-        let bytes = [UInt8](data)
-        var i = 0
-        var depth = 0
-        var currentKey: [UInt8] = []
-        var awaitingValue = false
-        var insideParent = false
-        var parentDepth = 0
-        let target = Array(key.utf8)
-        let parentName = Array(parent.utf8)
-
-        while i < bytes.count {
-            let b = bytes[i]
-            switch b {
-            case UInt8(ascii: "\""):
-                guard let end = endOfString(bytes, from: i) else { return nil }
-                let content = Array(bytes[(i + 1)..<end])
-                // A string followed by ':' is a key; if not, it is a value.
-                var j = end + 1
-                while j < bytes.count, isBlankByte(bytes[j]) { j += 1 }
-                if j < bytes.count, bytes[j] == UInt8(ascii: ":") {
-                    currentKey = content
-                    awaitingValue = true
-                    i = j + 1
-                    continue
-                }
-                awaitingValue = false
-                i = end + 1
-            case UInt8(ascii: "{"):
-                if awaitingValue {
-                    if depth == 1, currentKey == parentName {
-                        insideParent = true
-                        parentDepth = 2
-                    } else if insideParent, depth == parentDepth, currentKey == target {
-                        guard let close = endOfObject(bytes, from: i) else { return nil }
-                        return Data(bytes[i...close])
-                    }
-                }
-                awaitingValue = false
-                depth += 1
-                i += 1
-            case UInt8(ascii: "}"):
-                depth -= 1
-                if insideParent, depth < parentDepth { insideParent = false }
-                i += 1
-            case UInt8(ascii: "["):
-                awaitingValue = false
-                depth += 1
-                i += 1
-            case UInt8(ascii: "]"):
-                depth -= 1
-                i += 1
-            default:
-                if !isBlankByte(b) { awaitingValue = false }
-                i += 1
-            }
-        }
-        return nil
-    }
-
-    private static func isBlankByte(_ b: UInt8) -> Bool {
-        b == 0x20 || b == 0x0A || b == 0x0D || b == 0x09
-    }
-
-    /// Index of the quote that closes the string opened at `from`.
-    private static func endOfString(_ bytes: [UInt8], from: Int) -> Int? {
-        var i = from + 1
-        while i < bytes.count {
-            if bytes[i] == UInt8(ascii: "\\") {
-                i += 2
-                continue
-            }
-            if bytes[i] == UInt8(ascii: "\"") { return i }
-            i += 1
-        }
-        return nil
-    }
-
-    /// Index of the brace that closes the object opened at `from`.
-    private static func endOfObject(_ bytes: [UInt8], from: Int) -> Int? {
-        var i = from
-        var level = 0
-        while i < bytes.count {
-            switch bytes[i] {
-            case UInt8(ascii: "\""):
-                guard let end = endOfString(bytes, from: i) else { return nil }
-                i = end
-            case UInt8(ascii: "{"), UInt8(ascii: "["):
-                level += 1
-            case UInt8(ascii: "}"), UInt8(ascii: "]"):
-                level -= 1
-                if level == 0 { return i }
-            default:
-                break
-            }
-            i += 1
-        }
-        return nil
     }
 }
