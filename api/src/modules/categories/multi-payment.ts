@@ -49,7 +49,7 @@ export function multiPaymentRejection({
     return {
       code: 'multi_payment_requires_concept',
       message:
-        `«Se paga en varias veces» es de un ${LEVELS[MAX_DEPTH - 1]}, y esto es ` +
+        `«Se completa en varios pagos» es de un ${LEVELS[MAX_DEPTH - 1]}, y esto es ` +
         `un ${LEVELS[Math.max(0, Math.min(depth, MAX_DEPTH) - 1)]}. ` +
         `Un centro de costos y una categoría son sumas de lo que cuelga de ellos: ` +
         `no se pagan, ni de una vez ni de varias.`,
@@ -60,7 +60,7 @@ export function multiPaymentRejection({
     return {
       code: 'multi_payment_requires_recurring',
       message:
-        '«Se paga en varias veces» solo significa algo en un concepto recurrente. ' +
+        '«Se completa en varios pagos» solo significa algo en un concepto recurrente. ' +
         'Sin algo que vuelva cada mes no hay un total al que llegar, y sin total ' +
         'no existe «lo que falta».',
     };
@@ -70,7 +70,7 @@ export function multiPaymentRejection({
     return {
       code: 'multi_payment_excludes_auto_paid',
       message:
-        'Un concepto no puede tener «pago automático» y «se paga en varias veces» a la vez. ' +
+        'Un concepto no puede tener «pago automático» y «se completa en varios pagos» a la vez. ' +
         'El primero dice que esto se cobra solo, entero, el día que vence; el segundo, que ' +
         'se cubre a pedazos y no se sabe cuántos. Encendidos juntos, el cobro automático ' +
         'escribiría el importe completo el día del vencimiento y el concepto saldría de la ' +

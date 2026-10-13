@@ -7,7 +7,7 @@ describe('checkViolationMessage', () => {
       'violates check constraint \\"ck_categories_multi_payment_not_auto\\"" ...)';
 
     expect(checkViolationMessage(raw)).toBe(
-      'Un concepto no puede tener «pago automático» y «se paga en varias veces» a la vez.',
+      'Un concepto no puede tener «pago automático» y «se completa en varios pagos» a la vez.',
     );
   });
 

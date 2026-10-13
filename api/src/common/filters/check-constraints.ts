@@ -20,9 +20,9 @@ const MESSAGES: Readonly<Record<string, string>> = {
   ck_categories_payment_day_range: 'El día de pago va del 1 al 31.',
   ck_categories_payment_month_range: 'El mes va del 1 al 12.',
   ck_categories_multi_payment_not_auto:
-    'Un concepto no puede tener «pago automático» y «se paga en varias veces» a la vez.',
+    'Un concepto no puede tener «pago automático» y «se completa en varios pagos» a la vez.',
   ck_categories_multi_payment_recurring:
-    '«Se paga en varias veces» solo significa algo en un concepto recurrente.',
+    '«Se completa en varios pagos» solo significa algo en un concepto recurrente.',
   // 20261013154058_add_recurrence_pauses (ADR 0036).
   ck_recurrence_pauses_from_month_first_day: 'Una pausa empieza el primer día de un mes.',
   ck_recurrence_pauses_resume_month_first_day: 'Una pausa se reactiva el primer día de un mes.',
