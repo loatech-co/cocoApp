@@ -52,7 +52,8 @@ describe('Security headers and CORS (e2e)', () => {
 
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("frame-ancestors 'none'");
-    expect(csp).toContain("connect-src 'self'");
+    // blob: lets pdf.js read a receipt the page already downloaded; no other origin.
+    expect(csp).toMatch(/connect-src 'self' blob:(;|$)/);
     // `wasm-unsafe-eval` is the narrow permit Tesseract needs; full eval never.
     expect(csp).toContain("script-src 'self' 'wasm-unsafe-eval'");
     expect(csp).not.toContain("'unsafe-eval'");

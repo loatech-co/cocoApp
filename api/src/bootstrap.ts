@@ -124,7 +124,10 @@ function securityHeaders(): RequestHandler[] {
           imgSrc: ["'self'", 'data:', 'blob:'],
           // Only to ourselves. The Have I Been Pwned lookup is made by the
           // SERVER, never the browser, so there is no need to open it here.
-          connectSrc: ["'self'"],
+          // blob: for pdf.js, which reads an already-downloaded receipt through
+          // XHR; a blob: URL only points at data the page already holds, so it
+          // opens nothing outward (ADR 0035).
+          connectSrc: ["'self'", 'blob:'],
           // Tesseract and pdf.js create their Web Workers from blobs.
           workerSrc: ["'self'", 'blob:'],
           frameAncestors: ["'none'"],
