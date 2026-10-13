@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { RecurrenceFields, type Recurrence } from './recurrence-fields';
 
 /**
- * «Pago automático» and «se paga en varias veces» cannot coexist.
+ * «Pago automático» and «se completa en varios pagos» cannot coexist.
  *
  * And the rule is taught HERE, not only on the server. Leaving both
  * switchable so that the API answers 422 is making the rule be discovered
@@ -38,20 +38,20 @@ describe('The two ways of settling a concept', () => {
     render(<Harness />);
 
     expect(switchFor(/^Pago automático$/).disabled).toBe(false);
-    expect(switchFor(/^Se paga en varias veces$/).disabled).toBe(false);
+    expect(switchFor(/^Se completa en varios pagos$/).disabled).toBe(false);
   });
 
   it('with automatic payment on, the other one turns off and SAYS why', () => {
     render(<Harness />);
     fireEvent.click(switchFor(/^Pago automático$/));
 
-    expect(switchFor(/^Se paga en varias veces$/).disabled).toBe(true);
+    expect(switchFor(/^Se completa en varios pagos$/).disabled).toBe(true);
     expect(screen.getByText(/No se puede junto al pago automático/i)).toBeDefined();
   });
 
   it('and the other way around', () => {
     render(<Harness />);
-    fireEvent.click(switchFor(/^Se paga en varias veces$/));
+    fireEvent.click(switchFor(/^Se completa en varios pagos$/));
 
     expect(switchFor(/^Pago automático$/).disabled).toBe(true);
   });
@@ -63,19 +63,19 @@ describe('The two ways of settling a concept', () => {
     const autoPaySwitch = switchFor(/^Pago automático$/);
 
     fireEvent.click(autoPaySwitch);
-    expect(switchFor(/^Se paga en varias veces$/).disabled).toBe(true);
+    expect(switchFor(/^Se completa en varios pagos$/).disabled).toBe(true);
 
     fireEvent.click(autoPaySwitch);
-    expect(switchFor(/^Se paga en varias veces$/).disabled).toBe(false);
+    expect(switchFor(/^Se completa en varios pagos$/).disabled).toBe(false);
   });
 
   it('switching one on does NOT switch the other off behind the scenes', () => {
     // Switching off someone's setting on its own would be changing something they did not touch. What
     // is done is to prevent it and explain it, not to correct it on one's own.
     render(<Harness />);
-    fireEvent.click(switchFor(/^Se paga en varias veces$/));
+    fireEvent.click(switchFor(/^Se completa en varios pagos$/));
 
-    expect(switchFor(/^Se paga en varias veces$/).checked).toBe(true);
+    expect(switchFor(/^Se completa en varios pagos$/).checked).toBe(true);
     expect(switchFor(/^Pago automático$/).checked).toBe(false);
   });
 });
@@ -96,6 +96,6 @@ describe('What the several-payments switch says', () => {
 
   it('and none of this shows up if the concept is not recurring', () => {
     render(<Harness initial={{ ...BASE, isRecurring: false }} />);
-    expect(screen.queryByText(/^Se paga en varias veces$/)).toBeNull();
+    expect(screen.queryByText(/^Se completa en varios pagos$/)).toBeNull();
   });
 });

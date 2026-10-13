@@ -53,8 +53,8 @@ test.describe('pending payments', () => {
     await page.goto('/cost-centers');
     await page.getByRole('button', { name: /Arriendo$/ }).click();
     const card = page.getByRole('dialog', { name: 'Editar concepto' });
-    await card.getByRole('switch', { name: /Se paga en varias veces/ }).click();
-    await expect(card.getByRole('switch', { name: /Se paga en varias veces/ })).toBeChecked();
+    await card.getByRole('switch', { name: /Se completa en varios pagos/ }).click();
+    await expect(card.getByRole('switch', { name: /Se completa en varios pagos/ })).toBeChecked();
     await expectAccessible(page, 'the concept card');
     await card.getByRole('button', { name: 'Guardar' }).click();
     await expect(card).toBeHidden();
