@@ -17,6 +17,7 @@ import { Select } from '@/shared/ui/organisms/select';
 import { ConfirmDeletion } from './confirm-deletion';
 import { KeywordsFields } from './keywords-fields';
 import { RecurrenceFields } from './recurrence-fields';
+import { RenewalPause } from './renewal-pause';
 
 interface ConceptModalProps {
   isOpen: boolean;
@@ -125,6 +126,9 @@ function ConceptForm({ form, concept, tree, twin, onClose }: ConceptFormProps) {
       {concept && siblings.length > 1 && <SiblingCategoryField form={form} siblings={siblings} />}
 
       <RecurrenceFields value={form.recurrence} onChange={form.setRecurrence} />
+
+      {/* Only on a SAVED recurring concept: a pause is a period of its renewal (ADR 0036). */}
+      {concept?.isRecurring && <RenewalPause conceptId={concept.id} />}
 
       {/*
         After the recurrence and not before the name.

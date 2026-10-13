@@ -8,5 +8,6 @@ export * from './health-v2/health-v2';
 export * from './interpretation-v2/interpretation-v2';
 export * from './preferences-v2/preferences-v2';
 export * from './receipts-v2/receipts-v2';
+export * from './recurrence-pauses-v2/recurrence-pauses-v2';
 export * from './tags-v2/tags-v2';
 export * from './transactions-v2/transactions-v2';

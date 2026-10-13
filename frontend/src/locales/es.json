@@ -350,6 +350,35 @@
       "loadFailed": "No se pudieron cargar los centros de costos. Revisa tu conexión e inténtalo de nuevo.",
       "empty": "Todavía no hay centros de costos.",
       "createCostCenter": "Crear un centro de costos"
+    },
+    "pause": {
+      "title": "Renovación",
+      "active": "Se renueva según su periodicidad.",
+      "pausedSince": "En pausa desde {{month}}.",
+      "scheduledFrom": "Queda en pausa desde {{month}}.",
+      "resumesIn": "En pausa; se reactiva en {{month}}.",
+      "pause": "Pausar renovación",
+      "resume": "Reactivar renovación",
+      "askFrom": "¿Desde qué mes queda en pausa?",
+      "askResume": "¿Desde qué mes se reactiva?",
+      "month": "Mes",
+      "year": "Año",
+      "confirmPause": "Pausar",
+      "confirmResume": "Reactivar",
+      "history": "Pausas",
+      "periodOpen": "Desde {{from}}, sin fecha de regreso",
+      "periodClosed": "De {{from}} a {{until}}",
+      "remove": "Quitar la pausa: {{period}}",
+      "removeShort": "Quitar la pausa",
+      "failed": "No se pudo guardar la pausa.",
+      "charges": {
+        "title": "Cobros automáticos en meses en pausa",
+        "intro": "Ya se registraron estos cobros automáticos en meses que ahora quedan en pausa:",
+        "item": "{{concept}} — {{month}}",
+        "question": "¿Quieres eliminarlos? No se puede deshacer. Si cancelas, se conservan.",
+        "confirm": "Eliminar cobros",
+        "failed": "No se pudieron eliminar los cobros."
+      }
     }
   },
   "profile": {
