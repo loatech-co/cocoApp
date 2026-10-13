@@ -203,17 +203,18 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(3)
 
-  approvedBy    User?            @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull, map: "fk_users_approved_by_id")
-  approvedUsers User[]           @relation("ApprovedBy")
-  auditEvents   AuditLog[]
-  accounts      Account[]
-  categories    Category[]
-  tags          Tag[]
-  transactions  Transaction[]
-  preferences   UserPreference[]
-  importBatches ImportBatch[]
-  categoryRules CategoryRule[]
-  receipts      Receipt[]
+  approvedBy       User?             @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull, map: "fk_users_approved_by_id")
+  approvedUsers    User[]            @relation("ApprovedBy")
+  auditEvents      AuditLog[]
+  accounts         Account[]
+  categories       Category[]
+  tags             Tag[]
+  transactions     Transaction[]
+  preferences      UserPreference[]
+  importBatches    ImportBatch[]
+  categoryRules    CategoryRule[]
+  receipts         Receipt[]
+  recurrencePauses RecurrencePause[]
 
   @@index([status], map: "idx_users_status")
   @@map("users")
@@ -488,9 +489,38 @@ model Category {
   importRows   ImportRow[]
   rules        CategoryRule[]
   splits       TransactionSplit[]
+  pauses       RecurrencePause[]
 
   @@index([userId, kind, parentId], map: "idx_categories_user_id_kind_parent_id")
   @@map("categories")
+}
+
+// ── recurrence_pauses (ADR 0036) ─────────────────────────────────────────────
+// The periods in which a recurring concept stops renewing: no automatic
+// charge, not pending, not in the month's budget. A history, not a flag: "is it
+// paused in month M" is derived from these rows every time, never stored.
+//
+// The period is half-open, [from_month, resume_month): `from_month` is the
+// first paused month and `resume_month` the first month active again, both as
+// day 1. `resume_month` NULL is a pause with no end yet. The periods of one
+// concept never overlap (checked by the API under a lock on the concept);
+// the CHECK constraints of the migration hold the shape.
+
+model RecurrencePause {
+  id          BigInt    @id(map: "pk_recurrence_pauses") @default(autoincrement())
+  userId      BigInt    @map("user_id")
+  categoryId  BigInt    @map("category_id")
+  fromMonth   DateTime  @map("from_month") @db.Date
+  resumeMonth DateTime? @map("resume_month") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_recurrence_pauses_user_id")
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "fk_recurrence_pauses_category_id")
+
+  @@index([userId, categoryId, fromMonth], map: "idx_recurrence_pauses_user_id_category_id_from_month")
+  @@index([categoryId], map: "idx_recurrence_pauses_category_id")
+  @@map("recurrence_pauses")
 }
 
 // ── tags ─────────────────────────────────────────────────────────────────────

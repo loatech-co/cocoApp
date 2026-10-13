@@ -85,6 +85,12 @@ export const PROBLEMS = {
   merge_requires_concepts: { status: 422, title: 'Solo se unifican conceptos' },
   merge_source_has_children: { status: 422, title: 'El concepto tiene hijas' },
 
+  // ── Pausing the renewal of a recurring concept (ADR 0036) ─────────────────
+  pause_requires_recurring: { status: 422, title: 'Solo se pausa lo recurrente' },
+  pause_resume_not_after_start: { status: 422, title: 'Se reactiva antes de pausarse' },
+  pause_overlaps: { status: 409, title: 'Choca con otra pausa' },
+  charge_not_in_pause: { status: 422, title: 'No es un cobro automático de la pausa' },
+
   // ── Interpretation and capture ─────────────────────────────────────────────
   interpretation_needs_text: { status: 422, title: 'Falta el texto' },
   concept_archived: { status: 422, title: 'Concepto archivado' },

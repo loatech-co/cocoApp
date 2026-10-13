@@ -1,4 +1,5 @@
-import { isDueInMonth, dueDate } from './pending';
+import { dueDate } from './pending';
+import { isDueInMonth } from '../../common/recurrence/recurrence';
 import type { Periodicity } from '../../generated/prisma/client';
 
 /*

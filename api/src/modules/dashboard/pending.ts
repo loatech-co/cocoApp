@@ -1,54 +1,4 @@
 import { ZERO, type Money } from '../../common/money/money';
-import type { Periodicity } from '../../generated/prisma/client';
-
-/** How many months each periodicity takes to come back. */
-const MONTHS_BETWEEN_PAYMENTS: Record<Periodicity, number> = {
-  monthly: 1,
-  bimonthly: 2,
-  quarterly: 3,
-  semiannual: 6,
-  annual: 12,
-};
-
-/** `2026-09-01` → 24320. Absolute months, to subtract without fighting over years. */
-export function absoluteMonth(iso: string): number {
-  // `= NaN` is what a missing part would give: the same result as before.
-  const [year = NaN, month = NaN] = iso.split('-').map(Number);
-  return year * 12 + (month - 1);
-}
-
-/**
- * Whether a recurring concept is due in a given month.
- *
- * ── Why a reference month is needed ─────────────────────────────────────────
- * Because "every three months" does not say WHICH ones. It can be January,
- * April, July and October, or February, May, August and November: they are
- * different cycles and what tells them apart is the month one of them falls in.
- *
- * It used to count from the last payment, which seemed to save the field but
- * made everything fragile: deleting or fixing an old movement shifted the
- * whole cycle forwards or backwards, and the concept became due in another
- * month without anyone touching its settings.
- *
- * Monthly needs no reference: it is due every month.
- */
-export function isDueInMonth(
-  periodicity: Periodicity,
-  referenceMonth: number | null,
-  month: string,
-): boolean {
-  if (periodicity === 'monthly') return true;
-
-  const step = MONTHS_BETWEEN_PAYMENTS[periodicity];
-
-  // Without a reference it is assumed due: it is a concept marked recurring
-  // with no record this month. Keeping quiet would hide exactly what the user
-  // wants to see.
-  if (referenceMonth === null) return true;
-
-  const distance = absoluteMonth(month) - (referenceMonth - 1);
-  return ((distance % step) + step) % step === 0;
-}
 
 /**
  * The day of the month it is due, clipped to the short months.
@@ -162,19 +112,6 @@ export function expectedForMonth(
   count = 3,
 ): Money | null {
   return budget ?? estimateForMonth(byMonth, month, count);
-}
-
-/**
- * The fingerprint of an automatic charge: one concept, one month, once.
- *
- * It goes in `external_ref`, which has a UNIQUE index per user. The charge is
- * checked before inserting, but two simultaneous runs —two processes during a
- * deploy— can pass the check at the same time and both reach the insert. With
- * the fingerprint, the second one hits the database instead of duplicating an
- * expense.
- */
-export function chargeFingerprint(categoryId: bigint, month: string): string {
-  return `auto:${categoryId.toString()}:${month.slice(0, 7)}`;
 }
 
 /**

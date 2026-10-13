@@ -43,7 +43,7 @@ en UTC, posterior a todos los existentes.
 
 Esa confirmación es lo único entre una errata y producción; el script cierra
 además la API de datos de Supabase y cuenta tres cosas: `tables_without_rls`
-y `open_grants` deben dar `0`, y `policies` da `14`, todas `TO coco_app`
+y `open_grants` deben dar `0`, y `policies` da `15` (14 hasta el ADR 0036), todas `TO coco_app`
 ([ADR 0007](../../docs/adr/0007-close-supabase-data-api-by-script.md)). Una
 tabla nueva nace abierta a la clave pública, y un `policies` en `0` es que la
 seguridad por filas se cayó, no que todo está cerrado.

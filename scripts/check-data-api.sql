@@ -2,7 +2,7 @@
 -- scripts/verify-data-api-closed.sh after every production migration):
 --   tables_without_rls  0   every public table has row-level security
 --   open_grants         0   anon/authenticated hold nothing
---   policies            14  one per table, all TO coco_app (ADR 0024)
+--   policies            15  one per table, all TO coco_app (ADR 0024)
 --   unforced            0   FORCE on every table but _prisma_migrations
 SELECT
   (SELECT count(*) FROM pg_tables WHERE schemaname = 'public' AND NOT rowsecurity) AS tables_without_rls,

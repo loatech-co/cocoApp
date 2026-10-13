@@ -57,6 +57,7 @@ describe('Database constraint and index names (e2e)', () => {
     expect(rows.map(({ table_name }) => table_name)).toEqual([
       'categories',
       'category_rules',
+      'recurrence_pauses',
       'soportes',
       'tags',
       'transaction_splits',

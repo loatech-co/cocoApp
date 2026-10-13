@@ -19,6 +19,7 @@ import { ZERO, serialize, toMoney, type Money } from '../../common/money/money';
 import { Database } from '../../prisma/database';
 import { AccountsService } from '../accounts/accounts.service';
 import { CategoryLookupService, type SummaryCategory } from '../categories/category-lookup.service';
+import { RecurrenceService } from '../recurrence/recurrence.service';
 import { LedgerService, type SummaryMovement } from '../transactions/ledger.service';
 
 @Injectable()
@@ -27,6 +28,7 @@ export class DashboardService {
     private readonly categories: CategoryLookupService,
     private readonly ledger: LedgerService,
     private readonly accounts: AccountsService,
+    private readonly recurrence: RecurrenceService,
     private readonly db: Database,
   ) {}
 
@@ -134,8 +136,10 @@ export class DashboardService {
       does NOT yet have a cleared movement backing it.
     */
     const paidThisMonth = await this.ledger.clearedInMonth(userId, ids, new Date(currentMonth));
+    // A paused concept owes nothing this month (ADR 0036).
+    const pauses = await this.recurrence.periodsOf(userId, ids);
 
-    return pendingThisMonth(recurring, { history, paidThisMonth }, currentMonth, tree);
+    return pendingThisMonth(recurring, { history, paidThisMonth, pauses }, currentMonth, tree);
   }
 }
 

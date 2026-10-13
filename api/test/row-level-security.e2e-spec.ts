@@ -25,6 +25,7 @@ const USER_TABLES = [
   'category_rules',
   'import_batches',
   'import_rows',
+  'recurrence_pauses',
   'soportes',
   'tags',
   'transaction_splits',
@@ -52,6 +53,9 @@ async function seedEverything(db: PrismaClient, userId: bigint, mark: string): P
     description: mark,
   });
   const tag = await db.tag.create({ data: { userId, name: `${mark} etiqueta` } });
+  await db.recurrencePause.create({
+    data: { userId, categoryId: concept.id, fromMonth: new Date('2030-01-01') },
+  });
 
   await db.transactionSplit.create({
     data: { transactionId: transaction.id, categoryId: concept.id, amount: '1000' },
@@ -220,6 +224,16 @@ describe('Row-level security (e2e)', () => {
     await expect(
       db.forUser(ana.id, (tx) =>
         tx.transactionSplit.create({ data: { transactionId: brunosTx.id, amount: '1' } }),
+      ),
+    ).rejects.toThrow(/row-level security/);
+
+    // A pause of her own, pointing at his concept (ADR 0036).
+    const brunosConcept = (await rowsOf(env.prisma, bruno.id)).concept;
+    await expect(
+      db.forUser(ana.id, (tx) =>
+        tx.recurrencePause.create({
+          data: { userId: ana.id, categoryId: brunosConcept, fromMonth: new Date('2026-01-01') },
+        }),
       ),
     ).rejects.toThrow(/row-level security/);
 

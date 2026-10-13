@@ -23,6 +23,11 @@ const MESSAGES: Readonly<Record<string, string>> = {
     'Un concepto no puede tener «pago automático» y «se paga en varias veces» a la vez.',
   ck_categories_multi_payment_recurring:
     '«Se paga en varias veces» solo significa algo en un concepto recurrente.',
+  // 20261013154058_add_recurrence_pauses (ADR 0036).
+  ck_recurrence_pauses_from_month_first_day: 'Una pausa empieza el primer día de un mes.',
+  ck_recurrence_pauses_resume_month_first_day: 'Una pausa se reactiva el primer día de un mes.',
+  ck_recurrence_pauses_resume_after_from:
+    'El mes en que se reactiva tiene que ser posterior al mes en que quedó en pausa.',
 };
 
 const GENERIC_MESSAGE = 'Los datos no cumplen una regla de la base de datos.';

@@ -48,7 +48,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -58,7 +58,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -507,7 +507,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -726,7 +726,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -736,7 +736,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -944,7 +944,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -954,7 +954,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1050,7 +1050,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1060,7 +1060,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1321,7 +1321,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1331,7 +1331,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2097,7 +2097,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2204,7 +2204,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2512,7 +2512,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2522,7 +2522,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2730,7 +2730,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2740,7 +2740,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2825,7 +2825,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3016,7 +3016,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3131,7 +3131,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3510,7 +3510,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3520,7 +3520,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3693,7 +3693,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3902,7 +3902,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3912,7 +3912,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4499,6 +4499,726 @@
         "tags": ["ReceiptsV2"]
       }
     },
+    "/api/v2/categories/{id}/pauses": {
+      "get": {
+        "description": "The concept's pause history, the most recent first.",
+        "operationId": "RecurrencePauses_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based; 1 by default.",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "description": "50 by default, at most 200.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RecurrencePause"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaV2"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": ["RecurrencePausesV2"]
+      },
+      "post": {
+        "description": "Pauses the renewal from `fromMonth` on, with no end yet.",
+        "operationId": "RecurrencePauses_pause",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PauseRenewalInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/RecurrencePause"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {},
+                      "maxProperties": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": ["RecurrencePausesV2"]
+      }
+    },
+    "/api/v2/categories/{id}/pauses/{pauseId}": {
+      "patch": {
+        "description": "Sets the month the concept renews again.",
+        "operationId": "RecurrencePauses_resume",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pauseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeRenewalInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/RecurrencePause"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {},
+                      "maxProperties": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": ["RecurrencePausesV2"]
+      },
+      "delete": {
+        "description": "Removes a period, as if it had never been scheduled.",
+        "operationId": "RecurrencePauses_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pauseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done. No body."
+          },
+          "400": {
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": ["RecurrencePausesV2"]
+      }
+    },
+    "/api/v2/categories/{id}/pauses/{pauseId}/charges": {
+      "get": {
+        "description": "The automatic charges already written in months this pause covers.",
+        "operationId": "RecurrencePauses_charges",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pauseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based; 1 by default.",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "description": "50 by default, at most 200.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PausedCharge"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaV2"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": ["RecurrencePausesV2"]
+      }
+    },
+    "/api/v2/categories/{id}/pauses/{pauseId}/charges/discard": {
+      "post": {
+        "description": "Deletes the automatic charges the person confirmed, all from `charges`.",
+        "operationId": "RecurrencePauses_discard",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pauseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscardPausedChargesInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DiscardedCharges"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {},
+                      "maxProperties": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": ["RecurrencePausesV2"]
+      }
+    },
     "/api/v2/transactions/interpret": {
       "post": {
         "operationId": "Interpretation_interpret",
@@ -4556,7 +5276,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4661,7 +5381,7 @@
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`, `pause_overlaps`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4671,7 +5391,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5136,7 +5856,7 @@
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `transfer_requires_two_legs`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `pause_requires_recurring`, `pause_resume_not_after_start`, `charge_not_in_pause`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5268,6 +5988,10 @@
               "merge_into_itself",
               "merge_requires_concepts",
               "merge_source_has_children",
+              "pause_requires_recurring",
+              "pause_resume_not_after_start",
+              "pause_overlaps",
+              "charge_not_in_pause",
               "interpretation_needs_text",
               "concept_archived",
               "cost_center_cannot_classify",
@@ -6659,6 +7383,93 @@
           }
         },
         "required": ["id", "position", "fileName", "mimeType", "sizeBytes", "isAvailable"]
+      },
+      "RecurrencePause": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "categoryId": {
+            "type": "number"
+          },
+          "fromMonth": {
+            "type": "string",
+            "description": "The first paused month, `YYYY-MM`."
+          },
+          "resumeMonth": {
+            "type": "string",
+            "nullable": true,
+            "description": "The first month active again, `YYYY-MM`; `null` while it has no end."
+          }
+        },
+        "required": ["id", "categoryId", "fromMonth", "resumeMonth"]
+      },
+      "PauseRenewalInput": {
+        "type": "object",
+        "properties": {
+          "fromMonth": {
+            "type": "string",
+            "description": "The first paused month, `YYYY-MM`. It may be past or future."
+          }
+        },
+        "required": ["fromMonth"]
+      },
+      "ResumeRenewalInput": {
+        "type": "object",
+        "properties": {
+          "resumeMonth": {
+            "type": "string",
+            "description": "The first month active again, `YYYY-MM`; it must come after the pause starts."
+          }
+        },
+        "required": ["resumeMonth"]
+      },
+      "PausedCharge": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "The movement's id."
+          },
+          "month": {
+            "type": "string",
+            "description": "The month it was charged for, `YYYY-MM`."
+          },
+          "date": {
+            "type": "string",
+            "description": "The day it was charged, `YYYY-MM-DD`."
+          },
+          "conceptName": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "month", "date", "conceptName"]
+      },
+      "DiscardedCharges": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "number",
+            "description": "Movements deleted."
+          }
+        },
+        "required": ["deleted"]
+      },
+      "DiscardPausedChargesInput": {
+        "type": "object",
+        "properties": {
+          "transactionIds": {
+            "description": "The automatic charges the person confirmed, from the pause's list.",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 1
+            }
+          }
+        },
+        "required": ["transactionIds"]
       },
       "Candidate": {
         "type": "object",

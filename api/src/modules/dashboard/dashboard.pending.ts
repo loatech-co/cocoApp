@@ -4,8 +4,9 @@
  */
 import type { Tree } from './dashboard.summary';
 import type { PendingPayment } from './dashboard.types';
-import { pendingOutcome, expectedForMonth, isDueInMonth, dueDate } from './pending';
+import { pendingOutcome, expectedForMonth, dueDate } from './pending';
 import { ZERO, serialize, toMoney, type Money } from '../../common/money/money';
+import { isConceptDueInMonth, type PausePeriod } from '../../common/recurrence/recurrence';
 import type { SummaryCategory } from '../categories/category-lookup.service';
 import type { MonthlyHistory } from '../transactions/ledger.service';
 /** A recurring concept that can be due: it has a periodicity. */
@@ -49,7 +50,12 @@ export function liveRecurring(categories: readonly SummaryCategory[]): Recurring
 */
 export function pendingThisMonth(
   recurring: readonly RecurringConcept[],
-  data: { history: MonthlyHistory; paidThisMonth: ReadonlyMap<string, Money> },
+  data: {
+    history: MonthlyHistory;
+    paidThisMonth: ReadonlyMap<string, Money>;
+    /** The paused periods of each concept, by id (ADR 0036). */
+    pauses: ReadonlyMap<string, readonly PausePeriod[]>;
+  },
   currentMonth: string,
   tree: Tree,
 ): { pending: PendingPayment[]; budget: Money } {
@@ -57,11 +63,14 @@ export function pendingThisMonth(
   let budget = ZERO;
 
   for (const concept of recurring) {
-    // First whether it is due this month: a quarterly one that does not fall
-    // here neither counts for the budget nor shows as pending.
-    if (!isDueInMonth(concept.periodicity, concept.paymentMonth, currentMonth)) continue;
-
     const key = concept.id.toString();
+
+    // First whether it is due this month: a quarterly one that does not fall
+    // here, or one whose renewal is paused, neither counts for the budget nor
+    // shows as pending.
+    const pauses = data.pauses.get(key) ?? [];
+    if (!isConceptDueInMonth({ ...concept, pauses }, currentMonth)) continue;
+
     const paid = data.paidThisMonth.get(key);
 
     // The SAME figure shown in the pending list: if the budget were

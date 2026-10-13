@@ -21,6 +21,7 @@ const OWNER = {
   transactionTag: 'modules/transactions',
   receipt: 'modules/receipts',
   userPreference: 'modules/preferences',
+  recurrencePause: 'modules/recurrence',
   importBatch: 'modules/categories',
   importRow: 'modules/categories',
 };

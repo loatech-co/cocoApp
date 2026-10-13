@@ -182,6 +182,60 @@ describe('User isolation (e2e)', () => {
   });
 
   covers([
+    'GET /api/v2/categories/:id/pauses',
+    'POST /api/v2/categories/:id/pauses',
+    'PATCH /api/v2/categories/:id/pauses/:pauseId',
+    'DELETE /api/v2/categories/:id/pauses/:pauseId',
+    'GET /api/v2/categories/:id/pauses/:pauseId/charges',
+    'POST /api/v2/categories/:id/pauses/:pauseId/charges/discard',
+  ]);
+  it('pauses: Bruno cannot read, add, resume, delete or discard through Ana’s concept', async () => {
+    await env.prisma.category.update({
+      where: { id: brunoConceptId },
+      data: { isRecurring: true, periodicity: 'monthly' },
+    });
+    const own = await env.prisma.recurrencePause.create({
+      data: { userId: bruno.id, categoryId: brunoConceptId, fromMonth: new Date('2026-01-01') },
+    });
+
+    await untouched(async () => {
+      const pauses = `/api/v2/categories/${String(a.conceptId)}/pauses`;
+      const pause = `${pauses}/${String(a.pauseId)}`;
+      await http.get(pauses).set('Authorization', asBruno).expect(404);
+      await http
+        .post(pauses)
+        .set('Authorization', asBruno)
+        .send({ fromMonth: '2026-01' })
+        .expect(404);
+      await http
+        .patch(pause)
+        .set('Authorization', asBruno)
+        .send({ resumeMonth: '2031-01' })
+        .expect(404);
+      await http.delete(pause).set('Authorization', asBruno).expect(404);
+      await http.get(`${pause}/charges`).set('Authorization', asBruno).expect(404);
+      await http
+        .post(`${pause}/charges/discard`)
+        .set('Authorization', asBruno)
+        .send({ transactionIds: [Number(a.transactionId)] })
+        .expect(404);
+
+      // His own concept with her pause id, and his own pause with her movement.
+      const mine = `/api/v2/categories/${String(brunoConceptId)}/pauses`;
+      await http
+        .patch(`${mine}/${String(a.pauseId)}`)
+        .set('Authorization', asBruno)
+        .send({ resumeMonth: '2031-01' })
+        .expect(404);
+      await http
+        .post(`${mine}/${String(own.id)}/charges/discard`)
+        .set('Authorization', asBruno)
+        .send({ transactionIds: [Number(a.transactionId)] })
+        .expect(422);
+    });
+  });
+
+  covers([
     'GET /api/v2/transactions',
     'GET /api/v2/transactions/history',
     'POST /api/v2/transactions/transfer',

@@ -4,4 +4,4 @@
 # (after every production migration) and restore.sh (after every restore), so
 # both count the same thing; override with EXPECTED_POLICIES when the schema
 # grows.
-EXPECTED_POLICIES="${EXPECTED_POLICIES:-14}"
+EXPECTED_POLICIES="${EXPECTED_POLICIES:-15}"

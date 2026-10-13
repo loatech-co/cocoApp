@@ -1,15 +1,13 @@
 import {
   pendingOutcome,
   expectedForMonth,
-  chargeFingerprint,
   isAutoChargeDue,
   estimateForMonth,
-  absoluteMonth,
   previousMonths,
-  isDueInMonth,
   dueDate,
 } from './pending';
 import { toMoney } from '../../common/money/money';
+import { absoluteMonth, chargeFingerprint, isDueInMonth } from '../../common/recurrence/recurrence';
 
 describe('Pending payments', () => {
   describe('Whether it is due in the month', () => {

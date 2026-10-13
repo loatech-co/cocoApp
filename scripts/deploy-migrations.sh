@@ -23,7 +23,7 @@
 # ── Why it fails on the counts ───────────────────────────────────────────────
 # Closing the data API used to print three numbers for a human to read. A
 # wrong number went by unnoticed; scripts/verify-data-api-closed.sh now exits
-# 1 unless they are 0 / 0 / 14 / 0, FORCE ROW LEVEL SECURITY included.
+# 1 unless they are 0 / 0 / 15 / 0, FORCE ROW LEVEL SECURITY included.
 #
 # It goes through DIRECT_URL (session pooler, 5432): the transaction pooler
 # does not support the statements of the migration engine. --env-file (a file

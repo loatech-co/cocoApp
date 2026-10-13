@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Fails unless the data API is closed: the four counts of
-# scripts/check-data-api.sql come out as 0 / 0 / 14 / 0. deploy-migrations.sh
+# scripts/check-data-api.sql come out as 0 / 0 / 15 / 0. deploy-migrations.sh
 # runs it after every production migration; by hand it is the check of
 # docs/runbook.md, "Migrations".
 #

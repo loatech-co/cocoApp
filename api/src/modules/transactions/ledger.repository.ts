@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
-import type { AutoCharge, MonthlyHistory, SummaryFilter, SummaryMovement } from './ledger.types';
+import type {
+  AutoCharge,
+  MonthlyHistory,
+  SummaryFilter,
+  SummaryMovement,
+  WrittenAutoCharge,
+} from './ledger.types';
 import { inConcepts } from './transactions.where';
 import { ZERO, toMoney, type Money } from '../../common/money/money';
 import type { Prisma } from '../../generated/prisma/client';
@@ -23,6 +29,27 @@ export class LedgerRepository {
       tx.transaction.findFirst({ where: { userId, externalRef }, select: { id: true } }),
     );
     return row?.id ?? null;
+  }
+
+  /**
+   * The movements of a concept, still classified under it, whose reference
+   * starts with `prefix`: the automatic charges the task wrote (ADR 0036).
+   */
+  async findByExternalRefPrefix(
+    userId: bigint,
+    categoryId: bigint,
+    prefix: string,
+  ): Promise<WrittenAutoCharge[]> {
+    const rows = await this.db.forUser(userId, (tx) =>
+      tx.transaction.findMany({
+        where: { userId, categoryId, externalRef: { startsWith: prefix } },
+        select: { id: true, date: true, externalRef: true },
+        orderBy: { date: 'asc' },
+      }),
+    );
+    return rows.flatMap(({ id, date, externalRef }) =>
+      externalRef === null ? [] : [{ id, date, externalRef }],
+    );
   }
 
   /** The most recent categorized movements with a description, newest first. */

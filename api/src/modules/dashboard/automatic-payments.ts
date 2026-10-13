@@ -1,15 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import {
-  expectedForMonth,
-  chargeFingerprint,
-  isAutoChargeDue,
-  isDueInMonth,
-  dueDate,
-  historyWindow,
-} from './pending';
+import { expectedForMonth, isAutoChargeDue, dueDate, historyWindow } from './pending';
 import { toMoney } from '../../common/money/money';
+import { chargeFingerprint, isConceptDueInMonth } from '../../common/recurrence/recurrence';
 import { CategoryLookupService, type AutoPaidConcept } from '../categories/category-lookup.service';
+import { RecurrenceService } from '../recurrence/recurrence.service';
 import { LedgerService, type MonthlyHistory } from '../transactions/ledger.service';
 
 /**
@@ -45,6 +40,7 @@ export class AutomaticPaymentsService {
   constructor(
     private readonly categories: CategoryLookupService,
     private readonly ledger: LedgerService,
+    private readonly recurrence: RecurrenceService,
   ) {}
 
   /**
@@ -62,8 +58,22 @@ export class AutomaticPaymentsService {
     // on every sweep.
     if (concepts.length === 0) return 0;
 
+    // A concept whose renewal is paused this month is not charged (ADR 0036).
+    const pauses = await this.recurrence.periodsOf(
+      userId,
+      concepts.map((c) => c.id),
+    );
     const dueThisMonth = concepts.filter(
-      (c) => c.periodicity !== null && isDueInMonth(c.periodicity, c.paymentMonth, currentMonth),
+      (c) =>
+        c.periodicity !== null &&
+        isConceptDueInMonth(
+          {
+            periodicity: c.periodicity,
+            paymentMonth: c.paymentMonth,
+            pauses: pauses.get(c.id.toString()) ?? [],
+          },
+          currentMonth,
+        ),
     );
     if (dueThisMonth.length === 0) return 0;
 

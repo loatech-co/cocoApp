@@ -25,12 +25,13 @@ export interface AnaData {
   tagId: bigint;
   receiptId: bigint;
   ruleId: bigint;
+  pauseId: bigint;
 }
 
 /** Snapshot of every row a user owns, to prove nothing of theirs changed. */
 export async function snapshotOf(env: TestEnvironment, userId: bigint): Promise<string> {
   const where = { userId };
-  const [accounts, categories, transactions, tags, receipts, rules, preferences] =
+  const [accounts, categories, transactions, tags, receipts, rules, preferences, pauses] =
     await Promise.all([
       env.prisma.account.findMany({ where, orderBy: { id: 'asc' } }),
       env.prisma.category.findMany({ where, orderBy: { id: 'asc' } }),
@@ -43,9 +44,10 @@ export async function snapshotOf(env: TestEnvironment, userId: bigint): Promise<
       env.prisma.receipt.findMany({ where, orderBy: { id: 'asc' } }),
       env.prisma.categoryRule.findMany({ where, orderBy: { id: 'asc' } }),
       env.prisma.userPreference.findMany({ where, orderBy: { id: 'asc' } }),
+      env.prisma.recurrencePause.findMany({ where, orderBy: { id: 'asc' } }),
     ]);
   return JSON.stringify(
-    { accounts, categories, transactions, tags, receipts, rules, preferences },
+    { accounts, categories, transactions, tags, receipts, rules, preferences, pauses },
     (_k, v: unknown) => (typeof v === 'bigint' ? v.toString() : v),
   );
 }
@@ -112,6 +114,9 @@ export async function seedAna(env: TestEnvironment, userId: bigint): Promise<Ana
   await p.userPreference.create({
     data: { userId, prefKey: 'accounts_enabled', prefValue: true },
   });
+  const pause = await p.recurrencePause.create({
+    data: { userId, categoryId: concept.id, fromMonth: new Date('2030-01-01') },
+  });
 
   return {
     accountId: account.id,
@@ -123,6 +128,7 @@ export async function seedAna(env: TestEnvironment, userId: bigint): Promise<Ana
     tagId: tag.id,
     receiptId: receipt.id,
     ruleId: rule.id,
+    pauseId: pause.id,
   };
 }
 

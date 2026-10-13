@@ -12,6 +12,7 @@ import type {
   SummaryFilter,
   SummaryMovement,
   TwinVerdict,
+  WrittenAutoCharge,
 } from './ledger.types';
 import type { Money } from '../../common/money/money';
 
@@ -24,6 +25,7 @@ export type {
   MonthlyHistory,
   SummaryFilter,
   SummaryMovement,
+  WrittenAutoCharge,
 } from './ledger.types';
 
 /**
@@ -89,5 +91,14 @@ export class LedgerService {
 
   createAutoCharge(charge: AutoCharge): Promise<boolean> {
     return this.repository.createAutoCharge(charge);
+  }
+
+  /** The automatic charges of a concept, by their fingerprint's prefix. */
+  findAutoCharges(
+    userId: bigint,
+    categoryId: bigint,
+    fingerprintPrefix: string,
+  ): Promise<WrittenAutoCharge[]> {
+    return this.repository.findByExternalRefPrefix(userId, categoryId, fingerprintPrefix);
   }
 }

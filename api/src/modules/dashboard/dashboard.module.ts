@@ -6,10 +6,11 @@ import { DashboardService } from './dashboard.service';
 import { DashboardV2Controller } from './dashboard.v2.controller';
 import { AccountsModule } from '../accounts/accounts.module';
 import { CategoriesModule } from '../categories/categories.module';
+import { RecurrenceModule } from '../recurrence/recurrence.module';
 import { TransactionsModule } from '../transactions/transactions.module';
 
 @Module({
-  imports: [AccountsModule, CategoriesModule, TransactionsModule],
+  imports: [AccountsModule, CategoriesModule, RecurrenceModule, TransactionsModule],
   controllers: [DashboardV2Controller],
   providers: [DashboardService, AutomaticPaymentsService, AutoChargeTask],
 })

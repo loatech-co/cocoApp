@@ -11,6 +11,7 @@ import type { Learning, Suggestion } from './categorization.response';
 import type { Dashboard } from './dashboard.response';
 import type { Capture, Interpretation } from './interpretation.response';
 import type { Liveness, Preferences, Readiness, Receipt, Tag } from './misc.response';
+import type { DiscardedCharges, PausedCharge, RecurrencePause } from './recurrence.response';
 import type {
   Transaction,
   TransactionHistory,
@@ -27,6 +28,7 @@ import type { LivenessPayload, ReadinessPayload } from '../../modules/health/hea
 import type * as interpretation from '../../modules/interpretation/interpretation.domain';
 import type { Preferences as PreferencesDomain } from '../../modules/preferences/preferences';
 import type { Receipt as ReceiptDomain } from '../../modules/receipts/receipts.service';
+import type * as recurrence from '../../modules/recurrence/recurrence.domain';
 import type { Tag as TagDomain } from '../../modules/tags/tags.service';
 import type * as transactions from '../../modules/transactions/transactions.domain';
 import type { meV2, SessionV2 } from '../../presenters/v2/auth.presenter';
@@ -89,6 +91,9 @@ const CHECKS = {
     transactions.TransactionPage['meta']
   >,
   transfer: true satisfies Same<Transfer, Wire<transactions.Transfer>>,
+  recurrencePause: true satisfies Same<RecurrencePause, Wire<recurrence.RecurrencePause>>,
+  pausedCharge: true satisfies Same<PausedCharge, Wire<recurrence.PausedCharge>>,
+  discardedCharges: true satisfies Same<DiscardedCharges, recurrence.DiscardedCharges>,
 };
 
 describe('v2 response classes', () => {

@@ -105,11 +105,42 @@ describe('pendingThisMonth', () => {
     });
     const result = pendingThisMonth(
       liveRecurring([quarterly]),
-      { history: new Map(), paidThisMonth: new Map() },
+      { history: new Map(), paidThisMonth: new Map(), pauses: new Map() },
       '2026-03',
       treeOf([quarterly]),
     );
     expect(result.pending).toEqual([]);
     expect(serialize(result.budget)).toBe('0.00');
+  });
+
+  it('leaves out a concept whose renewal is paused this month, from the list and the budget', () => {
+    const monthly = makeCategory({
+      id: 4n,
+      name: 'Streaming',
+      isRecurring: true,
+      periodicity: 'monthly',
+      paymentDay: 5,
+      budget: new Prisma.Decimal('100'),
+    });
+    const month = (m: string) =>
+      pendingThisMonth(
+        liveRecurring([monthly]),
+        {
+          history: new Map(),
+          paidThisMonth: new Map(),
+          pauses: new Map([['4', [{ fromMonth: '2026-10', resumeMonth: '2026-12' }]]]),
+        },
+        m,
+        treeOf([monthly]),
+      );
+
+    for (const paused of ['2026-10-01', '2026-11-01']) {
+      expect(month(paused).pending).toEqual([]);
+      expect(serialize(month(paused).budget)).toBe('0.00');
+    }
+    for (const active of ['2026-09-01', '2026-12-01']) {
+      expect(month(active).pending.map((p) => p.name)).toEqual(['Streaming']);
+      expect(serialize(month(active).budget)).toBe('100.00');
+    }
   });
 });

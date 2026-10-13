@@ -82,3 +82,10 @@ export interface AutoCharge {
   notes: string;
   externalRef: string;
 }
+
+/** A movement the auto-charge task wrote: its id, its date and its fingerprint. */
+export interface WrittenAutoCharge {
+  id: bigint;
+  date: Date;
+  externalRef: string;
+}

@@ -18,6 +18,7 @@ import { HealthModule } from './modules/health/health.module';
 import { InterpretationModule } from './modules/interpretation/interpretation.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { ReceiptsModule } from './modules/receipts/receipts.module';
+import { RecurrenceModule } from './modules/recurrence/recurrence.module';
 import { SpaModule } from './modules/spa/spa.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
@@ -62,6 +63,7 @@ import { PrismaModule } from './prisma/prisma.module';
     CategoriesModule,
     TagsModule,
     TransactionsModule,
+    RecurrenceModule,
     InterpretationModule,
     ReceiptsModule,
     DashboardModule,

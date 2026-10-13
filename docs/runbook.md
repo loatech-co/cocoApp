@@ -131,7 +131,7 @@ scripts/deploy-migrations.sh              # production: status, backup gate, con
   `_prisma_migrations` row fixed) before it was applied anywhere else.
 - The script ends with `scripts/close-data-api.sql` and then
   `scripts/verify-data-api-closed.sh`, which exits `1` unless
-  `tables_without_rls = 0`, `open_grants = 0`, `policies = 14` (all of them
+  `tables_without_rls = 0`, `open_grants = 0`, `policies = 15` (all of them
   `TO coco_app`; `EXPECTED_POLICIES` when the schema grows) and
   `unforced = 0` (FORCE ROW LEVEL SECURITY on every table but
   `_prisma_migrations`)
@@ -189,7 +189,7 @@ sees no other user's rows.
   `coco_app.<project-ref>`; host, port (6543) and parameters stay as they were.
 - **A restore needs `coco_app` first**: the policies and grants name it.
 - **After a migration**, `bash scripts/verify-data-api-closed.sh` (what
-  `deploy-migrations.sh` runs last) exits `0`: `policies = 14` and
+  `deploy-migrations.sh` runs last) exits `0`: `policies = 15` and
   `unforced = 0`, every public table except `_prisma_migrations` forced.
   `--local [NAME]` asks the local database the same, or the one whose URL is
   in the variable `NAME`; it tolerates `_prisma_migrations` without RLS, and
