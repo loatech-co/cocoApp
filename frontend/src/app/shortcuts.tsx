@@ -6,6 +6,7 @@ import { useOnChange } from '@/shared/lib/on-change';
 import { MAX_SHORTCUTS, addShortcut, useShortcuts } from '@/shared/lib/shortcuts';
 import { Button } from '@/shared/ui/atoms/button';
 import { Input } from '@/shared/ui/atoms/input';
+import { SHEET_HEAD_ROW, SHEET_TITLE, SHEET_TITLE_BOX } from '@/shared/ui/foundations/sheet';
 import { showToast } from '@/shared/ui/molecules/toast';
 
 import { ShortcutGrid } from './shortcut-grid';
@@ -137,7 +138,7 @@ function ShortcutsHeader({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex min-h-10.5 items-center gap-2">
+      <div className={SHEET_HEAD_ROW}>
         {mode === 'choosing' && (
           <Button
             type="button"
@@ -150,9 +151,11 @@ function ShortcutsHeader({
           </Button>
         )}
 
-        <h2 className="min-w-0 flex-1 truncate font-display text-lg font-semibold">
-          {mode === 'choosing' ? t('shell.shortcuts.add') : t('shell.shortcuts.title')}
-        </h2>
+        <div className={SHEET_TITLE_BOX}>
+          <h2 className={SHEET_TITLE}>
+            {mode === 'choosing' ? t('shell.shortcuts.add') : t('shell.shortcuts.title')}
+          </h2>
+        </div>
 
         {mode === 'gallery' ? (
           <Button type="button" variant="tool" size="sm" onClick={() => setMode('arranging')}>
@@ -165,8 +168,6 @@ function ShortcutsHeader({
         )}
       </div>
 
-      {/* The header goes past the 78 floor only because its CONTENT is taller,
-          which is the only reason it should. */}
       {mode === 'choosing' && <FindPage search={search} setSearch={setSearch} />}
     </div>
   );

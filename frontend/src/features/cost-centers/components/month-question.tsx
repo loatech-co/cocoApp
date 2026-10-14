@@ -6,6 +6,7 @@ import { capitalize, LONG_MONTHS } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { Field } from '@/shared/ui/atoms/field';
+import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 import { Select } from '@/shared/ui/organisms/select';
 
 const MONTH_OPTIONS = LONG_MONTHS.map((name, i) => ({
@@ -92,7 +93,9 @@ function QuestionActions({
   onCancel: () => void;
 }) {
   return (
-    <div className="flex justify-end gap-2">
+    // The modal footer: in a row on the desktop, stacked at full width on the
+    // phone, «Cancelar» first and the action nearest the thumb.
+    <ModalFooter className="mt-0 pt-0">
       <Button type="button" variant="outline" size="sm" onClick={onCancel}>
         {t('common.cancel')}
       </Button>
@@ -100,6 +103,6 @@ function QuestionActions({
         {isBusy && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
         {confirmLabel}
       </Button>
-    </div>
+    </ModalFooter>
   );
 }

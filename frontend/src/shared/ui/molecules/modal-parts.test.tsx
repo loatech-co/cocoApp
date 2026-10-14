@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
-import { act, renderHook } from '@testing-library/react';
+import { act, cleanup, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MOBILE_QUERY } from '@/shared/lib/mobile';
 import { SHEET_TOP_CORNERS } from '@/shared/ui/atoms/bottom-sheet';
 
-import { modalSheetPanel, useSheetClose } from './modal-parts';
+import { ModalFooter, ModalHeader, modalSheetPanel, useSheetClose } from './modal-parts';
 
 /** The screen and the motion preference that `matchMedia` answers. */
 function screenIs({ isMobile, isStill = false }: { isMobile: boolean; isStill?: boolean }) {
@@ -17,7 +17,10 @@ function screenIs({ isMobile, isStill = false }: { isMobile: boolean; isStill?: 
   })) as unknown as typeof window.matchMedia;
 }
 
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+  cleanup();
+});
 
 describe('The sheet presentation of a modal', () => {
   it('rises with the top corners of a bottom sheet, and is the centered card on the desktop', () => {
@@ -70,5 +73,38 @@ describe('The sheet presentation of a modal', () => {
     rerender({ isOpen: false });
     rerender({ isOpen: true });
     expect(result.current.isClosing).toBe(false);
+  });
+});
+
+describe('The actions of a modal, sheet or drawer on the phone', () => {
+  it('stack at full width in the order written, and go in a row only on the desktop', () => {
+    render(
+      <ModalFooter>
+        <button type="button">Cancelar</button>
+        <button type="button">Registrar</button>
+      </ModalFooter>,
+    );
+    const footer = screen.getByRole('button', { name: 'Cancelar' }).parentElement!;
+
+    expect(footer.className.split(' ')).toEqual(
+      expect.arrayContaining(['flex-col', '[&>*]:w-full', 'desktop:flex-row']),
+    );
+    expect(footer.className).not.toMatch(/(^| )sm:flex-row/);
+    expect(footer.firstElementChild!.textContent).toBe('Cancelar');
+  });
+});
+
+describe('The head of the transaction sheet on the phone', () => {
+  it('is the shared sheet head: 24 from the top, everything from the top, a title that wraps', () => {
+    render(
+      <ModalHeader isSheet title="Nuevo gasto" leading={<span>icono</span>} onClose={vi.fn()} />,
+    );
+    const title = screen.getByRole('heading', { name: 'Nuevo gasto' });
+    const row = title.parentElement!.parentElement!;
+
+    expect(row.parentElement!.className).toContain('mobile:pt-6');
+    expect(row.className).toContain('mobile:items-start');
+    expect(title.parentElement!.className).toContain('mobile:min-h-[42px]');
+    expect(title.className).toContain('mobile:whitespace-normal');
   });
 });

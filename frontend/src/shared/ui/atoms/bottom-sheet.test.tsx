@@ -96,4 +96,17 @@ describe('The bottom sheet', () => {
 
     expect(column.className).toContain('mobile:min-h-[min(500px,88dvh)]');
   });
+
+  it('opens with the shared sheet head: 24 from the top edge, the handle laid over them', () => {
+    render(<Host />);
+    fireEvent.click(screen.getByText('abrir'));
+    const title = screen.getByRole('heading', { name: 'Atajos' });
+    const head = title.closest('.pt-6')!;
+
+    expect(head.className).toContain('px-4');
+    expect(title.className).toContain('font-display');
+    expect(title.parentElement!.className).toContain('min-h-[42px]');
+    const handle = head.querySelector('[aria-hidden="true"]')!;
+    expect(handle.className).toContain('absolute');
+  });
 });

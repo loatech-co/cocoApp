@@ -107,7 +107,8 @@ botón del tamaño de su texto dice cuál es la acción principal sin gritarlo.
 A la derecha porque es donde acaba de leerse un formulario, de arriba abajo y
 de izquierda a derecha.
 
-**En el teléfono se apilan a ancho completo.** Dos botones del tamaño de su
+**En el teléfono se apilan a ancho completo** —en todo lo que la app trata
+como teléfono, `mobile:`; en fila solo en el escritorio—. Dos botones del tamaño de su
 texto, en una esquina, son dos blancos pequeños y juntos: es donde se pulsa
 «Cancelar» queriendo pulsar «Guardar».
 
@@ -163,6 +164,24 @@ se sale). Lo pone `BottomSheet` en la columna que mide —así la medida y el
 deslizamiento ya lo incluyen— y `modalSheetPanel` en la ficha del
 movimiento. Lo corto queda arriba; el pie, donde lo hay, va abajo. Dos hojas
 de la misma familia ya no se abren a alturas distintas.
+
+**La cabecera de una hoja del teléfono es una sola**
+(`shared/ui/foundations/sheet.ts`, que usan `BottomSheet`, los atajos y la
+ficha del movimiento con `ModalHeader isSheet`): empieza 24px debajo del
+canto de arriba —el asa, donde la hay, va encima de esos 24 y no empuja nada—,
+con el canal de 16 a los lados. El icono de delante, el título y las
+acciones de detrás cuelgan del MISMO borde de arriba; el título va en una
+caja tan alta como un botón del teléfono (42), así que en una línea queda a
+la altura de la equis y, si salta a dos, crece hacia abajo sin mover ni el
+icono ni la equis. Mismo tamaño y peso de título en todas, y no se corta:
+salta de línea.
+
+**Y en el teléfono, dentro de una ficha, una hoja o un cajón, los botones de
+acción van APILADOS a todo el ancho, nunca uno al lado del otro.** En el
+orden en que se escriben, que es el de la ficha del movimiento: «Cancelar»
+arriba y la acción principal abajo, junto al pulgar. Lo pone `ModalFooter`,
+que solo los pone en fila en el escritorio (`desktop:`); todo grupo de
+acciones de una superficie así lo usa, o se apila igual.
 
 **Alto mínimo: 400px.** Para que abrir dos fichas seguidas no sea ver el
 panel crecer y encogerse. No es para estirar las cortas: con 600 —que fue

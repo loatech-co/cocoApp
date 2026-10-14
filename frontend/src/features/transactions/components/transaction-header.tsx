@@ -71,6 +71,7 @@ export function TransactionHeader({ mode, onEdit, onDelete, onClose }: Transacti
 
   return (
     <ModalHeader
+      isSheet
       title={sheetTitle(mode)}
       description={sheetHelp(mode.isConfirming)}
       leading={

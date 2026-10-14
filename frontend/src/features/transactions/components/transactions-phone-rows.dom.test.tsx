@@ -107,7 +107,14 @@ describe('The transactions table, on the phone', () => {
     const [first, second] = rows();
 
     fireEvent.click(first!);
-    fireEvent.click(screen.getByRole('button', { name: 'Ver soporte' }));
+    // Stacked, «Editar» first, each the full width.
+    const edit = screen.getByRole('button', { name: 'Editar' });
+    const view = screen.getByRole('button', { name: 'Ver soporte' });
+    expect(edit.parentElement).toBe(view.parentElement);
+    expect(edit.parentElement!.className).toContain('flex-col');
+    expect(edit.nextElementSibling).toBe(view);
+    expect(view.className).toContain('w-full');
+    fireEvent.click(view);
     expect(screen.getByRole('dialog', { name: 'Visor de soportes' })).toBeDefined();
 
     fireEvent.click(second!);

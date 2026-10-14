@@ -157,7 +157,7 @@ export function ModalHeader({
   leading,
   actions,
   onClose,
-  className,
+  isSheet = false,
 }: {
   title: ReactNode;
   /** What this modal is, in one sentence. */
@@ -167,7 +167,13 @@ export function ModalHeader({
   /** Icon buttons to the left of the close X. Delete, edit. */
   actions?: ReactNode;
   onClose: () => void;
-  className?: string;
+  /**
+   * On the phone this modal is a sheet that rises from the bottom
+   * (`modalSheetPanel`), and there its head is the shared sheet head
+   * (`foundations/sheet.ts`): 24 from the top edge, everything from the top,
+   * a title that wraps instead of being cut. The desktop is not touched.
+   */
+  isSheet?: boolean;
 }) {
   return (
     <div
@@ -176,7 +182,7 @@ export function ModalHeader({
         // it are the same column, and two different insets look like a step
         // on the left edge of the modal.
         'flex shrink-0 items-start justify-between gap-3 px-4 pb-4 pt-4',
-        className,
+        isSheet && 'mobile:pt-6',
       )}
     >
       {/*
@@ -184,27 +190,50 @@ export function ModalHeader({
         they are not the same: the swatch has to sit level with the title —not
         with its description line—, and the close X has to stay at the top
         even if there are two lines of explanation below.
+
+        As a phone sheet the inner row goes from the top too, and the title
+        sits in a box as tall as the close button: one line reads level with
+        it, two lines grow downward.
       */}
-      <div className="flex min-w-0 items-center gap-3">
+      <div className={cn('flex min-w-0 items-center gap-3', isSheet && 'mobile:items-start')}>
         {leading}
-        <div className="min-w-0">
-          <h2 className="truncate font-display text-lg font-semibold leading-tight">{title}</h2>
+        <div
+          className={cn(
+            'min-w-0',
+            isSheet && 'mobile:min-h-[42px] mobile:flex mobile:flex-col mobile:justify-center',
+          )}
+        >
+          <h2
+            className={cn(
+              'truncate font-display text-lg font-semibold leading-tight',
+              isSheet && 'mobile:whitespace-normal',
+            )}
+          >
+            {title}
+          </h2>
           {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
-        {actions}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm-icon"
-          onClick={onClose}
-          aria-label={t('common.close')}
-        >
-          <X className="size-4" aria-hidden="true" />
-        </Button>
-      </div>
+      <HeaderActions actions={actions} onClose={onClose} />
+    </div>
+  );
+}
+
+/** Delete, edit and close: the three things done with the WHOLE modal. */
+function HeaderActions({ actions, onClose }: { actions: ReactNode; onClose: () => void }) {
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      {actions}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm-icon"
+        onClick={onClose}
+        aria-label={t('common.close')}
+      >
+        <X className="size-4" aria-hidden="true" />
+      </Button>
     </div>
   );
 }
@@ -251,9 +280,11 @@ export function ModalFooter({ className, ...props }: ComponentProps<'div'>) {
     <div
       className={cn(
         'mt-auto flex flex-col gap-2 pt-2',
-        'sm:flex-row sm:justify-end',
+        // In a row only on the DESKTOP: everywhere the app treats as a phone
+        // —portrait tablets included— they stack, whatever the width says.
+        'desktop:flex-row desktop:justify-end',
         // Full width when stacked, the size of their text in a row.
-        '[&>*]:w-full sm:[&>*]:w-auto',
+        '[&>*]:w-full desktop:[&>*]:w-auto',
         className,
       )}
       {...props}

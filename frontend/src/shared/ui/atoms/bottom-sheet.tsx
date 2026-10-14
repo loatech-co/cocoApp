@@ -4,6 +4,12 @@ import { createPortal } from 'react-dom';
 import { useEscape, useFocusTrap } from '@/shared/lib/focus';
 import { useSwipeToClose } from '@/shared/lib/swipe';
 import { cn } from '@/shared/lib/utils';
+import {
+  SHEET_HEAD_PADDING,
+  SHEET_HEAD_ROW,
+  SHEET_TITLE,
+  SHEET_TITLE_BOX,
+} from '@/shared/ui/foundations/sheet';
 import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
 interface BottomSheetProps {
@@ -130,7 +136,8 @@ const COLUMN_CLASS =
  */
 function Handle() {
   return (
-    <div className="flex h-8 w-full items-center justify-center" aria-hidden="true">
+    // Over the head's 24px top padding, not in its flow: see `SHEET_HEAD_PADDING`.
+    <div className="absolute inset-x-0 top-2 flex justify-center" aria-hidden="true">
       <span className="h-[5px] w-[72px] rounded-full bg-muted-foreground/40" />
     </div>
   );
@@ -233,18 +240,20 @@ function SheetContent({
   return (
     <>
       {/* ── The head ──────────────────────────────────────────────────
-          With a 78px floor. A head with a single title line is
-          so short that two panels of the same family opened at different
-          heights, and what the eye reads as changed is the head. One
-          with a search box is taller because its CONTENT is taller, which is
-          the only reason it should go past the floor.
-
-          A box, 16 on the sides —the gutter, see the body below—; 8 down
-          to the body, which adds its own 8. A head is read by its EDGES,
-          not by its parts. */}
-      <div className="min-h-[78px] shrink-0 px-4 pb-2">
+          24 from the top edge with the handle laid over them, 16 on the
+          sides, and everything from the top: the shared sheet head
+          (`foundations/sheet.ts`). 8 down to the body, which adds its own 8.
+          A head with a search box is taller because its CONTENT is taller,
+          which is the only reason it should be. */}
+      <div className={cn('relative shrink-0 pb-2', SHEET_HEAD_PADDING)}>
         <Handle />
-        {head ?? <h2 className="font-display text-lg font-semibold">{title}</h2>}
+        {head ?? (
+          <div className={SHEET_HEAD_ROW}>
+            <div className={SHEET_TITLE_BOX}>
+              <h2 className={SHEET_TITLE}>{title}</h2>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── One gutter, 16px, and it belongs to the sheet ──────────────────

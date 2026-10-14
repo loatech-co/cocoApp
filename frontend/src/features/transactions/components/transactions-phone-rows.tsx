@@ -157,7 +157,7 @@ function RowDetails({
     <>
       <RowFacts facts={rowFacts(transaction, tree, receipts.isSuccess && count === 0)} />
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="flex flex-col gap-2">
         <Button type="button" variant="outline" className="w-full" onClick={onEdit}>
           {t('common.edit')}
         </Button>
