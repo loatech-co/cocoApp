@@ -357,6 +357,9 @@ function panelClass({ isFloating, hasOwnWidth, direction, align, width, isUnpadd
     // scrolls inside the panel instead of being clipped.
     isFloating ? 'overflow-y-auto overscroll-contain' : 'overflow-hidden',
     isUnpadded ? 'p-0' : 'p-1',
+    // A dropdown opened from inside a sheet keeps its own inset: see
+    // `--panel-inset` in `BottomSheet`.
+    '[--panel-edge:initial] [--panel-inset:initial]',
     FLOATING_SURFACE,
     SURGE,
     // Where it COMES FROM. A panel that grows from its own center comes
@@ -384,7 +387,9 @@ function panelClass({ isFloating, hasOwnWidth, direction, align, width, isUnpadd
 /** The heading of a block of the menu: "Ordenar por", "Filtrar por"… */
 export function MenuTitle({ children }: { children: ReactNode }) {
   return (
-    <p className="px-2.5 pb-1 pt-1.5 text-xs font-semibold text-muted-foreground">{children}</p>
+    <p className="px-[var(--panel-inset,0.625rem)] pb-1 pt-1.5 text-xs font-semibold text-muted-foreground">
+      {children}
+    </p>
   );
 }
 
@@ -396,7 +401,7 @@ export function MenuTitle({ children }: { children: ReactNode }) {
  * that came out wrong.
  */
 export function MenuSeparator() {
-  return <hr className="-mx-1 my-1 border-border" />;
+  return <hr className="mx-[calc(var(--panel-edge,0.25rem)*-1)] my-1 border-border" />;
 }
 
 /**
@@ -439,7 +444,7 @@ export function MenuOption({
       disabled={isDisabled}
       aria-disabled={isDisabled}
       className={cn(
-        'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
+        'flex w-full items-center gap-2.5 rounded-md px-[var(--panel-inset,0.625rem)] py-2 text-left text-sm transition-colors',
         // A menu row is 36 with a pointer. With a finger, 42.
         'mobile:min-h-[42px]',
         isDisabled

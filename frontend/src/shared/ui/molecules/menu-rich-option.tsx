@@ -47,7 +47,7 @@ export function MenuRichOption({
       aria-disabled={isDisabled}
       onClick={onClick}
       className={cn(
-        'flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left transition-colors',
+        'flex w-full items-center gap-3 rounded-md px-[var(--panel-inset,0.625rem)] py-2.5 text-left transition-colors',
         isDisabled ? 'cursor-not-allowed opacity-50' : HIGHLIGHT,
       )}
     >

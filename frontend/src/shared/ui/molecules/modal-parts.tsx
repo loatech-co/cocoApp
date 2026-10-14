@@ -1,9 +1,12 @@
 import { X } from 'lucide-react';
-import type { ComponentProps, ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 
 import { t } from '@/shared/lib/i18n';
+import { useIsMobile } from '@/shared/lib/mobile';
 import { cn } from '@/shared/lib/utils';
+import { SHEET_TOP_CORNERS } from '@/shared/ui/atoms/bottom-sheet';
 import { Button } from '@/shared/ui/atoms/button';
+import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
 /**
  * The header and the footer of a modal.
@@ -61,6 +64,75 @@ import { Button } from '@/shared/ui/atoms/button';
  */
 export const MODAL_PANEL =
   'flex max-h-[92dvh] min-h-[min(400px,92dvh)] w-full flex-col sm:max-w-[720px]';
+
+/**
+ * The other presentation of a modal on the phone: a SHEET that rises from the
+ * bottom edge, as `BottomSheet` does, instead of a card set 24px apart.
+ *
+ * ── Why a second presentation, and who uses it ──────────────────────────────
+ * The card reads as something on top, which is right for a short question.
+ * The transaction's modal is a long form filled with the thumb: stuck to the
+ * bottom and full width, its footer sits where the thumb already is and the
+ * fields get the whole width. So far only it asks for this; every other modal
+ * keeps the card.
+ *
+ * It borrows from `BottomSheet` what makes a sheet a sheet —the 16px top
+ * corners and the 220ms travel—, not the component: that one is always
+ * mounted and measures its height for menus; a modal is mounted to open.
+ *
+ * On the desktop (`desktop:`) both are the same centered card.
+ */
+export const MODAL_SHEET_SCRIM = cn(
+  'fixed inset-0 z-50 flex items-end justify-center bg-[var(--scrim)] backdrop-blur-sm reveal',
+  'desktop:items-center desktop:p-4',
+);
+
+export function modalSheetPanel(isClosing: boolean): string {
+  return cn(
+    MODAL_PANEL,
+    FLOATING_SURFACE,
+    SHEET_TOP_CORNERS,
+    'desktop:rounded-lg desktop:emerge',
+    // Who asked for less motion gets the fade only: see `rise` in `index.css`.
+    isClosing ? 'sink' : 'rise',
+  );
+}
+
+/** How long the sheet takes to go down: the `sink` of `index.css`. */
+const SHEET_EXIT_MS = 180;
+
+/**
+ * Closes a sheet AFTER it has gone down.
+ *
+ * Whoever opens the modal unmounts it on close, and an unmounted panel has
+ * nowhere to travel to. So on the phone the close is held: the panel gets
+ * `sink` and the real `onClose` runs once it is out of sight. On the desktop,
+ * or for whoever asked for less motion, it closes at once.
+ */
+export function useSheetClose(
+  isOpen: boolean,
+  onClose: () => void,
+): { isClosing: boolean; close: () => void } {
+  const isMobile = useIsMobile();
+  const [isClosing, setIsClosing] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+
+  // Closed for real: the next opening starts by rising again.
+  if (!isOpen && isClosing) setIsClosing(false);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  function close() {
+    const isStill = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!isMobile || isStill) {
+      onClose();
+      return;
+    }
+    if (isClosing) return;
+    setIsClosing(true);
+    timer.current = window.setTimeout(onClose, SHEET_EXIT_MS);
+  }
+  return { isClosing, close };
+}
 
 /**
  * The header of a modal.

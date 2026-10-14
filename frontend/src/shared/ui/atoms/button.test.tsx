@@ -184,3 +184,15 @@ describe('Button', () => {
     expect(classes).not.toContain('hover:underline');
   });
 });
+
+/**
+ * The phone floor: below the breakpoint every button is at least 42 high, and
+ * an icon button at least 42 wide, whatever its size says for a pointer.
+ */
+describe('Button on the phone', () => {
+  it.each([...SIZES, 'sm-icon-round'] as const)('%s is never below 42×42', (size) => {
+    const classes = buttonVariants({ size }).split(' ');
+    expect(classes).toContain('mobile:min-h-[42px]');
+    expect(classes).toContain('mobile:min-w-[42px]');
+  });
+});

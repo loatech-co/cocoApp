@@ -965,6 +965,18 @@
   animation: emerge 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* A sheet that rises from the bottom edge travels its whole height, with the
+   curve and the time of `BottomSheet` (220ms); it goes down faster, 180ms,
+   because leaving is not something to watch. `sink` keeps its end state: the
+   panel is unmounted right after, and must not jump back meanwhile. */
+@utility rise {
+  animation: rise 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@utility sink {
+  animation: sink 180ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
 /* The scrim only fades. Any movement of it would read as the page behind
    moving, and the page behind has not moved. */
 @utility reveal {
@@ -993,6 +1005,21 @@
   }
 }
 
+@keyframes rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes sink {
+  to {
+    transform: translateY(100%);
+  }
+}
+
 @keyframes reveal {
   from {
     opacity: 0;
@@ -1015,6 +1042,16 @@
   }
 
   @keyframes emerge {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  /* No slide: the sheet just appears. Leaving, it closes at once (see
+     `useSheetClose`), so `sink` never runs here. */
+  @keyframes rise {
     from {
       opacity: 0;
     }

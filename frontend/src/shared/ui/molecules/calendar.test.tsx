@@ -156,3 +156,37 @@ describe('Calendar', () => {
     }
   });
 });
+
+/**
+ * On the phone the range band lives inside the cells: it starts and ends at
+ * the center of the two ends —under their circles— and is flush and square
+ * where a week wraps, so nothing of it reaches past the grid.
+ */
+describe('The range band on the phone', () => {
+  function band(day: string): string | undefined {
+    const cell = screen.getByRole('button', {
+      name: new RegExp(`^${day} de octubre`),
+    }).parentElement!;
+    return cell.querySelector('span[aria-hidden="true"]')?.className;
+  }
+
+  it('runs from the center of the first day to the center of the last', () => {
+    render(
+      <Calendar
+        from="2026-10-01"
+        to="2026-10-14"
+        view={{ year: 2026, month: 9 }}
+        onViewChange={() => {}}
+        onSelectDay={() => {}}
+      />,
+    );
+
+    expect(band('1')).toContain('left-1/2');
+    expect(band('14')).toContain('right-1/2');
+    // Sunday the 4th and Monday the 5th: the week wraps, the band is square.
+    expect(band('4')).toContain('right-0');
+    expect(band('5')).toContain('left-0');
+    expect(band('4')).not.toContain('rounded');
+    expect(band('15')).toBeUndefined();
+  });
+});

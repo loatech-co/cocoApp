@@ -203,7 +203,7 @@ function PhoneSearch({ search, isFiltering }: { search: ToolbarSearch; isFilteri
           Both look the same and answer different questions: that one
           SEARCHES for a transaction across the whole app; this one CUTS what
           is being looked at, and what is typed stays set on closing. */}
-        <p className="px-3 py-2 text-sm text-muted-foreground">
+        <p className="px-[var(--panel-inset,0.75rem)] py-2 text-sm text-muted-foreground">
           {t('transactions.toolbar.searchHelp')}
         </p>
       </BottomSheet>

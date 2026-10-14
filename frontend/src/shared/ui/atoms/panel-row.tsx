@@ -16,7 +16,7 @@ import { cn } from '@/shared/lib/utils';
  * `BLOQUE` and `SUPERFICIE_FLOTANTE`. A single place where it changes.
  */
 export const PANEL_ROW_CLASS =
-  'flex min-h-[48px] w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors hover:bg-muted';
+  'flex min-h-[48px] w-full items-center gap-3 rounded-lg px-[var(--panel-inset,0.75rem)] text-left text-sm transition-colors hover:bg-muted';
 
 /** Red only for what cannot be undone: signing out. */
 const TONES = {

@@ -94,7 +94,10 @@ export function BottomSheet({
         style={{ height: height ?? undefined }}
         className={sheetClass(isOpen)}
       >
-        <div ref={column} className="flex max-h-[88dvh] flex-col">
+        <div
+          ref={column}
+          className="flex max-h-[88dvh] flex-col [--panel-edge:0px] [--panel-inset:0px]"
+        >
           <SheetContent title={title} head={head} visits={visits}>
             {children}
           </SheetContent>
@@ -174,6 +177,13 @@ function useVisitCount(isOpen: boolean): number {
   return visits;
 }
 
+/**
+ * The top corners of anything that rises from the bottom edge: this panel and
+ * the transaction sheet on the phone (`MODAL_SHEET_PANEL`). Exported so the
+ * exception in `radius.test.ts` stays in this one file.
+ */
+export const SHEET_TOP_CORNERS = 'rounded-t-[16px]';
+
 /** The sheet: where it is, its edge and how it travels. */
 function sheetClass(isOpen: boolean): string {
   return cn(
@@ -193,7 +203,7 @@ function sheetClass(isOpen: boolean): string {
       has no neighbors, it is on top of everything. It is registered with its
       reason in `shared/ui/radius.test.ts`.
     */
-    'rounded-t-[16px]',
+    SHEET_TOP_CORNERS,
     FLOATING_SURFACE,
     // The same duration and the same curve for the travel and for the height:
     // it grows and shrinks with the same gesture it arrived with.
@@ -220,33 +230,37 @@ function SheetContent({
           with a search box is taller because its CONTENT is taller, which is
           the only reason it should go past the floor.
 
-          A box, 24 on the sides; 12 down to the body. A head is
-          read by its EDGES, not by its parts.
-
-          24 and not 16: with 16, the title and the first line of the body
-          sat almost flush with the edge of the screen —the sheet takes the
-          full width, so its padding is the ONLY thing that separates what is
-          written from the edge of the phone— and the text read as cramped. */}
-      <div className="min-h-[78px] shrink-0 px-6 pb-3">
+          A box, 16 on the sides —the gutter, see the body below—; 8 down
+          to the body, which adds its own 8. A head is read by its EDGES,
+          not by its parts. */}
+      <div className="min-h-[78px] shrink-0 px-4 pb-2">
         <Handle />
         {head ?? <h2 className="font-display text-lg font-semibold">{title}</h2>}
       </div>
 
-      {/* The safe edge goes in the BODY PADDING and not on the panel: a
-          padded panel leaves a dead strip of color under the
-          scroll instead of letting the content pass underneath.
+      {/* ── One gutter, 16px, and it belongs to the sheet ──────────────────
+          The head, the body and whatever the body carries line up on the
+          same 16 from the edge of the phone. What goes inside was often
+          drawn for a dropdown first —the filter, the range, the menu rows—
+          with its own inset, and nested here it added a second frame: the
+          rows started 12px further in than the title. So the sheet sets
+          `--panel-inset` and `--panel-edge` to zero, and that content reads
+          them for its side padding (and its separators' bleed): in a
+          dropdown they are unset and it keeps its own.
 
-          24 on the sides, the same as the head: two different insets
-          look like a step on the left edge of the sheet.
+          8 on top, inside the scroll: what sticks out of its box —the minus
+          of a shortcut, a focus ring— is not clipped by the top edge. The
+          sides already have the gutter for that.
 
-          And 30 at the bottom, more than the sides on purpose: there is no screen
-          edge there but the bottom edge of the phone, where the go-home
-          gesture lives. The last row needs more air than the
-          others so it does not end up under it. */}
+          The safe edge goes in the BODY PADDING and not on the panel: a
+          padded panel leaves a dead strip of color under the scroll instead
+          of letting the content pass underneath. And 30 at the bottom, more
+          than the sides on purpose: there is no screen edge there but the
+          bottom edge of the phone, where the go-home gesture lives. */}
       <div
         key={visits}
         data-body
-        className="min-h-0 flex-1 touch-pan-y overscroll-contain px-6 pb-[calc(30px+env(safe-area-inset-bottom,0px))] [overflow-y:auto]"
+        className="min-h-0 flex-1 touch-pan-y overscroll-contain px-4 pb-[calc(30px+env(safe-area-inset-bottom,0px))] pt-2 [overflow-y:auto]"
       >
         {children}
       </div>

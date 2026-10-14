@@ -144,6 +144,19 @@ ancho que necesitan dos columnas. Vive en `Modal`, en `ModalHeader` y
 en `Confirmation` —una llamada no lo escribe—, porque dos sangrados
 distintos se ven como un escalón en el canto izquierdo de la ficha.
 
+**En el teléfono, la hoja que sube desde abajo tiene UN canal de 16px**
+(`px-4`), y es suyo: la cabecera, el cuerpo y el pie se alinean a esos 16
+desde el borde. Vive en `shared/ui/atoms/bottom-sheet.tsx`, que además pone
+`--panel-inset` y `--panel-edge` a cero; lo que se dibujó primero para un
+desplegable —el filtro por clasificación, el rango, las filas de un menú—
+lee esas variables para su sangrado lateral, así que dentro de la hoja no
+añade un segundo marco y en el desplegable conserva el suyo. Una llamada no
+escribe relleno lateral propio dentro de una hoja. El cuerpo deja 8 arriba,
+dentro del desplazamiento, para que lo que asoma de su caja —el menos de un
+atajo, un anillo de foco— no quede cortado. La ficha del movimiento, en el
+teléfono, es también una hoja (`MODAL_SHEET_SCRIM`, `modalSheetPanel`) con
+el mismo canal de 16.
+
 **Alto mínimo: 400px.** Para que abrir dos fichas seguidas no sea ver el
 panel crecer y encogerse. No es para estirar las cortas: con 600 —que fue
 el primer valor— una ficha de dos campos se abría con un palmo de vacío

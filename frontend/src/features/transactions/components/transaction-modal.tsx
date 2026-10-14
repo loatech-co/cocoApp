@@ -11,9 +11,12 @@ import {
   type TransactionType,
 } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
-import { cn } from '@/shared/lib/utils';
-import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
-import { ModalBody, MODAL_PANEL } from '@/shared/ui/molecules/modal-parts';
+import {
+  ModalBody,
+  MODAL_SHEET_SCRIM,
+  modalSheetPanel,
+  useSheetClose,
+} from '@/shared/ui/molecules/modal-parts';
 import { Confirmation } from '@/shared/ui/organisms/confirmation';
 
 import { CameraCapture } from './camera-capture';
@@ -64,7 +67,10 @@ interface TransactionModalProps {
  * What it needs to work is gathered by `useTransactionSheet`.
  */
 export function TransactionModal(props: TransactionModalProps) {
-  const { isOpen, transaction, payment, defaultType = 'expense', onClose } = props;
+  const { isOpen, transaction, payment, defaultType = 'expense' } = props;
+  // Every way out —the X, Escape, the scrim, «Cancelar», a save— goes
+  // through here, so on the phone the sheet goes down before it is unmounted.
+  const { isClosing, close: onClose } = useSheetClose(isOpen, props.onClose);
   const transactionSheet = useTransactionSheet({
     isOpen,
     transaction,
@@ -79,7 +85,7 @@ export function TransactionModal(props: TransactionModalProps) {
   const { category, concept } = selectedPath(transactionSheet.tree, sheet.categoryId);
 
   return (
-    <SheetOverlay isEditing={isEditing} onClose={onClose}>
+    <SheetOverlay isEditing={isEditing} isClosing={isClosing} onClose={onClose}>
       <TransactionHeader
         mode={{
           type: sheet.type,
@@ -168,38 +174,24 @@ function TransactionSteps({
   );
 }
 
-/** The sheet's scrim and panel. */
+/**
+ * The sheet's scrim and panel: on the phone, a sheet that rises from the bottom
+ * edge, full width; on the desktop, the centered card. See `MODAL_SHEET_SCRIM`.
+ */
 function SheetOverlay({
   isEditing,
+  isClosing,
   onClose,
   children,
 }: {
   isEditing: boolean;
+  isClosing: boolean;
   onClose: () => void;
   children: ReactNode;
 }) {
   return (
     <div
-      // The shared scrim, `--scrim`. There used to be a `bg-carbon-950/50` here
-      // that painted nothing —`carbon` was not a color in any palette of this
-      // project—, so the modal floated over the page with no scrim behind it.
-      className={cn(
-        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--scrim)] backdrop-blur-sm',
-        /*
-          ── 24 to the edge of the screen, on the phone ────────────────────
-          The sheet is not full-bleed. Stuck to three edges, it reads as another
-          SCREEN: it eats the whole width, the bottom corner disappears and
-          the only thing saying the app is still behind is a strip of scrim
-          at the top. Set apart, it reads again as what it is —something that is
-          ON TOP— and the scrim shows on all four sides.
-
-          It is distance from the sheet to the edge of the screen, not padding of
-          the sheet: the inside stays at 16, which is what `Modal` and
-          `CabeceraDeModal` already set.
-        */
-        'p-6',
-        'reveal sm:items-center sm:p-4',
-      )}
+      className={MODAL_SHEET_SCRIM}
       // `onMouseDown` on the scrim, and not `onClick` anywhere.
       //
       // With click, a drag that STARTS inside the panel and ends outside
@@ -218,14 +210,8 @@ function SheetOverlay({
             ? t('transactions.sheet.editMovementTitle')
             : t('transactions.sheet.newMovementTitle')
         }
-        // On mobile it comes in from the bottom and takes the width: it is the
-        // pattern people expect from an app, and it keeps the thumb near the buttons.
-        //
-        // The width is set by `PANEL_DE_MODAL`, which caps it at 720 for every
-        // sheet. And all four corners, not just the top ones: set apart
-        // from the bottom edge, the bottom ones show too, and two straight edges
-        // under two curved ones is a half-drawn box.
-        className={cn(MODAL_PANEL, FLOATING_SURFACE, 'emerge', 'rounded-lg')}
+        data-presentation="sheet"
+        className={modalSheetPanel(isClosing)}
       >
         {children}
       </div>

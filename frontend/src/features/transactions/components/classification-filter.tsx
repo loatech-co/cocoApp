@@ -64,7 +64,7 @@ export function ClassificationFilter({
           longer than the screen with no way to reach the bottom. */}
       <ul className="max-h-64 overflow-y-auto border-y border-border py-1">
         {list.length === 0 ? (
-          <li className="px-3 py-2 text-sm text-muted-foreground">
+          <li className="px-[var(--panel-inset,0.75rem)] py-2 text-sm text-muted-foreground">
             {t('transactions.classificationFilter.nothingToExpand')}
           </li>
         ) : (
@@ -92,7 +92,7 @@ export function ClassificationFilter({
 
 function FilterFooter({ checked, onClear }: { checked: number[]; onClear: () => void }) {
   return (
-    <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+    <div className="flex items-center justify-between gap-2 px-[var(--panel-inset,0.75rem)] py-2 text-xs">
       <span className="text-muted-foreground">
         {checked.length === 0
           ? t('transactions.classificationFilter.unfiltered')
@@ -125,7 +125,7 @@ function FilterRow({ node, isChecked, hasCheckedInside, onToggle, onEnter }: Fil
     <li className="flex items-stretch">
       <label
         className={cn(
-          'flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 py-2 pl-3 pr-2 text-sm transition-colors',
+          'flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 py-2 pl-[var(--panel-inset,0.75rem)] pr-2 text-sm transition-colors',
           // The ROW is the control: the 16 box is a second,
           // smaller way of hitting a target that is already the whole
           // width of the dropdown. That is why the row has a floor and the
@@ -154,7 +154,7 @@ function FilterRow({ node, isChecked, hasCheckedInside, onToggle, onEnter }: Fil
 /** Where you are: the levels walked, and the way back to the one above. */
 function FilterPath({ path, onBack }: { path: CategoryTree[]; onBack: () => void }) {
   return (
-    <div className="flex min-h-9 items-center gap-1 px-3 py-1.5">
+    <div className="flex min-h-9 items-center gap-1 px-[var(--panel-inset,0.75rem)] py-1.5">
       {path.length > 0 ? (
         <BackCrumb path={path.map((n) => n.name)} isStrong onBack={onBack} />
       ) : (

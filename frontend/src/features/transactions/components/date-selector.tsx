@@ -242,7 +242,7 @@ function DayCalendar({ value, onSelect }: { value: string; onSelect: (iso: strin
     >
       {(close) => (
         <Calendar
-          className="p-3"
+          className="px-[var(--panel-inset,0.75rem)] py-3"
           from={value || undefined}
           to={value || undefined}
           onSelectDay={(iso) => {

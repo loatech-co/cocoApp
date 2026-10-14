@@ -77,6 +77,17 @@ Una fila donde el botón mide 40, el campo 42 y el selector 36 se ve
 temblorosa aunque nadie sepa decir por qué. Las variantes de icono
 —`sm-icon`, `md-icon`— no son un tamaño más.
 
+**En el teléfono, nada que se toque mide menos de 42px.** Todo botón —sea
+cual sea su `size`, con texto o de icono, y el `link` también— mide al menos
+42 de alto y 42 de ancho por debajo del corte: lo pone la base de
+`shared/ui/atoms/button.tsx` (`mobile:min-h-[42px] mobile:min-w-[42px]`), no
+cada llamada. Lo mismo los controles que no son `Button` pero se tocan como
+uno: las filas de un menú o de una lista, la fila con casilla y los chips
+(`ToggleOption`, los atajos de rango). `shared/ui/touch-floor.test.ts` lista
+quién lo declara y las pocas excepciones concedidas, cada una con su razón;
+`button.test.tsx` fija el mínimo de cada `size`. En el escritorio los tamaños
+siguen siendo 36 y 44.
+
 ## 5. El color vive en `index.css`, y se nombra por su papel
 
 **Regla:** Ningún color a mano: los tokens viven en `index.css` y se nombran por su papel, no por su tono.

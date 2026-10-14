@@ -76,4 +76,16 @@ describe('The bottom sheet', () => {
     // the whole panel, not on top of the line.
     expect(panel.querySelector('[aria-hidden="true"] .rounded-full')).toBeTruthy();
   });
+
+  it('owns one 16px gutter, and tells what it carries to drop its own inset', () => {
+    render(<Host />);
+    fireEvent.click(screen.getByText('abrir'));
+    const body = screen.getByText('lo de dentro').parentElement!;
+
+    expect(body.className.split(' ')).toEqual(expect.arrayContaining(['px-4', 'pt-2']));
+    // On the column, so the head reads it too.
+    expect(body.parentElement!.className.split(' ')).toEqual(
+      expect.arrayContaining(['[--panel-inset:0px]', '[--panel-edge:0px]']),
+    );
+  });
 });

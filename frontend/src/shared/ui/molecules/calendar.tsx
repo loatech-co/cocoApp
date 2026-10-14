@@ -155,6 +155,8 @@ function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps
   const isEnd = iso === to;
   const isEdge = isStart || isEnd;
 
+  const hasBand = isInRange && from !== to;
+
   return (
     <div
       className={cn(
@@ -162,19 +164,36 @@ function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps
         // column measures, and the circle inside measures whatever the
         // cell measures. With a fixed 36px, in a narrow panel the circle
         // stuck out the sides of its cell.
-        'aspect-square',
+        'relative aspect-square',
         // The range band is `--accent`, the theme's token for what is
         // pointed at. It also carried a `dark:bg-white/12` on top: a
         // made-up white that comes from no token and that in dark
         // painted the band gray instead of teal.
-        isInRange && !isEdge && 'bg-accent',
-        isInRange && isEdge && from !== to && 'bg-accent',
-        // The ends are also rounded at the start and at the end of each
-        // row, or the band would be cut flush against the edge.
-        (isStart || i % 7 === 0) && 'rounded-l-full',
-        (isEnd || i % 7 === 6) && 'rounded-r-full',
+        //
+        // On the desktop the band is the cell's own background, rounded at
+        // the ends and at the start and end of each row.
+        hasBand && 'desktop:bg-accent',
+        (isStart || i % 7 === 0) && 'desktop:rounded-l-full',
+        (isEnd || i % 7 === 6) && 'desktop:rounded-r-full',
       )}
     >
+      {/* ── On the phone, a band INSIDE the cells ────────────────────────
+          The rounded row ends read as loose pills, one per week, and their
+          caps looked like they stuck out of the Monday and Sunday columns.
+          Here the band is a strip a little lower than the circle, square
+          and flush with the grid's edges where a week wraps, and it starts
+          and ends at the CENTER of the first and last day: the filled
+          circle on top is its only rounded end. */}
+      {hasBand && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            'absolute inset-y-[12%] bg-accent desktop:hidden',
+            isStart ? 'left-1/2' : 'left-0',
+            isEnd ? 'right-1/2' : 'right-0',
+          )}
+        />
+      )}
       <button
         type="button"
         onClick={() => onSelectDay(iso)}
@@ -182,7 +201,7 @@ function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps
         aria-label={longDay(iso)}
         aria-pressed={isEdge}
         className={cn(
-          'size-full select-none rounded-full text-sm transition-colors',
+          'relative size-full select-none rounded-full text-sm transition-colors',
           isEdge
             ? 'bg-primary font-semibold text-primary-foreground hover:bg-primary/90'
             : isInRange

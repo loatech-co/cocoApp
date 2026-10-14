@@ -114,7 +114,7 @@ function ProfileSummary({ name }: { name: string }) {
   return (
     <Link
       to="/account"
-      className={cn(PANEL_ROW_CLASS, '-mx-1.5 gap-3')}
+      className={cn(PANEL_ROW_CLASS, 'gap-3')}
       aria-label={t('shell.account.myAccountOf', { name })}
     >
       <Avatar name={name} className="size-10" />
