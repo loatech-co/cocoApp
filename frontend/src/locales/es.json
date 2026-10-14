@@ -618,6 +618,7 @@
       "staticCenter": "“{{name}}” es un centro estático. La clasificación solo se modifica desde Centros de costos.",
       "latePayment": "Pertenece a {{month}}, pero se pagó el {{day}}",
       "unclassified": "Sin clasificar",
+      "open": "Ver movimiento",
       "columns": {
         "concept": "Concepto",
         "period": "Periodo",

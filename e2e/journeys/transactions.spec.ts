@@ -1,4 +1,4 @@
-import { movementRow } from '../support/app';
+import { movementRow, openMovement } from '../support/app';
 import { expectAccessible } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 import { createConcept, createExpense } from '../support/seed';
@@ -11,9 +11,7 @@ test.describe('a movement', () => {
   });
 
   test('is edited from its card and the table shows the new amount', async ({ page }) => {
-    await movementRow(page, 'Mercado', '50.000')
-      .getByRole('cell', { name: 'Mercado', exact: true })
-      .click();
+    await openMovement(page, 'Mercado', '50.000');
     const card = page.getByRole('dialog', { name: 'Editar movimiento' });
     await expect(card.getByText('$ 50.000')).toBeVisible();
     await expectAccessible(page, 'the movement card');
@@ -28,9 +26,7 @@ test.describe('a movement', () => {
   });
 
   test('is deleted, and its concept stays in the cost centres', async ({ page }) => {
-    await movementRow(page, 'Mercado', '50.000')
-      .getByRole('cell', { name: 'Mercado', exact: true })
-      .click();
+    await openMovement(page, 'Mercado', '50.000');
     const card = page.getByRole('dialog', { name: 'Editar movimiento' });
     await card.getByRole('button', { name: 'Eliminar movimiento' }).click();
 

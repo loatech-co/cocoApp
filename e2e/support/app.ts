@@ -51,12 +51,36 @@ export async function openAccountPanel(page: Page, email: string): Promise<void>
   }
 }
 
-/** The movement's row in the table, by its concept and its amount. */
+/**
+ * The movement's row in the table, by its concept and its amount. On the
+ * phone the table is a list of rows that unfold: the row is its list item,
+ * found by the toggle that shows the concept.
+ */
 export function movementRow(page: Page, concept: string, amount: string): Locator {
+  if (onPhone()) {
+    return page
+      .getByRole('listitem')
+      .filter({ has: page.getByRole('button', { name: new RegExp(`^${concept}\\b`) }) })
+      .filter({ hasText: amount });
+  }
   return page
     .getByRole('row')
     .filter({ has: page.getByRole('cell', { name: concept, exact: true }) })
     .filter({ hasText: amount });
+}
+
+/**
+ * Opens the movement's sheet from its row: a tap on the row on the desktop;
+ * on the phone, unfold the row and press «Ver movimiento».
+ */
+export async function openMovement(page: Page, concept: string, amount: string): Promise<void> {
+  const row = movementRow(page, concept, amount);
+  if (onPhone()) {
+    await row.getByRole('button', { expanded: false }).click();
+    await row.getByRole('button', { name: 'Ver movimiento' }).click();
+    return;
+  }
+  await row.getByRole('cell', { name: concept, exact: true }).click();
 }
 
 /** "Cerrar sesión" in the account panel: a menu item on the desktop, a button on the phone. */

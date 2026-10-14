@@ -1,7 +1,13 @@
 import type { Locator, Page } from '@playwright/test';
 import { join } from 'node:path';
 
-import { movementRow, openNewExpense, openNewExpenseByHand, pickConcept } from '../support/app';
+import {
+  movementRow,
+  openMovement,
+  openNewExpense,
+  openNewExpenseByHand,
+  pickConcept,
+} from '../support/app';
 import { expectAccessible } from '../support/axe';
 import { FILES } from '../support/environment.mjs';
 import { expect, test } from '../support/fixtures';
@@ -92,7 +98,7 @@ test.describe('registering an expense', () => {
 
     const row = movementRow(page, 'Mercado', '45.000');
     await expect(row).toBeVisible();
-    await row.getByRole('cell', { name: 'Mercado', exact: true }).click();
+    await openMovement(page, 'Mercado', '45.000');
     const card = page.getByRole('dialog', { name: 'Editar movimiento' });
     await expect(card.getByRole('button', { name: 'Ver en grande' })).toBeVisible();
   });

@@ -32,6 +32,7 @@ const CONTROLS: [filePath: string, what: string][] = [
   ['shared/ui/atoms/option.tsx', 'the row of a list: Select, Combo and the concept search'],
   ['shared/ui/molecules/menu.tsx', 'a menu option'],
   ['shared/ui/atoms/toggle-option.tsx', 'a chip: the range shortcuts'],
+  ['shared/ui/atoms/sort-button.tsx', 'a column header that sorts'],
   ['app/navigation.tsx', 'a section row and the account trigger'],
   [
     'features/transactions/components/classification-filter.tsx',

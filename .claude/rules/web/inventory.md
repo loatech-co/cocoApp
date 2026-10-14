@@ -45,6 +45,7 @@ Se actualiza en el mismo PR que crea o cambia un componente.
 | `atoms/rail-toggle.tsx`          | átomo      | Plegar y desplegar el riel (`RailToggle`)                                                                      |
 | `atoms/search-box.tsx`           | átomo      | La caja de filtrar una lista a la vista (`SearchBox`): `header` o `box`                                        |
 | `atoms/skeleton.tsx`             | átomo      | Hueco de carga                                                                                                 |
+| `atoms/sort-button.tsx`          | átomo      | El botón que ordena una columna, con su flecha siempre a la vista (`SortButton`, `ColumnSort`)                 |
 | `atoms/text-button.tsx`          | átomo      | Acción que se lee como texto (`TextButton`): `primary`, `subtle` o `highlight`                                 |
 | `atoms/text-link.tsx`            | átomo      | Enlace dentro de una frase, subrayado en reposo (`TextLink`)                                                   |
 | `atoms/textarea.tsx`             | átomo      | Campo de texto de varias líneas                                                                                |
@@ -62,6 +63,7 @@ Se actualiza en el mismo PR que crea o cambia un componente.
 | `molecules/overlay-control.tsx`  | molécula   | Mandos sobre un documento o un velo (`OverlayButton`, `ControlSeparator`, `ControlReadout`)                    |
 | `molecules/section.tsx`          | molécula   | Una parte de una ficha con su nombre encima (`Section`)                                                        |
 | `molecules/table.tsx`            | molécula   | Tabla, filas, celdas, pie y esqueleto                                                                          |
+| `molecules/expandable-rows.tsx`  | molécula   | Una tabla en el teléfono: filas que se despliegan, con cabecera, datos (`RowFacts`), pie y esqueleto           |
 | `organisms/combo.tsx`            | organismo  | Desplegable con filtro y, si se pide, «crear»; la caja es un `combobox` con `aria-activedescendant`            |
 | `organisms/confirmation.tsx`     | organismo  | La ficha que pregunta antes de algo irreversible                                                               |
 | `organisms/modal.tsx`            | organismo  | El armazón de una ficha                                                                                        |

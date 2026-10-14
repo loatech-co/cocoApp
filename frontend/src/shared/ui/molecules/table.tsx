@@ -1,8 +1,8 @@
-import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
+import { SortButton } from '@/shared/ui/atoms/sort-button';
 
 /**
  * The pieces of a data table.
@@ -228,36 +228,5 @@ export function TableSkeleton({
         ))}
       </tbody>
     </Table>
-  );
-}
-/** The button that sorts a column, with its arrow always visible. */
-function SortButton({
-  sort,
-  align,
-  children,
-}: {
-  sort: { direction: 'asc' | 'desc' | null; onChange: () => void };
-  align: 'left' | 'right';
-  children: ReactNode;
-}) {
-  const Arrow =
-    sort.direction === 'asc' ? ChevronUp : sort.direction === 'desc' ? ChevronDown : ChevronsUpDown;
-
-  return (
-    <button
-      type="button"
-      onClick={sort.onChange}
-      className={cn(
-        'inline-flex items-center gap-1 rounded-sm transition-colors hover:text-foreground',
-        align === 'right' && 'flex-row-reverse',
-        sort.direction && 'text-foreground',
-      )}
-    >
-      {children}
-      <Arrow
-        className={cn('size-3.5 shrink-0', !sort.direction && 'opacity-40')}
-        aria-hidden="true"
-      />
-    </button>
   );
 }

@@ -40,6 +40,7 @@ export function DashboardTransactions({
           sort={orderBy}
           skeletonRows={8}
           pie={tableFooter(transactions.data)}
+          phoneTotal={phoneTotal(transactions.data)}
         />
       )}
 
@@ -70,6 +71,15 @@ function PageCount({ page, total }: { page: number; total: number | undefined })
       )}
     </div>
   );
+}
+
+/** The same totals, for the phone's expandable rows. */
+function phoneTotal(data: Table['transactions']['data']) {
+  if (!data || data.data.length === 0) return undefined;
+  return {
+    label: t('transactions.dashboard.total', { total: data.meta.total }),
+    amount: formatCOP(data.meta.sumExpense),
+  };
 }
 
 function tableFooter(data: Table['transactions']['data']): ReactNode {
