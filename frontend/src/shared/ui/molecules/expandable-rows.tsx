@@ -25,10 +25,13 @@ import { SortButton, type ColumnSort } from '@/shared/ui/atoms/sort-button';
  * PRIMARY ones and passes the rest as the row's details.
  */
 export function ExpandableRows({
+  label,
   head,
   foot,
   children,
 }: {
+  /** The list's name, for whoever cannot see the heading above it. */
+  label?: string;
   head?: ReactNode;
   foot?: ReactNode;
   children: ReactNode;
@@ -36,7 +39,9 @@ export function ExpandableRows({
   return (
     <div className="flex flex-col gap-1.5">
       {head}
-      <ul className="flex flex-col gap-1.5">{children}</ul>
+      <ul aria-label={label} className="flex flex-col gap-1.5">
+        {children}
+      </ul>
       {foot}
     </div>
   );
@@ -101,12 +106,19 @@ export function ExpandableRow({
   onToggle,
   isFlagged = false,
   isDimmed = false,
+  surface = 'card',
   children,
 }: {
   primary: ReactNode;
   value: ReactNode;
   isOpen: boolean;
   onToggle: () => void;
+  /**
+   * What the row is made of. On the well a row is a `card`; INSIDE a card
+   * —the pending payments— a card-colored row would not show, so it is a
+   * block (`muted`), as rule 6 says for what sits inside a card.
+   */
+  surface?: 'card' | 'block';
   /** The row asks for something: an unclassified transaction, for example. */
   isFlagged?: boolean;
   isDimmed?: boolean;
@@ -117,7 +129,8 @@ export function ExpandableRow({
   return (
     <li
       className={cn(
-        'rounded-lg bg-card transition-colors',
+        'rounded-lg transition-colors',
+        surface === 'card' ? 'bg-card' : 'bg-muted',
         // Amber and not red, as on the desktop: unclassified is pending, not
         // an error.
         isFlagged && 'bg-warning-surface/40',

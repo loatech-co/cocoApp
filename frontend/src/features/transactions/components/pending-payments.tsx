@@ -4,13 +4,16 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 import { type PendingPayment } from '@/shared/api/generated/model';
 import { shortDay, formatCOP, todayInBogota } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
+import { useIsMobile } from '@/shared/lib/mobile';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { CardRow } from '@/shared/ui/atoms/card-row';
 import { Checkbox } from '@/shared/ui/atoms/checkbox';
-import { Progress } from '@/shared/ui/atoms/progress';
 import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 import { Menu, MenuTitle } from '@/shared/ui/molecules/menu';
+
+import { PhonePendingList } from './pending-payments-phone';
+import { PendingProgress, progressOf } from './pending-progress';
 
 /**
  * What is left to pay this month.
@@ -115,58 +118,50 @@ export function PendingPayments({
              The list spills 12px over the card's padding —that is where the
              bar goes, over the padding and outside the rows— and its content
              ends right at the card's inner edge. */}
-        <ul className="-mr-3 mt-4 flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto pr-3">
-          {visible.map((payment) => (
-            <PendingRow key={payment.categoryId} payment={payment} now={now} onSelect={onSelect} />
-          ))}
-          {/* With ALL turned off, the list is empty and the card would be left with
-              nothing to show but the button to go back. It is said, because a
-              blank gap reads as «nothing pending», which is the
-              opposite of what is happening. */}
-          {visible.length === 0 && (
-            <li className="py-6 text-center text-sm text-muted-foreground">
-              {t('transactions.pending.offCentersNote')}
-            </li>
-          )}
-        </ul>
+        <PendingList visible={visible} now={now} onSelect={onSelect} />
       </CardContent>
     </Card>
   );
 }
 
-/** What a payment made in several installments has covered so far. */
-function PendingProgress({
-  payment,
-  progress,
-  hasAction,
+/**
+ * The rows: drawers on the phone (`PhonePendingList`), a list that is tapped
+ * on the desktop. Either way, with everything turned off it says so.
+ */
+function PendingList({
+  visible,
+  now,
+  onSelect,
 }: {
-  payment: PendingPayment;
-  progress: number | null;
-  hasAction: boolean;
+  visible: PendingPayment[];
+  now: string;
+  onSelect: ((payment: PendingPayment) => void) | undefined;
 }) {
-  if (progress === null) return null;
+  const isMobile = useIsMobile();
+
+  if (isMobile && visible.length > 0) {
+    return (
+      <div className="mt-4">
+        <PhonePendingList payments={visible} now={now} onSelect={onSelect} />
+      </div>
+    );
+  }
+
   return (
-    <span className="block w-full">
-      <Progress
-        value={progress}
-        label={t('transactions.pending.progressLabel', {
-          name: payment.name,
-          paid: formatCOP(payment.paidAmount),
-          expected: formatCOP(payment.expectedAmount ?? '0'),
-        })}
-        className="h-1"
-      />
-      <span className="mt-1.5 flex items-baseline justify-between gap-2 text-xs">
-        <span className="tabular min-w-0 truncate text-muted-foreground">
-          {t('transactions.pending.soFar', { amount: formatCOP(payment.paidAmount) })}
-        </span>
-        {hasAction && (
-          <span className="shrink-0 font-medium text-accent-ink">
-            {t('transactions.sheet.registerAnother')}
-          </span>
-        )}
-      </span>
-    </span>
+    <ul className="-mr-3 mt-4 flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto pr-3">
+      {visible.map((payment) => (
+        <PendingRow key={payment.categoryId} payment={payment} now={now} onSelect={onSelect} />
+      ))}
+      {/* With ALL turned off, the list is empty and the card would be left with
+          nothing to show but the button to go back. It is said, because a
+          blank gap reads as «nothing pending», which is the
+          opposite of what is happening. */}
+      {visible.length === 0 && (
+        <li className="py-6 text-center text-sm text-muted-foreground">
+          {t('transactions.pending.offCentersNote')}
+        </li>
+      )}
+    </ul>
   );
 }
 
@@ -210,16 +205,7 @@ function PendingRow({
 }) {
   const isOverdue = payment.dueDate < now;
 
-  /*
-      How much it has covered so far, for those paid in several installments.
-
-      It is `null` when there is no total to reach: with no expected value there
-      is no fraction to paint, and a bar without a denominator is a
-      bar that lies. Those are painted like any other pending payment.
-    */
-  const total = Number(payment.expectedAmount ?? 0);
-  const paidSoFar = Number(payment.paidAmount);
-  const progress = payment.isMultiPayment && total > 0 ? paidSoFar / total : null;
+  const progress = progressOf(payment);
 
   return (
     <li

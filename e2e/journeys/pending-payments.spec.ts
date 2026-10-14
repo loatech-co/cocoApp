@@ -1,4 +1,4 @@
-import { movementRow } from '../support/app';
+import { movementRow, payPending, pendingRow } from '../support/app';
 import { expectAccessible } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 import { createConcept, createExpense } from '../support/seed';
@@ -20,14 +20,14 @@ test.describe('pending payments', () => {
     await createConcept(account.api, ['Costos fijos', 'Vivienda'], 'Arriendo', RENT);
     await signIn();
 
-    const pending = page.getByRole('listitem').filter({ hasText: 'Costos fijos · Vivienda' });
+    const pending = pendingRow(page, 'Arriendo');
     await expect(page.getByRole('heading', { name: 'Pagos pendientes' })).toBeVisible();
     await expect(pending).toContainText('Arriendo');
     await expect(pending).toContainText('$ 1.000.000');
     await expectAccessible(page, 'the summary with a pending payment');
 
     // Paying it from the list: the sheet opens with the concept and the budget.
-    await pending.getByRole('button').click();
+    await payPending(page, 'Arriendo');
     const sheet = page.getByRole('dialog', { name: 'Nuevo movimiento' });
     await expect(sheet.getByRole('button', { name: 'Concepto' })).toContainText('Arriendo');
     await expect(sheet.getByRole('textbox', { name: 'Valor' })).toHaveValue('1.000.000');
@@ -42,6 +42,7 @@ test.describe('pending payments', () => {
     page,
     account,
     signIn,
+    isMobile,
   }) => {
     const rent = await createConcept(account.api, ['Costos fijos', 'Vivienda'], 'Arriendo', RENT);
     await createExpense(account.api, rent, 400_000);
@@ -60,6 +61,13 @@ test.describe('pending payments', () => {
     await expect(card).toBeHidden();
 
     await page.goto('/');
+    if (isMobile) {
+      // On the phone it is a plain fact of the open drawer, without a bar.
+      await pendingRow(page, 'Arriendo').getByRole('button', { expanded: false }).click();
+      await expect(pendingRow(page, 'Arriendo')).toContainText('$ 400.000 de $ 1.000.000');
+      await expectAccessible(page, 'the summary with an instalment in progress');
+      return;
+    }
     const progress = page.getByRole('progressbar', { name: /Arriendo/ });
     await expect(progress).toHaveAccessibleName('Arriendo: lleva $ 400.000 de $ 1.000.000');
     await expect(page.getByText('Lleva $ 400.000')).toBeVisible();

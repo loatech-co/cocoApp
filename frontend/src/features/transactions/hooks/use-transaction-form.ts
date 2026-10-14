@@ -26,6 +26,11 @@ export interface SheetOpening {
   transaction?: Transaction | null | undefined;
   payment?: PendingPayment | null | undefined;
   defaultType: TransactionType;
+  /**
+   * Opens an existing transaction already editable: the «Editar» of a phone
+   * table row asked for that, and opening to read first would be one more tap.
+   */
+  shouldOpenEditing?: boolean | undefined;
 }
 
 /** What is typed in the sheet: the transaction's data and its classification. */
@@ -112,7 +117,7 @@ function useTransactionFields(opening: SheetOpening, discards: number) {
 
 /** Where the sheet is at: what is shown, what is being done, what failed. */
 function useSheetStatus(opening: SheetOpening, discards: number) {
-  const { isOpen, transaction, payment, defaultType } = opening;
+  const { isOpen, transaction, payment, defaultType, shouldOpenEditing = false } = opening;
   const [error, setError] = useState<string | null>(null);
   const [isConfirmingDeletion, setIsConfirmingDeletion] = useState(false);
   /**
@@ -156,7 +161,7 @@ function useSheetStatus(opening: SheetOpening, discards: number) {
     setIsCascadeVisible(false);
     setError(null);
     setIsConfirmingDeletion(false);
-    setEditable(!transaction);
+    setEditable(!transaction || shouldOpenEditing);
     // Always the form: a sheet left on the camera or mid-reading would reopen
     // there for the next transaction.
     setStep('form');

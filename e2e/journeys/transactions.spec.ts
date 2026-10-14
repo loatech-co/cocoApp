@@ -10,13 +10,17 @@ test.describe('a movement', () => {
     await signIn();
   });
 
-  test('is edited from its card and the table shows the new amount', async ({ page }) => {
+  test('is edited from its card and the table shows the new amount', async ({ page, isMobile }) => {
     await openMovement(page, 'Mercado', '50.000');
     const card = page.getByRole('dialog', { name: 'Editar movimiento' });
-    await expect(card.getByText('$ 50.000')).toBeVisible();
-    await expectAccessible(page, 'the movement card');
-
-    await card.getByRole('button', { name: 'Editar movimiento' }).click();
+    // The phone row's «Editar» opens it editable; the desktop opens it to read first.
+    if (isMobile) {
+      await expect(card.getByRole('textbox', { name: 'Valor' })).toHaveValue('50.000');
+    } else {
+      await expect(card.getByText('$ 50.000')).toBeVisible();
+      await expectAccessible(page, 'the movement card');
+      await card.getByRole('button', { name: 'Editar movimiento' }).click();
+    }
     await card.getByRole('textbox', { name: 'Valor' }).fill('61000');
     await expectAccessible(page, 'the movement card, editing');
     await card.getByRole('button', { name: 'Guardar' }).click();

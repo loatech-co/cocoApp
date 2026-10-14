@@ -66,7 +66,12 @@ export function DashboardPage() {
               p.apply({ categoryIds: previous ? [previous.id] : [] });
             }}
           />
-          <DashboardTransactions table={table} tree={p.tree} onOpen={sheet.setEditing} />
+          <DashboardTransactions
+            table={table}
+            tree={p.tree}
+            onOpen={sheet.setEditing}
+            onEdit={sheet.editFromRow}
+          />
         </>
       )}
 
@@ -75,10 +80,8 @@ export function DashboardPage() {
         transaction={sheet.editing}
         payment={sheet.confirming}
         defaultType={sheet.newType}
-        onClose={() => {
-          sheet.setEditing(undefined);
-          sheet.setConfirming(null);
-        }}
+        shouldOpenEditing={sheet.shouldOpenEditing}
+        onClose={sheet.close}
       />
     </div>
   );

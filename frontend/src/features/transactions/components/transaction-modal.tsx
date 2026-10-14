@@ -47,6 +47,8 @@ interface TransactionModalProps {
   payment?: PendingPayment | null;
   /** Which type to open with when CREATING. The "Nuevo movimiento" menu picks it. */
   defaultType?: TransactionType;
+  /** An existing transaction opens editable instead of to read: see `SheetOpening`. */
+  shouldOpenEditing?: boolean;
   onClose: () => void;
 }
 
@@ -71,13 +73,7 @@ export function TransactionModal(props: TransactionModalProps) {
   // Every way out —the X, Escape, the scrim, «Cancelar», a save— goes
   // through here, so on the phone the sheet goes down before it is unmounted.
   const { isClosing, close: onClose } = useSheetClose(isOpen, props.onClose);
-  const transactionSheet = useTransactionSheet({
-    isOpen,
-    transaction,
-    payment,
-    defaultType,
-    onClose,
-  });
+  const transactionSheet = useTransactionSheet({ ...props, defaultType, onClose });
   const { sheet } = transactionSheet;
 
   if (!isOpen) return null;

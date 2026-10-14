@@ -36,6 +36,8 @@ interface TransactionsTableProps {
   tree: CategoryTree[];
   isLoading?: boolean;
   onOpen: (transaction: Transaction) => void;
+  /** The phone row's «Editar»; without it, it opens like a desktop row tap. */
+  onEdit?: ((transaction: Transaction) => void) | undefined;
   /** Without this the headers do not sort: in a dashboard it would make no sense. */
   sort?: ColumnOrder;
   pie?: ReactNode;
@@ -66,6 +68,7 @@ export function TransactionsTable({
   tree,
   isLoading = false,
   onOpen,
+  onEdit,
   sort,
   pie,
   phoneTotal,
@@ -87,7 +90,7 @@ export function TransactionsTable({
         tree={tree}
         isLoading={isLoading}
         skeletonRows={skeletonRows}
-        onOpen={onOpen}
+        onEdit={onEdit ?? onOpen}
         sort={sort}
         total={phoneTotal}
       />

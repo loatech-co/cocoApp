@@ -238,3 +238,14 @@ describe('The sheet of a concept paid in several installments', () => {
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');
   });
 });
+
+describe('The sheet opened from «Editar»', () => {
+  it('starts editable, where a plain opening starts to read', () => {
+    renderSheet({ transaction: TRANSACTION, shouldOpenEditing: true });
+    expect(screen.getByLabelText('Valor')).toBeDefined();
+
+    cleanup();
+    renderSheet({ transaction: TRANSACTION });
+    expect(screen.queryByLabelText('Valor')).toBeNull();
+  });
+});

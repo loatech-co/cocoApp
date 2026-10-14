@@ -576,7 +576,13 @@
       "offCentersNote": "Lo que queda es de los centros que están apagados.",
       "soFar": "Lleva {{amount}}",
       "filterByCostCenter": "Filtrar por centro de costos",
-      "progressLabel": "{{name}}: lleva {{paid}} de {{expected}}"
+      "progressLabel": "{{name}}: lleva {{paid}} de {{expected}}",
+      "classification": "Clasificación",
+      "due": "Vence",
+      "overdue": "Vencido",
+      "registerPayment": "Registrar pago",
+      "paid": "Pagado",
+      "paidOf": "{{paid}} de {{expected}}"
     },
     "searchPanel": {
       "help": "Escribe el concepto, el comercio o lo que decía el recibo.",
@@ -621,7 +627,10 @@
       "staticCenter": "“{{name}}” es un centro estático. La clasificación solo se modifica desde Centros de costos.",
       "latePayment": "Pertenece a {{month}}, pero se pagó el {{day}}",
       "unclassified": "Sin clasificar",
-      "open": "Ver movimiento",
+      "classification": "Clasificación",
+      "receipt": "Soporte",
+      "noReceipt": "Sin soporte",
+      "viewReceipt": "Ver soporte",
       "columns": {
         "concept": "Concepto",
         "period": "Periodo",

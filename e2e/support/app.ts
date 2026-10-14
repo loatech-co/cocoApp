@@ -77,10 +77,35 @@ export async function openMovement(page: Page, concept: string, amount: string):
   const row = movementRow(page, concept, amount);
   if (onPhone()) {
     await row.getByRole('button', { expanded: false }).click();
-    await row.getByRole('button', { name: 'Ver movimiento' }).click();
+    await row.getByRole('button', { name: 'Editar', exact: true }).click();
     return;
   }
   await row.getByRole('cell', { name: concept, exact: true }).click();
+}
+
+/**
+ * A pending payment, by its concept. On the phone it is a drawer: closed, it
+ * shows only the concept and the amount, and «Registrar pago» is inside.
+ */
+export function pendingRow(page: Page, concept: string): Locator {
+  if (onPhone()) {
+    return page
+      .getByRole('list', { name: 'Pagos pendientes' })
+      .getByRole('listitem')
+      .filter({ has: page.getByRole('button', { name: new RegExp(`^${concept}\\b`) }) });
+  }
+  return page.getByRole('listitem').filter({ hasText: concept });
+}
+
+/** Pays a pending payment from the list: the row on the desktop, its drawer's button on the phone. */
+export async function payPending(page: Page, concept: string): Promise<void> {
+  const row = pendingRow(page, concept);
+  if (onPhone()) {
+    await row.getByRole('button', { expanded: false }).click();
+    await row.getByRole('button', { name: 'Registrar pago' }).click();
+    return;
+  }
+  await row.getByRole('button').click();
 }
 
 /** "Cerrar sesión" in the account panel: a menu item on the desktop, a button on the phone. */

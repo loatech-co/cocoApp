@@ -16,10 +16,13 @@ export function DashboardTransactions({
   table,
   tree,
   onOpen,
+  onEdit,
 }: {
   table: Table;
   tree: Category[];
   onOpen: (transaction: Transaction) => void;
+  /** The «Editar» of a phone row: opens the sheet already editable. */
+  onEdit: (transaction: Transaction) => void;
 }) {
   const { page, setPage, transactions, orderBy } = table;
 
@@ -37,6 +40,7 @@ export function DashboardTransactions({
           tree={tree}
           isLoading={transactions.isPending}
           onOpen={onOpen}
+          onEdit={onEdit}
           sort={orderBy}
           skeletonRows={8}
           pie={tableFooter(transactions.data)}

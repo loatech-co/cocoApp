@@ -65,8 +65,28 @@ function useDashboardSheet() {
   /** The pending payment being confirmed. It changes the whole sheet. */
   const [confirming, setConfirming] = useState<PendingPayment | null>(null);
   const [newType, setNewType] = useState<TransactionType>('expense');
+  /** Opened from a phone row's «Editar»: the sheet starts editable. */
+  const [shouldOpenEditing, setShouldOpenEditing] = useState(false);
 
-  return { editing, setEditing, confirming, setConfirming, newType, setNewType };
+  return {
+    editing,
+    setEditing,
+    confirming,
+    setConfirming,
+    newType,
+    setNewType,
+    shouldOpenEditing,
+    /** A phone row's «Editar»: the sheet on that transaction, already editable. */
+    editFromRow: (transaction: Transaction) => {
+      setShouldOpenEditing(true);
+      setEditing(transaction);
+    },
+    close: () => {
+      setEditing(undefined);
+      setConfirming(null);
+      setShouldOpenEditing(false);
+    },
+  };
 }
 
 /** The path down to what is being broken down. */
