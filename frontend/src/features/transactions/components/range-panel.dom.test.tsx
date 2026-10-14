@@ -12,11 +12,11 @@ afterEach(() => {
   atWidth(false);
 });
 
-function openPanel() {
+function openPanel(preset: 'custom' | 'this-month' = 'custom') {
   render(
     <QueryClientProvider client={testQueryClient()}>
       <RangePanel
-        filters={{ preset: 'custom', from: '2026-10-01', to: '2026-10-14', categoryIds: [] }}
+        filters={{ preset, from: '2026-10-01', to: '2026-10-14', categoryIds: [] }}
         apply={vi.fn()}
         hasShortcuts
         close={vi.fn()}
@@ -32,6 +32,23 @@ describe('The range panel, on the phone', () => {
 
     const list = screen.getByRole('button', { name: 'Mes en curso' }).closest('ul')!;
     expect(list.className.split(' ')).toEqual(expect.arrayContaining(['grid', 'grid-cols-3']));
+  });
+
+  it('lights the chip of the preset in use, and none for days picked by hand', () => {
+    atWidth(true);
+    openPanel('this-month');
+
+    const chip = screen.getByRole('button', { name: 'Mes en curso' });
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
+    expect(chip.className).toContain('bg-primary/15');
+    expect(chip.className).toContain('mobile:border-primary/40');
+
+    cleanup();
+    openPanel('custom');
+    const pressed = screen
+      .getAllByRole('button')
+      .filter((b) => b.getAttribute('aria-pressed') === 'true' && b.closest('ul'));
+    expect(pressed).toHaveLength(0);
   });
 
   it('gives the range its own line, and stacks «Cancelar» and «Aplicar» as a sheet foot', () => {
