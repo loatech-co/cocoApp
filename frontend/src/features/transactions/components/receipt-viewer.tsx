@@ -1,8 +1,9 @@
 import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 import type { ReceiptFailure } from '@/features/transactions/model/receipts';
 import { type Receipt } from '@/shared/api/generated/model';
+import { cn } from '@/shared/lib/utils';
 import { PAGE_WIDTH, PdfPage } from '@/shared/ui/atoms/pdf-page';
 
 import { ConfirmReceiptDeletion } from './confirm-receipt-deletion';
@@ -79,7 +80,7 @@ export function Lightbox(props: ViewerProps) {
       aria-label={receipt.fileName}
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
       // Above the transaction modal, which is at z-50.
-      className="fixed inset-0 z-[60] flex flex-col bg-stage/90 p-3 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[60] flex flex-col bg-stage/90 p-4 backdrop-blur-sm sm:p-6"
     >
       <ViewerHeader
         receipt={receipt}
@@ -168,9 +169,50 @@ function ViewerStage(props: ViewerStageProps) {
   );
 }
 
+/**
+ * How much of a page's width fits: 1 when the 620px page fits, less on a
+ * phone. «100 %» means the whole page width in sight; zoom multiplies that.
+ */
+function useFit(slot: RefObject<HTMLDivElement | null>): number {
+  const [fit, setFit] = useState(1);
+
+  useLayoutEffect(() => {
+    const el = slot.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+
+    const measure = (): void => {
+      const style = getComputedStyle(el);
+      const inner = el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      setFit(inner > 0 ? Math.min(1, inner / PAGE_WIDTH) : 1);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    measure();
+    return () => observer.disconnect();
+  }, [slot]);
+
+  return fit;
+}
+
 function ViewerSheet({ receipt, url, error, onRetry, scale, page, onPages }: ViewerStageProps) {
+  const slot = useRef<HTMLDivElement>(null);
+  const width = scale * useFit(slot);
+
   return (
-    <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-lg bg-stage/25 p-3 sm:p-6">
+    <div
+      ref={slot}
+      className={cn(
+        'relative flex min-w-0 flex-1 overflow-auto rounded-lg bg-stage/25 sm:p-6',
+        /*
+          SAFE centering. Plain `justify-center` centers a page wider than
+          its slot by pushing half of it off the LEFT edge, where no scroll
+          reaches: zoomed in, the left of the receipt could not be seen.
+          `safe` falls back to the start when it does not fit, so the scroll
+          reaches both edges.
+        */
+        'justify-center-safe',
+      )}
+    >
       {error ? (
         <div className="flex w-full items-center justify-center">
           <UnavailableReceipt error={error} onRetry={onRetry} isDark />
@@ -187,10 +229,10 @@ function ViewerSheet({ receipt, url, error, onRetry, scale, page, onPages }: Vie
           // else, the zoom button would do two different things depending on which
           // receipt was open.
           className="h-fit max-w-none rounded-lg bg-white shadow-2xl"
-          style={{ width: PAGE_WIDTH * scale }}
+          style={{ width: PAGE_WIDTH * width }}
         />
       ) : (
-        <PdfPage url={url} page={page} scale={scale} onPageCount={onPages} />
+        <PdfPage url={url} page={page} scale={width} onPageCount={onPages} />
       )}
     </div>
   );
