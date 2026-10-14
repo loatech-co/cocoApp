@@ -6,11 +6,13 @@ import { transactionName, selectedPath } from '@/features/transactions/model/tra
 import { type Transaction } from '@/shared/api/generated/model';
 import { DEFAULT_CURRENCY } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
+import { useIsMobile } from '@/shared/lib/mobile';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 
 import { PendingReceipts } from './pending-receipts';
+import { PhoneEntryGate } from './phone-entry-gate';
 import { Receipts } from './receipts';
 import { TransactionFields } from './transaction-fields';
 import { TransactionReadColumn } from './transaction-read-view';
@@ -61,7 +63,16 @@ type SheetFormProps = FieldsProps & {
  * The sheet's form: the receipt on the left, the data on the right
  * —to read or to edit— and the footer.
  */
-export function TransactionSheetForm({
+export function TransactionSheetForm(props: SheetFormProps) {
+  const { sheet, scan, onCancel } = props;
+  const isGated = useIsMobile() && !sheet.isFormShown && sheet.pending.length === 0;
+
+  if (isGated) return <EntryGateForm sheet={sheet} scan={scan} onCancel={onCancel} />;
+  return <OpenSheetForm {...props} />;
+}
+
+/** The grid and its footer, once there is something to read or fill in. */
+function OpenSheetForm({
   transaction,
   scan,
   onSubmit,
@@ -149,21 +160,71 @@ function PendingReceiptsColumn({
   return (
     <PendingReceipts
       files={sheet.pending}
-      onAdd={(added) => {
-        const [first, ...rest] = added;
-
-        if (sheet.pending.length === 0 && first) {
-          void scan(first).then(() => {
-            if (rest.length > 0) sheet.setPending((p) => [...p, ...rest]);
-          });
-          return;
-        }
-
-        sheet.setPending((p) => [...p, ...added]);
-      }}
+      onAdd={(added) => addReceipts(sheet, scan, added)}
       onRemove={(i) => sheet.setPending((p) => p.filter((_, n) => n !== i))}
       onTakePhoto={() => sheet.setStep('camera')}
     />
+  );
+}
+
+/** Reads the first receipt, keeps the rest, and opens the form on the phone. */
+function addReceipts(
+  sheet: TransactionSheetState,
+  scan: (file: File) => Promise<void>,
+  added: File[],
+): void {
+  const [first, ...rest] = added;
+  sheet.setFormShown(true);
+
+  if (sheet.pending.length === 0 && first) {
+    void scan(first).then(() => {
+      if (rest.length > 0) sheet.setPending((p) => [...p, ...rest]);
+    });
+    return;
+  }
+
+  sheet.setPending((p) => [...p, ...added]);
+}
+
+/**
+ * A new transaction on the phone, before it is known how it starts: the
+ * receipt sources and «Registrar manualmente». See `PhoneEntryGate`.
+ *
+ * The foot keeps only «Cancelar»: there is nothing to register yet.
+ *
+ * ── Why focus moves here ────────────────────────────────────────────────────
+ * «Registrar manualmente» is asking to type, and the first field is the
+ * concept finder —the search box the focus rule already lets open focused—.
+ * Without it, the gesture would be two taps: the button and then the field.
+ */
+function EntryGateForm({
+  sheet,
+  scan,
+  onCancel,
+}: {
+  sheet: TransactionSheetState;
+  scan: (file: File) => Promise<void>;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="flex flex-1 flex-col gap-4 mobile:min-h-0">
+      <div className={SHEET_GRID}>
+        <PhoneEntryGate
+          onAdd={(added) => addReceipts(sheet, scan, added)}
+          onManual={() => {
+            sheet.setFormShown(true);
+            // After the commit that mounts the fields.
+            setTimeout(() => document.getElementById('tx-concept')?.focus(), 0);
+          }}
+        />
+      </div>
+
+      <ModalFooter>
+        <Button type="button" variant="outline" onClick={onCancel}>
+          {t('common.cancel')}
+        </Button>
+      </ModalFooter>
+    </div>
   );
 }
 

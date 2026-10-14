@@ -144,6 +144,12 @@ function useSheetStatus(opening: SheetOpening, discards: number) {
     to the form when they finish.
   */
   const [step, setStep] = useState<'camera' | 'reading' | 'form'>('form');
+  /**
+   * Whether the phone already left the entry gate of a new transaction: see
+   * `PhoneEntryGate`. Editing or confirming a payment has data to show, so it
+   * opens past the gate.
+   */
+  const [isFormShown, setFormShown] = useState(false);
 
   useOnChange([isOpen, transaction, payment, defaultType, discards], () => {
     if (!isOpen) return;
@@ -154,9 +160,12 @@ function useSheetStatus(opening: SheetOpening, discards: number) {
     // Always the form: a sheet left on the camera or mid-reading would reopen
     // there for the next transaction.
     setStep('form');
+    setFormShown(Boolean(transaction ?? payment));
   });
 
   return {
+    isFormShown,
+    setFormShown,
     error,
     setError,
     isConfirmingDeletion,

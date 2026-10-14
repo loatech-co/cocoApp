@@ -9,6 +9,7 @@ import { TransactionModal } from '@/features/transactions/components/transaction
 import { type CategoryTree } from '@/shared/api/categories';
 import { type PendingPayment, type Transaction } from '@/shared/api/generated/model';
 import { keys } from '@/shared/api/query-keys';
+import { MOBILE_QUERY } from '@/shared/lib/mobile';
 
 /*
   What the tests of a transaction's sheet share: the example tree, transaction and
@@ -143,4 +144,14 @@ export function fakeReceiptBrowser(): void {
     unobserve(): void {}
     disconnect(): void {}
   };
+}
+
+/** jsdom does not evaluate media queries: it is told the answer. */
+export function atWidth(isMobile: boolean): void {
+  window.matchMedia = ((query: string) => ({
+    matches: query === MOBILE_QUERY ? isMobile : !isMobile,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  })) as unknown as typeof window.matchMedia;
 }

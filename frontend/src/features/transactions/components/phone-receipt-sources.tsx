@@ -1,4 +1,4 @@
-import { Camera, ClipboardPaste, ImagePlus } from 'lucide-react';
+import { Camera, ClipboardPaste, ImagePlus, type LucideIcon } from 'lucide-react';
 import { useRef } from 'react';
 
 import { usePasteScreenshot } from '@/features/transactions/hooks/use-paste-screenshot';
@@ -30,28 +30,46 @@ import { RECEIPT_TYPES } from './receipt-drop-zone';
  * sheet —that is «Registrar», at the foot— and stacked they are three targets
  * a thumb cannot confuse.
  */
-export function PhoneReceiptSources({ onAdd }: { onAdd: (files: File[]) => void }) {
+export function PhoneReceiptSources({
+  onAdd,
+  isCompact = false,
+}: {
+  onAdd: (files: File[]) => void;
+  /**
+   * Once the form is open the three go in one row, icon only: the fields
+   * are what is being filled now, and three full-width buttons above them
+   * pushed the concept below the fold. The name stays as `aria-label`.
+   */
+  isCompact?: boolean;
+}) {
   const camera = useRef<HTMLInputElement>(null);
   const library = useRef<HTMLInputElement>(null);
   const { paste, pasteProblem } = usePasteScreenshot(onAdd);
+  const size = isCompact ? 'compact' : 'full';
 
   return (
-    <div className="flex flex-col gap-2">
-      <Button type="button" variant="outline" onClick={() => camera.current?.click()}>
-        <Camera aria-hidden="true" />
-        {t('transactions.supports.takePhotoNow')}
-      </Button>
-      <Button type="button" variant="outline" onClick={() => void paste()}>
-        <ClipboardPaste aria-hidden="true" />
-        {t('transactions.supports.paste')}
-      </Button>
-      <Button type="button" variant="outline" onClick={() => library.current?.click()}>
-        <ImagePlus aria-hidden="true" />
-        {t('transactions.supports.uploadImage')}
-      </Button>
+    <div className={isCompact ? 'flex flex-wrap gap-2' : 'flex flex-col gap-2'}>
+      <Source
+        size={size}
+        Icon={Camera}
+        label={t('transactions.supports.takePhotoNow')}
+        onClick={() => camera.current?.click()}
+      />
+      <Source
+        size={size}
+        Icon={ClipboardPaste}
+        label={t('transactions.supports.paste')}
+        onClick={() => void paste()}
+      />
+      <Source
+        size={size}
+        Icon={ImagePlus}
+        label={t('transactions.supports.uploadImage')}
+        onClick={() => library.current?.click()}
+      />
 
       {pasteProblem && (
-        <p role="alert" className="text-center text-xs text-muted-foreground">
+        <p role="alert" className="w-full text-center text-xs text-muted-foreground">
           {pasteProblem}
         </p>
       )}
@@ -59,5 +77,32 @@ export function PhoneReceiptSources({ onAdd }: { onAdd: (files: File[]) => void 
       <FilePicker ref={camera} accept="image/*" capture="environment" onFiles={onAdd} />
       <FilePicker ref={library} multiple accept={RECEIPT_TYPES} onFiles={onAdd} />
     </div>
+  );
+}
+
+/** One source: icon and name, or —compact— the icon with the name for the ear. */
+function Source({
+  size,
+  Icon,
+  label,
+  onClick,
+}: {
+  size: 'full' | 'compact';
+  Icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+}) {
+  const isCompact = size === 'compact';
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size={isCompact ? 'md-icon' : 'md'}
+      aria-label={isCompact ? label : undefined}
+      onClick={onClick}
+    >
+      <Icon aria-hidden="true" />
+      {!isCompact && label}
+    </Button>
   );
 }

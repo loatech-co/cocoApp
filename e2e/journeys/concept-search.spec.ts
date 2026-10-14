@@ -1,4 +1,4 @@
-import { movementRow, openNewExpense } from '../support/app';
+import { movementRow, openNewExpenseByHand } from '../support/app';
 import { expectAccessible } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 import { createConcept } from '../support/seed';
@@ -11,7 +11,7 @@ test.describe('the concept finder', () => {
     await createConcept(account.api, ['Costos fijos', 'Vivienda'], 'Arriendo');
     await signIn();
 
-    const sheet = await openNewExpense(page);
+    const sheet = await openNewExpenseByHand(page);
     await sheet.getByRole('button', { name: 'Concepto' }).click();
     await sheet.getByRole('textbox', { name: 'Buscar concepto o categoría' }).fill('supertienda');
 
@@ -46,7 +46,7 @@ test.describe('the concept finder', () => {
   test('creates the concept that is missing, in the category chosen', async ({ page, signIn }) => {
     await signIn();
 
-    const sheet = await openNewExpense(page);
+    const sheet = await openNewExpenseByHand(page);
     await sheet.getByRole('button', { name: 'Concepto' }).click();
     await sheet.getByRole('textbox', { name: 'Buscar concepto o categoría' }).fill('Panadería');
     await sheet.getByRole('button', { name: 'Crear concepto «Panadería»' }).click();

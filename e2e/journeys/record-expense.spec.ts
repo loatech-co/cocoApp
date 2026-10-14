@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { join } from 'node:path';
 
-import { movementRow, openNewExpense, pickConcept } from '../support/app';
+import { movementRow, openNewExpense, openNewExpenseByHand, pickConcept } from '../support/app';
 import { expectAccessible } from '../support/axe';
 import { FILES } from '../support/environment.mjs';
 import { expect, test } from '../support/fixtures';
@@ -28,16 +28,34 @@ async function attachReceipt(page: Page, sheet: Locator, isMobile: boolean): Pro
   await upload.locator('input[type="file"]').setInputFiles(receipt);
 }
 
+/**
+ * The phone's new transaction before choosing how it starts: the sources and
+ * «Registrar manualmente», no fields, and only «Cancelar» at the foot. Closes
+ * it again, so the journey can open it fresh.
+ */
+async function expectEntryGate(sheet: Locator, page: Page): Promise<void> {
+  await expect(sheet.getByRole('button', { name: 'Registrar manualmente' })).toBeVisible();
+  await expect(sheet.getByRole('button', { name: 'Tomar una foto' })).toBeVisible();
+  await expect(sheet.getByRole('textbox', { name: 'Valor' })).toHaveCount(0);
+  await expect(sheet.getByRole('button', { name: 'Registrar', exact: true })).toHaveCount(0);
+  await expectAccessible(page, 'the entry gate of a new expense');
+  await sheet.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(sheet).toBeHidden();
+}
+
 test.describe('registering an expense', () => {
-  test('by hand: the form opens straight away and the row appears', async ({
+  test('by hand: the form opens (on the phone, behind «Registrar manualmente») and the row appears', async ({
     page,
     account,
     signIn,
+    isMobile,
   }) => {
     await createConcept(account.api, ['Costos variables', 'Licencias'], 'Mercado');
     await signIn();
 
-    const sheet = await openNewExpense(page);
+    if (isMobile) await expectEntryGate(await openNewExpense(page), page);
+
+    const sheet = await openNewExpenseByHand(page);
     await expect(sheet.getByRole('textbox', { name: 'Valor' })).toBeVisible();
     await expectAccessible(page, 'the new-expense sheet');
 

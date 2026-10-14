@@ -58,6 +58,8 @@ const BORN_FOCUSED: Record<string, string> = {
     'The filter of a dropdown with many options: if it has to be pressed before typing, nobody discovers they could filter.',
   'features/transactions/components/concept-search.tsx':
     "The sheet's concept finder: it opens to type, like a Combo's filter, and the box is the first thing inside.",
+  'features/transactions/components/transaction-sheet-form.tsx':
+    '«Registrar manualmente» on the phone: the tap asks to type, and what it focuses is the concept finder.',
 };
 
 /**

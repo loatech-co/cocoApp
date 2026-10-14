@@ -3,22 +3,16 @@ import { act, cleanup, fireEvent, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { readReceipt } from '@/features/transactions/api/read-receipt';
-import { MOBILE_QUERY } from '@/shared/lib/mobile';
-import { CELSIA_READING, fakeReceiptBrowser, openNew } from '@/test-support/transaction-sheet';
+import {
+  CELSIA_READING,
+  atWidth,
+  fakeReceiptBrowser,
+  openNew,
+} from '@/test-support/transaction-sheet';
 
 vi.mock('@/features/transactions/api/read-receipt', () => ({
   readReceipt: vi.fn(),
 }));
-
-/** jsdom does not evaluate media queries: it is told the answer. */
-function atWidth(isMobile: boolean): void {
-  window.matchMedia = ((query: string) => ({
-    matches: query === MOBILE_QUERY ? isMobile : !isMobile,
-    media: query,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-  })) as unknown as typeof window.matchMedia;
-}
 
 function fileFields(container: HTMLElement): HTMLInputElement[] {
   return Array.from(container.querySelectorAll<HTMLInputElement>('input[type="file"]'));
@@ -91,6 +85,7 @@ describe('The receipt column of a new transaction, on the phone', () => {
 
   it('keeps «Registrar» and «Cancelar» outside what scrolls, at the foot', () => {
     openNew();
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar manualmente' }));
 
     const register = screen.getByRole('button', { name: 'Registrar' });
     const valueField = screen.getByLabelText('Valor');

@@ -22,6 +22,16 @@ export async function openNewExpense(page: Page): Promise<Locator> {
   return sheet;
 }
 
+/**
+ * Opens the "new expense" sheet to type it: on the phone the fields wait
+ * behind «Registrar manualmente», next to the three receipt sources.
+ */
+export async function openNewExpenseByHand(page: Page): Promise<Locator> {
+  const sheet = await openNewExpense(page);
+  if (onPhone()) await sheet.getByRole('button', { name: 'Registrar manualmente' }).click();
+  return sheet;
+}
+
 /** Picks a concept in the sheet's concept finder, by what is typed. */
 export async function pickConcept(sheet: Locator, typed: string, option: RegExp): Promise<void> {
   await sheet.getByRole('button', { name: 'Concepto' }).click();

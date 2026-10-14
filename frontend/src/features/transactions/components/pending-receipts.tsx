@@ -127,8 +127,10 @@ function EmptyPendingReceipts({
   onLoad: () => void;
   onTakePhoto: () => void;
 }) {
-  // Mounted, not hidden: the phone has no drop box and no in-app camera.
-  if (useIsMobile()) return <PhoneReceiptSources onAdd={onAdd} />;
+  // Mounted, not hidden: the phone has no drop box and no in-app camera. The
+  // full-size sources are the entry gate's (`PhoneEntryGate`); here, with the
+  // form already open, they go compact.
+  if (useIsMobile()) return <PhoneReceiptSources onAdd={onAdd} isCompact />;
 
   return (
     <>
