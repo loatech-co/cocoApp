@@ -13,12 +13,18 @@ export function FilePicker({
   ref,
   accept,
   multiple: isMultiple = false,
+  capture,
   onFiles,
 }: {
   ref: RefObject<HTMLInputElement | null>;
   /** The accepted types, as in `accept`. */
   accept: string;
   multiple?: boolean;
+  /**
+   * Opens the camera straight away instead of the picker. Only phone browsers
+   * read it; a desktop one ignores it and shows the file explorer.
+   */
+  capture?: 'environment' | undefined;
   onFiles: (files: File[]) => void;
 }) {
   return (
@@ -27,6 +33,7 @@ export function FilePicker({
       type="file"
       multiple={isMultiple}
       accept={accept}
+      capture={capture}
       className="hidden"
       onChange={(e) => {
         onFiles(Array.from(e.target.files ?? []));

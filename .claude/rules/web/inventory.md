@@ -27,7 +27,7 @@ Se actualiza en el mismo PR que crea o cambia un componente.
 | `atoms/donut.tsx`                | átomo      | Gráfica de dona con su pista flotante                                                                          |
 | `atoms/drop-surface.tsx`         | átomo      | El cuadro donde se sueltan o se eligen archivos (`DropSurface`)                                                |
 | `atoms/empty-state.tsx`          | átomo      | Lo que se ve cuando una lista no tiene nada                                                                    |
-| `atoms/file-picker.tsx`          | átomo      | El campo de archivos del navegador, escondido (`FilePicker`)                                                   |
+| `atoms/file-picker.tsx`          | átomo      | El campo de archivos del navegador, escondido (`FilePicker`); `capture` abre la cámara del teléfono            |
 | `atoms/icons.tsx`                | átomo      | Los iconos que se eligen para una categoría                                                                    |
 | `atoms/input.tsx`                | átomo      | Campo de texto con iconos informativos y acciones (`FieldAction`)                                              |
 | `atoms/switch.tsx`               | átomo      | Interruptor de encendido y apagado; `isLoading` mientras guarda                                                |

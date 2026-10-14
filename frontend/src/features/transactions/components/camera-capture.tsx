@@ -95,7 +95,6 @@ function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; state: 
         }
 
         track.current = stream;
-        if (video.current) video.current.srcObject = stream;
         setState('ready');
       } catch (e) {
         if (!isStillAlive()) return;
@@ -110,6 +109,16 @@ function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; state: 
       track.current = null;
     };
   }, []);
+
+  /*
+    The stream is handed to the `<video>` AFTER it exists. It is only mounted
+    once the state is `ready`, so handing it over next to `setState` found no
+    element and the viewer stayed black: the camera was on, with its light,
+    and nothing reached the screen.
+  */
+  useEffect(() => {
+    if (state === 'ready' && video.current) video.current.srcObject = track.current;
+  }, [state]);
 
   return { video, state };
 }

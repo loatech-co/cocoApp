@@ -2,10 +2,12 @@ import { Camera, Plus, Trash2, Upload } from 'lucide-react';
 import { useState } from 'react';
 
 import { t } from '@/shared/lib/i18n';
+import { useIsMobile } from '@/shared/lib/mobile';
 import { useObjectUrls } from '@/shared/lib/object-url';
 import { Button } from '@/shared/ui/atoms/button';
 import { OverlayButton } from '@/shared/ui/molecules/overlay-control';
 
+import { PhoneReceiptSources } from './phone-receipt-sources';
 import { DropZone } from './receipt-drop-zone';
 import { ReceiptPager } from './receipt-pager';
 import { FilePreview } from './receipt-preview';
@@ -110,6 +112,8 @@ export function PendingReceipts(props: PendingReceiptsProps) {
  * photo does to the form is exactly what it did from the chooser; only where
  * it starts changed.
  *
+ * On the phone neither exists: see `PhoneReceiptSources`.
+ *
  * Same size for both and `outline` for both: neither is the primary action of
  * this sheet —that is "Registrar", at the foot— and a filled button here would
  * compete with it.
@@ -123,6 +127,9 @@ function EmptyPendingReceipts({
   onLoad: () => void;
   onTakePhoto: () => void;
 }) {
+  // Mounted, not hidden: the phone has no drop box and no in-app camera.
+  if (useIsMobile()) return <PhoneReceiptSources onAdd={onAdd} />;
+
   return (
     <>
       <div className="flex min-h-0 flex-1">

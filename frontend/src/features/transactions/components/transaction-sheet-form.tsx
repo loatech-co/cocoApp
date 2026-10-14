@@ -6,6 +6,7 @@ import { transactionName, selectedPath } from '@/features/transactions/model/tra
 import { type Transaction } from '@/shared/api/generated/model';
 import { DEFAULT_CURRENCY } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
+import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 
@@ -32,8 +33,19 @@ import { TransactionReadColumn } from './transaction-read-view';
  *
  * Below `lg` there is no split: they are two stacked rows, because on a
  * phone two 170px columns are not two columns.
+ *
+ * ── On the phone, the grid is what scrolls ──────────────────────────────────
+ * And not the whole body: that way «Registrar» and «Cancelar» stay at the foot
+ * of the sheet, in reach of the thumb, while the fields pass under them. With
+ * the body scrolling, the buttons were the last thing of a long column and
+ * recording an expense meant scrolling to find them. The 4px of padding and
+ * negative margin give the fields' focus halo room inside the scroll box,
+ * which would otherwise clip it at the edges.
  */
-const SHEET_GRID = 'grid gap-5 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:grid-cols-2';
+const SHEET_GRID = cn(
+  'grid gap-5 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:grid-cols-2',
+  'mobile:-m-1 mobile:min-h-0 mobile:flex-1 mobile:overflow-y-auto mobile:p-1',
+);
 
 type FieldsProps = ComponentProps<typeof TransactionFields>;
 
@@ -60,7 +72,7 @@ export function TransactionSheetForm({
   const { sheet } = fields;
 
   return (
-    <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
+    <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4 mobile:min-h-0">
       {/*
         ── The same grid, whether reading or editing ────────────────────────
         And the SAME one in the tree, not a copy in each branch: the paper column
@@ -117,7 +129,8 @@ export function TransactionSheetForm({
  * The receipts of a transaction that does not exist yet.
  *
  * The FIRST document of a new transaction is read. Whether it came from the drop
- * zone, the paste button, "Cargar archivo" or the camera: the receipt is what
+ * zone, the paste button, "Cargar archivo", the camera or, on the phone, the
+ * system's own camera or photo library: the receipt is what
  * turns the expected (or empty) value and date into the real ones. Attaching
  * it and having nothing happen left the document as decoration and forced
  * typing what the app can read.

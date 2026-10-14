@@ -8,6 +8,10 @@ import { Button } from '@/shared/ui/atoms/button';
 import { DropSurface } from '@/shared/ui/atoms/drop-surface';
 import { FilePicker } from '@/shared/ui/atoms/file-picker';
 
+/** What a receipt can be: a PDF or a photo, in the formats the reader understands. */
+export const RECEIPT_TYPES =
+  'application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp';
+
 /** Dropping files on top: it is marked while they pass over and they are handed over on drop. */
 function useFileDrop(isUploading: boolean, onFiles: (files: File[]) => void) {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -99,12 +103,7 @@ export function DropZone({ isUploading, progress, isAlone, onPress, onFiles }: D
         )}
       </DropSurface>
 
-      <FilePicker
-        ref={field}
-        multiple
-        accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
-        onFiles={onFiles}
-      />
+      <FilePicker ref={field} multiple accept={RECEIPT_TYPES} onFiles={onFiles} />
     </div>
   );
 }
