@@ -52,6 +52,14 @@ describe('The entry gate of a new transaction, on the phone', () => {
     expect(footer()).toEqual(['Cancelar']);
   });
 
+  it('draws «Registrar manualmente» as a button like the three sources, set a little apart', () => {
+    openNew();
+
+    const photo = screen.getByRole('button', { name: 'Tomar una foto' }).className;
+    const manual = screen.getByRole('button', { name: 'Registrar manualmente' }).className;
+    expect(manual).toBe(`${photo} mt-2`);
+  });
+
   it('opens the form on «Registrar manualmente», with the sources compact above it', async () => {
     vi.useFakeTimers();
     openNew();

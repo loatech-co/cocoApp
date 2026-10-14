@@ -17,9 +17,10 @@ import { PhoneReceiptSources } from './phone-receipt-sources';
  *
  * Any of the three sources opens the form too: what was read lands in it.
  *
- * «Registrar manualmente» is `ghost` on purpose: it is the other road, not a
- * fourth source, and with the same border as the three it read as one more
- * way to give a receipt.
+ * «Registrar manualmente» is a button like the three —`outline`, full width,
+ * icon and name—: as a bare link it read as a footnote, not as one of the
+ * ways in. The extra gap above it keeps it apart from the receipt sources: it
+ * is the road without a receipt.
  */
 export function PhoneEntryGate({
   onAdd,
@@ -31,7 +32,7 @@ export function PhoneEntryGate({
   return (
     <div className="flex flex-col gap-2">
       <PhoneReceiptSources onAdd={onAdd} />
-      <Button type="button" variant="ghost" onClick={onManual}>
+      <Button type="button" variant="outline" size="md" className="mt-2" onClick={onManual}>
         <PenLine aria-hidden="true" />
         {t('transactions.sheet.registerManually')}
       </Button>
