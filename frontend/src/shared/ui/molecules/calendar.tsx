@@ -118,8 +118,13 @@ export function Calendar({
         —`p-3` in the range picker— and with `border-box` those 24px would be
         taken off the 294: the column dropped to 38.6. Here the measurement
         shares its box with no padding.
+
+        ── On the phone, the whole width ────────────────────────────────────
+        There the calendar lives in a sheet, and 294 left a narrow month in
+        the middle of a 358px sheet with empty margins on both sides. It
+        takes the sheet's width: the columns are about 51 and still square.
       */}
-      <div className="mx-auto w-[294px] max-w-full">
+      <div className="mx-auto w-[294px] max-w-full mobile:w-full">
         <MonthHeader current={current} moveMonth={moveMonth} />
 
         <WeekdayRow />
@@ -141,6 +146,9 @@ interface DayCellProps {
   iso: string;
   /** Its position in the grid: decides where the band curves. */
   i: number;
+  /** First or last day with a number in its week row: the band caps there. */
+  isRowStart: boolean;
+  isRowEnd: boolean;
   from: string | undefined;
   to: string | undefined;
   today: string;
@@ -149,13 +157,21 @@ interface DayCellProps {
 }
 
 /** A day of the month: its range band, its circle and its number. */
-function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps) {
+function DayCell({
+  iso,
+  i,
+  isRowStart,
+  isRowEnd,
+  from,
+  to,
+  today,
+  onSelectDay,
+  onHover,
+}: DayCellProps) {
   const isInRange = from !== undefined && to !== undefined && iso >= from && iso <= to;
   const isStart = iso === from;
   const isEnd = iso === to;
   const isEdge = isStart || isEnd;
-
-  const hasBand = isInRange && from !== to;
 
   return (
     <div
@@ -172,27 +188,13 @@ function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps
         //
         // On the desktop the band is the cell's own background, rounded at
         // the ends and at the start and end of each row.
-        hasBand && 'desktop:bg-accent',
+        isInRange && from !== to && 'desktop:bg-accent',
         (isStart || i % 7 === 0) && 'desktop:rounded-l-full',
         (isEnd || i % 7 === 6) && 'desktop:rounded-r-full',
       )}
     >
-      {/* ── On the phone, a band INSIDE the cells ────────────────────────
-          The rounded row ends read as loose pills, one per week, and their
-          caps looked like they stuck out of the Monday and Sunday columns.
-          Here the band is a strip a little lower than the circle, square
-          and flush with the grid's edges where a week wraps, and it starts
-          and ends at the CENTER of the first and last day: the filled
-          circle on top is its only rounded end. */}
-      {hasBand && (
-        <span
-          aria-hidden="true"
-          className={cn(
-            'absolute inset-y-[12%] bg-accent desktop:hidden',
-            isStart ? 'left-1/2' : 'left-0',
-            isEnd ? 'right-1/2' : 'right-0',
-          )}
-        />
+      {isInRange && from !== to && (
+        <PhoneBand isStart={isStart} isEnd={isEnd} isRowStart={isRowStart} isRowEnd={isRowEnd} />
       )}
       <button
         type="button"
@@ -200,28 +202,68 @@ function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps
         onMouseEnter={() => onHover?.(iso)}
         aria-label={longDay(iso)}
         aria-pressed={isEdge}
-        className={cn(
-          'relative size-full select-none rounded-full text-sm transition-colors',
-          isEdge
-            ? 'bg-primary font-semibold text-primary-foreground hover:bg-primary/90'
-            : isInRange
-              ? cn('text-foreground', HIGHLIGHT)
-              : cn('text-muted-foreground', HIGHLIGHT),
-          // Today carries a ring, not a fill: the fill belongs to the
-          // selected and they would compete to mean the same thing.
-          //
-          // The ring is in the accent as INK and not in `--input`.
-          // `--input` is a field's border, computed to show against a
-          // white fill, not to tell one 40px cell apart from forty
-          // others: today's circle was there and could not be found.
-          iso === today &&
-            !isEdge &&
-            'font-semibold text-foreground ring-1 ring-inset ring-accent-ink/50',
-        )}
+        className={dayClass(isEdge, isInRange, iso === today)}
       >
         {Number(iso.slice(8))}
       </button>
     </div>
+  );
+}
+
+/** A day's circle: filled at the ends, plain inside the range, ringed today. */
+function dayClass(isEdge: boolean, isInRange: boolean, isToday: boolean): string {
+  return cn(
+    'relative size-full select-none rounded-full text-sm transition-colors',
+    // On the phone the circle is drawn from the SAME box as the band
+    // —4px in from the cell on every side—, so the two are exactly
+    // the same height and the circle never sticks out of the band.
+    'mobile:absolute mobile:inset-1 mobile:size-auto mobile:text-base',
+    isEdge
+      ? 'bg-primary font-semibold text-primary-foreground hover:bg-primary/90'
+      : isInRange
+        ? cn('text-foreground', HIGHLIGHT)
+        : cn('text-muted-foreground', HIGHLIGHT),
+    // Today carries a ring, not a fill: the fill belongs to the
+    // selected and they would compete to mean the same thing.
+    //
+    // The ring is in the accent as INK and not in `--input`.
+    // `--input` is a field's border, computed to show against a
+    // white fill, not to tell one 40px cell apart from forty
+    // others: today's circle was there and could not be found.
+    isToday && !isEdge && 'font-semibold text-foreground ring-1 ring-inset ring-accent-ink/50',
+  );
+}
+
+/**
+ * The range band on the phone: one pill per week row.
+ *
+ * It is inset 4px from the cell top and bottom, exactly like the circle, so
+ * the circle and the band are the same height. Where the range starts or ends
+ * the band runs from the CENTER of that day inward, under its circle, so the
+ * circle is its rounded end. Where the row wraps, or the month leaves a gap, it
+ * gets its own rounded cap at the edge of that column and never goes past it.
+ */
+function PhoneBand({
+  isStart,
+  isEnd,
+  isRowStart,
+  isRowEnd,
+}: {
+  isStart: boolean;
+  isEnd: boolean;
+  isRowStart: boolean;
+  isRowEnd: boolean;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      data-band
+      className={cn(
+        'absolute inset-y-1 bg-accent desktop:hidden',
+        isStart ? 'left-1/2' : isRowStart ? 'left-1 rounded-l-full' : 'left-0',
+        isEnd ? 'right-1/2' : isRowEnd ? 'right-1 rounded-r-full' : 'right-0',
+      )}
+    />
   );
 }
 
@@ -283,7 +325,7 @@ function MonthDays({
   today,
   onSelectDay,
   onHover,
-}: Omit<DayCellProps, 'iso' | 'i'> & { cells: (string | null)[] }) {
+}: Omit<DayCellProps, 'iso' | 'i' | 'isRowStart' | 'isRowEnd'> & { cells: (string | null)[] }) {
   // No spacing between cells: the range band has to be continuous, and a gap
   // would break it into loose little squares.
   return (
@@ -299,6 +341,8 @@ function MonthDays({
             key={iso}
             iso={iso}
             i={i}
+            isRowStart={i % 7 === 0 || cells[i - 1] === null}
+            isRowEnd={i % 7 === 6 || cells[i + 1] == null}
             from={from}
             to={to}
             today={today}

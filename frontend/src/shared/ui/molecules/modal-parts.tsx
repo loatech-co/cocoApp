@@ -92,6 +92,9 @@ export function modalSheetPanel(isClosing: boolean): string {
     MODAL_PANEL,
     FLOATING_SURFACE,
     SHEET_TOP_CORNERS,
+    // At least 500 high on the phone, like every sheet (see `BottomSheet`);
+    // the footer already goes to the bottom with `mt-auto`.
+    'mobile:min-h-[min(500px,92dvh)]',
     'desktop:rounded-lg desktop:emerge',
     // Who asked for less motion gets the fade only: see `rise` in `index.css`.
     isClosing ? 'sink' : 'rise',

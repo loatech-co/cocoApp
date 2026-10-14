@@ -94,10 +94,15 @@ export function BottomSheet({
         style={{ height: height ?? undefined }}
         className={sheetClass(isOpen)}
       >
-        <div
-          ref={column}
-          className="flex max-h-[88dvh] flex-col [--panel-edge:0px] [--panel-inset:0px]"
-        >
+        {/* ── At least 500 high, on the phone ─────────────────────────────
+            A two-row menu rose as a strip a third of the screen tall, and
+            sheets of the same family opened at different heights. The floor
+            goes on the COLUMN, the box that is measured, so the measured
+            height —and the slide— already include it. `min()` with the cap:
+            on a short screen the cap wins and nothing runs off the top. The
+            body is `flex-1`, so what is short sits at the top and the space
+            left is the body's, not a stretched row. */}
+        <div ref={column} className={COLUMN_CLASS}>
           <SheetContent title={title} head={head} visits={visits}>
             {children}
           </SheetContent>
@@ -107,6 +112,10 @@ export function BottomSheet({
     document.body,
   );
 }
+
+/** The measured column: its cap, its phone floor and the inset it hands down. */
+const COLUMN_CLASS =
+  'flex max-h-[88dvh] flex-col [--panel-edge:0px] [--panel-inset:0px] mobile:min-h-[min(500px,88dvh)]';
 
 /**
  * The handle.

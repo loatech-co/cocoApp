@@ -88,4 +88,12 @@ describe('The bottom sheet', () => {
       expect.arrayContaining(['[--panel-inset:0px]', '[--panel-edge:0px]']),
     );
   });
+
+  it('is at least 500 high on the phone, unless the screen is shorter', () => {
+    render(<Host />);
+    fireEvent.click(screen.getByText('abrir'));
+    const column = screen.getByText('lo de dentro').parentElement!.parentElement!;
+
+    expect(column.className).toContain('mobile:min-h-[min(500px,88dvh)]');
+  });
 });

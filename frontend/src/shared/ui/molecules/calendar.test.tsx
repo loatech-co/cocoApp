@@ -158,35 +158,62 @@ describe('Calendar', () => {
 });
 
 /**
- * On the phone the range band lives inside the cells: it starts and ends at
- * the center of the two ends —under their circles— and is flush and square
- * where a week wraps, so nothing of it reaches past the grid.
+ * On the phone the range band is one pill per week row, drawn from the same
+ * box as the circles: it starts and ends at the CENTER of the two ends —under
+ * their circles— and where a week wraps it caps inside its own column.
  */
 describe('The range band on the phone', () => {
   function band(day: string): string | undefined {
     const cell = screen.getByRole('button', {
       name: new RegExp(`^${day} de octubre`),
     }).parentElement!;
-    return cell.querySelector('span[aria-hidden="true"]')?.className;
+    return cell.querySelector('[data-band]')?.className;
   }
 
-  it('runs from the center of the first day to the center of the last', () => {
+  function show(from: string, to: string) {
     render(
       <Calendar
-        from="2026-10-01"
-        to="2026-10-14"
+        from={from}
+        to={to}
         view={{ year: 2026, month: 9 }}
         onViewChange={() => {}}
         onSelectDay={() => {}}
       />,
     );
+  }
+
+  it('runs from the center of the first day to the center of the last, capped where weeks wrap', () => {
+    show('2026-10-01', '2026-10-14');
 
     expect(band('1')).toContain('left-1/2');
     expect(band('14')).toContain('right-1/2');
-    // Sunday the 4th and Monday the 5th: the week wraps, the band is square.
-    expect(band('4')).toContain('right-0');
-    expect(band('5')).toContain('left-0');
-    expect(band('4')).not.toContain('rounded');
+    // Sunday the 4th and Monday the 5th: the week wraps, each side caps in its column.
+    expect(band('4')).toContain('rounded-r-full');
+    expect(band('5')).toContain('rounded-l-full');
+    expect(band('8')).not.toContain('rounded');
     expect(band('15')).toBeUndefined();
+  });
+
+  it('a range from a Sunday to a Monday is two half bands, one under each circle', () => {
+    show('2026-10-04', '2026-10-05');
+
+    expect(band('4')).toContain('left-1/2');
+    expect(band('4')).toContain('right-1');
+    expect(band('5')).toContain('right-1/2');
+    expect(band('5')).toContain('left-1');
+  });
+
+  it('a single day is only its circle', () => {
+    show('2026-10-07', '2026-10-07');
+
+    expect(band('7')).toBeUndefined();
+  });
+
+  it('draws the circle from the same box as the band', () => {
+    show('2026-10-01', '2026-10-14');
+
+    const day = screen.getByRole('button', { name: /^1 de octubre/ }).className;
+    expect(day).toContain('mobile:inset-1');
+    expect(band('2')).toContain('inset-y-1');
   });
 });

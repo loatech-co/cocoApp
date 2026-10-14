@@ -26,6 +26,8 @@ describe('The sheet presentation of a modal', () => {
     expect(panel).toContain('rise');
     expect(panel).toContain('desktop:rounded-lg');
     expect(modalSheetPanel(true)).toContain('sink');
+    // At least 500 high on the phone, unless the screen is shorter.
+    expect(panel).toContain('mobile:min-h-[min(500px,92dvh)]');
   });
 
   it('on the phone, closes only after the sheet has gone down', () => {

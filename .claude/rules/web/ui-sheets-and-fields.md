@@ -157,6 +157,13 @@ atajo, un anillo de foco— no quede cortado. La ficha del movimiento, en el
 teléfono, es también una hoja (`MODAL_SHEET_SCRIM`, `modalSheetPanel`) con
 el mismo canal de 16.
 
+**Y en el teléfono toda hoja mide al menos 500px de alto**
+(`min(500px, <su alto máximo>)`: en una pantalla corta gana el máximo y nada
+se sale). Lo pone `BottomSheet` en la columna que mide —así la medida y el
+deslizamiento ya lo incluyen— y `modalSheetPanel` en la ficha del
+movimiento. Lo corto queda arriba; el pie, donde lo hay, va abajo. Dos hojas
+de la misma familia ya no se abren a alturas distintas.
+
 **Alto mínimo: 400px.** Para que abrir dos fichas seguidas no sea ver el
 panel crecer y encogerse. No es para estirar las cortas: con 600 —que fue
 el primer valor— una ficha de dos campos se abría con un palmo de vacío
