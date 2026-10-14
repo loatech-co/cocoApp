@@ -339,7 +339,6 @@
   "Nadie entra a Coco sin que apruebes su cuenta.",
   "Ningún icono se llama así.",
   "Ningún movimiento coincide",
-  "Ningún movimiento dice «{{}}».",
   "Ninguna categoría coincide.",
   "No caben más atajos",
   "No hay conexión con el servidor.",
@@ -553,5 +552,6 @@
   "Volver a los atajos",
   "Volver al inicio",
   "Volver al tamaño normal",
-  "Ya existe “{{}}”."
+  "Ya existe “{{}}”.",
+  "Sin resultados para “{{}}”"
 ]

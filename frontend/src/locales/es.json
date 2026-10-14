@@ -581,7 +581,10 @@
     "searchPanel": {
       "help": "Escribe el concepto, el comercio o lo que decía el recibo.",
       "failed": "No se pudo buscar. Revisa tu conexión e inténtalo de nuevo.",
-      "noMatch": "Ningún movimiento dice «{{query}}».",
+      "noMatch": "Sin resultados para “{{query}}”",
+      "recentTitle": "Últimos movimientos",
+      "resultsOne": "1 resultado",
+      "resultsMany": "{{n}} resultados",
       "latest": "Los {{shown}} más recientes de {{total}}. Afina la palabra para ver los otros.",
       "placeholder": "Buscar: celsia, colegio, sura…",
       "label": "Buscar un movimiento"
