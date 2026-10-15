@@ -75,7 +75,12 @@ export function SearchPanel({
   );
 }
 
-function SearchBody({
+/**
+ * The list under a search field: the latest with the field empty, the
+ * matches of `query` otherwise. Shared by the bottom bar's search and the
+ * dashboard's magnifier, so both open on the same thing.
+ */
+export function SearchBody({
   query,
   onSelect,
 }: {

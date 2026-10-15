@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Filters } from '@/features/transactions/model/filters';
 import type { SortOrder } from '@/features/transactions/model/sort-orders';
 import { useCategories } from '@/shared/api/categories';
-import { type TransactionType } from '@/shared/api/generated/model';
+import { type Transaction, type TransactionType } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { useIsMobile } from '@/shared/lib/mobile';
 import { useOnChange } from '@/shared/lib/on-change';
@@ -14,6 +14,7 @@ import { Input } from '@/shared/ui/atoms/input';
 import { PageHeader } from '@/shared/ui/atoms/page-header';
 
 import { DateSelector } from './date-selector';
+import { SearchBody } from './search-panel';
 import { ClassificationMenu, NewTransactionMenu, SortMenu } from './toolbar-menus';
 
 interface ToolbarFiltersProps {
@@ -39,6 +40,8 @@ interface ToolbarFiltersProps {
    * is being looked at.
    */
   onNew?: (type: TransactionType) => void;
+  /** Opens a transaction found from the phone's magnifier. */
+  onOpenTransaction?: (transaction: Transaction) => void;
   actions?: ReactNode;
 }
 
@@ -63,7 +66,7 @@ interface ToolbarFiltersProps {
  */
 export function ToolbarFilters(props: ToolbarFiltersProps) {
   const { title, subtitle, summary, filters, apply, clear, hasActiveFilters } = props;
-  const { sort, onNew, actions } = props;
+  const { sort, onNew, onOpenTransaction, actions } = props;
   const categories = useCategories();
   const isMobile = useIsMobile();
   const search = useToolbarSearch(filters, apply);
@@ -86,7 +89,11 @@ export function ToolbarFilters(props: ToolbarFiltersProps) {
         <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap">
           {/* ── Search ───────────────────────────────────────────────────── */}
           {isMobile ? (
-            <PhoneSearch search={search} isFiltering={(filters.q ?? '') !== ''} />
+            <PhoneSearch
+              search={search}
+              query={filters.q ?? ''}
+              onOpenTransaction={onOpenTransaction}
+            />
           ) : (
             <DesktopSearch search={search} />
           )}
@@ -160,8 +167,18 @@ type ToolbarSearch = ReturnType<typeof useToolbarSearch>;
   icons pushes the other three off the screen, and the system keyboard
   comes up right on top of the list being cut.
 */
-function PhoneSearch({ search, isFiltering }: { search: ToolbarSearch; isFiltering: boolean }) {
-  const { text, setText, isSearching, setIsSearching, field } = search;
+function PhoneSearch({
+  search,
+  query,
+  onOpenTransaction,
+}: {
+  search: ToolbarSearch;
+  /** What the dashboard is cut by: the typed text, once its delay has passed. */
+  query: string;
+  onOpenTransaction: ((transaction: Transaction) => void) | undefined;
+}) {
+  const { text, isSearching, setIsSearching, field } = search;
+  const isFiltering = query !== '';
   return (
     <>
       <Button
@@ -171,7 +188,12 @@ function PhoneSearch({ search, isFiltering }: { search: ToolbarSearch; isFilteri
         aria-label={t('shell.bottomBar.search')}
         aria-pressed={isSearching || isFiltering}
         aria-expanded={isSearching}
-        onClick={() => setIsSearching(true)}
+        onClick={() => {
+          setIsSearching(true);
+          // `autoFocus` acted once, when the field was born with the sheet
+          // closed; the sheet takes the focus into its box first, so a tick later.
+          setTimeout(() => field.current?.focus(), 0);
+        }}
       >
         <Search className="size-4" aria-hidden="true" />
       </Button>
@@ -179,35 +201,54 @@ function PhoneSearch({ search, isFiltering }: { search: ToolbarSearch; isFilteri
       <BottomSheet
         isOpen={isSearching}
         title={t('shell.bottomBar.search')}
-        head={
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              ref={field}
-              type="search"
-              autoFocus
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={t('transactions.searchPanel.placeholder')}
-              aria-label={t('transactions.toolbar.searchByKeyword')}
-              className="pl-9"
-            />
-          </div>
-        }
+        head={<PhoneSearchField search={search} />}
         onClose={() => setIsSearching(false)}
       >
-        {/* What this does, and not what the magnifier in the bottom bar does.
-          Both look the same and answer different questions: that one
-          SEARCHES for a transaction across the whole app; this one CUTS what
-          is being looked at, and what is typed stays set on closing. */}
-        <p className="px-[var(--panel-inset,0.75rem)] py-2 text-sm text-muted-foreground">
-          {t('transactions.toolbar.searchHelp')}
-        </p>
+        {/* What this does, and not what the magnifier in the bottom bar does:
+          this one CUTS what is being looked at, and what is typed stays set
+          on closing. One line, above the list.
+
+          ── And under it, the same list as the bottom bar's search ─────────
+          It showed only that line, so on opening it looked EMPTY: the latest
+          transactions appeared in the other search sheet, and this is the
+          magnifier people tap on the dashboard. Now both open on the latest
+          and show the matches of what is typed; a tap opens the transaction.
+          Mounted only while open: the sheet itself is always mounted. */}
+        <p className="pb-3 text-xs text-muted-foreground">{t('transactions.toolbar.searchHelp')}</p>
+        {isSearching && (
+          <SearchBody
+            query={(text.trim() === '' ? '' : query).trim()}
+            onSelect={(transaction) => {
+              setIsSearching(false);
+              onOpenTransaction?.(transaction);
+            }}
+          />
+        )}
       </BottomSheet>
     </>
+  );
+}
+
+/** The field at the head of the phone's search sheet. */
+function PhoneSearchField({ search }: { search: ToolbarSearch }) {
+  const { text, setText, field } = search;
+  return (
+    <div className="relative">
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden="true"
+      />
+      <Input
+        ref={field}
+        type="search"
+        autoFocus
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={t('transactions.searchPanel.placeholder')}
+        aria-label={t('transactions.toolbar.searchByKeyword')}
+        className="pl-9"
+      />
+    </div>
   );
 }
 

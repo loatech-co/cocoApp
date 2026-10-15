@@ -130,6 +130,7 @@ function Bar({ page: p }: { page: ReturnType<typeof useDashboardPage> }) {
         p.clear();
       }}
       hasActiveFilters={p.hasActiveFilters}
+      onOpenTransaction={sheet.setEditing}
       onNew={(type) => {
         sheet.setNewType(type);
         // A new transaction starts from scratch, wherever it comes from: without
