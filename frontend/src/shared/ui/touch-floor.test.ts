@@ -36,7 +36,7 @@ const CONTROLS: [filePath: string, what: string][] = [
   ['app/navigation.tsx', 'a section row and the account trigger'],
   [
     'features/transactions/components/classification-filter.tsx',
-    'the row with a checkbox: the row is the control',
+    'the row with a checkbox: the row is the control, 52 on the phone',
   ],
 ];
 
@@ -68,7 +68,10 @@ const EXCEPTIONS: [filePath: string, className: string, reason: string][] = [
 describe('The touch floor', () => {
   it.each(CONTROLS)('%s declares it — %s', (filePath) => {
     const code = readFileSync(join(SRC_ROOT, filePath), 'utf8');
-    expect(code).toContain(`mobile:min-h-[${TOUCH_FLOOR_PX}px]`);
+    // The floor or above it: a row may ask for more (the classification
+    // filter's are 52), never for less.
+    const floors = [...code.matchAll(/mobile:min-h-\[(\d+)px\]/g)].map((m) => Number(m[1]));
+    expect(floors.some((px) => px >= TOUCH_FLOOR_PX)).toBe(true);
   });
 
   it.each(EXCEPTIONS)('%s stays below on purpose (%s)', (filePath, className) => {

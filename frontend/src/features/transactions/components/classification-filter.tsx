@@ -61,8 +61,10 @@ export function ClassificationFilter({
       <FilterPath path={path} onBack={() => setPath(path.slice(0, -1))} />
 
       {/* Limited height: a center with forty concepts would make a menu
-          longer than the screen with no way to reach the bottom. */}
-      <ul className="max-h-64 overflow-y-auto border-y border-border py-1">
+          longer than the screen with no way to reach the bottom. Not on the
+          phone: there it lives in a sheet that scrolls by itself, and a box
+          scrolling inside a scrolling sheet cut the list at five rows. */}
+      <ul className="max-h-64 overflow-y-auto border-y border-border py-1 mobile:max-h-none">
         {list.length === 0 ? (
           <li className="px-[var(--panel-inset,0.75rem)] py-2 text-sm text-muted-foreground">
             {t('transactions.classificationFilter.nothingToExpand')}
@@ -129,8 +131,10 @@ function FilterRow({ node, isChecked, hasCheckedInside, onToggle, onEnter }: Fil
           // The ROW is the control: the 16 box is a second,
           // smaller way of hitting a target that is already the whole
           // width of the dropdown. That is why the row has a floor and the
-          // box does not.
-          'mobile:min-h-[42px]',
+          // box does not. 52 on the phone, above the 42 floor: in the sheet
+          // these rows are a list read with the thumb, and at 42 the cost
+          // centers sat cramped one on top of the other.
+          'mobile:min-h-[52px]',
           HIGHLIGHT,
           isChecked && 'font-medium',
         )}

@@ -55,6 +55,8 @@ export function DrillButton({ name, onDrill }: { name: string; onDrill: () => vo
       title={t('ui.levelNav.open', { name })}
       className={cn(
         'grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors',
+        // On the phone, the touch floor: 42 wide, and as tall as its row.
+        'mobile:min-w-[42px]',
         HIGHLIGHT,
       )}
     >
