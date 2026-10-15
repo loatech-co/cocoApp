@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { drawPdfPage } from '@/shared/lib/pdf';
 
-import { PAGE_WIDTH, PdfPage } from './pdf-page';
+import { PAGE_WIDTH, PdfPage, RECEIPT_PAGE } from './pdf-page';
 
 vi.mock('@/shared/lib/pdf', () => ({ drawPdfPage: vi.fn() }));
 const draw = vi.mocked(drawPdfPage);
@@ -60,5 +62,33 @@ describe('PdfPage', () => {
 
     unmount();
     expect(firstDrawing().isAlive()).toBe(false);
+  });
+});
+
+/**
+ * A receipt keeps its shape. In Safari `h-fit` on an image resolves to its
+ * NATURAL height whatever its width: a tall receipt shown at the phone's
+ * width came out stretched three times. The page's height must follow its
+ * ratio (`h-auto`), and nothing that draws a receipt may force it.
+ */
+describe('A receipt page keeps its aspect ratio', () => {
+  it('sets only the width: the height is auto and the row does not stretch it', () => {
+    const classes = RECEIPT_PAGE.split(' ');
+    expect(classes).toEqual(expect.arrayContaining(['h-auto', 'self-start']));
+    expect(classes).not.toContain('h-fit');
+  });
+
+  it('no receipt image or canvas in the app forces its height with h-fit', () => {
+    const offenders = [
+      'features/transactions/components/receipt-viewer.tsx',
+      'shared/ui/atoms/pdf-page.tsx',
+    ]
+      .map(
+        (path) =>
+          [path, readFileSync(join(import.meta.dirname, '..', '..', '..', path), 'utf8')] as const,
+      )
+      .filter(([, code]) => /\bh-fit\b/.test(code.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, '')))
+      .map(([path]) => path);
+    expect(offenders).toEqual([]);
   });
 });

@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 're
 import type { ReceiptFailure } from '@/features/transactions/model/receipts';
 import { type Receipt } from '@/shared/api/generated/model';
 import { cn } from '@/shared/lib/utils';
-import { PAGE_WIDTH, PdfPage } from '@/shared/ui/atoms/pdf-page';
+import { PAGE_WIDTH, PdfPage, RECEIPT_PAGE } from '@/shared/ui/atoms/pdf-page';
 
 import { ConfirmReceiptDeletion } from './confirm-receipt-deletion';
 import { UnavailableReceipt } from './receipt-unavailable';
@@ -228,7 +228,13 @@ function ViewerSheet({ receipt, url, error, onRetry, scale, page, onPages }: Vie
           // The SAME width as a PDF page: if an image measured something
           // else, the zoom button would do two different things depending on which
           // receipt was open.
-          className="h-fit max-w-none rounded-lg bg-white shadow-2xl"
+          //
+          // Only the WIDTH is set; the height follows the image's own ratio.
+          // It was `h-fit`, and Safari resolves `fit-content` on an image to
+          // its NATURAL height whatever the width: a 1000×3000 receipt shown
+          // 358 wide stayed 3000 tall —stretched three times—. `h-auto` keeps
+          // the ratio, and `self-start` stops the slot's row from stretching it.
+          className={RECEIPT_PAGE}
           style={{ width: PAGE_WIDTH * width }}
         />
       ) : (

@@ -8,6 +8,14 @@ import { drawPdfPage } from '@/shared/lib/pdf';
 /** The width of a sheet at 100 %: a letter page readable on a laptop without zooming. */
 export const PAGE_WIDTH = 620;
 
+/**
+ * How a receipt's page sits in a viewer: its width is set from outside, its
+ * height ALWAYS follows its own ratio (`h-auto`), and `self-start` keeps a flex
+ * row from stretching it. Never `h-fit`: Safari resolves it to the natural
+ * height of an image whatever its width, and the receipt comes out stretched.
+ */
+export const RECEIPT_PAGE = 'h-auto max-w-none self-start rounded-lg bg-white shadow-2xl';
+
 interface PdfPageProps {
   url: string;
   page: number;
@@ -95,11 +103,7 @@ export function PdfPage({ url, page, scale, onPageCount }: PdfPageProps) {
       )}
       {/* The canvas is drawn at twice the pixels and shown at half: it is what
           keeps it sharp on a retina screen. */}
-      <canvas
-        ref={canvas}
-        className="h-fit max-w-none rounded-lg bg-white shadow-2xl"
-        style={{ width: PAGE_WIDTH * scale }}
-      />
+      <canvas ref={canvas} className={RECEIPT_PAGE} style={{ width: PAGE_WIDTH * scale }} />
     </>
   );
 }
