@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -13,13 +14,32 @@ import { FILES } from '../support/environment.mjs';
 import { expect, test } from '../support/fixtures';
 import { createConcept } from '../support/seed';
 
+/** The date printed on `receipt.pdf`; same length as any dd/mm/yyyy, so the PDF's xref stays valid. */
+const RECEIPT_DATE = '02/10/2026';
+
+/**
+ * The fixture receipt dated today (in the journeys' time zone). The movement
+ * takes the receipt's date, and the dashboard lists the current month: with
+ * the fixed date the row fell outside the period from November 2026 on.
+ */
+function receiptDatedToday(): { name: string; mimeType: string; buffer: Buffer } {
+  const today = new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date());
+  const pdf = readFileSync(join(FILES, 'receipt.pdf'), 'latin1').replace(RECEIPT_DATE, today);
+  return { name: 'receipt.pdf', mimeType: 'application/pdf', buffer: Buffer.from(pdf, 'latin1') };
+}
+
 /**
  * Gives the sheet the receipt the way each screen offers it: the desktop
  * opens the upload panel; the phone has no drop box, and «Cargar una imagen»
  * is the system's picker straight away (no `capture`, so it also takes a PDF).
  */
 async function attachReceipt(page: Page, sheet: Locator, isMobile: boolean): Promise<void> {
-  const receipt = join(FILES, 'receipt.pdf');
+  const receipt = receiptDatedToday();
 
   if (isMobile) {
     await expect(sheet.getByText('Agregar los soportes del movimiento')).toBeHidden();

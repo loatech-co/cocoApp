@@ -218,7 +218,7 @@ Los soportes viven en el disco del hosting: sin respaldo automático, sin CDN, c
 5. **Huérfanos:** borrar un movimiento borra también su archivo en Storage, en la misma operación o con una tarea de limpieza programada. Documenta cuántos huérfanos hay hoy en el disco, sin borrarlos.
 6. La app iOS y la web no cambian: suben por el mismo endpoint.
 
-Prueba de punta a punta en local con un bucket de desarrollo antes de desplegar.
+Prueba de punta a punta en local con un bucket de desarrollo antes de desplegar. _(Ese bucket ya no existe: [ADR 0037](adr/0037-no-supabase-project-for-development.md).)_
 
 ---
 
@@ -922,6 +922,7 @@ Un pago con Apple Pay produce dos capturas: la transacción de Wallet y el SMS d
 #### 4.2 Autenticación de desarrollo
 
 - Retoma la opción C de la fase 0: un segundo proyecto de Supabase solo para desarrollo. **Yo lo creo y te paso las claves**; tú lo conectas al entorno local. A partir de aquí, el entorno local no toca la autenticación de producción.
+- _Nota (6 nov 2026):_ `cocoApp-dev` se borró; el entorno local usa Postgres local y `npm run dev:auth`. Ver [ADR 0037](adr/0037-no-supabase-project-for-development.md).
 
 #### 4.3 Soportes desde iOS
 

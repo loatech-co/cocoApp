@@ -76,6 +76,7 @@
       "js-yaml": "^4.1.1"
     },
     "brace-expansion@1": "1.1.21",
-    "undici@7": "7.29.1"
+    "multer": "2.5.0",
+    "undici": "7.30.1"
   }
 }
