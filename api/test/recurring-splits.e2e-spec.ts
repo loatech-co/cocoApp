@@ -22,6 +22,13 @@ describe('Recurring concepts paid through splits (e2e)', () => {
       .toISOString()
       .slice(0, 7),
   );
+  /** The month's real last day: a fixed `-31` is a 400 in a 30-day month. */
+  const THIS_MONTH = new Date(
+    Date.UTC(NOW.getUTCFullYear(), NOW.getUTCMonth(), 1, 12) - 5 * 60 * 60 * 1000,
+  );
+  const MONTH_END = new Date(Date.UTC(THIS_MONTH.getUTCFullYear(), THIS_MONTH.getUTCMonth() + 1, 0))
+    .toISOString()
+    .slice(0, 10);
 
   beforeAll(async () => {
     env = await startApp();
@@ -70,7 +77,7 @@ describe('Recurring concepts paid through splits (e2e)', () => {
     pending: { name: string; expectedAmount: string | null; paidAmount: string }[];
   }> {
     const r = await http
-      .get(`/api/v2/dashboard?from=${MONTH}-01&to=${MONTH}-31`)
+      .get(`/api/v2/dashboard?from=${MONTH}-01&to=${MONTH_END}`)
       .set('Authorization', auth)
       .expect(200);
     return r.body.data;
