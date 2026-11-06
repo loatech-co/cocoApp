@@ -42,17 +42,17 @@
     "tailwindcss": "^4.0.0",
     "tesseract.js": "^7.0.0",
     "typescript": "^5.7.2",
-    "vite": "^6.0.5"
+    "vite": "^6.4.5"
   },
   "devDependencies": {
-    "@storybook/addon-themes": "^10.6.1",
-    "@storybook/react-vite": "^10.6.1",
+    "@storybook/addon-themes": "^10.6.6",
+    "@storybook/react-vite": "^10.6.6",
     "@testing-library/react": "^16.3.2",
     "@vitest/coverage-v8": "^4.1.11",
     "jsdom": "^29.1.1",
     "orval": "^8.40.0",
-    "storybook": "^10.6.1",
-    "storybook-addon-pseudo-states": "^10.6.1",
+    "storybook": "^10.6.6",
+    "storybook-addon-pseudo-states": "^10.6.6",
     "vitest": "^4.1.10"
   }
 }

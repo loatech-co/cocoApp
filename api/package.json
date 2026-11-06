@@ -55,7 +55,7 @@
     "rxjs": "^7.8.1",
     "sharp": "^0.35.5",
     "typescript": "^5.7.2",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@nestjs/schematics": "^11.0.0",
